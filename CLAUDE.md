@@ -17,6 +17,13 @@ widgets 100 % génériques.
   rendue. Un JSON hors contrat → widget `invalid`, jamais un affichage « comme si ».
 - **Server-side only.** Le fetch et les jetons restent côté serveur (Server
   Components). Pas de `x-hub-token` exposé au client, pas de CORS demandé aux apps.
+- **Hub privé, protégé par auth.** Le hub affiche des données personnelles réelles :
+  il est derrière un **login Google (Auth.js v5), une seule adresse admise**
+  (`AUTHORIZED_EMAIL`). `middleware.ts` garde tout sauf `/api/auth/*`, `/login` et les
+  assets. **Toute nouvelle route affichant des données doit rester derrière la
+  middleware** (ne jamais l'ajouter aux exclusions du matcher) et, si elle porte des
+  jetons, revérifier la session côté serveur (défense en profondeur, cf. `app/page.tsx`).
+  Voir la section « Authentification » du README.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via
   `safeHttpUrl` (http/https uniquement). Ne jamais rendre un href brut.
 
