@@ -18,6 +18,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   session: { strategy: "jwt" },
+  // Fait confiance au host de la requête pour construire les URLs de callback. Requis
+  // en self-hosted / local (sinon Auth.js lève UntrustedHost/Invalid URL) ; sans risque
+  // ici car les redirect URIs OAuth sont verrouillés côté Google (un host forgé ne
+  // matcherait aucun callback autorisé). Sur Vercel c'est de toute façon le comportement.
+  trustHost: true,
   pages: {
     signIn: "/login",
     // Une erreur (dont le refus d'un compte non autorisé) est rendue par /login, qui

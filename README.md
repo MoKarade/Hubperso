@@ -66,7 +66,7 @@ Aucune n'est committée.
 | `GOOGLE_CLIENT_SECRET` | Secret du client OAuth | (Google Cloud Console) |
 | `AUTH_SECRET` | Signature des JWT de session | `npx auth secret` |
 | `AUTHORIZED_EMAIL` | Unique adresse admise | `marc.richard4@gmail.com` |
-| `AUTH_URL` | URL canonique (auto-détectée sur Vercel) | prod `https://hubperso.com` · local `http://localhost:3000` |
+| `AUTH_URL` | **Optionnelle** — la config utilise `trustHost`, le host de la requête suffit (local et Vercel). À poser seulement pour forcer un domaine canonique en prod, avec le protocole : `https://hubperso.com` |
 
 **Redirect URIs à configurer côté Google Cloud Console** (client OAuth) :
 

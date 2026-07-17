@@ -33,8 +33,8 @@ Vérifs vertes en local : `npm run typecheck`, `npm run test` (42 tests), `npm r
    - `GOOGLE_CLIENT_SECRET`
    - `AUTH_SECRET` (générer : `npx auth secret` ou `openssl rand -base64 32`)
    - `AUTHORIZED_EMAIL` = `marc.richard4@gmail.com`
-   - `AUTH_URL` (prod : `https://hubperso.com` ; en Preview, laisser Vercel auto-détecter
-     ou poser l'URL `.vercel.app` du déploiement).
+   - `AUTH_URL` — **optionnelle** (la config utilise `trustHost`). À poser seulement pour
+     forcer le domaine canonique en prod : `https://hubperso.com` (avec le protocole).
 
    > Les jetons des apps (`HUB_TOKEN_FINANCEAI`, `HUB_TOKEN_DRIVEAI`, …) restent tels
    > quels, inchangés.
