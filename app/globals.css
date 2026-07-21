@@ -22,7 +22,10 @@
   --shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 8px 24px -12px oklch(0% 0 0 / 0.12);
   --shadow-hover: 0 2px 4px oklch(0% 0 0 / 0.05), 0 18px 44px -16px oklch(0% 0 0 / 0.22);
 
-  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,7 +52,15 @@
 }
 
 body {
-  background: var(--bg);
+  /* Halo de lumière neutre en haut de page : de la profondeur sans toucher aux
+     accents des apps. Quasi invisible, mais le fond ne semble plus « plat ». */
+  background:
+    radial-gradient(
+      120% 60% at 50% 0%,
+      color-mix(in oklch, var(--surface) 55%, transparent),
+      transparent 70%
+    ),
+    var(--bg);
   color: var(--text);
   font-family: var(--font);
   line-height: 1.5;
@@ -77,6 +88,7 @@ a:focus-visible,
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  animation: rise-in 480ms var(--ease-out) backwards;
 }
 .page__eyebrow {
   text-transform: uppercase;
@@ -104,6 +116,17 @@ a:focus-visible,
   grid-auto-rows: minmax(150px, auto);
   grid-auto-flow: dense;
   gap: var(--gap);
+}
+/* Densité adaptative : dès que les widgets se multiplient, la grille se resserre
+   (4 colonnes + gap réduit sur grand écran) pour rester lisible d'un coup d'œil. */
+.bento--dense {
+  --gap: clamp(0.7rem, 0.5rem + 0.6vw, 1rem);
+  grid-auto-rows: minmax(120px, auto);
+}
+@media (min-width: 1100px) {
+  .bento--dense {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .widget--lg {
   grid-column: span 2;
@@ -133,6 +156,16 @@ a:focus-visible,
 }
 
 /* --- Widget --- */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .widget {
   --accent: oklch(60% 0.02 265);
   position: relative;
@@ -145,7 +178,12 @@ a:focus-visible,
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
-  transition: box-shadow 200ms ease, transform 200ms ease;
+  transition: box-shadow 240ms var(--ease-out), transform 240ms var(--ease-out),
+    border-color 240ms ease;
+  /* Entrée en cascade : chaque carte arrive avec son propre délai (--enter-delay,
+     posé par la page). `backwards` la garde invisible pendant l'attente. */
+  animation: rise-in 520ms var(--ease-out) backwards;
+  animation-delay: var(--enter-delay, 0ms);
 }
 .widget::before {
   content: "";
@@ -153,10 +191,16 @@ a:focus-visible,
   inset: 0 0 auto 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent), transparent 72%);
+  opacity: 0.85;
+  transition: opacity 240ms ease;
 }
 .widget:hover {
   box-shadow: var(--shadow-hover);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  border-color: color-mix(in oklch, var(--accent) 24%, var(--border));
+}
+.widget:hover::before {
+  opacity: 1;
 }
 .widget__head {
   display: flex;
@@ -215,11 +259,22 @@ a:focus-visible,
   font-weight: 600;
   white-space: nowrap;
 }
+@keyframes dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
 .badge__dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: currentColor;
+  /* Pulsation lente : le statut « respire » sans attirer l'œil en permanence. */
+  animation: dot-pulse 2.6s ease-in-out infinite;
 }
 .badge--ok {
   color: var(--ok);
@@ -254,8 +309,11 @@ a:focus-visible,
   gap: 0.12rem;
 }
 .metric__label {
-  font-size: 0.78rem;
-  color: var(--text-soft);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
 }
 .metric__value {
   font-weight: 700;
@@ -363,14 +421,19 @@ a:focus-visible,
   font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
-  transition: border-color 160ms ease, color 160ms ease;
+  transition: border-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
 }
 .action:hover {
   border-color: var(--accent);
   color: var(--accent);
+  transform: translateY(-1px);
 }
 .action__arrow {
   font-size: 0.9em;
+  transition: transform 160ms var(--ease-out);
+}
+.action:hover .action__arrow {
+  transform: translate(1px, -1px);
 }
 .action--disabled {
   opacity: 0.5;
@@ -378,10 +441,20 @@ a:focus-visible,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .widget {
+  .widget,
+  .page__head,
+  .login__card,
+  .badge__dot {
+    animation: none;
+  }
+  .widget,
+  .action,
+  .login__button {
     transition: none;
   }
-  .widget:hover {
+  .widget:hover,
+  .action:hover,
+  .login__button:hover {
     transform: none;
   }
 }
@@ -426,6 +499,7 @@ a:focus-visible,
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  animation: rise-in 560ms var(--ease-out) backwards;
 }
 .login__title {
   font-size: clamp(1.8rem, 1.4rem + 2vw, 2.4rem);
@@ -456,10 +530,16 @@ a:focus-visible,
   border-radius: var(--radius-sm);
   padding: 0.7rem 1rem;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out);
 }
 .login__button:hover {
-  opacity: 0.9;
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.login__button:active {
+  transform: none;
 }
 .login__button:focus-visible {
   outline: 2px solid var(--info);
