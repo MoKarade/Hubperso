@@ -9,8 +9,22 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { decideGuard } from "@/lib/authGuard";
+import { isAuthConfigured } from "@/lib/authConfigured";
 
 export default auth((req) => {
+  // Fail-closed : sans AUTH_SECRET/AUTHORIZED_EMAIL, Auth.js loggue MissingSecret mais
+  // laisse passer (constaté sur Vercel). On refuse alors TOUT ce qui est protégé.
+  if (!isAuthConfigured()) {
+    return NextResponse.json(
+      {
+        error: "auth_unconfigured",
+        message:
+          "Authentification non configurée (AUTH_SECRET / AUTHORIZED_EMAIL manquants). Accès refusé.",
+      },
+      { status: 503 },
+    );
+  }
+
   const decision = decideGuard({
     isAuthenticated: Boolean(req.auth),
     pathname: req.nextUrl.pathname,
