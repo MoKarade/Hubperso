@@ -30,6 +30,12 @@ flowchart LR
   hors contrat). Chaque widget montre exactement ce qui ne va pas.
 - **`lib/url.ts`** : les `href` du contrat ne deviennent des liens que s'ils sont
   `http(s)` (le contrat accepte aussi `javascript:`/`data:` — filtrés au rendu).
+- **Rafraîchissement** (`components/RefreshControls.tsx`) : la vue se rafraîchit
+  automatiquement toutes les 60 s quand l'onglet est visible, plus un bouton
+  « Rafraîchir » manuel — via `router.refresh()`, donc toujours server-side (session
+  revérifiée, jetons jamais côté client). Limite honnête : le hub relit ce que chaque
+  app **publie** ; si une app n'a pas resynchronisé ses propres sources (`dataAsOf`
+  ancien), ses chiffres ne bougent pas — la synchro des sources se fait dans l'app.
 - **Widgets génériques** : la taille bento dérive de la richesse du summary, la
   couleur d'accent vient de `app.color`, les métriques sont formatées en fr-CA.
 

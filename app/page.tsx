@@ -5,6 +5,7 @@ import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
 import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
+import { RefreshControls } from "@/components/RefreshControls";
 import { SignOutButton } from "@/components/SignOutButton";
 
 // Un summary est un instantané : toujours frais, jamais mis en cache statiquement.
@@ -51,6 +52,7 @@ export default async function Page() {
           <p className="page__meta">
             {online}/{results.length} en ligne · rafraîchi {refreshedAt}
           </p>
+          <RefreshControls />
           <SignOutButton />
         </div>
       </header>
