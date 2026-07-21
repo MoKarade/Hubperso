@@ -33,6 +33,58 @@ flowchart LR
 - **Widgets génériques** : la taille bento dérive de la richesse du summary, la
   couleur d'accent vient de `app.color`, les métriques sont formatées en fr-CA.
 
+## Authentification
+
+Le hub affiche des données personnelles réelles : il est **privé**. L'accès passe par
+un **login Google (Auth.js / NextAuth v5)** restreint à **une seule adresse**.
+
+- **Un seul compte admis.** Le callback `signIn` (`auth.ts`) n'autorise que l'adresse
+  `AUTHORIZED_EMAIL` (comparée en lower-case + trim, logique pure dans `lib/authorized.ts`).
+  Tout autre compte Google est refusé : **aucune session créée**, redirection vers
+  `/login?error=AccessDenied` avec le message « Accès non autorisé — ce hub est privé ».
+- **Tout est protégé.** `middleware.ts` garde l'ensemble des routes sauf `/api/auth/*`,
+  `/login` et les assets statiques. Sans session : une page → redirection vers `/login`
+  (avec `callbackUrl`) ; une route `/api/*` → **401 JSON** (la décision est isolée et
+  testée dans `lib/authGuard.ts`).
+- **Défense en profondeur.** La page `/` (Server Component qui porte les jetons
+  `x-hub-token` des apps) revérifie la session côté serveur avant tout fetch : sans
+  session, aucune donnée n'est récupérée ni rendue.
+- **Session JWT**, sans base de données (le hub n'en a pas). Déconnexion via le bouton
+  discret du header.
+
+> Le contrat, les widgets et les jetons des apps (`HUB_TOKEN_*`) sont **inchangés** :
+> l'auth est une couche ajoutée par-dessus, elle ne touche pas au dashboard existant.
+
+### Variables d'environnement (auth)
+
+À poser dans `.env.local` (local) et dans les variables d'environnement Vercel (prod).
+Aucune n'est committée.
+
+| Variable | Rôle | Valeur attendue |
+|---|---|---|
+| `GOOGLE_CLIENT_ID` | Client OAuth Google (Web application) | (Google Cloud Console) |
+| `GOOGLE_CLIENT_SECRET` | Secret du client OAuth | (Google Cloud Console) |
+| `AUTH_SECRET` | Signature des JWT de session | `npx auth secret` |
+| `AUTHORIZED_EMAIL` | Unique adresse admise | `marc.richard4@gmail.com` |
+| `AUTH_URL` | **Optionnelle** — la config utilise `trustHost`, le host de la requête suffit (local et Vercel). À poser seulement pour forcer un domaine canonique en prod, avec le protocole : `https://hubperso.com` |
+
+**Redirect URIs à configurer côté Google Cloud Console** (client OAuth) :
+
+```
+https://hubperso.com/api/auth/callback/google
+https://<projet>.vercel.app/api/auth/callback/google
+http://localhost:3000/api/auth/callback/google
+```
+
+### Tester le login en local
+
+1. Copie `.env.example` en `.env.local` et renseigne les 5 variables ci-dessus
+   (+ les jetons `HUB_TOKEN_*` si tu veux des widgets réels).
+2. `npm run dev` puis ouvre `http://localhost:3000`.
+3. Flux attendu : accès sans session → redirection `/login` → **Se connecter avec
+   Google** → si tu te connectes avec `marc.richard4@gmail.com` → accès au hub ;
+   avec tout autre compte Google → **refus** (« Accès non autorisé — ce hub est privé »).
+
 ## Configuration
 
 Copie `.env.example` en `.env.local`. Les URLs sont publiques ; les jetons sont des
