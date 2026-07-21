@@ -60,12 +60,22 @@ function Footer({ summary }: { summary: HubSummary }) {
   );
 }
 
-export function AppWidget({ result }: { result: SummaryResult }) {
+export function AppWidget({
+  result,
+  index = 0,
+}: {
+  result: SummaryResult;
+  /** Position dans la grille — pilote le délai de l'animation d'entrée en cascade. */
+  index?: number;
+}) {
   const badge = statusBadge(result);
   const name = result.state === "ok" ? result.summary.app.name : result.source.name;
   const accent = result.state === "ok" ? result.summary.app.color : undefined;
   const appUrl = result.state === "ok" ? safeHttpUrl(result.summary.app.url) : null;
-  const style = accent ? ({ "--accent": accent } as CSSProperties) : undefined;
+  const style = {
+    ...(accent ? { "--accent": accent } : null),
+    "--enter-delay": `${index * 70}ms`,
+  } as CSSProperties;
 
   return (
     <article className={`widget ${sizeClass(result)}`} style={style}>

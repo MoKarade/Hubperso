@@ -55,9 +55,14 @@ export default async function Page() {
         </div>
       </header>
 
-      <section className="bento" aria-label="Widgets des apps">
-        {results.map((result) => (
-          <AppWidget key={result.source.id} result={result} />
+      {/* Densité adaptative : aéré par défaut, la grille se resserre quand les apps
+          se multiplient (indépendant du contenu des apps — purement un compte). */}
+      <section
+        className={`bento${results.length >= 7 ? " bento--dense" : ""}`}
+        aria-label="Widgets des apps"
+      >
+        {results.map((result, index) => (
+          <AppWidget key={result.source.id} result={result} index={index} />
         ))}
       </section>
     </main>
