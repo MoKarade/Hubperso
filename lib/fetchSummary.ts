@@ -37,11 +37,13 @@ export type SummaryResult =
   | { state: "invalid"; source: HubSource; detail: string };
 
 /**
- * Coupe VITE (3 s) : le dashboard ne doit jamais pendre, et sur échec on retombe sur le
- * dernier bon résumé. Un budget serré vaut mieux qu'un long blocage — la fraîcheur réelle
- * vient de toute façon du dernier passage moteur (`dataAsOf`), pas de l'instant du fetch.
+ * Budget d'attente d'une app. Doit rester AU-DESSUS du timeout interne du broker le plus lent
+ * (DriveAI attend Apps Script jusqu'à 8 s au réveil à froid) : sinon le hub coupe avant de
+ * recevoir la réponse, et le cache ne se remplit jamais (le bug initial : 3 s < 4,8 s côté
+ * broker → « délai dépassé » en boucle). 9 s laisse la réponse arriver ; si l'app dépasse quand
+ * même, on retombe sur le dernier bon résumé en cache — jamais un « injoignable » clignotant.
  */
-const TIMEOUT_MS = 3000;
+const TIMEOUT_MS = 9000;
 
 /** Au-delà, un résumé en cache est trop vieux pour masquer une panne : on montre l'erreur honnête. */
 const STALE_MAX_MS = 30 * 60 * 1000; // 30 min
