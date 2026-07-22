@@ -26,7 +26,7 @@ flowchart LR
   **valide** chaque réponse avec `validateSummary` du contrat. Une réponse non
   conforme n'est jamais affichée comme valide.
 - **États honnêtes** (jamais de fake data) : `unconfigured` (pas de jeton),
-  `unauthorized` (401), `unreachable` (réseau / 5xx / timeout 3 s), `invalid` (JSON
+  `unauthorized` (401), `unreachable` (réseau / 5xx / timeout 9 s), `invalid` (JSON
   hors contrat). Chaque widget montre exactement ce qui ne va pas.
 - **Résilience (dernier bon résumé)** : une app derrière plusieurs couches à démarrage
   à froid (Vercel + Apps Script) peut dépasser ponctuellement le budget réseau. Plutôt
