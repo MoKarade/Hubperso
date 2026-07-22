@@ -51,10 +51,22 @@ function ProblemBody({ result }: { result: SummaryResult }) {
   return <p className="widget__problem">{message}</p>;
 }
 
-function Footer({ summary }: { summary: HubSummary }) {
+/** « il y a 3 min » / « il y a 40 s » — âge lisible d'un résumé servi depuis le cache. */
+function humanAge(ms: number): string {
+  const min = Math.round(ms / 60000);
+  return min >= 1 ? `il y a ${min} min` : `il y a ${Math.max(1, Math.round(ms / 1000))} s`;
+}
+
+function Footer({ summary, cachedAgeMs }: { summary: HubSummary; cachedAgeMs?: number }) {
   return (
     <footer className="widget__foot">
-      <span>Généré {formatDateTime(summary.generatedAt)}</span>
+      {cachedAgeMs !== undefined ? (
+        <span title="L’app n’a pas répondu à temps : dernier résumé connu.">
+          En cache · {humanAge(cachedAgeMs)}
+        </span>
+      ) : (
+        <span>Généré {formatDateTime(summary.generatedAt)}</span>
+      )}
       {summary.dataAsOf && <span>Données du {formatDateTime(summary.dataAsOf)}</span>}
     </footer>
   );
@@ -98,7 +110,9 @@ export function AppWidget({
           <ProblemBody result={result} />
         )}
       </div>
-      {result.state === "ok" && <Footer summary={result.summary} />}
+      {result.state === "ok" && (
+        <Footer summary={result.summary} cachedAgeMs={result.stale ? result.cachedAgeMs : undefined} />
+      )}
     </article>
   );
 }

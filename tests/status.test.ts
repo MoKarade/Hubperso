@@ -30,6 +30,17 @@ describe("statusBadge", () => {
       expect(statusBadge(result).tone).toBe(tone);
     }
   });
+
+  it("un résumé servi depuis le cache est « En cache » (warn), jamais « À jour »", () => {
+    const badge = statusBadge({
+      state: "ok",
+      source,
+      summary: validSummary({ status: "ok" }),
+      stale: true,
+      cachedAgeMs: 120000,
+    });
+    expect(badge).toEqual({ tone: "warn", label: "En cache" });
+  });
 });
 
 describe("severityTone", () => {
