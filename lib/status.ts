@@ -24,6 +24,8 @@ export function statusBadge(result: SummaryResult): StatusBadgeInfo {
     case "invalid":
       return { tone: "danger", label: "Réponse invalide" };
     case "ok":
+      // Résumé servi depuis le cache (app pas jointe à temps) : honnête, jamais « À jour ».
+      if (result.stale) return { tone: "warn", label: "En cache" };
       switch (result.summary.status) {
         case "ok":
           return { tone: "ok", label: "À jour" };

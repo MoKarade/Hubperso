@@ -1,6 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { HUB_TOKEN_HEADER } from "@mokarade/hub-contract";
-import { fetchSummary, fetchAllSummaries } from "../lib/fetchSummary";
+import {
+  fetchSummary,
+  fetchAllSummaries,
+  __resetSummaryCache,
+} from "../lib/fetchSummary";
 import type { HubSource } from "../lib/sources";
 import { validSummary, jsonFetch } from "./helpers";
 
@@ -13,6 +17,14 @@ function source(over: Partial<HubSource> = {}): HubSource {
     ...over,
   };
 }
+
+// Le cache de résilience est un état de module : on l'isole entre chaque cas.
+beforeEach(() => __resetSummaryCache());
+
+const okFetch = () => jsonFetch(200, validSummary());
+const timeoutFetch = (async () => {
+  throw new DOMException("aborted", "TimeoutError");
+}) as unknown as typeof fetch;
 
 describe("fetchSummary", () => {
   it("unconfigured si aucun jeton (aucune requête émise)", async () => {
@@ -87,6 +99,67 @@ describe("fetchSummary", () => {
     const s = source({ id: "driveai", name: "DriveAI" });
     const res = await fetchSummary(s, jsonFetch(401, {}));
     expect(res.source.id).toBe("driveai");
+  });
+});
+
+describe("fetchSummary — résilience (dernier bon résumé)", () => {
+  it("accroc réseau APRÈS un succès récent → sert le cache marqué stale (jamais « injoignable »)", async () => {
+    let t = 1_000_000;
+    const now = () => t;
+    const s = source({ id: "driveai" });
+
+    const ok = await fetchSummary(s, okFetch(), now); // peuple le cache à t
+    expect(ok.state).toBe("ok");
+
+    t += 5 * 60_000; // 5 min plus tard, l'app dépasse le budget
+    const res = await fetchSummary(s, timeoutFetch, now);
+    expect(res.state).toBe("ok");
+    if (res.state === "ok") {
+      expect(res.stale).toBe(true);
+      expect(res.cachedAgeMs).toBe(5 * 60_000);
+    }
+  });
+
+  it("accroc réseau SANS succès préalable → « injoignable » honnête (rien à resservir)", async () => {
+    const res = await fetchSummary(source({ id: "driveai" }), timeoutFetch);
+    expect(res.state).toBe("unreachable");
+  });
+
+  it("cache TROP vieux (> 30 min) → « injoignable » honnête plutôt qu'une donnée périmée masquée", async () => {
+    let t = 1_000_000;
+    const now = () => t;
+    const s = source({ id: "driveai" });
+    await fetchSummary(s, okFetch(), now);
+
+    t += 31 * 60_000;
+    const res = await fetchSummary(s, timeoutFetch, now);
+    expect(res.state).toBe("unreachable");
+  });
+
+  it("401 n'est JAMAIS masqué par le cache (vrai problème d'auth à corriger)", async () => {
+    let t = 1_000_000;
+    const now = () => t;
+    const s = source({ id: "driveai" });
+    await fetchSummary(s, okFetch(), now); // cache chaud
+
+    t += 60_000;
+    const res = await fetchSummary(s, jsonFetch(401, {}), now);
+    expect(res.state).toBe("unauthorized");
+  });
+
+  it("un nouveau succès rafraîchit le cache (l'âge repart de zéro)", async () => {
+    let t = 1_000_000;
+    const now = () => t;
+    const s = source({ id: "driveai" });
+    await fetchSummary(s, okFetch(), now);
+
+    t += 10 * 60_000;
+    await fetchSummary(s, okFetch(), now); // re-succès → cache réécrit à t
+
+    t += 2 * 60_000;
+    const res = await fetchSummary(s, timeoutFetch, now);
+    expect(res.state).toBe("ok");
+    if (res.state === "ok") expect(res.cachedAgeMs).toBe(2 * 60_000);
   });
 });
 

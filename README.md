@@ -26,8 +26,14 @@ flowchart LR
   **valide** chaque réponse avec `validateSummary` du contrat. Une réponse non
   conforme n'est jamais affichée comme valide.
 - **États honnêtes** (jamais de fake data) : `unconfigured` (pas de jeton),
-  `unauthorized` (401), `unreachable` (réseau / 5xx / timeout 5 s), `invalid` (JSON
+  `unauthorized` (401), `unreachable` (réseau / 5xx / timeout 3 s), `invalid` (JSON
   hors contrat). Chaque widget montre exactement ce qui ne va pas.
+- **Résilience (dernier bon résumé)** : une app derrière plusieurs couches à démarrage
+  à froid (Vercel + Apps Script) peut dépasser ponctuellement le budget réseau. Plutôt
+  que clignoter en « injoignable » à chaque accroc, le hub garde en mémoire le **dernier
+  résumé valide** par source et le ressert, marqué **« En cache »** avec son âge, si un
+  fetch échoue alors que ce résumé a moins de 30 min. Donnée RÉELLE, jamais présentée
+  comme live ; au-delà de 30 min (ou sur `unauthorized`), l'erreur honnête réapparaît.
 - **`lib/url.ts`** : les `href` du contrat ne deviennent des liens que s'ils sont
   `http(s)` (le contrat accepte aussi `javascript:`/`data:` — filtrés au rendu).
 - **Rafraîchissement** (`components/RefreshControls.tsx`) : la vue se rafraîchit
