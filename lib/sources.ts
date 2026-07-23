@@ -43,7 +43,7 @@ const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "batchchef",
     name: "BatchChef",
-    defaultUrl: "https://batchchef.hubperso.com/hub/summary",
+    defaultUrl: "https://batchchef-glu8-chi.vercel.app/api/hub/summary",
     urlEnv: "BATCHCHEF_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_BATCHCHEF",
   },

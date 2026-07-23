@@ -7,7 +7,7 @@ describe("getSources", () => {
     expect(sources.map((s) => s.id)).toEqual(["financeai", "driveai", "batchchef"]);
     expect(sources[0]?.summaryUrl).toBe("https://finance.hubperso.com/hub/summary");
     expect(sources[1]?.summaryUrl).toBe("https://drive.hubperso.com/hub/summary");
-    expect(sources[2]?.summaryUrl).toBe("https://batchchef.hubperso.com/hub/summary");
+    expect(sources[2]?.summaryUrl).toBe("https://batchchef-glu8-chi.vercel.app/api/hub/summary");
     expect(sources.every((s) => s.token === null)).toBe(true);
   });
 
