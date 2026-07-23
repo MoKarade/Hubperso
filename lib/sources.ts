@@ -40,6 +40,13 @@ const SOURCE_DEFS: readonly SourceDef[] = [
     urlEnv: "DRIVEAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_DRIVEAI",
   },
+  {
+    id: "batchchef",
+    name: "BatchChef",
+    defaultUrl: "https://batchchef.hubperso.com/hub/summary",
+    urlEnv: "BATCHCHEF_SUMMARY_URL",
+    tokenEnv: "HUB_TOKEN_BATCHCHEF",
+  },
 ];
 
 type Env = Record<string, string | undefined>;

@@ -106,8 +106,10 @@ secrets (variables d'environnement uniquement, jamais committés).
 |---|---|
 | `HUB_TOKEN_FINANCEAI` | Jeton `x-hub-token` de FinanceAI |
 | `HUB_TOKEN_DRIVEAI` | Jeton `x-hub-token` de DriveAI |
+| `HUB_TOKEN_BATCHCHEF` | Jeton `x-hub-token` de BatchChef |
 | `FINANCEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://finance.hubperso.com/hub/summary` |
 | `DRIVEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://drive.hubperso.com/hub/summary` |
+| `BATCHCHEF_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://batchchef.hubperso.com/hub/summary` |
 
 Sans jeton, l'app concernée s'affiche « non configurée » — les autres continuent de
 fonctionner. Ajouter une app = une entrée dans `lib/sources.ts` + sa variable de jeton.
