@@ -14,7 +14,10 @@
 import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-const REFRESH_INTERVAL_MS = 60_000;
+// 15 s : rafraîchissement quasi-continu (uniquement onglet visible) pour voir vite les
+// changements (coût après un chat, état d'un batch…). Le bouton « Rafraîchir » reste le
+// moyen INSTANTANÉ sur demande. Poll léger : chaque summary est une lecture bon marché.
+const REFRESH_INTERVAL_MS = 15_000;
 
 export function RefreshControls() {
   const router = useRouter();
