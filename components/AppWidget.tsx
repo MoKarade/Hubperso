@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "@/lib/fetchSummary";
+import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
 import { formatDateTime } from "@/lib/format";
@@ -8,15 +9,6 @@ import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertList } from "./AlertList";
 import { ActionList } from "./ActionList";
-
-/** Taille bento : dérivée de la richesse du contenu, jamais uniforme. */
-function sizeClass(result: SummaryResult): string {
-  if (result.state !== "ok") return "widget--sm";
-  const n = result.summary.metrics.length;
-  if (n >= 4) return "widget--lg";
-  if (n >= 1) return "widget--md";
-  return "widget--sm";
-}
 
 function OkBody({ summary }: { summary: HubSummary }) {
   const empty =
@@ -75,11 +67,16 @@ function Footer({ summary, cachedAgeMs }: { summary: HubSummary; cachedAgeMs?: n
 export function AppWidget({
   result,
   index = 0,
+  featured = false,
 }: {
   result: SummaryResult;
   /** Position dans la grille — pilote le délai de l'animation d'entrée en cascade. */
   index?: number;
+  /** Vignette « héros » (grand format) : une seule sur la grille. */
+  featured?: boolean;
 }) {
+  const okMetrics = result.state === "ok" ? result.summary.metrics.length : 0;
+  const size = widgetSize(result.state === "ok", okMetrics, featured);
   const badge = statusBadge(result);
   const name = result.state === "ok" ? result.summary.app.name : result.source.name;
   const accent = result.state === "ok" ? result.summary.app.color : undefined;
@@ -90,7 +87,7 @@ export function AppWidget({
   } as CSSProperties;
 
   return (
-    <article className={`widget ${sizeClass(result)}`} style={style}>
+    <article className={`widget ${size}`} style={style}>
       <header className="widget__head">
         <h2 className="widget__title">
           {appUrl ? (

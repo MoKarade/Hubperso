@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
+import { heroIndex } from "@/lib/bento";
 import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
 import { RefreshControls } from "@/components/RefreshControls";
@@ -41,6 +42,14 @@ export default async function Page() {
   const online = results.filter((r) => r.state === "ok").length;
   const refreshedAt = formatDateTime(new Date().toISOString());
 
+  // Un seul widget « héros » (le plus riche) : évite que plusieurs grands s'empilent.
+  const hero = heroIndex(
+    results.map((r) => ({
+      ok: r.state === "ok",
+      metrics: r.state === "ok" ? r.summary.metrics.length : 0,
+    })),
+  );
+
   return (
     <main className="page">
       <header className="page__head">
@@ -64,7 +73,7 @@ export default async function Page() {
         aria-label="Widgets des apps"
       >
         {results.map((result, index) => (
-          <AppWidget key={result.source.id} result={result} index={index} />
+          <AppWidget key={result.source.id} result={result} index={index} featured={index === hero} />
         ))}
       </section>
     </main>

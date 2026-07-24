@@ -128,12 +128,14 @@ a:focus-visible,
     grid-template-columns: repeat(4, 1fr);
   }
 }
+/* Un seul « héros » (2×2). Les autres tiennent sur 1 colonne : ça pave au lieu de
+   s'empiler quand plusieurs apps sont riches. */
 .widget--lg {
   grid-column: span 2;
   grid-row: span 2;
 }
 .widget--md {
-  grid-column: span 2;
+  grid-column: span 1;
 }
 .widget--sm {
   grid-column: span 1;
