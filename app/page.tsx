@@ -4,8 +4,10 @@ import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
 import { heroIndex } from "@/lib/bento";
+import { aggregateUsage } from "@/lib/usage";
 import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
+import { CostsCard } from "@/components/CostsCard";
 import { RefreshControls } from "@/components/RefreshControls";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -41,6 +43,7 @@ export default async function Page() {
   const results = await fetchAllSummaries(getSources());
   const online = results.filter((r) => r.state === "ok").length;
   const refreshedAt = formatDateTime(new Date().toISOString());
+  const usage = aggregateUsage(results);
 
   // Un seul widget « héros » (le plus riche) : évite que plusieurs grands s'empilent.
   const hero = heroIndex(
@@ -65,6 +68,8 @@ export default async function Page() {
           <SignOutButton />
         </div>
       </header>
+
+      <CostsCard digest={usage} />
 
       {/* Densité adaptative : aéré par défaut, la grille se resserre quand les apps
           se multiplient (indépendant du contenu des apps — purement un compte). */}
