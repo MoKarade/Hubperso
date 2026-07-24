@@ -13,6 +13,17 @@ const CURRENCY = new Intl.NumberFormat("fr-CA", {
 
 const NUMBER = new Intl.NumberFormat("fr-CA");
 
+const CAD_CENTS = new Intl.NumberFormat("fr-CA", {
+  style: "currency",
+  currency: "CAD",
+  maximumFractionDigits: 2,
+});
+
+/** Montant en dollars canadiens avec les cents (coûts d'usage). */
+export function formatCad(amount: number): string {
+  return CAD_CENTS.format(amount);
+}
+
 const ONE_DECIMAL = new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 1 });
 
 /**
