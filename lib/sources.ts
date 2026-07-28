@@ -47,6 +47,13 @@ const SOURCE_DEFS: readonly SourceDef[] = [
     urlEnv: "BATCHCHEF_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_BATCHCHEF",
   },
+  {
+    id: "jobai",
+    name: "JobAI",
+    defaultUrl: "https://emploi.hubperso.com/api/hub/summary",
+    urlEnv: "JOBAI_SUMMARY_URL",
+    tokenEnv: "HUB_TOKEN_JOBAI",
+  },
 ];
 
 type Env = Record<string, string | undefined>;
