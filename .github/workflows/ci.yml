@@ -1,0 +1,91 @@
+name: CI
+
+# Ce dépôt n'avait AUCUNE vérification automatisée. C'est ce silence qui a laissé vivre
+# en production 5 vulnérabilités — dont 2 CRITICAL sur `@auth/core`, l'une étant un
+# contournement de la normalisation d'adresse par homoglyphes, soit le vecteur exact
+# contre un hub dont toute l'auth repose sur UNE adresse admise (`AUTHORIZED_EMAIL`).
+# Rien ne s'est déclenché : il n'y avait rien pour se déclencher.
+#
+# Le job `gate` rejoue EXACTEMENT le gate local du CLAUDE.md. Une CI qui vérifie autre
+# chose que ce qu'on exécute avant de committer diverge, et c'est le mauvais exemplaire
+# qu'on finit par croire.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Le cron ne sert qu'au job `audit` (voir plus bas) : une vulnérabilité apparaît sans
+  # qu'une ligne de code n'ait changé. Lundi 12 h UTC.
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+# Une seule exécution utile par référence : un push qui en suit un autre annule le premier.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Gate (typecheck · tests · lint · build)
+    # Le cron ne concerne que l'audit : inutile de rejouer le gate sur un code inchangé.
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci` et non `npm install` : le lockfile est committé et fait autorité.
+      - name: Dépendances
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm run test
+
+      - name: Lint
+        run: npm run lint
+
+      # Le build en dernier : l'étape la plus lente, et un échec de typecheck ou de test
+      # la rend inutile. Vérifié : il ne demande AUCUNE variable d'environnement.
+      - name: Build
+        run: npm run build
+
+  audit:
+    name: Audit des dépendances de production
+    runs-on: ubuntu-latest
+    # Job SÉPARÉ du gate, volontairement. Un avis de sécurité est publié sans qu'aucun
+    # commit n'ait eu lieu : si l'audit vivait dans le gate, un dépôt sain deviendrait
+    # « rouge » du jour au lendemain et on prendrait l'habitude du rouge — c'est
+    # exactement comme ça qu'une CI cesse d'être lue (vécu chez JobAI : quatre commits
+    # rouges de suite sans que personne ne le voie). Séparés, « gate vert / audit rouge »
+    # se lit d'un coup d'œil et désigne la vraie cause.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Dépendances
+        run: npm ci
+
+      # `--omit=dev` : seules les dépendances qui partent en production comptent. Les
+      # avis sur l'outillage de développement ne menacent pas le site et noieraient le
+      # signal. Mesuré à 0 au moment où ce fichier est écrit.
+      - name: npm audit (production)
+        run: npm audit --omit=dev
+
+# ── Note sur le cron ──────────────────────────────────────────────────────────
+# GitHub désactive les workflows planifiés d'un dépôt resté 60 jours sans activité, et
+# le signale par courriel. Si l'audit hebdomadaire cesse d'apparaître, c'est là qu'il
+# faut regarder — pas dans ce fichier.

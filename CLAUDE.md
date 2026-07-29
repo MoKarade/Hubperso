@@ -44,8 +44,17 @@ les clés inconnues).
 ## Vérifications avant commit
 
 ```bash
-npm run typecheck && npm run test && npm run build
+npm run typecheck && npm run test && npm run lint && npm run build
 ```
+
+*(`lint` = ESLint CLI : `next lint` est déprécié et retiré dans Next 16. Le bloc
+`ignores` de `eslint.config.mjs` est indispensable — l'ESLint CLI n'ignore pas
+`node_modules`/`.next` implicitement, contrairement à `next lint`.)*
+
+La **CI** (`.github/workflows/ci.yml`) rejoue exactement ce gate, plus un job `audit`
+séparé (`npm audit --omit=dev`, aussi en hebdomadaire). Séparé volontairement : un avis
+de sécurité paraît sans qu'une ligne n'ait changé — mêlé au gate, il peindrait le dépôt
+en rouge sans rapport avec le code, et on prendrait l'habitude du rouge.
 
 ## Style (hérité du CLAUDE.md global de Marc)
 
