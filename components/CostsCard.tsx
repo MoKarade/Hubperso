@@ -3,10 +3,10 @@
 
 import Link from "next/link";
 import { formatCad } from "@/lib/format";
-import type { UsageDigest } from "@/lib/usage";
+import { PERIOD_LABEL, type UsageDigest } from "@/lib/usage";
 
 export function CostsCard({ digest }: { digest: UsageDigest }) {
-  const { totalCad, trackedCount, quotaWarnings, apps } = digest;
+  const { totalsByPeriod, trackedCount, quotaWarnings, apps } = digest;
   const tracked = apps.filter((a) => a.tracked && a.costCad !== null);
 
   return (
@@ -26,16 +26,25 @@ export function CostsCard({ digest }: { digest: UsageDigest }) {
         </p>
       ) : (
         <>
-          <p className="costs__total">
-            ≈ {formatCad(totalCad)}
-            <span className="costs__period"> · cumulé</span>
-          </p>
+          {/* Un total PAR période : les apps ne déclarent pas la même (cf. lib/usage.ts).
+              Les fusionner donnerait un montant qui n'existe pas. */}
+          {totalsByPeriod.map((t) => (
+            <p key={t.period} className="costs__total">
+              ≈ {formatCad(t.cad)}
+              <span className="costs__period"> · {PERIOD_LABEL[t.period]}</span>
+            </p>
+          ))}
           <ul className="costs__apps">
             {tracked.map((a) => (
               <li key={a.id}>
                 <span className="costs__dot" style={a.color ? { background: a.color } : undefined} aria-hidden />
                 <span className="costs__name">{a.name}</span>
-                <span className="costs__amount">{formatCad(a.costCad ?? 0)}</span>
+                <span className="costs__amount">
+                  {formatCad(a.costCad ?? 0)}
+                  {a.cost && (
+                    <span className="costs__period"> · {PERIOD_LABEL[a.cost.period]}</span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

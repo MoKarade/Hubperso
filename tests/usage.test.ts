@@ -43,7 +43,7 @@ describe("quotaRatio", () => {
 });
 
 describe("aggregateUsage", () => {
-  it("somme les coûts en CAD, compte les apps suivies", () => {
+  it("somme les coûts en CAD d'une MÊME période, compte les apps suivies", () => {
     const d = aggregateUsage([
       ok("a", { cost: { amount: 10, currency: "CAD", period: "total" } }),
       ok("b", { cost: { amount: 2, currency: "USD", period: "total" } }),
@@ -51,15 +51,35 @@ describe("aggregateUsage", () => {
     ]);
     expect(d.trackedCount).toBe(2);
     expect(d.apps.find((x) => x.id === "c")?.tracked).toBe(false);
+    expect(d.totalsByPeriod).toHaveLength(1);
+    expect(d.totalsByPeriod[0]?.period).toBe("total");
+    expect(d.totalsByPeriod[0]?.appCount).toBe(2);
     // 10 CAD + 2 USD×1.38 = 12.76
-    expect(d.totalCad).toBeCloseTo(10 + 2 * USD_TO_CAD, 2);
+    expect(d.totalsByPeriod[0]?.cad).toBeCloseTo(10 + 2 * USD_TO_CAD, 2);
+  });
+
+  // LE défaut corrigé : DriveAI publie « mois », BatchChef/FinanceAI publient « total ».
+  // Les additionner produisait un montant inexistant, affiché « cumulé ».
+  it("ne fusionne JAMAIS des périodes différentes", () => {
+    const d = aggregateUsage([
+      ok("cumul", { cost: { amount: 10, currency: "CAD", period: "total" } }),
+      ok("mensuel", { cost: { amount: 3, currency: "CAD", period: "mois" } }),
+      ok("quotidien", { cost: { amount: 1, currency: "CAD", period: "jour" } }),
+    ]);
+    expect(d.totalsByPeriod).toEqual([
+      { period: "total", cad: 10, appCount: 1 },
+      { period: "mois", cad: 3, appCount: 1 },
+      { period: "jour", cad: 1, appCount: 1 },
+    ]);
+    // Aucune somme globale ne doit exister : elle ne pourrait pas être honnête.
+    expect(d).not.toHaveProperty("totalCad");
   });
 
   it("app hors ligne → non suivie, jamais un coût inventé", () => {
     const d = aggregateUsage([{ state: "unreachable", source: source("x"), detail: "timeout" }]);
     expect(d.trackedCount).toBe(0);
     expect(d.apps[0]?.costCad).toBeNull();
-    expect(d.totalCad).toBe(0);
+    expect(d.totalsByPeriod).toEqual([]);
   });
 
   it("compte les quotas à ≥ 80 % de leur plafond", () => {
