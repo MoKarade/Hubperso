@@ -26,6 +26,12 @@ widgets 100 % génériques.
   Voir la section « Authentification » du README.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via
   `safeHttpUrl` (http/https uniquement). Ne jamais rendre un href brut.
+- **Jamais d'agrégat entre unités incomparables.** Le contrat laisse chaque app choisir
+  la `period` de son coût (`total` / `mois` / `jour`) et elles ne s'accordent pas.
+  `aggregateUsage` somme donc PAR période (`totalsByPeriod`) et il n'existe volontairement
+  aucun `totalCad` global : un tel champ ne pourrait pas être honnête. Même vigilance pour
+  toute future agrégation (devises, fenêtres de temps) — sommer d'abord ce qui est comparable,
+  afficher l'unité, jamais un chiffre unique qui mélange.
 
 ## Ajouter une app
 

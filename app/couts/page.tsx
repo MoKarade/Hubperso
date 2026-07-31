@@ -6,16 +6,10 @@ import { auth } from "@/auth";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
-import { aggregateUsage, quotaRatio, toCad } from "@/lib/usage";
+import { PERIOD_LABEL, aggregateUsage, quotaRatio, toCad } from "@/lib/usage";
 import { formatCad } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-const PERIOD_LABEL: Record<"total" | "mois" | "jour", string> = {
-  total: "cumulé",
-  mois: "ce mois-ci",
-  jour: "aujourd’hui",
-};
 
 export default async function CoutsPage() {
   if (!isAuthConfigured()) redirect("/");
@@ -34,7 +28,13 @@ export default async function CoutsPage() {
         </div>
         <div className="page__aside">
           <p className="page__meta">
-            {digest.trackedCount}/{digest.apps.length} app(s) suivie(s) · total ≈ {formatCad(digest.totalCad)}
+            {digest.trackedCount}/{digest.apps.length} app(s) suivie(s)
+            {digest.totalsByPeriod.map((t) => (
+              <span key={t.period}>
+                {" "}
+                · {formatCad(t.cad)} {PERIOD_LABEL[t.period]}
+              </span>
+            ))}
           </p>
           <Link href="/" className="btn">← Hub</Link>
         </div>

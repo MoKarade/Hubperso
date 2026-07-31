@@ -49,7 +49,17 @@ const TIMEOUT_MS = 9000;
 const STALE_MAX_MS = 30 * 60 * 1000; // 30 min
 
 type Cached = { summary: HubSummary; at: number };
-/** Dernier résumé VALIDE par `source.id`. Mémoire du process (suffit au rafraîchissement 60 s). */
+/**
+ * Dernier résumé VALIDE par `source.id`.
+ *
+ * ⚠️ PORTÉE RÉELLE : mémoire du PROCESS. Sur Vercel, les fonctions sont éphémères et
+ * multi-instances — cette Map est VIDE à chaque démarrage à froid et n'est pas partagée
+ * entre instances. Le filet ne joue donc que pendant une session de polling continue
+ * (onglet ouvert), PAS après une période d'inactivité — c'est-à-dire pas au moment où
+ * les réveils à froid des apps sont les plus lents. Ne pas le prendre pour une garantie.
+ * Un vrai cache partagé (Vercel KV/Redis) serait nécessaire pour ça ; non fait, car le
+ * repli honnête « injoignable » reste correct et l'app est mono-utilisateur.
+ */
 const lastGood = new Map<string, Cached>();
 
 /** Vide le cache de résilience — pour les tests (isolation entre cas). */
