@@ -14,6 +14,8 @@ export interface HubSource {
   summaryUrl: string;
   /** Jeton x-hub-token, ou null si non configuré. */
   token: string | null;
+  /** Occupe la grande tuile 2×2 de la grille. Exactement une source doit l'avoir. */
+  hero: boolean;
 }
 
 interface SourceDef {
@@ -22,9 +24,19 @@ interface SourceDef {
   defaultUrl: string;
   urlEnv: string;
   tokenEnv: string;
+  hero?: boolean;
 }
 
-/** Apps connues du hub. Ajouter une app = une entrée ici + sa variable de jeton. */
+/**
+ * Apps connues du hub. Ajouter une app = une entrée ici + sa variable de jeton.
+ *
+ * `hero` : quelle app occupe la grande tuile 2×2. C'est une DÉCISION, pas une déduction.
+ * Auparavant le héros était élu à l'exécution (l'app publiant le plus de métriques), ce qui
+ * rendait la mise en page dépendante des données — donc inconnue tant que TOUTES les apps
+ * n'avaient pas répondu, et remaniée dès qu'une app hoquetait. En le déclarant, la grille
+ * est connue avant le premier fetch : chaque carte peut arriver à son rythme dans un
+ * emplacement déjà réservé, sans que rien ne saute (cf. le streaming dans `app/page.tsx`).
+ */
 const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "financeai",
@@ -32,6 +44,7 @@ const SOURCE_DEFS: readonly SourceDef[] = [
     defaultUrl: "https://finance.hubperso.com/hub/summary",
     urlEnv: "FINANCEAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_FINANCEAI",
+    hero: true,
   },
   {
     id: "driveai",
@@ -65,5 +78,6 @@ export function getSources(env: Env = process.env): HubSource[] {
     name: def.name,
     summaryUrl: env[def.urlEnv]?.trim() || def.defaultUrl,
     token: env[def.tokenEnv]?.trim() || null,
+    hero: def.hero === true,
   }));
 }

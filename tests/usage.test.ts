@@ -7,7 +7,7 @@ import type { HubSource } from "../lib/sources";
 import { aggregateUsage, quotaRatio, toCad, USD_TO_CAD } from "../lib/usage";
 
 function source(id: string): HubSource {
-  return { id, name: id, summaryUrl: `https://${id}.test/hub/summary`, token: "t" };
+  return { id, name: id, summaryUrl: `https://${id}.test/hub/summary`, token: "t", hero: false };
 }
 
 function ok(id: string, usage?: HubSummary["usage"]): SummaryResult {
