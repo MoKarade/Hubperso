@@ -2,13 +2,20 @@ import { describe, it, expect } from "vitest";
 import { getSources } from "../lib/sources";
 
 describe("getSources", () => {
-  it("expose financeai, driveai, batchchef et jobai avec les URLs par défaut et aucun jeton", () => {
+  it("expose les cinq apps avec les URLs par défaut et aucun jeton", () => {
     const sources = getSources({});
-    expect(sources.map((s) => s.id)).toEqual(["financeai", "driveai", "batchchef", "jobai"]);
+    expect(sources.map((s) => s.id)).toEqual([
+      "financeai",
+      "driveai",
+      "batchchef",
+      "carai",
+      "jobai",
+    ]);
     expect(sources[0]?.summaryUrl).toBe("https://finance.hubperso.com/hub/summary");
     expect(sources[1]?.summaryUrl).toBe("https://drive.hubperso.com/hub/summary");
     expect(sources[2]?.summaryUrl).toBe("https://batchchef-glu8-chi.vercel.app/api/hub/summary");
-    expect(sources[3]?.summaryUrl).toBe("https://emploi.hubperso.com/api/hub/summary");
+    expect(sources[3]?.summaryUrl).toBe("https://carai.hubperso.com/hub/summary");
+    expect(sources[4]?.summaryUrl).toBe("https://emploi.hubperso.com/api/hub/summary");
     expect(sources.every((s) => s.token === null)).toBe(true);
   });
 
@@ -17,12 +24,14 @@ describe("getSources", () => {
       HUB_TOKEN_FINANCEAI: "jeton-finance",
       HUB_TOKEN_DRIVEAI: "jeton-drive",
       HUB_TOKEN_BATCHCHEF: "jeton-batch",
+      HUB_TOKEN_CARAI: "jeton-car",
       HUB_TOKEN_JOBAI: "jeton-job",
     });
     expect(sources[0]?.token).toBe("jeton-finance");
     expect(sources[1]?.token).toBe("jeton-drive");
     expect(sources[2]?.token).toBe("jeton-batch");
-    expect(sources[3]?.token).toBe("jeton-job");
+    expect(sources[3]?.token).toBe("jeton-car");
+    expect(sources[4]?.token).toBe("jeton-job");
   });
 
   it("permet de surcharger l'URL (app pas encore sur son domaine final)", () => {
