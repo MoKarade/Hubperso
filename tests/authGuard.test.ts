@@ -47,4 +47,29 @@ describe("decideGuard", () => {
       decideGuard({ isAuthenticated: false, pathname: "/login" }),
     ).toEqual({ type: "next" });
   });
+  // INSTALLABILITÉ (PWA). Le navigateur récupère `/manifest.webmanifest` SANS cookies :
+  // s'il tombait sur la redirection vers /login, le hub cesserait d'être installable —
+  // en silence, sans erreur nulle part. Idem pour `/sw.js`, que Chromium exige pour
+  // proposer « Installer l'application ». Ces chemins passent aujourd'hui par la règle
+  // générale « dernier segment contenant un point » ; ce test empêche qu'un
+  // resserrement de `isPublicPath` les emporte sans qu'on s'en aperçoive.
+  //
+  // Aucun de ces fichiers ne porte de donnée : ce sont des assets statiques. La règle du
+  // CLAUDE.md (« toute route affichant des données reste derrière la middleware ») n'est
+  // pas touchée — le test ci-dessous vérifie d'ailleurs que `/` le reste.
+  it("laisse passer les fichiers requis pour l'installation, et RIEN d'autre", () => {
+    for (const chemin of [
+      "/manifest.webmanifest",
+      "/sw.js",
+      "/icon-192.png",
+      "/icon-512.png",
+      "/icon-maskable-512.png",
+      "/apple-touch-icon.png",
+    ]) {
+      expect(isPublicPath(chemin)).toBe(true);
+    }
+    // Les routes qui portent des données restent protégées.
+    expect(isPublicPath("/")).toBe(false);
+    expect(isPublicPath("/couts")).toBe(false);
+  });
 });
