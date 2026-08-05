@@ -14,6 +14,7 @@ function source(over: Partial<HubSource> = {}): HubSource {
     name: "FinanceAI",
     summaryUrl: "https://x.test/hub/summary",
     token: "jeton",
+    hero: false,
     ...over,
   };
 }

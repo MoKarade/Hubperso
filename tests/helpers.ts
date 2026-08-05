@@ -1,4 +1,17 @@
 import type { HubSummary } from "@mokarade/hub-contract";
+import type { HubSource } from "../lib/sources";
+
+/** Une source de référence, modifiable par override. `hero` par défaut à false. */
+export function hubSource(over: Partial<HubSource> = {}): HubSource {
+  return {
+    id: "financeai",
+    name: "FinanceAI",
+    summaryUrl: "https://finance.hubperso.com/hub/summary",
+    token: "jeton-de-test",
+    hero: false,
+    ...over,
+  };
+}
 
 /** Un summary valide de référence, modifiable par override dans chaque test. */
 export function validSummary(over: Partial<HubSummary> = {}): HubSummary {

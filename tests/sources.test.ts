@@ -37,4 +37,20 @@ describe("getSources", () => {
     expect(sources[0]?.token).toBeNull();
     expect(sources[0]?.summaryUrl).toBe("https://finance.hubperso.com/hub/summary");
   });
+
+  // VERROU DU RENDU EN FLUX. La grille réserve une tuile 2×2 pour le héros AVANT le moindre
+  // fetch. S'il y en avait deux, deux tuiles doubles se disputeraient la place ; s'il n'y en
+  // avait aucune, la grille perdrait sa hiérarchie sans que rien ne le signale. Ce test casse
+  // le jour où quelqu'un ajoute une app en recopiant l'entrée de FinanceAI (`hero: true`)
+  // sans l'enlever — l'erreur la plus probable en ajoutant une source.
+  it("expose EXACTEMENT un héros", () => {
+    const heroes = getSources({}).filter((s) => s.hero);
+    expect(heroes).toHaveLength(1);
+    expect(heroes[0]?.id).toBe("financeai");
+  });
+
+  it("le héros ne dépend ni de l'environnement ni des données", () => {
+    const avecJetons = getSources({ HUB_TOKEN_DRIVEAI: "x", HUB_TOKEN_JOBAI: "y" });
+    expect(avecJetons.filter((s) => s.hero).map((s) => s.id)).toEqual(["financeai"]);
+  });
 });

@@ -9,6 +9,7 @@ const source: HubSource = {
   name: "FinanceAI",
   summaryUrl: "https://x/hub/summary",
   token: "t",
+  hero: false,
 };
 
 describe("statusBadge", () => {
