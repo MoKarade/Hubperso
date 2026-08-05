@@ -48,6 +48,13 @@ const SOURCE_DEFS: readonly SourceDef[] = [
     tokenEnv: "HUB_TOKEN_BATCHCHEF",
   },
   {
+    id: "carai",
+    name: "CarAI",
+    defaultUrl: "https://carai.hubperso.com/hub/summary",
+    urlEnv: "CARAI_SUMMARY_URL",
+    tokenEnv: "HUB_TOKEN_CARAI",
+  },
+  {
     id: "jobai",
     name: "JobAI",
     defaultUrl: "https://emploi.hubperso.com/api/hub/summary",
