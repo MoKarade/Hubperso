@@ -72,4 +72,17 @@ describe("decideGuard", () => {
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/couts")).toBe(false);
   });
+  // La vue détaillée AFFICHE DES DONNÉES et déclenche le fetch porteur du x-hub-token.
+  // Elle doit donc rester protégée — c'est la règle n°1 du CLAUDE.md du hub. Son chemin
+  // n'a pas de point, donc `isPublicPath` la refuse ; ce test empêche qu'un futur
+  // assouplissement de la règle « fichier avec extension » l'emporte par accident.
+  it("garde la vue détaillée /app/[id] derrière l'authentification", () => {
+    for (const chemin of ["/app/carai", "/app/financeai", "/app/driveai"]) {
+      expect(isPublicPath(chemin)).toBe(false);
+      expect(decideGuard({ isAuthenticated: false, pathname: chemin })).toEqual({
+        type: "redirect",
+        location: `/login?callbackUrl=${encodeURIComponent(chemin)}`,
+      });
+    }
+  });
 });
