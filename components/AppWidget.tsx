@@ -1,13 +1,16 @@
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import type { HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "@/lib/fetchSummary";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
+import { separerAlertes } from "@/lib/alertes";
 import { safeHttpUrl } from "@/lib/url";
 import { formatDateTime } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertList } from "./AlertList";
+import { AlertBanner } from "./AlertBanner";
 import { ActionList } from "./ActionList";
 
 function OkBody({ summary }: { summary: HubSummary }) {
@@ -15,10 +18,14 @@ function OkBody({ summary }: { summary: HubSummary }) {
     summary.metrics.length === 0 &&
     summary.alerts.length === 0 &&
     summary.actions.length === 0;
+  // L'alerte la plus grave (sévérité `alert`) sort de la liste pour devenir un bandeau, en
+  // tête de carte. `reste` ne la contient plus : jamais affichée deux fois.
+  const { bandeau, reste } = separerAlertes(summary.alerts);
   return (
     <>
+      {bandeau && <AlertBanner alert={bandeau} />}
       <MetricList metrics={summary.metrics} />
-      <AlertList alerts={summary.alerts} />
+      <AlertList alerts={reste} />
       <ActionList actions={summary.actions} />
       {empty && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
@@ -100,6 +107,13 @@ export function AppWidget({
         </h2>
         <StatusBadge {...badge} />
       </header>
+      {/* Le titre ouvre l'APP elle-même (lien externe) ; ce lien-ci ouvre le DÉTAIL dans le
+          hub. Deux destinations différentes, donc deux liens distincts plutôt qu'un seul
+          ambigu. Il vaut aussi pour une app en erreur : c'est là qu'on voit l'endpoint
+          interrogé et le message complet. */}
+      <Link className="widget__detail" href={`/app/${result.source.id}`}>
+        Détail →
+      </Link>
       <div className="widget__body">
         {result.state === "ok" ? (
           <OkBody summary={result.summary} />
