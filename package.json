@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@mokarade/hub-contract": "github:MoKarade/hub-contract#2d37a61c337d485ab9ec716d9c7507972e807226",
+    "@vercel/analytics": "^2.0.1",
     "geist": "^1.7.2",
     "next": "^15.5.22",
     "next-auth": "^5.0.0-beta.32",
