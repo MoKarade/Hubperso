@@ -40,11 +40,46 @@ erreur nulle part. Variable absente ⇒ comportement natif, cookie limité à l'
 Concerne **les six** apps, y compris DriveAI et FinanceAI qui n'utilisent pas Auth.js.
 
 Google mémorise le consentement **par client OAuth**, pas par site. Si les six apps
-partagent un seul client, tu accordes les permissions une fois ; ensuite, chaque autre app
-obtient ses jetons par une redirection **silencieuse** — aucun écran.
+partagent un seul client, tu accordes les permissions une fois ; ensuite, une app qui ne
+force pas l'écran obtient ses jetons par une redirection **silencieuse**.
 
-C'est ce mécanisme qui fait entrer DriveAI et FinanceAI dans le lot : elles gardent leur
-propre système d'authentification, mais cessent de te redemander l'autorisation.
+⚠️ **« Qui ne force pas l'écran » exclut deux apps, et ce n'est pas un détail.** Voir la
+section suivante — c'est la limite réelle de ce montage.
+
+### Ce que le client partagé ne fait PAS disparaître
+
+Mesuré dans le code, pas déduit. Deux apps envoient `prompt=consent` à Google **exprès** :
+
+| App | Où | Pourquoi |
+|---|---|---|
+| DriveAI | `api/login.ts` | `access_type=offline` + `prompt=consent` sont la seule façon **garantie** d'obtenir un `refresh_token` |
+| BatchChef | `auth.ts` | idem, pour son jeton Tasks de longue durée |
+
+Google n'émet un `refresh_token` qu'à la **première** autorisation d'un couple
+client + compte — sauf si le consentement est forcé. Or partager le client rend cette
+première autorisation *déjà faite* : retirer `prompt=consent` ferait donc revenir ces deux
+apps sans jeton de rafraîchissement, et leur session durable casserait. Le paramètre reste.
+
+**Conséquence à assumer : DriveAI et BatchChef continueront d'afficher l'écran de
+consentement à chaque connexion.** Le client partagé ne leur apporte rien sur ce point. Ce
+qu'il apporte reste réel — un seul client à gérer, un seul jeu d'URI, et la voie ouverte
+pour FinanceAI dont le flux, lui, peut devenir silencieux — mais pas ça.
+
+### L'accès Tasks de BatchChef, et le cookie partagé
+
+Le JWT de BatchChef ne porte pas qu'une identité : il porte l'`access_token` Google et le
+`refresh_token` du scope Tasks. Ceux de Hubperso, JobAI et CarAI n'en portent aucun — ces
+trois apps ne demandent que l'identité.
+
+Le cookie étant partagé, **c'est la dernière app où tu t'es connecté qui décide du contenu
+du jeton**. Connecte-toi depuis le hub : BatchChef te verra connecté, mais sans jeton
+Google. L'export vers Google Tasks répondra alors « Aucun jeton Google — clique
+*Reconnecter Google* », et ce bouton existe déjà.
+
+L'échec est donc **honnête et réparable en un clic**, pas silencieux. Mais il n'est pas
+définitif non plus : reconnecte-toi plus tard depuis le hub, et il revient. C'est le prix
+de l'option « portées par app », et il se paie à chaque nouvelle connexion faite ailleurs
+que dans BatchChef.
 
 ## Ce que Marc doit configurer
 
@@ -167,5 +202,13 @@ Le client partagé donne le même confort sans ce coût.
 ## Ce qui reste vrai après
 
 DriveAI et FinanceAI **ne partagent pas la session** — elles ont leur propre système
-d'authentification. Ce qu'elles gagnent, c'est la disparition de l'écran de consentement
-Google. Concrètement : un aller-retour silencieux au lieu d'un formulaire.
+d'authentification, et le cookie d'Auth.js ne leur dit rien.
+
+Et parmi elles, seule **FinanceAI** peut vraiment gagner le silence : son flux GIS n'a pas
+besoin de `refresh_token` (il renouvelle par `prompt=''` contre Google), donc rien ne
+l'oblige à forcer le consentement. DriveAI, elle, garde son écran — voir « Ce que le client
+partagé ne fait PAS disparaître ».
+
+Autrement dit : le vrai gain de ce chantier est le **cookie de session partagé** entre les
+quatre apps Auth.js. Le client OAuth unique est une mise en ordre utile, pas la moitié du
+résultat.
