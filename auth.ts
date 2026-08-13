@@ -10,12 +10,20 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { isAuthorizedEmail } from "@/lib/authorized";
 import { cookiesSessionPartagee } from "@/lib/sessionPartagee";
+import { PARAMS_AUTORISATION, majJetonsGoogle } from "@/lib/jetonsGoogle";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // ── PORTÉES IDENTIQUES DANS LES QUATRE APPS ────────────────────────────────
+      // Le hub n'appelle AUCUNE API Google. Il demande quand même la portée Tasks
+      // parce que le cookie de session est PARTAGÉ : c'est la dernière app où l'on
+      // s'est connecté qui décide du contenu du jeton. Si seul BatchChef demandait
+      // Tasks, se connecter par le hub la laisserait connectée mais sans droit
+      // d'écriture. Voir `lib/jetonsGoogle.ts`.
+      authorization: { params: PARAMS_AUTORISATION },
     }),
   ],
   session: { strategy: "jwt" },
@@ -58,12 +66,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // v5) — la middleware redirige vers /login, aucune donnée n'est rendue. Le jour où
     // une app aurait une autre adresse autorisée, sa session serait refusée au lieu
     // d'être acceptée en silence.
-    jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       // À la connexion seulement : on fixe l'adresse dans le jeton. Aux lectures
       // suivantes, `user` est absent et c'est `token.email` qui fait foi.
       if (user?.email) token.email = user.email;
       if (!isAuthorizedEmail(token.email, process.env.AUTHORIZED_EMAIL)) return null;
-      return token;
+      // Capture des jetons Google à la connexion, renouvellement ensuite. Le hub ne
+      // s'en sert pas ; il les transporte pour les apps qui, elles, en ont besoin.
+      // Le contrôle d'adresse passe AVANT : on ne rafraîchit pas un jeton pour une
+      // session qu'on s'apprête à refuser.
+      return await majJetonsGoogle(token, account);
     },
   },
 });

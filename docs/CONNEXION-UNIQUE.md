@@ -65,21 +65,32 @@ consentement à chaque connexion.** Le client partagé ne leur apporte rien sur 
 qu'il apporte reste réel — un seul client à gérer, un seul jeu d'URI, et la voie ouverte
 pour FinanceAI dont le flux, lui, peut devenir silencieux — mais pas ça.
 
-### L'accès Tasks de BatchChef, et le cookie partagé
+### L'accès Tasks, et pourquoi les quatre apps le demandent
 
 Le JWT de BatchChef ne porte pas qu'une identité : il porte l'`access_token` Google et le
-`refresh_token` du scope Tasks. Ceux de Hubperso, JobAI et CarAI n'en portent aucun — ces
-trois apps ne demandent que l'identité.
+`refresh_token` du scope Tasks. Le cookie étant partagé, **c'est la dernière app où tu t'es
+connecté qui décide du contenu du jeton**. Si BatchChef était seule à demander Tasks, te
+connecter depuis le hub la laisserait connectée mais sans droit d'écriture — l'export
+répondrait « Aucun jeton Google — clique *Reconnecter Google* », et ça reviendrait à chaque
+connexion faite ailleurs.
 
-Le cookie étant partagé, **c'est la dernière app où tu t'es connecté qui décide du contenu
-du jeton**. Connecte-toi depuis le hub : BatchChef te verra connecté, mais sans jeton
-Google. L'export vers Google Tasks répondra alors « Aucun jeton Google — clique
-*Reconnecter Google* », et ce bouton existe déjà.
+Décision de Marc (13/08/2026) : **accès complets, aucune reconnexion.** Les quatre apps
+demandent donc les mêmes portées et capturent les mêmes jetons, via `lib/jetonsGoogle.ts`
+— fichier volontairement **identique dans les quatre dépôts**. Une divergence ferait
+dépendre le bon fonctionnement de l'app par laquelle on est passé : le pire genre de bogue,
+celui qui n'arrive qu'une fois sur quatre et ne se reproduit jamais.
 
-L'échec est donc **honnête et réparable en un clic**, pas silencieux. Mais il n'est pas
-définitif non plus : reconnecte-toi plus tard depuis le hub, et il revient. C'est le prix
-de l'option « portées par app », et il se paie à chaque nouvelle connexion faite ailleurs
-que dans BatchChef.
+Les portées restent **`openid email profile` + `tasks`**. Ni Drive, ni Agenda, ni Gmail :
+DriveAI et FinanceAI n'utilisent pas ce cookie, leur ajouter leurs portées ici n'apporterait
+rien et multiplierait par quatre les portes vers un Drive complet. Un test le verrouille.
+
+Conséquence à assumer : Hubperso, JobAI et CarAI **afficheront « accéder à vos tâches »**
+dans l'écran de consentement Google alors qu'aucune des trois n'y touche. C'est le prix
+d'un cookie unique — et l'alternative était de recliquer « Reconnecter Google » dans
+BatchChef à chaque connexion.
+
+Le renouvellement, lui, profite à tout le monde : l'app par laquelle tu passes rafraîchit le
+jeton et le réécrit dans le cookie partagé, donc les trois autres en héritent aussitôt.
 
 ## Ce que Marc doit configurer
 
@@ -181,12 +192,16 @@ apps. Écartée après avoir mesuré ce que ça voulait dire :
 
 | App | Portées réelles |
 |---|---|
-| Hubperso, JobAI, CarAI | identité seule |
-| BatchChef | identité + `tasks` |
+| Hubperso, JobAI, CarAI, BatchChef | identité + `tasks` (voir la section précédente) |
 | FinanceAI | **`drive.appdata`** + email |
 | DriveAI | `drive` (Drive entier), `spreadsheets`, `tasks`, `calendar.events`, `calendar.readonly` |
 
 Deux raisons de ne pas unir.
+
+Précision : `tasks` a bien été étendu aux quatre apps Auth.js — mais c'est un cas à part.
+Elles partagent **un seul cookie**, donc leurs portées ne sont pas quatre décisions
+indépendantes, c'est une seule. L'union rejetée ici est celle qui traverserait vers DriveAI
+et FinanceAI, lesquelles n'utilisent pas ce cookie du tout.
 
 FinanceAI utilise `drive.appdata`, **le scope Drive le plus restreint qui existe** : il ne
 donne accès qu'à son propre dossier caché. Son code le justifie explicitement — « un vol
