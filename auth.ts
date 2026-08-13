@@ -9,15 +9,34 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { isAuthorizedEmail } from "@/lib/authorized";
+import { cookiesSessionPartagee } from "@/lib/sessionPartagee";
+import { PARAMS_AUTORISATION, majJetonsGoogle } from "@/lib/jetonsGoogle";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // ── PORTÉES IDENTIQUES DANS LES QUATRE APPS ────────────────────────────────
+      // Le hub n'appelle AUCUNE API Google. Il demande quand même la portée Tasks
+      // parce que le cookie de session est PARTAGÉ : c'est la dernière app où l'on
+      // s'est connecté qui décide du contenu du jeton. Si seul BatchChef demandait
+      // Tasks, se connecter par le hub la laisserait connectée mais sans droit
+      // d'écriture. Voir `lib/jetonsGoogle.ts`.
+      authorization: { params: PARAMS_AUTORISATION },
     }),
   ],
   session: { strategy: "jwt" },
+  // ── CONNEXION UNIQUE ENTRE LES APPS DU HUB ───────────────────────────────────────
+  // Avec `AUTH_COOKIE_DOMAIN=.hubperso.com`, le cookie de session est déclaré sur le
+  // domaine parent : le navigateur l'envoie à TOUS les sous-domaines. Combiné à un
+  // `AUTH_SECRET` IDENTIQUE dans chaque app (le JWT est chiffré avec — sans le même
+  // secret, l'app reçoit le cookie mais n'en tire rien), se connecter à une app vaut
+  // pour toutes. Corollaire assumé : une DÉCONNEXION vaut aussi pour toutes.
+  //
+  // Variable non définie (local, préversions) ⇒ comportement natif, cookie limité à
+  // l'hôte. Voir `lib/sessionPartagee.ts` et `docs/CONNEXION-UNIQUE.md`.
+  cookies: cookiesSessionPartagee(process.env.AUTH_COOKIE_DOMAIN),
   // Fait confiance au host de la requête pour construire les URLs de callback. Requis
   // en self-hosted / local (sinon Auth.js lève UntrustedHost/Invalid URL) ; sans risque
   // ici car les redirect URIs OAuth sont verrouillés côté Google (un host forgé ne
@@ -34,6 +53,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // refuse la connexion et redirige vers /login?error=AccessDenied.
     signIn({ user }) {
       return isAuthorizedEmail(user?.email, process.env.AUTHORIZED_EMAIL);
+    },
+    // ⚠️ REVÉRIFICATION À CHAQUE LECTURE — c'est la contrepartie du cookie partagé.
+    //
+    // `signIn` ne tourne qu'à la CONNEXION. Le cookie étant désormais lisible par tous
+    // les sous-domaines, cette app accepterait sans broncher une session fabriquée par
+    // une autre app du hub. Aujourd'hui c'est cohérent — les apps partagent la même
+    // AUTHORIZED_EMAIL — mais ça ne l'est que par coïncidence de configuration.
+    //
+    // `jwt` tourne à chaque lecture de session, pas seulement à la connexion : c'est
+    // donc ici que le contrôle a du sens. Renvoyer `null` INVALIDE la session (Auth.js
+    // v5) — la middleware redirige vers /login, aucune donnée n'est rendue. Le jour où
+    // une app aurait une autre adresse autorisée, sa session serait refusée au lieu
+    // d'être acceptée en silence.
+    async jwt({ token, user, account }) {
+      // À la connexion seulement : on fixe l'adresse dans le jeton. Aux lectures
+      // suivantes, `user` est absent et c'est `token.email` qui fait foi.
+      if (user?.email) token.email = user.email;
+      if (!isAuthorizedEmail(token.email, process.env.AUTHORIZED_EMAIL)) return null;
+      // Capture des jetons Google à la connexion, renouvellement ensuite. Le hub ne
+      // s'en sert pas ; il les transporte pour les apps qui, elles, en ont besoin.
+      // Le contrôle d'adresse passe AVANT : on ne rafraîchit pas un jeton pour une
+      // session qu'on s'apprête à refuser.
+      return await majJetonsGoogle(token, account);
     },
   },
 });
