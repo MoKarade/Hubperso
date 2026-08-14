@@ -2,7 +2,7 @@
 // côté serveur, défense en profondeur : cette page déclenche le fetch porteur des jetons).
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 
 export default async function CoutsPage() {
   if (!isAuthConfigured()) redirect("/");
-  const session = await auth();
-  if (!session) redirect("/login");
+  // Session ET accès au hub : cette page affiche les coûts des cinq apps (lib/gardeHub.ts).
+  await exigerAccesHub();
 
   const results = await fetchAllSummaries(getSources());
   const digest = aggregateUsage(results);

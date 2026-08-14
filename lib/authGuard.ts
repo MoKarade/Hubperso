@@ -16,6 +16,20 @@ export type GuardDecision =
 export function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname.startsWith("/login/")) return true;
   if (pathname.startsWith("/api/auth/")) return true;
+  // POST /api/acces : appel de SERVEUR À SERVEUR (une app demande si une adresse a accès
+  // chez elle). Aucun navigateur, donc aucun cookie de session à présenter — la garder
+  // derrière la session la rendrait inutilisable.
+  //
+  // « Public pour la middleware » ne veut PAS dire « ouverte » : la route exige un
+  // `x-hub-token` d'app valide, comparé à temps constant, et ne répond que 401 sans lui
+  // (app/api/acces/route.ts). C'est le même genre d'authentification que celle que chaque
+  // app applique à son propre `/hub/summary`.
+  //
+  // ⚠️ C'est la SEULE exception, et elle est ici plutôt que dans le matcher du middleware
+  // (CLAUDE.md : ne jamais ajouter une route aux exclusions du matcher). La requête
+  // continue donc de traverser la middleware — le refus global quand l'auth n'est pas
+  // configurée s'applique toujours.
+  if (pathname === "/api/acces") return true;
   if (
     pathname.startsWith("/_next/static/") ||
     pathname.startsWith("/_next/image") ||

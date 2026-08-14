@@ -14,7 +14,13 @@ import { resolve } from "node:path";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { sql } from "drizzle-orm";
 import { acces, personnes } from "../lib/db/schema";
-import { estProprietaire, normaliser } from "../lib/personnes";
+import {
+  CACHE_CONNEXION_MS,
+  estProprietaire,
+  normaliser,
+  peutSeConnecter,
+  viderCacheConnexion,
+} from "../lib/personnes";
 
 const client = new PGlite();
 const dbTest = drizzle(client);
@@ -135,5 +141,109 @@ describe("aAcces — le propriétaire ne dépend jamais de la base", () => {
     expect(await aAcces(PROPRIO, "", { AUTHORIZED_EMAIL: PROPRIO })).toBe(
       false,
     );
+  });
+});
+
+describe("peutSeConnecter — la porte d'entrée, distincte des accès par app", () => {
+  const env = { AUTHORIZED_EMAIL: PROPRIO, DATABASE_URL: "postgres://peu-importe" };
+
+  beforeEach(() => {
+    // Le cache est un état de MODULE, pas de base : sans le vider, un test hériterait de
+    // l'entrée laissée par le précédent, et ce serait un faux positif.
+    viderCacheConnexion();
+  });
+
+  it("laisse entrer le propriétaire sans jamais interroger la base", async () => {
+    const lecture = vi.fn(async () => false);
+    expect(await peutSeConnecter(PROPRIO, env, 0, lecture)).toBe(true);
+    expect(lecture).not.toHaveBeenCalled();
+  });
+
+  it("refuse une adresse vide", async () => {
+    const lecture = vi.fn(async () => true);
+    expect(await peutSeConnecter("", env, 0, lecture)).toBe(false);
+    expect(lecture).not.toHaveBeenCalled();
+  });
+
+  it("refuse quand la base n'est pas configurée, même pour une adresse qui aurait accès", async () => {
+    const lecture = vi.fn(async () => true);
+    expect(await peutSeConnecter(INVITEE, {}, 0, lecture)).toBe(false);
+    expect(lecture).not.toHaveBeenCalled();
+  });
+
+  it("laisse entrer une invitée qui a au moins un accès", async () => {
+    const lecture = vi.fn(async () => true);
+    expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(true);
+    expect(lecture).toHaveBeenCalledWith(INVITEE);
+  });
+
+  it("refuse une invitée sans aucun accès", async () => {
+    const lecture = vi.fn(async () => false);
+    expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(false);
+  });
+
+  it("répond `false` si la lecture échoue, sans laisser fuiter l'exception", async () => {
+    const erreur = vi.spyOn(console, "error").mockImplementation(() => {});
+    const lecture = vi.fn(async () => {
+      throw new Error("panne réseau");
+    });
+    expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(false);
+    expect(erreur).toHaveBeenCalledOnce();
+    erreur.mockRestore();
+  });
+
+  describe("le cache d'une minute", () => {
+    it("mémorise un OUI et ne relit plus la base tant qu'il est valide", async () => {
+      const lecture = vi.fn(async () => true);
+      expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(true);
+      // Juste avant l'expiration : toujours en cache, la base n'est PAS relue — même si
+      // elle répondrait autre chose entre-temps, ce qui est justement ce qu'on vérifie.
+      lecture.mockResolvedValue(false);
+      const justeAvant = CACHE_CONNEXION_MS - 1;
+      expect(await peutSeConnecter(INVITEE, env, justeAvant, lecture)).toBe(true);
+      expect(lecture).toHaveBeenCalledOnce();
+    });
+
+    it("relit la base une fois le cache expiré", async () => {
+      const lecture = vi.fn(async () => true);
+      expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(true);
+      lecture.mockResolvedValue(false);
+      expect(
+        await peutSeConnecter(INVITEE, env, CACHE_CONNEXION_MS, lecture),
+      ).toBe(false);
+      expect(lecture).toHaveBeenCalledTimes(2);
+    });
+
+    it("NE mémorise JAMAIS un refus — sinon quelqu'un qu'on vient d'ajouter attendrait une minute", async () => {
+      const lecture = vi.fn(async () => false);
+      expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(false);
+      // Même instant (0 ms écoulée) : si le refus avait été mis en cache, cette deuxième
+      // lecture serait COURT-CIRCUITÉE par le cache — la base ne serait pas relue.
+      expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(false);
+      expect(lecture).toHaveBeenCalledTimes(2);
+
+      // Et à l'inverse : dès que la base dit `true`, le OUI est immédiat — rien ne devait
+      // rester en travers.
+      lecture.mockResolvedValue(true);
+      expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(true);
+      expect(lecture).toHaveBeenCalledTimes(3);
+    });
+
+    it("une révocation efface le cache tout de suite, pas seulement à l'expiration", async () => {
+      const lecture = vi.fn(async () => true);
+      expect(await peutSeConnecter(INVITEE, env, 0, lecture)).toBe(true);
+      lecture.mockResolvedValue(false);
+      // Même instant (0 ms écoulée) : sans l'appel qui vide le cache sur un refus constaté,
+      // rien ne forcerait cette deuxième lecture — mais elle EST forcée ici parce que ce
+      // test avance le temps jusqu'à l'expiration pour l'observer proprement.
+      expect(
+        await peutSeConnecter(INVITEE, env, CACHE_CONNEXION_MS, lecture),
+      ).toBe(false);
+      // Un accès rendu juste après ne doit pas se heurter à une entrée fantôme du refus.
+      lecture.mockResolvedValue(true);
+      expect(
+        await peutSeConnecter(INVITEE, env, CACHE_CONNEXION_MS, lecture),
+      ).toBe(true);
+    });
   });
 });

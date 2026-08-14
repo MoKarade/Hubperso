@@ -15,7 +15,7 @@
 
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
 import { fetchSummary } from "@/lib/fetchSummary";
@@ -33,8 +33,8 @@ export default async function DetailAppPage({
   params: Promise<{ id: string }>;
 }) {
   if (!isAuthConfigured()) redirect("/");
-  const session = await auth();
-  if (!session) redirect("/login");
+  // Session ET accès au hub : cette page déplie les données d'une app (lib/gardeHub.ts).
+  await exigerAccesHub();
 
   const { id } = await params;
   const source = getSources().find((s) => s.id === id);

@@ -48,12 +48,20 @@ flowchart LR
 ## Authentification
 
 Le hub affiche des données personnelles réelles : il est **privé**. L'accès passe par
-un **login Google (Auth.js / NextAuth v5)** restreint à **une seule adresse**.
+un **login Google (Auth.js / NextAuth v5)**.
 
-- **Un seul compte admis.** Le callback `signIn` (`auth.ts`) n'autorise que l'adresse
-  `AUTHORIZED_EMAIL` (comparée en lower-case + trim, logique pure dans `lib/authorized.ts`).
-  Tout autre compte Google est refusé : **aucune session créée**, redirection vers
-  `/login?error=AccessDenied` avec le message « Accès non autorisé — ce hub est privé ».
+- **Qui obtient une session.** Le callback `signIn` (`auth.ts`) appelle `peutSeConnecter`
+  (`lib/personnes.ts`) : le **propriétaire** (`AUTHORIZED_EMAIL`, comparé en lower-case +
+  trim) entre toujours, sans passer par la base ; toute autre personne doit être **active
+  et avoir au moins un accès** dans la table `acces`. Un compte sans aucun accès est
+  refusé : **aucune session créée**, redirection vers `/login?error=AccessDenied` avec le
+  message « Accès non autorisé — ce hub est privé ».
+- **Obtenir une session ≠ voir le tableau de bord.** La connexion est unique pour toutes
+  les apps du hub ; les accès sont **par app** (`docs/ACCES-PAR-APP.md`). Le hub se traite
+  lui-même comme une app (`APP_HUB`) : ses pages exigent en plus `aAcces(email, APP_HUB)`
+  via `exigerAccesHub()` (`lib/gardeHub.ts`). Une personne connectée sans cet accès
+  atterrit sur `/sans-acces`, pas sur `/login` — sinon elle se reconnecterait aussitôt
+  pour retomber sur le même refus.
 - **Tout est protégé.** `middleware.ts` garde l'ensemble des routes sauf `/api/auth/*`,
   `/login` et les assets statiques. Sans session : une page → redirection vers `/login`
   (avec `callbackUrl`) ; une route `/api/*` → **401 JSON** (la décision est isolée et
@@ -61,8 +69,16 @@ un **login Google (Auth.js / NextAuth v5)** restreint à **une seule adresse**.
 - **Défense en profondeur.** La page `/` (Server Component qui porte les jetons
   `x-hub-token` des apps) revérifie la session côté serveur avant tout fetch : sans
   session, aucune donnée n'est récupérée ni rendue.
-- **Session JWT**, sans base de données (le hub n'en a pas). Déconnexion via le bouton
-  discret du header.
+- **Session JWT** : la session elle-même ne tient pas en base. Le hub a désormais une
+  petite base Neon, mais elle ne contient **que** la liste des personnes et leurs accès
+  par app — aucune donnée d'app, aucune session. Déconnexion via le bouton discret du
+  header.
+- **Accès par app** (`docs/ACCES-PAR-APP.md`) : le cookie de session étant partagé entre
+  toutes les apps du hub, être connecté ne dit pas *où* on a le droit d'entrer. Le hub
+  répond à cette question pour les autres apps via `POST /api/acces`, authentifié par le
+  `HUB_TOKEN` de l'app appelante — qui l'identifie, donc une app ne peut pas interroger
+  les accès d'une autre. Reste à faire : la page d'administration et le module client
+  dans JobAI, CarAI et BatchChef (l'endpoint est prêt, rien ne l'appelle encore).
 
 > Le contrat, les widgets et les jetons des apps (`HUB_TOKEN_*`) sont **inchangés** :
 > l'auth est une couche ajoutée par-dessus, elle ne touche pas au dashboard existant.
@@ -77,7 +93,8 @@ Aucune n'est committée.
 | `GOOGLE_CLIENT_ID` | Client OAuth Google (Web application) | (Google Cloud Console) |
 | `GOOGLE_CLIENT_SECRET` | Secret du client OAuth | (Google Cloud Console) |
 | `AUTH_SECRET` | Signature des JWT de session | `npx auth secret` |
-| `AUTHORIZED_EMAIL` | Unique adresse admise | `marc.richard4@gmail.com` |
+| `AUTHORIZED_EMAIL` | Le **propriétaire** : accès à tout, toujours, sans passer par la base (`lib/personnes.ts`) | `marc.richard4@gmail.com` |
+| `DATABASE_URL` | **Optionnelle** — base Neon (connection string *pooled*) pour la liste des personnes et leurs accès. Absente : seul le propriétaire entre, et l'app le dit |
 | `AUTH_URL` | **Optionnelle** — la config utilise `trustHost`, le host de la requête suffit (local et Vercel). À poser seulement pour forcer un domaine canonique en prod, avec le protocole : `https://hubperso.com` |
 
 **Redirect URIs à configurer côté Google Cloud Console** (client OAuth) :

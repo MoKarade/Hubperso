@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
@@ -95,10 +94,13 @@ export default async function Page() {
   }
 
   // Défense en profondeur : cette page porte les jetons x-hub-token des apps (le fetch
-  // part d'ici). Même si la middleware garde déjà tout, on revérifie la session côté
-  // serveur AVANT de lancer le moindre fetch — sans session, rien n'est récupéré ni rendu.
-  const session = await auth();
-  if (!session) redirect("/login");
+  // part d'ici). Même si la middleware garde déjà tout, on revérifie côté serveur AVANT de
+  // lancer le moindre fetch — sans session, rien n'est récupéré ni rendu.
+  //
+  // Et pas seulement la session : l'ACCÈS AU HUB. Une personne invitée sur une seule app a
+  // une session valide (la connexion est unique) — cette page-ci affiche les données des
+  // cinq apps, elle exige donc `aAcces(…, APP_HUB)`. Voir lib/gardeHub.ts.
+  await exigerAccesHub();
 
   const sources: HubSource[] = getSources();
   // Lancées tout de suite et toutes ensemble : le parallélisme vient d'ici, pas de Suspense.

@@ -18,6 +18,16 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/api/summaries")).toBe(false);
   });
+
+  // L'exception de serveur à serveur. Elle est NOMMÉE, pas déduite d'un motif : sans ce
+  // test, un `startsWith("/api/acces")` élargi plus tard ouvrirait aussi une future
+  // `/api/acces-admin` à qui n'a pas de session, en silence.
+  it("laisse passer /api/acces — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/acces")).toBe(true);
+    expect(isPublicPath("/api/acces/")).toBe(false);
+    expect(isPublicPath("/api/acces-admin")).toBe(false);
+    expect(isPublicPath("/api/acces/tout")).toBe(false);
+  });
 });
 
 describe("decideGuard", () => {
