@@ -821,3 +821,126 @@ a:focus-visible,
   transition: color 160ms ease;
 }
 .widget__detail:hover { color: var(--accent); }
+
+/* --- Administration (/administration) ----------------------------------------
+   Réservée au propriétaire (lib/gardeHub.ts). Pas de nouvelle direction visuelle :
+   mêmes tokens, mêmes formes que le reste du hub — .btn, .page, les variables de
+   couleur — pour que cette page ne se distingue pas d'un pastiche greffé après coup. */
+.admin__intro {
+  max-width: 60ch;
+  margin: 0 0 var(--gap);
+  font-size: 0.88rem;
+  color: var(--text-soft);
+}
+.admin__vide {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+.admin__ajout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 var(--gap);
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.admin__input {
+  flex: 1 1 220px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+.admin__input:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 1px;
+}
+.admin__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.admin__personne {
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.admin__personne-tete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.admin__personne-email {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+.admin__personne-nom {
+  margin: 0.1rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.86rem;
+}
+.admin__personne-meta {
+  margin: 0.25rem 0 0;
+  color: var(--text-faint);
+  font-size: 0.76rem;
+}
+.admin__badge-inactif {
+  color: var(--warn);
+  font-weight: 600;
+}
+.admin__personne-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+.admin__btn-danger:hover {
+  color: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 40%, var(--border));
+}
+.admin__apps {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.admin__app-toggle {
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.admin__app-toggle:hover {
+  border-color: var(--text-faint);
+  color: var(--text);
+}
+.admin__app-toggle--actif {
+  background: color-mix(in oklch, var(--ok) 16%, var(--surface));
+  border-color: color-mix(in oklch, var(--ok) 40%, var(--border));
+  color: var(--text);
+}

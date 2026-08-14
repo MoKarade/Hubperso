@@ -1,8 +1,10 @@
 // tests/gardePages.test.ts — la garde qu'on oublie de mettre.
 //
-// Chaque page de `app/` qui affiche des données doit passer par `exigerAccesHub()`. Une
-// page ajoutée sans cette ligne s'afficherait pour toute personne CONNECTÉE — donc, depuis
-// que le hub accepte des invités, pour quelqu'un qui n'a accès qu'à BatchChef.
+// Chaque page de `app/` qui affiche des données doit passer par `exigerAccesHub()` — ou
+// par `exigerProprietaire()`, qui l'appelle en premier et resserre ensuite sur le seul
+// propriétaire (lib/gardeHub.ts) : une garde plus stricte satisfait la même exigence. Une
+// page ajoutée sans aucune des deux s'afficherait pour toute personne CONNECTÉE — donc,
+// depuis que le hub accepte des invités, pour quelqu'un qui n'a accès qu'à BatchChef.
 //
 // Rien dans le code ne rend cet oubli visible : la page marche, elle marche même très bien,
 // simplement pour trop de monde. Ce test énumère les fichiers réels plutôt que de faire
@@ -52,18 +54,25 @@ describe("toute page du hub est gardée", () => {
     expect(pages.map((p) => p.relatif)).toContain("page.tsx");
   });
 
-  it("chaque page appelle exigerAccesHub, sauf les exceptions nommées", () => {
+  it("chaque page appelle exigerAccesHub ou exigerProprietaire, sauf les exceptions nommées", () => {
     for (const page of pages) {
       const raison = EXCEPTIONS[page.relatif];
       if (raison) {
         expect(page.source, `${page.relatif} — exception : ${raison}`).not.toContain(
           "exigerAccesHub",
         );
+        expect(page.source, `${page.relatif} — exception : ${raison}`).not.toContain(
+          "exigerProprietaire",
+        );
         continue;
       }
-      expect(page.source, `${page.relatif} n'appelle pas exigerAccesHub()`).toContain(
-        "exigerAccesHub()",
-      );
+      const gardee =
+        page.source.includes("exigerAccesHub()") ||
+        page.source.includes("exigerProprietaire()");
+      expect(
+        gardee,
+        `${page.relatif} n'appelle ni exigerAccesHub() ni exigerProprietaire()`,
+      ).toBe(true);
     }
   });
 
