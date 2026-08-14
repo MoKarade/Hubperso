@@ -13,7 +13,7 @@ describe("getSources", () => {
     ]);
     expect(sources[0]?.summaryUrl).toBe("https://finance.hubperso.com/hub/summary");
     expect(sources[1]?.summaryUrl).toBe("https://drive.hubperso.com/hub/summary");
-    expect(sources[2]?.summaryUrl).toBe("https://batchchef-glu8-chi.vercel.app/api/hub/summary");
+    expect(sources[2]?.summaryUrl).toBe("https://batchchef.hubperso.com/api/hub/summary");
     expect(sources[3]?.summaryUrl).toBe("https://carai.hubperso.com/hub/summary");
     expect(sources[4]?.summaryUrl).toBe("https://emploi.hubperso.com/api/hub/summary");
     expect(sources.every((s) => s.token === null)).toBe(true);
