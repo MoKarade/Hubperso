@@ -4,6 +4,7 @@
 // Le contrat livre des valeurs brutes ; c'est le hub qui décide du rendu selon `format`.
 
 import type { HubMetric } from "@mokarade/hub-contract";
+import { FUSEAU } from "./fuseau";
 
 const CURRENCY = new Intl.NumberFormat("fr-CA", {
   style: "currency",
@@ -54,11 +55,19 @@ export function formatTrend(trend: number): string {
   return `${sign}${ONE_DECIMAL.format(Math.abs(trend))} %`;
 }
 
-/** Datetime ISO → libellé court fr-CA (ex. « 15 juill., 14:05 »). */
+/**
+ * Datetime ISO → libellé court fr-CA à l'heure du Québec (ex. « 15 juill., 14:05 »).
+ *
+ * ⚠️ `timeZone` n'est PAS optionnel ici. Sans lui, `Intl` prend le fuseau de la machine :
+ * le hub rend ses dates côté serveur, et Vercel tourne en UTC — l'heure affichée serait
+ * fausse de quatre ou cinq heures selon la saison, sans aucun signe extérieur. Voir
+ * `lib/fuseau.ts`.
+ */
 export function formatDateTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return new Intl.DateTimeFormat("fr-CA", {
+    timeZone: FUSEAU,
     day: "numeric",
     month: "short",
     hour: "2-digit",

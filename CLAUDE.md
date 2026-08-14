@@ -26,6 +26,13 @@ widgets 100 % génériques.
   Voir la section « Authentification » du README.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via
   `safeHttpUrl` (http/https uniquement). Ne jamais rendre un href brut.
+- **Les dates s'affichent à l'heure du Québec, jamais à celle du serveur.** Tout
+  `Intl.DateTimeFormat` doit passer `timeZone: FUSEAU` (`lib/fuseau.ts`). Sans lui, `Intl`
+  prend le fuseau de la machine — et le hub rend ses dates côté serveur, où Vercel tourne
+  en UTC : la fraîcheur affichée serait fausse de 4 ou 5 h selon la saison, sans aucun
+  signe extérieur. C'est le même principe que « no fake data » appliqué au temps : une
+  heure fausse est pire qu'une heure absente, parce qu'on la croit. Tests dans
+  `tests/fuseau.test.ts`, dont un cas d'hiver qui échouerait sur un décalage écrit en dur.
 - **Jamais d'agrégat entre unités incomparables.** Le contrat laisse chaque app choisir
   la `period` de son coût (`total` / `mois` / `jour`) et elles ne s'accordent pas.
   `aggregateUsage` somme donc PAR période (`totalsByPeriod`) et il n'existe volontairement
