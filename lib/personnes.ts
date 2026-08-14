@@ -96,3 +96,84 @@ export async function aAcces(
     return false;
   }
 }
+
+/** Durée de vie d'une réponse POSITIVE mémorisée. Une révocation mord en moins d'une minute. */
+export const CACHE_CONNEXION_MS = 60_000;
+
+/**
+ * Adresses dont on sait qu'elles peuvent se connecter, et jusqu'à quand.
+ *
+ * ⚠️ POSITIFS SEULEMENT, et c'est une décision. Mémoriser un refus ferait attendre jusqu'à
+ * une minute à quelqu'un qu'on vient d'ajouter — précisément le moment où l'on regarde si
+ * ça marche. Mémoriser un accord fait durer un accès retiré au plus une minute : c'est le
+ * délai déjà annoncé pour les révocations (docs/ACCES-PAR-APP.md).
+ *
+ * Portée réelle : la mémoire du PROCESS. Sur Vercel, plusieurs instances, chacune la sienne
+ * — le délai reste borné à une minute par instance, pas cumulé.
+ */
+const cacheConnexion = new Map<string, number>();
+
+/** Pour les tests, et pour rendre le cache observable plutôt que magique. */
+export function viderCacheConnexion(): void {
+  cacheConnexion.clear();
+}
+
+/**
+ * Cette adresse peut-elle OBTENIR UNE SESSION ?
+ *
+ * À ne pas confondre avec `aAcces` :
+ *   - `peutSeConnecter` = « as-tu le droit d'entrer quelque part dans le hub ? » ;
+ *   - `aAcces(email, appId)` = « as-tu le droit d'entrer ICI ? ».
+ *
+ * La distinction existe parce que la connexion est UNIQUE (le hub est la porte d'entrée de
+ * toutes les apps) alors que les accès sont PAR APP. Quelqu'un invité sur BatchChef doit
+ * pouvoir se connecter au hub — sinon il ne peut pas atteindre BatchChef — sans pour autant
+ * voir le tableau de bord, qui affiche les données des cinq apps. C'est `aAcces(email,
+ * APP_HUB)` qui garde ce tableau de bord, pas cette fonction.
+ *
+ * Une personne sans AUCUN accès ne peut pas se connecter : une session qui n'ouvre rien
+ * n'aurait aucune utilité, et vaut mieux ne pas exister.
+ */
+export async function peutSeConnecter(
+  email: string | null | undefined,
+  env: Partial<NodeJS.ProcessEnv> = process.env,
+  maintenantMs: number = Date.now(),
+  // Dernier paramètre injectable : c'est la SEULE partie qui touche la base. L'extraire
+  // rend la logique de cache — celle où se joue le délai d'une révocation — vérifiable
+  // pour de vrai, sans mocker un module ni brancher une base distante.
+  lireAuMoinsUnAcces: (adresse: string) => Promise<boolean> = lireAccesEnBase,
+): Promise<boolean> {
+  const adresse = normaliser(email);
+  if (!adresse) return false;
+
+  if (estProprietaire(adresse, env)) return true;
+  if (!baseConfiguree(env)) return false;
+
+  const expiration = cacheConnexion.get(adresse);
+  if (expiration !== undefined && expiration > maintenantMs) return true;
+
+  try {
+    if (!(await lireAuMoinsUnAcces(adresse))) {
+      // Un accès retiré doit disparaître du cache tout de suite, sinon l'entrée mémorisée
+      // survivrait à la révocation qu'on vient justement de constater.
+      cacheConnexion.delete(adresse);
+      return false;
+    }
+    cacheConnexion.set(adresse, maintenantMs + CACHE_CONNEXION_MS);
+    return true;
+  } catch (erreur) {
+    console.error("[connexion] lecture impossible :", erreur);
+    return false;
+  }
+}
+
+/** A-t-elle au moins un accès, quelle que soit l'app ? (la seule requête de la fonction ci-dessus) */
+async function lireAccesEnBase(adresse: string): Promise<boolean> {
+  const lignes = await db
+    .select({ email: acces.email })
+    .from(acces)
+    .innerJoin(personnes, eq(personnes.email, acces.email))
+    .where(and(eq(acces.email, adresse), eq(personnes.actif, true)))
+    .limit(1);
+  return lignes.length > 0;
+}

@@ -1,14 +1,21 @@
 // auth.ts
 //
 // Configuration Auth.js (NextAuth v5). Le hub affiche des données financières réelles :
-// il est PRIVÉ. Un seul compte Google est admis (AUTHORIZED_EMAIL) ; tout autre compte
-// est refusé au callback signIn (aucune session créée). Pas de base de données → session
-// stockée en JWT. Le secret et les identifiants OAuth viennent tous de l'environnement,
-// jamais du code (voir README / .env.example).
+// il est PRIVÉ. Obtiennent une session le PROPRIÉTAIRE (`AUTHORIZED_EMAIL`, qui n'a besoin
+// d'aucune base) et les personnes actives ayant au moins un accès en base ; tout autre
+// compte est refusé au callback signIn — aucune session créée.
+//
+// Attention à ne pas lire ça comme « qui a accès au hub » : la connexion est UNIQUE pour
+// toutes les apps du hub, alors que les accès sont PAR APP. Voir `lib/gardeHub.ts` et
+// `docs/ACCES-PAR-APP.md`.
+//
+// La session reste stockée en JWT (la base ne contient que les personnes et leurs accès).
+// Le secret et les identifiants OAuth viennent tous de l'environnement, jamais du code
+// (voir README / .env.example).
 
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import { isAuthorizedEmail } from "@/lib/authorized";
+import { peutSeConnecter } from "@/lib/personnes";
 import { cookiesSessionPartagee } from "@/lib/sessionPartagee";
 import { PARAMS_AUTORISATION, majJetonsGoogle } from "@/lib/jetonsGoogle";
 import { destinationApresConnexion } from "@/lib/retour";
@@ -50,10 +57,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/login",
   },
   callbacks: {
-    // Seule l'adresse autorisée obtient une session. Sinon on retourne false : Auth.js
-    // refuse la connexion et redirige vers /login?error=AccessDenied.
-    signIn({ user }) {
-      return isAuthorizedEmail(user?.email, process.env.AUTHORIZED_EMAIL);
+    // Qui obtient une session : le PROPRIÉTAIRE, ou une personne active ayant au moins un
+    // accès en base. Sinon on retourne false : Auth.js refuse la connexion et redirige vers
+    // /login?error=AccessDenied.
+    //
+    // « Au moins un accès » et pas « inscrite » : une session qui n'ouvre aucune app
+    // n'aurait aucune utilité et vaut mieux ne pas exister. Obtenir une session ne dit
+    // d'ailleurs rien de ce qu'on peut VOIR — le tableau de bord du hub, qui affiche les
+    // données des cinq apps, exige `aAcces(…, APP_HUB)` (lib/gardeHub.ts).
+    async signIn({ user }) {
+      return await peutSeConnecter(user?.email);
     },
     // ── RETOUR VERS L'APP D'ORIGINE APRÈS CONNEXION ──────────────────────────────
     //
@@ -85,11 +98,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // v5) — la middleware redirige vers /login, aucune donnée n'est rendue. Le jour où
     // une app aurait une autre adresse autorisée, sa session serait refusée au lieu
     // d'être acceptée en silence.
+    //
+    // C'est aussi ici que se joue la RÉVOCATION : retirer le dernier accès de quelqu'un
+    // en base invalide sa session à la lecture suivante, sans qu'il ait à se déconnecter.
+    // `peutSeConnecter` mémorise une minute les réponses positives (jamais les négatives)
+    // pour ne pas faire une requête à la base à chaque affichage — le délai annoncé pour
+    // une révocation est donc « moins d'une minute », pas « immédiat ».
     async jwt({ token, user, account }) {
       // À la connexion seulement : on fixe l'adresse dans le jeton. Aux lectures
       // suivantes, `user` est absent et c'est `token.email` qui fait foi.
       if (user?.email) token.email = user.email;
-      if (!isAuthorizedEmail(token.email, process.env.AUTHORIZED_EMAIL)) return null;
+      if (!(await peutSeConnecter(token.email))) return null;
       // Capture des jetons Google à la connexion, renouvellement ensuite. Le hub ne
       // s'en sert pas ; il les transporte pour les apps qui, elles, en ont besoin.
       // Le contrôle d'adresse passe AVANT : on ne rafraîchit pas un jeton pour une

@@ -78,11 +78,38 @@ compromis assumé — retirer un accès prend effet en moins d'une minute.
 dans l'ADR 0001 et assumé — mieux vaut une app qui refuse que six qui s'ouvrent parce
 qu'une requête a échoué.
 
+## Le portier du hub lui-même
+
+`auth.ts` n'accorde plus une session à la seule adresse `AUTHORIZED_EMAIL` : il l'accorde
+au **propriétaire**, ou à **toute personne active ayant au moins un accès en base**
+(`peutSeConnecter`, `lib/personnes.ts`). Une session qui n'ouvrirait rien n'aurait aucune
+utilité — elle n'est donc simplement pas créée.
+
+**Obtenir une session ne dit rien de ce qu'on peut voir dans le hub.** La connexion est
+UNIQUE (le hub est la porte d'entrée de toutes les apps) ; les accès sont PAR APP. Quelqu'un
+invité sur BatchChef doit pouvoir se connecter — sinon impossible d'atteindre BatchChef —
+sans que ça lui ouvre le tableau de bord du hub, qui affiche les données des cinq apps. Le
+hub se traite donc lui-même comme une app parmi les autres, sous l'identifiant `APP_HUB`
+(`"hubperso"`) : ses pages exigent en plus `aAcces(email, APP_HUB)`, via `exigerAccesHub()`
+(`lib/gardeHub.ts`), appelée par `app/page.tsx`, `app/couts/page.tsx` et `app/app/[id]/page.tsx`.
+`tests/gardePages.test.ts` énumère les fichiers réels de `app/` et échoue si une page en
+oublie l'appel — deux exceptions nommées : `/login` (boucle) et `/sans-acces` (voir
+ci-dessous).
+
+Une personne connectée mais sans accès au hub atterrit sur **`/sans-acces`**, pas sur
+`/login` : y renvoyer redéclencherait une connexion qui réussirait aussitôt (la session est
+valide) pour aboutir au même refus — une boucle qui ressemble à une panne.
+
+**Révocation.** Le callback `jwt` d'Auth.js revérifie `peutSeConnecter` à **chaque lecture**
+de session, pas seulement à la connexion : retirer le dernier accès de quelqu'un en base
+invalide sa session à la lecture suivante, sans déconnexion explicite. Comme pour
+l'endpoint, le délai réel est « moins d'une minute » (cache des réponses positives
+uniquement — un refus n'est jamais mis en cache, pour ne pas faire attendre quelqu'un qu'on
+vient tout juste d'ajouter).
+
 ## Ce qui n'est pas encore fait
 
-- Le **portier du hub lui-même** : `auth.ts` refuse encore toute adresse autre que le
-  propriétaire dès la connexion. Tant que ce n'est pas changé, une personne invitée ne peut
-  pas obtenir de session du tout — l'endpoint ci-dessus est prêt, mais personne ne peut
-  encore s'en servir pour entrer.
-- La **page d'administration** (ajouter/retirer quelqu'un sans toucher à Vercel).
-- Le **module client** dans JobAI, CarAI et BatchChef.
+- La **page d'administration** (ajouter/retirer quelqu'un sans toucher à Vercel) : pour
+  l'instant, `personnes`/`acces` ne se peuplent qu'à la main dans la base.
+- Le **module client** dans JobAI, CarAI et BatchChef — chacune doit encore appeler
+  `POST /api/acces` et respecter le cache d'une minute.

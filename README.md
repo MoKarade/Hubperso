@@ -48,12 +48,20 @@ flowchart LR
 ## Authentification
 
 Le hub affiche des données personnelles réelles : il est **privé**. L'accès passe par
-un **login Google (Auth.js / NextAuth v5)** restreint à **une seule adresse**.
+un **login Google (Auth.js / NextAuth v5)**.
 
-- **Un seul compte admis.** Le callback `signIn` (`auth.ts`) n'autorise que l'adresse
-  `AUTHORIZED_EMAIL` (comparée en lower-case + trim, logique pure dans `lib/authorized.ts`).
-  Tout autre compte Google est refusé : **aucune session créée**, redirection vers
-  `/login?error=AccessDenied` avec le message « Accès non autorisé — ce hub est privé ».
+- **Qui obtient une session.** Le callback `signIn` (`auth.ts`) appelle `peutSeConnecter`
+  (`lib/personnes.ts`) : le **propriétaire** (`AUTHORIZED_EMAIL`, comparé en lower-case +
+  trim) entre toujours, sans passer par la base ; toute autre personne doit être **active
+  et avoir au moins un accès** dans la table `acces`. Un compte sans aucun accès est
+  refusé : **aucune session créée**, redirection vers `/login?error=AccessDenied` avec le
+  message « Accès non autorisé — ce hub est privé ».
+- **Obtenir une session ≠ voir le tableau de bord.** La connexion est unique pour toutes
+  les apps du hub ; les accès sont **par app** (`docs/ACCES-PAR-APP.md`). Le hub se traite
+  lui-même comme une app (`APP_HUB`) : ses pages exigent en plus `aAcces(email, APP_HUB)`
+  via `exigerAccesHub()` (`lib/gardeHub.ts`). Une personne connectée sans cet accès
+  atterrit sur `/sans-acces`, pas sur `/login` — sinon elle se reconnecterait aussitôt
+  pour retomber sur le même refus.
 - **Tout est protégé.** `middleware.ts` garde l'ensemble des routes sauf `/api/auth/*`,
   `/login` et les assets statiques. Sans session : une page → redirection vers `/login`
   (avec `callbackUrl`) ; une route `/api/*` → **401 JSON** (la décision est isolée et
@@ -69,9 +77,8 @@ un **login Google (Auth.js / NextAuth v5)** restreint à **une seule adresse**.
   toutes les apps du hub, être connecté ne dit pas *où* on a le droit d'entrer. Le hub
   répond à cette question pour les autres apps via `POST /api/acces`, authentifié par le
   `HUB_TOKEN` de l'app appelante — qui l'identifie, donc une app ne peut pas interroger
-  les accès d'une autre. **Aujourd'hui le portier reste le propriétaire seul** : `auth.ts`
-  refuse encore toute autre adresse dès la connexion. L'endpoint est prêt, la porte pas
-  encore ouverte.
+  les accès d'une autre. Reste à faire : la page d'administration et le module client
+  dans JobAI, CarAI et BatchChef (l'endpoint est prêt, rien ne l'appelle encore).
 
 > Le contrat, les widgets et les jetons des apps (`HUB_TOKEN_*`) sont **inchangés** :
 > l'auth est une couche ajoutée par-dessus, elle ne touche pas au dashboard existant.
