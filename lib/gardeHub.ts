@@ -24,7 +24,7 @@
 import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
 import { auth } from "@/auth";
-import { APP_HUB, aAcces } from "./personnes";
+import { APP_HUB, aAcces, estProprietaire } from "./personnes";
 import { assurerMigrations } from "./migrations";
 
 /**
@@ -44,5 +44,26 @@ export async function exigerAccesHub(): Promise<Session> {
   await assurerMigrations();
 
   if (!(await aAcces(session.user?.email, APP_HUB))) redirect("/sans-acces");
+  return session;
+}
+
+/**
+ * Exige le PROPRIÉTAIRE, rien de moins — pour la page d'administration.
+ *
+ * Voir l'accès au hub n'est PAS voir la liste des personnes qui y ont accès : une
+ * personne invitée sur BatchChef a le droit d'entrer dans le hub une fois qu'on lui a
+ * accordé `aAcces(…, APP_HUB)`, mais ça ne lui donne aucune raison de pouvoir SE
+ * l'accorder à elle-même, ni à quiconque, sur n'importe quelle app. L'administration est
+ * une capacité strictement plus forte que « voir le tableau de bord » — elle mérite sa
+ * propre garde, pas une variante affaiblie de `exigerAccesHub`.
+ *
+ * Passe D'ABORD par `exigerAccesHub()` (session + accès au hub), puis resserre sur le
+ * seul propriétaire. Quelqu'un avec accès au hub mais pas propriétaire est renvoyé vers
+ * `/` — c'est une page qu'il a légitimement le droit de voir, contrairement à
+ * `/sans-acces` qui décrirait une situation qui n'est pas la sienne.
+ */
+export async function exigerProprietaire(): Promise<Session> {
+  const session = await exigerAccesHub();
+  if (!estProprietaire(session.user?.email)) redirect("/");
   return session;
 }
