@@ -37,7 +37,10 @@ interface SourceDef {
  * est connue avant le premier fetch : chaque carte peut arriver à son rythme dans un
  * emplacement déjà réservé, sans que rien ne saute (cf. le streaming dans `app/page.tsx`).
  */
-const SOURCE_DEFS: readonly SourceDef[] = [
+// Exporté pour que `tests/envExample.test.ts` vérifie que `.env.example` documente bien
+// chaque variable déclarée ici — l'oubli de `HUB_TOKEN_CARAI` avait échappé à tout le
+// monde parce que le code marchait et que seul le fichier d'exemple mentait.
+export const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "financeai",
     name: "FinanceAI",
