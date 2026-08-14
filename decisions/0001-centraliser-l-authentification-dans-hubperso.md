@@ -47,6 +47,11 @@ cache 60 secondes**. `AUTHORIZED_EMAIL` disparaît partout.
 
 ### 3. « Que peux-tu faire chez Google ? » — le prêt de jetons
 
+> ⚠️ **NON RÉALISÉ, et volontairement.** Ce paragraphe décrit l'intention du 14/08 au matin.
+> Voir l'amendement en fin de document : l'exploration du code de DriveAI a montré que la
+> moitié qui compte ne peut pas emprunter de jeton, et que la justification donnée plus bas
+> pour la base était fausse. Ne pas lire ce qui suit comme un état des lieux.
+
 Le `refresh_token` vit chiffré dans la base de Hubperso. Les apps qui appellent une API
 Google l'empruntent par `GET /api/google/jeton`, authentifié par le même jeton partagé.
 DriveAI perd tout son système d'authentification propre ; FinanceAI gagne deux fonctions
@@ -140,3 +145,70 @@ Le chantier est terminé quand, et seulement quand :
   hub** — c'est le test qui prouve le prêt de jetons ;
 - ajouter une personne dans la page d'administration lui ouvre l'app choisie, et seulement
   celle-là.
+
+---
+
+## Amendement du 14/08 — l'étape 3 se réduit à l'autorisation
+
+Écrit après avoir lu le code de DriveAI, et non avant. Trois constats qui contredisent le
+texte ci-dessus ; ils sont consignés plutôt que corrigés en silence, parce qu'un ADR dont on
+réécrit les prémisses ne sert plus à comprendre pourquoi on a tranché.
+
+### DriveAI n'est pas une app, c'en est deux
+
+Deux identités Google **totalement séparées**, qui ne partagent aucun jeton :
+
+| | Front (SPA + fonctions Vercel) | Moteur (Apps Script) |
+|---|---|---|
+| Authentification | OAuth de Marc, cookie `driveai_rt` | `ScriptApp.getOAuthToken()` |
+| Portées | 5 + identité | 9, **dont Gmail** |
+| Déclenchement | clic dans le navigateur | **toutes les 5 minutes, sans personne** |
+
+Le moteur ne détient **aucun** jeton : Google l'autorise au niveau du projet Apps Script.
+Il n'a ni navigateur, ni cookie, ni `refresh_token` à remplacer. Lui faire emprunter un
+jeton au hub voudrait dire le sortir d'Apps Script — un autre chantier, d'un autre ordre de
+grandeur, et qui toucherait le seul composant détenant Gmail.
+
+### La justification donnée à la base était fausse
+
+Les trade-offs affirment que le `refresh_token` doit être lisible sans navigateur « parce
+que DriveAI construit son summary à trois heures du matin ». C'est faux sur le mécanisme :
+cette chaîne est `hubperso.com` → `/api/hub/summary` → broker Vercel → web app Apps Script
+(`?secret=…`) → une Property pré-calculée. **Aucun jeton Google de Marc n'y intervient.**
+
+La base reste pleinement justifiée — mais par le mécanisme n° 2 seul (la liste des personnes
+et leurs accès), qui est réel et livré. Pas par celui-ci.
+
+### Fusionner les clients OAuth coûterait plus cher que ce qu'on croyait
+
+Le client du hub devrait demander `drive` **complet** et `gmail.modify` : des portées
+**restreintes**. Deux conséquences que « les portées fusionnent » ne rendait pas :
+vérification Google (avec son audit de sécurité pour les portées restreintes), et surtout
+l'exigence déjà écrite plus haut — passer l'écran de consentement **En production**, sans
+quoi les `refresh_token` meurent tous les sept jours. On échangerait un système qui marche
+contre une dépendance à un processus de validation externe, pour un gain qui ne concerne que
+la moitié « front » de DriveAI.
+
+### Décision (Marc, 14/08)
+
+**L'étape 3 se limite à l'autorisation.** DriveAI remplace son verrou `ALLOWED_EMAIL` par un
+appel à `POST /api/acces`, exactement comme JobAI, CarAI et BatchChef. Elle **garde son
+propre client OAuth Google**, et le moteur Apps Script n'est pas touché.
+
+Ce qui est abandonné, et qu'il ne faut pas aller rechercher dans l'historique en croyant que
+c'était fini : le coffre à jetons côté hub (chiffrement AES-256-GCM, table `jetons_google`,
+endpoint de prêt) a été écrit puis **retiré avant d'être livré**, parce que rien ne
+l'utiliserait. Livrer de l'infrastructure inerte aurait donné l'illusion d'une étape franchie.
+
+Ce que ça change concrètement pour DriveAI, en plus de l'invitation depuis
+`/administration` : la session porte désormais l'adresse en plus du `refresh_token`, et
+`/api/config` comme `/api/refresh` revérifient l'accès **à chaque appel**. Sans ça, retirer
+un accès n'aurait mordu qu'à l'expiration du cookie — un an plus tard. Le coût est une
+reconnexion unique, les cookies de l'ancien format étant refusés faute de savoir à qui ils
+appartiennent.
+
+### Ce qui reste vrai des « conséquences vérifiables »
+
+Le premier point — « le projet Google ne contient plus qu'un client OAuth » — **ne sera pas
+atteint**, et ne doit plus servir de critère. Les autres restent valables. FinanceAI reste
+au backlog, sans lien avec ce constat.
