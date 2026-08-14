@@ -1,5 +1,12 @@
 # Connexion unique entre les apps du hub
 
+> ⚠️ **Ce document décrit l'état du 13/08/2026, qui est un état de transition.**
+> La cible a changé le 14/08 : voir
+> [ADR 0001 — Centraliser l'authentification dans Hubperso](../decisions/0001-centraliser-l-authentification-dans-hubperso.md).
+> Ce qui est décrit ici reste exact pour le cookie de session partagé — c'est la brique 1
+> de l'ADR — mais la partie « client OAuth partagé, portées par app » est remplacée par un
+> client unique et un prêt de jetons depuis Hubperso.
+
 > Décision de Marc (2026-08-13) : se connecter à **une** app doit valoir pour **toutes**, sur
 > un appareil donné, et sans redemander l'autorisation Google.
 >
