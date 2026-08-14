@@ -11,6 +11,7 @@ import Google from "next-auth/providers/google";
 import { isAuthorizedEmail } from "@/lib/authorized";
 import { cookiesSessionPartagee } from "@/lib/sessionPartagee";
 import { PARAMS_AUTORISATION, majJetonsGoogle } from "@/lib/jetonsGoogle";
+import { destinationApresConnexion } from "@/lib/retour";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -53,6 +54,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // refuse la connexion et redirige vers /login?error=AccessDenied.
     signIn({ user }) {
       return isAuthorizedEmail(user?.email, process.env.AUTHORIZED_EMAIL);
+    },
+    // ── RETOUR VERS L'APP D'ORIGINE APRÈS CONNEXION ──────────────────────────────
+    //
+    // Le hub devient la porte d'entrée unique (ADR 0001) : quelqu'un qui ouvre JobAI
+    // sans session arrive ici, et doit repartir sur JobAI une fois connecté.
+    //
+    // Auth.js refuse par défaut toute destination hors de sa propre origine, et il a
+    // raison — c'est ce qui empêche `?callbackUrl=https://evil.com` de transformer le
+    // hub en tremplin d'hameçonnage : la victime atterrit sur un site tiers APRÈS une
+    // connexion réussie, donc en confiance.
+    //
+    // On ne supprime donc pas cette garde, on la remplace par une liste blanche de
+    // DOMAINES (`lib/retour.ts`, 13 tests dont les pièges classiques : userinfo
+    // `@evil.com`, suffixe `evil-hubperso.com`, préfixe `hubperso.com.evil.com`,
+    // URL protocol-relative `//evil.com`). Une destination refusée ramène au hub sans
+    // erreur — échec fermé.
+    redirect({ url, baseUrl }) {
+      return destinationApresConnexion(url, baseUrl);
     },
     // ⚠️ REVÉRIFICATION À CHAQUE LECTURE — c'est la contrepartie du cookie partagé.
     //
