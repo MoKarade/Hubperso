@@ -61,8 +61,17 @@ un **login Google (Auth.js / NextAuth v5)** restreint à **une seule adresse**.
 - **Défense en profondeur.** La page `/` (Server Component qui porte les jetons
   `x-hub-token` des apps) revérifie la session côté serveur avant tout fetch : sans
   session, aucune donnée n'est récupérée ni rendue.
-- **Session JWT**, sans base de données (le hub n'en a pas). Déconnexion via le bouton
-  discret du header.
+- **Session JWT** : la session elle-même ne tient pas en base. Le hub a désormais une
+  petite base Neon, mais elle ne contient **que** la liste des personnes et leurs accès
+  par app — aucune donnée d'app, aucune session. Déconnexion via le bouton discret du
+  header.
+- **Accès par app** (`docs/ACCES-PAR-APP.md`) : le cookie de session étant partagé entre
+  toutes les apps du hub, être connecté ne dit pas *où* on a le droit d'entrer. Le hub
+  répond à cette question pour les autres apps via `POST /api/acces`, authentifié par le
+  `HUB_TOKEN` de l'app appelante — qui l'identifie, donc une app ne peut pas interroger
+  les accès d'une autre. **Aujourd'hui le portier reste le propriétaire seul** : `auth.ts`
+  refuse encore toute autre adresse dès la connexion. L'endpoint est prêt, la porte pas
+  encore ouverte.
 
 > Le contrat, les widgets et les jetons des apps (`HUB_TOKEN_*`) sont **inchangés** :
 > l'auth est une couche ajoutée par-dessus, elle ne touche pas au dashboard existant.
@@ -77,7 +86,8 @@ Aucune n'est committée.
 | `GOOGLE_CLIENT_ID` | Client OAuth Google (Web application) | (Google Cloud Console) |
 | `GOOGLE_CLIENT_SECRET` | Secret du client OAuth | (Google Cloud Console) |
 | `AUTH_SECRET` | Signature des JWT de session | `npx auth secret` |
-| `AUTHORIZED_EMAIL` | Unique adresse admise | `marc.richard4@gmail.com` |
+| `AUTHORIZED_EMAIL` | Le **propriétaire** : accès à tout, toujours, sans passer par la base (`lib/personnes.ts`) | `marc.richard4@gmail.com` |
+| `DATABASE_URL` | **Optionnelle** — base Neon (connection string *pooled*) pour la liste des personnes et leurs accès. Absente : seul le propriétaire entre, et l'app le dit |
 | `AUTH_URL` | **Optionnelle** — la config utilise `trustHost`, le host de la requête suffit (local et Vercel). À poser seulement pour forcer un domaine canonique en prod, avec le protocole : `https://hubperso.com` |
 
 **Redirect URIs à configurer côté Google Cloud Console** (client OAuth) :
