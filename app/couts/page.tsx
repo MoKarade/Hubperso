@@ -6,7 +6,13 @@ import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
-import { PERIOD_LABEL, aggregateUsage, quotaRatio, toCad } from "@/lib/usage";
+import {
+  PERIOD_LABEL,
+  aggregateUsage,
+  pourquoiPasDeTotalUnique,
+  quotaRatio,
+  toCad,
+} from "@/lib/usage";
 import { formatCad } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +24,7 @@ export default async function CoutsPage() {
 
   const results = await fetchAllSummaries(getSources());
   const digest = aggregateUsage(results);
+  const note = pourquoiPasDeTotalUnique(digest.totalsByPeriod);
 
   return (
     <main className="page">
@@ -29,16 +36,32 @@ export default async function CoutsPage() {
         <div className="page__aside">
           <p className="page__meta">
             {digest.trackedCount}/{digest.apps.length} app(s) suivie(s)
-            {digest.totalsByPeriod.map((t) => (
-              <span key={t.period}>
-                {" "}
-                · {formatCad(t.cad)} {PERIOD_LABEL[t.period]}
-              </span>
-            ))}
           </p>
           <Link href="/" className="btn">← Hub</Link>
         </div>
       </header>
+
+      {/* LE TOTAL, EN ÉVIDENCE. Il était relégué dans la ligne grise de l'en-tête, sur une
+          page qui ne parle que de ça. Un montant PAR PÉRIODE (jamais fusionné, cf.
+          lib/usage.ts) — et, quand il y en a plusieurs, la RAISON écrite à côté : deux
+          nombres côte à côte sans explication invitent à les additionner de tête, ce qui
+          refait précisément l'erreur que le code évite. */}
+      {digest.totalsByPeriod.length > 0 && (
+        <section className="totaux" aria-label="Totaux des coûts">
+          <div className="totaux__liste">
+            {digest.totalsByPeriod.map((t) => (
+              <div key={t.period} className="totaux__bloc">
+                <p className="totaux__montant">≈ {formatCad(t.cad)}</p>
+                <p className="totaux__periode">{PERIOD_LABEL[t.period]}</p>
+                <p className="totaux__apps">
+                  {t.appCount} app{t.appCount > 1 ? "s" : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+          {note && <p className="totaux__note">{note}</p>}
+        </section>
+      )}
 
       <section className="couts" aria-label="Coûts et quotas par application">
         {digest.apps.map((a) => (

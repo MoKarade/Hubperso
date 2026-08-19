@@ -944,3 +944,55 @@ a:focus-visible,
   border-color: color-mix(in oklch, var(--ok) 40%, var(--border));
   color: var(--text);
 }
+
+/* --- Totaux en tête de /couts ------------------------------------------------
+   Le total était relégué dans la ligne grise de l'en-tête, sur une page qui ne parle
+   que de ça. Un bloc par période, jamais fusionnés (lib/usage.ts), avec la raison
+   écrite quand il y en a plusieurs — deux montants côte à côte sans explication
+   invitent à les additionner de tête. */
+.totaux {
+  margin-bottom: var(--gap);
+  padding: clamp(1rem, 0.8rem + 0.6vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.totaux__liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1.2rem, 0.8rem + 2vw, 3rem);
+}
+.totaux__bloc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.totaux__montant {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.4rem + 1.6vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.totaux__periode {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+.totaux__apps {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+.totaux__note {
+  margin: 0.9rem 0 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-faint);
+  max-width: 70ch;
+}

@@ -4,7 +4,13 @@ import { describe, expect, it } from "vitest";
 import type { HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "../lib/fetchSummary";
 import type { HubSource } from "../lib/sources";
-import { aggregateUsage, quotaRatio, toCad, USD_TO_CAD } from "../lib/usage";
+import {
+  aggregateUsage,
+  pourquoiPasDeTotalUnique,
+  quotaRatio,
+  toCad,
+  USD_TO_CAD,
+} from "../lib/usage";
 
 function source(id: string): HubSource {
   return { id, name: id, summaryUrl: `https://${id}.test/hub/summary`, token: "t", hero: false };
@@ -93,5 +99,39 @@ describe("aggregateUsage", () => {
   it("un bloc usage vide (ni coût ni quota) reste non suivi", () => {
     const d = aggregateUsage([ok("a", {})]);
     expect(d.trackedCount).toBe(0);
+  });
+});
+
+describe("pourquoiPasDeTotalUnique — dire à l'écran ce que le code sait déjà", () => {
+  it("se tait quand une seule période est en jeu", () => {
+    // Rien à expliquer : une note permanente deviendrait du bruit qu'on cesse de lire,
+    // et le jour où elle compte vraiment, on ne la verrait plus.
+    expect(pourquoiPasDeTotalUnique([])).toBeNull();
+    expect(pourquoiPasDeTotalUnique([{ period: "total", cad: 12, appCount: 2 }])).toBeNull();
+  });
+
+  it("explique, et NOMME les périodes en cause", () => {
+    // C'est le cas réel d'aujourd'hui : FinanceAI publie un cumul, DriveAI le mois courant.
+    // Un lecteur qui voit deux montants sans explication les additionne de tête — il refait
+    // exactement l'erreur que `aggregateUsage` évite, sauf que lui ne le saura jamais.
+    const note = pourquoiPasDeTotalUnique([
+      { period: "total", cad: 12, appCount: 2 },
+      { period: "mois", cad: 3, appCount: 1 },
+    ]);
+    expect(note).not.toBeNull();
+    expect(note).toContain("cumulé");
+    expect(note).toContain("ce mois-ci");
+    // La conclusion doit être explicite : sans elle, on décrit le problème sans dire
+    // qu'additionner est faux.
+    expect(note).toMatch(/n'existe pas/);
+  });
+
+  it("couvre les trois périodes du contrat", () => {
+    const note = pourquoiPasDeTotalUnique([
+      { period: "total", cad: 1, appCount: 1 },
+      { period: "mois", cad: 2, appCount: 1 },
+      { period: "jour", cad: 3, appCount: 1 },
+    ]);
+    expect(note).toContain("aujourd\u2019hui");
   });
 });
