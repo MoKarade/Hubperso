@@ -119,3 +119,24 @@ export const PERIOD_LABEL: Record<UsagePeriod, string> = {
   mois: "ce mois-ci",
   jour: "aujourd’hui",
 };
+
+/**
+ * Pourquoi il n'y a pas UN seul total — à afficher à côté des montants, pas seulement dans
+ * un commentaire de code.
+ *
+ * Le hub somme par période et refuse de fusionner (voir l'en-tête). Jusqu'ici, la raison
+ * n'était écrite que pour les développeurs : à l'écran, on voyait deux montants côte à côte
+ * sans jamais savoir pourquoi ils n'en faisaient pas un. Un lecteur qui les additionne de
+ * tête refait exactement l'erreur que le code évite — sauf que lui ne le saura pas.
+ *
+ * `null` quand une seule période est en jeu : il n'y a alors rien à expliquer, et une note
+ * permanente deviendrait du bruit qu'on cesse de lire.
+ */
+export function pourquoiPasDeTotalUnique(totaux: PeriodTotal[]): string | null {
+  if (totaux.length <= 1) return null;
+  const periodes = totaux.map((t) => PERIOD_LABEL[t.period]).join(" et ");
+  return (
+    `Pas de total unique : ces montants couvrent des périodes différentes (${periodes}). ` +
+    `Les additionner donnerait un nombre qui n'existe pas.`
+  );
+}
