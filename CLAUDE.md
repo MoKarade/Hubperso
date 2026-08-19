@@ -17,13 +17,32 @@ widgets 100 % génériques.
   rendue. Un JSON hors contrat → widget `invalid`, jamais un affichage « comme si ».
 - **Server-side only.** Le fetch et les jetons restent côté serveur (Server
   Components). Pas de `x-hub-token` exposé au client, pas de CORS demandé aux apps.
-- **Hub privé, protégé par auth.** Le hub affiche des données personnelles réelles :
-  il est derrière un **login Google (Auth.js v5), une seule adresse admise**
-  (`AUTHORIZED_EMAIL`). `middleware.ts` garde tout sauf `/api/auth/*`, `/login` et les
-  assets. **Toute nouvelle route affichant des données doit rester derrière la
-  middleware** (ne jamais l'ajouter aux exclusions du matcher) et, si elle porte des
-  jetons, revérifier la session côté serveur (défense en profondeur, cf. `app/page.tsx`).
-  Voir la section « Authentification » du README.
+- **Hub privé, protégé par auth.** Le hub affiche des données personnelles réelles : il est
+  derrière un **login Google (Auth.js v5)**. `middleware.ts` garde tout sauf `/api/auth/*`,
+  `/login`, `/api/acces` et les assets. **Toute nouvelle route affichant des données doit
+  rester derrière la middleware** (ne jamais l'ajouter aux exclusions du matcher) et, si
+  elle porte des jetons, revérifier la session côté serveur (défense en profondeur, cf.
+  `app/page.tsx`). Voir la section « Authentification » du README.
+- **Deux questions distinctes, jamais confondues** (ADR 0001, `docs/ACCES-PAR-APP.md`).
+  `AUTHORIZED_EMAIL` **n'est plus « la seule adresse admise »** : c'est le PROPRIÉTAIRE.
+  - *Peut-elle se connecter ?* → `peutSeConnecter` (`lib/personnes.ts`) : le propriétaire,
+    ou toute personne active ayant **au moins un accès** quelque part. Sinon aucune session.
+  - *A-t-elle le droit d'entrer ICI ?* → `aAcces(email, appId)`. Le hub se traite lui-même
+    comme une app (`APP_HUB = "hubperso"`) : **toute page du hub appelle `exigerAccesHub()`**
+    (`lib/gardeHub.ts`), et `exigerProprietaire()` pour ce qui est réservé au propriétaire.
+    `tests/gardePages.test.ts` fait respecter cette règle — une page ajoutée sans garde
+    échoue au test, elle ne se découvre pas en production.
+
+  Le propriétaire est vérifié **en premier et SANS réseau** : une panne de base ne doit
+  jamais enfermer Marc dehors de sa propre administration, seul endroit d'où il pourrait
+  se réparer.
+- **`/api/acces` traverse le garde, et ce n'est pas une exception au principe ci-dessus.**
+  Le matcher est inchangé ; c'est `isPublicPath` (`lib/authGuard.ts`) qui laisse passer
+  cette seule route. Elle n'est pas ouverte : elle est authentifiée **autrement**, par le
+  `HUB_TOKEN` de l'app appelante — c'est un serveur qui appelle un serveur, il n'a pas de
+  cookie de session à présenter. Le jeton **identifie** l'appelant, donc l'`appId` vient du
+  jeton et **jamais du corps de la requête** : une app ne peut pas interroger les accès
+  d'une autre.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via
   `safeHttpUrl` (http/https uniquement). Ne jamais rendre un href brut.
 - **Les dates s'affichent à l'heure du Québec, jamais à celle du serveur.** Tout
@@ -45,7 +64,12 @@ widgets 100 % génériques.
 1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
    `defaultUrl`, `urlEnv`, `tokenEnv`).
 2. La variable de jeton correspondante dans l'environnement (jamais en dur).
-   C'est tout : le widget est rendu automatiquement à partir du summary.
+
+C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît
+dans `/administration` — `APPS_DISPONIBLES` (`lib/administration.ts`) dérive de `SOURCE_DEFS`
+plutôt que d'être une seconde liste écrite à la main. Une liste séparée aurait fini par
+diverger, et une app absente de la page d'administration serait une app dont personne ne
+peut recevoir l'accès.
 
 ## Évolution du contrat
 

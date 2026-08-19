@@ -42,8 +42,22 @@ Google et leur page de connexion, dont le bouton devient un lien vers `hubperso.
 Deux tables dans une base Neon appartenant à Hubperso : les personnes, et leurs accès
 **par app**. Une page d'administration remplace les six variables d'environnement.
 
-Chaque app interroge `GET /api/acces` avec son jeton `x-hub-token` et **met la réponse en
-cache 60 secondes**. `AUTHORIZED_EMAIL` disparaît partout.
+Chaque app interroge `POST /api/acces` avec son jeton `x-hub-token` et **met la réponse en
+cache 60 secondes**.
+
+> **Deux précisions écrites après coup, parce que ce paragraphe s'est révélé faux à la
+> livraison** (le reste du §2 est conforme) :
+>
+> - **`POST`, pas `GET`.** Une adresse en `GET` finit dans les journaux d'URL — les nôtres,
+>   ceux de Vercel, et de tout ce qui se trouve entre les deux. Le corps ne porte que
+>   l'adresse : l'`appId`, lui, est déduit du **jeton**, jamais lu dans la requête, sinon
+>   une app pourrait interroger les accès d'une autre.
+> - **`AUTHORIZED_EMAIL` ne disparaît pas.** Il **change de rôle** : de « la seule adresse
+>   admise » à « le propriétaire — accès à tout, toujours, et vérifié SANS réseau ». Le
+>   supprimer aurait fait de la base un point de panne dont la clé est à l'intérieur :
+>   base injoignable ou table vide au premier déploiement, et plus personne ne peut ouvrir
+>   l'administration pour y ajouter la première personne. Il reste aussi la condition
+>   fail-closed du middleware (`lib/authConfigured.ts`).
 
 ### 3. « Que peux-tu faire chez Google ? » — le prêt de jetons
 

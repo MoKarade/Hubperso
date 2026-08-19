@@ -3,7 +3,10 @@ name: CI
 # Ce dépôt n'avait AUCUNE vérification automatisée. C'est ce silence qui a laissé vivre
 # en production 5 vulnérabilités — dont 2 CRITICAL sur `@auth/core`, l'une étant un
 # contournement de la normalisation d'adresse par homoglyphes, soit le vecteur exact
-# contre un hub dont toute l'auth repose sur UNE adresse admise (`AUTHORIZED_EMAIL`).
+# contre un hub dont toute l'auth repose sur une COMPARAISON D'ADRESSES — celle du
+# propriétaire (`AUTHORIZED_EMAIL`) comme celles de la base, que `normaliser()` se contente
+# de passer en minuscules et de trimmer. L'arrivée de la base n'a pas réduit ce vecteur :
+# elle l'a élargi à toutes les personnes invitées.
 # Rien ne s'est déclenché : il n'y avait rien pour se déclencher.
 #
 # Le job `gate` rejoue EXACTEMENT le gate local du CLAUDE.md. Une CI qui vérifie autre

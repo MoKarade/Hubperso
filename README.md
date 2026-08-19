@@ -63,9 +63,14 @@ un **login Google (Auth.js / NextAuth v5)**.
   atterrit sur `/sans-acces`, pas sur `/login` — sinon elle se reconnecterait aussitôt
   pour retomber sur le même refus.
 - **Tout est protégé.** `middleware.ts` garde l'ensemble des routes sauf `/api/auth/*`,
-  `/login` et les assets statiques. Sans session : une page → redirection vers `/login`
-  (avec `callbackUrl`) ; une route `/api/*` → **401 JSON** (la décision est isolée et
-  testée dans `lib/authGuard.ts`).
+  `/login`, `/api/acces` et les assets statiques. Sans session : une page → redirection
+  vers `/login` (avec `callbackUrl`) ; une route `/api/*` → **401 JSON** (la décision est
+  isolée et testée dans `lib/authGuard.ts`).
+  `/api/acces` est le seul ajout à cette liste, et il ne passe **pas** par le matcher : le
+  matcher reste inchangé, c'est `isPublicPath` qui le laisse traverser. La distinction
+  compte — l'endpoint n'est pas ouvert, il est authentifié **autrement** (par le `HUB_TOKEN`
+  de l'app appelante, pas par une session de navigateur, puisque c'est un serveur qui
+  appelle un serveur).
 - **Défense en profondeur.** La page `/` (Server Component qui porte les jetons
   `x-hub-token` des apps) revérifie la session côté serveur avant tout fetch : sans
   session, aucune donnée n'est récupérée ni rendue.
@@ -77,8 +82,9 @@ un **login Google (Auth.js / NextAuth v5)**.
   toutes les apps du hub, être connecté ne dit pas *où* on a le droit d'entrer. Le hub
   répond à cette question pour les autres apps via `POST /api/acces`, authentifié par le
   `HUB_TOKEN` de l'app appelante — qui l'identifie, donc une app ne peut pas interroger
-  les accès d'une autre. Reste à faire : la page d'administration et le module client
-  dans JobAI, CarAI et BatchChef (l'endpoint est prêt, rien ne l'appelle encore).
+  les accès d'une autre. La page `/administration` (réservée au propriétaire) permet
+  d'ajouter ou de retirer quelqu'un, app par app, sans toucher à Vercel ni à la base.
+  JobAI, CarAI et BatchChef appellent déjà `POST /api/acces` à chaque lecture de session.
 
 > Le contrat, les widgets et les jetons des apps (`HUB_TOKEN_*`) sont **inchangés** :
 > l'auth est une couche ajoutée par-dessus, elle ne touche pas au dashboard existant.
@@ -107,12 +113,19 @@ http://localhost:3000/api/auth/callback/google
 
 ### Tester le login en local
 
-1. Copie `.env.example` en `.env.local` et renseigne les 5 variables ci-dessus
+1. Copie `.env.example` en `.env.local` et renseigne les variables ci-dessus
    (+ les jetons `HUB_TOKEN_*` si tu veux des widgets réels).
 2. `npm run dev` puis ouvre `http://localhost:3000`.
-3. Flux attendu : accès sans session → redirection `/login` → **Se connecter avec
-   Google** → si tu te connectes avec `marc.richard4@gmail.com` → accès au hub ;
-   avec tout autre compte Google → **refus** (« Accès non autorisé — ce hub est privé »).
+3. **Sans `DATABASE_URL`** — seul le propriétaire entre : accès sans session → redirection
+   `/login` → **Se connecter avec Google** → `AUTHORIZED_EMAIL` → accès au hub ; tout autre
+   compte → **refus** (« Accès non autorisé — ce hub est privé »).
+4. **Avec `DATABASE_URL`** — c'est le seul scénario qui exerce vraiment l'invitation, et
+   celui qui compte : ouvre `/administration`, ajoute une adresse, coche `hubperso`, puis
+   connecte-toi avec ce compte. Attendu : il entre. Décoche l'accès `hubperso` en laissant
+   la personne active : il obtient toujours une session (il a d'autres accès, ou aucun →
+   refus à la porte), mais atterrit sur `/sans-acces` au lieu du tableau de bord. Les deux
+   moitiés se testent séparément parce que ce sont **deux questions différentes** :
+   « peut-il se connecter ? » et « a-t-il le droit d'entrer ICI ? ».
 
 ## Configuration
 
@@ -124,9 +137,13 @@ secrets (variables d'environnement uniquement, jamais committés).
 | `HUB_TOKEN_FINANCEAI` | Jeton `x-hub-token` de FinanceAI |
 | `HUB_TOKEN_DRIVEAI` | Jeton `x-hub-token` de DriveAI |
 | `HUB_TOKEN_BATCHCHEF` | Jeton `x-hub-token` de BatchChef |
+| `HUB_TOKEN_CARAI` | Jeton `x-hub-token` de CarAI |
+| `HUB_TOKEN_JOBAI` | Jeton `x-hub-token` de JobAI |
 | `FINANCEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://finance.hubperso.com/hub/summary` |
 | `DRIVEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://drive.hubperso.com/hub/summary` |
-| `BATCHCHEF_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://batchchef.hubperso.com/hub/summary` |
+| `BATCHCHEF_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://batchchef.hubperso.com/api/hub/summary` |
+| `CARAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://carai.hubperso.com/hub/summary` |
+| `JOBAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://emploi.hubperso.com/api/hub/summary` |
 
 Sans jeton, l'app concernée s'affiche « non configurée » — les autres continuent de
 fonctionner. Ajouter une app = une entrée dans `lib/sources.ts` + sa variable de jeton.
@@ -143,6 +160,11 @@ npm run build      # build de production
 
 ## Déploiement
 
-Server-side, derrière **Cloudflare Access** (Google OAuth + MFA) pour toute exposition
-Internet. Les jetons vivent dans les variables d'environnement de l'hôte. Comme le hub
+Server-side. Les jetons vivent dans les variables d'environnement de l'hôte. Comme le hub
 fetch en server-side, les apps n'ont aucun réglage CORS à faire.
+
+**Cloudflare Access** (Google OAuth + MFA) peut rester devant comme couche réseau, mais
+n'est **plus la barrière** : depuis que le hub a sa propre authentification applicative,
+aucune donnée n'est servie sans session valide, même sans Cloudflare. Le noter parce que
+l'inverse — croire que Cloudflare protège pendant que l'app est ouverte — est le sens dans
+lequel l'erreur coûte quelque chose.
