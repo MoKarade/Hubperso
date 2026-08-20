@@ -25,9 +25,10 @@ Deux tables dans la base du hub (`lib/db/schema.ts`), et rien d'autre :
   Clé étrangère en cascade : supprimer une personne emporte tous ses accès, donc pas
   d'accès orphelin qu'aucune page n'afficherait et que personne ne penserait à retirer.
 
-**Pas de distinction lecture/écriture.** C'est un choix : huit apps × deux niveaux, ce sont
-seize cases à cocher et une occasion de se tromper à chaque invitation. On accorde une app
-entière, ou rien.
+**Pas de distinction lecture/écriture.** C'est un choix : six apps × deux niveaux, ce sont
+douze cases à cocher et une occasion de se tromper à chaque invitation. On accorde une app
+entière, ou rien. (Six = le hub lui-même + les cinq de `SOURCE_DEFS`, cf. `APPS_DISPONIBLES`
+dans `lib/administration.ts`.)
 
 **`AUTHORIZED_EMAIL` est le propriétaire**, pas « la seule adresse admise ». Il a accès à
 tout, toujours, **sans passer par la base** — sinon une table vide, une base injoignable ou
@@ -107,9 +108,10 @@ l'endpoint, le délai réel est « moins d'une minute » (cache des réponses po
 uniquement — un refus n'est jamais mis en cache, pour ne pas faire attendre quelqu'un qu'on
 vient tout juste d'ajouter).
 
-## Ce qui n'est pas encore fait
+## Ce qui est fait
 
-- La **page d'administration** (ajouter/retirer quelqu'un sans toucher à Vercel) : pour
-  l'instant, `personnes`/`acces` ne se peuplent qu'à la main dans la base.
-- Le **module client** dans JobAI, CarAI et BatchChef — chacune doit encore appeler
-  `POST /api/acces` et respecter le cache d'une minute.
+- La **page d'administration** : `/administration` (réservée au propriétaire par
+  `exigerProprietaire()`) ajoute et retire des personnes app par app, sans toucher à Vercel
+  ni écrire une ligne de SQL. `lib/administration.ts` + `tests/administration.test.ts`.
+- Le **module client** dans JobAI, CarAI et BatchChef : chacune appelle `POST /api/acces`
+  à chaque lecture de session, avec le même cache d'une minute (positif seulement).

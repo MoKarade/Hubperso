@@ -1,11 +1,17 @@
 # Connexion unique entre les apps du hub
 
-> ⚠️ **Ce document décrit l'état du 13/08/2026, qui est un état de transition.**
-> La cible a changé le 14/08 : voir
-> [ADR 0001 — Centraliser l'authentification dans Hubperso](../decisions/0001-centraliser-l-authentification-dans-hubperso.md).
-> Ce qui est décrit ici reste exact pour le cookie de session partagé — c'est la brique 1
-> de l'ADR — mais la partie « client OAuth partagé, portées par app » est remplacée par un
-> client unique et un prêt de jetons depuis Hubperso.
+> ⚠️ **Ce document décrit l'état du 13/08/2026.** Ce qui concerne le **cookie de session
+> partagé** reste exact et en production — c'est la brique 1 de l'
+> [ADR 0001](../decisions/0001-centraliser-l-authentification-dans-hubperso.md).
+>
+> Ce qui concerne le **client OAuth partagé et les portées par app** ne s'est pas fait, et
+> ne se fera pas. La cible intermédiaire (« un client unique + un prêt de jetons depuis
+> Hubperso ») a été **abandonnée elle aussi** : le coffre à jetons a été écrit puis retiré
+> avant d'être livré, et « le projet Google ne contient plus qu'un client OAuth » ne doit
+> plus servir de critère. Voir l'**amendement** de l'ADR 0001, pas seulement son corps.
+> Ce qui a réellement été livré à la place : l'autorisation centralisée
+> (`POST /api/acces`, [accès par app](./ACCES-PAR-APP.md)), chaque app gardant son propre
+> client OAuth.
 
 > Décision de Marc (2026-08-13) : se connecter à **une** app doit valoir pour **toutes**, sur
 > un appareil donné, et sans redemander l'autorisation Google.
@@ -183,14 +189,23 @@ logique du partage.
 quatre deviennent forgeables. La rotation devra être faite sur les quatre le même jour.
 
 **Un cookie sur `.hubperso.com` est lisible par tous les sous-domaines.** C'est acceptable
-ici — toutes les apps sont à Marc, une seule adresse est admise — mais ça ne le serait plus
-le jour où un sous-domaine servirait autre chose.
+ici — toutes les apps sont à Marc — mais ça ne le serait plus le jour où un sous-domaine
+servirait autre chose. À noter depuis l'étape 2 : le cookie n'est plus réservé à une seule
+adresse, des invités en ont un aussi. Ce qui borne leur portée n'est plus le cookie mais
+l'**autorisation par app** vérifiée à chaque lecture (`aAcces`), pas le fait qu'il n'existe
+qu'une seule session possible dans l'écosystème.
 
 **Le contrôle d'adresse suit désormais la donnée, pas la connexion.** `signIn` ne tourne
 qu'à la connexion ; le cookie étant partagé, chaque app accepterait une session fabriquée
-ailleurs. Le callback `jwt` revérifie donc `AUTHORIZED_EMAIL` à **chaque lecture** et
-invalide la session sinon. Sans ça, une app dont on changerait l'adresse autorisée
-continuerait d'accepter les sessions des autres en silence.
+ailleurs. Le callback `jwt` revérifie donc **à chaque lecture** et invalide la session
+sinon (`return null`). Sans ça, une app dont on changerait les droits continuerait
+d'accepter les sessions des autres en silence.
+
+Ce qu'il revérifie a changé le 14/08 : ce n'est plus `AUTHORIZED_EMAIL` mais
+`peutSeConnecter(token.email)` côté hub, et `aAccesHub(token.email)` côté apps satellites.
+La propriété qui compte est la même — le contrôle est **rejoué**, pas fait une fois — mais
+la source de vérité est maintenant la base du hub, ce qui rend la **révocation réelle** :
+retirer un accès dans `/administration` mord à la lecture suivante, sans déconnexion.
 
 ## Pourquoi pas l'union des portées
 
