@@ -82,7 +82,14 @@ describe("fetchSummary", () => {
   });
 
   it("invalid si le JSON ne respecte pas le contrat", async () => {
-    const res = await fetchSummary(source(), jsonFetch(200, { contractVersion: 99 }));
+    // ⚠️ L'échantillon était `{ contractVersion: 99 }`, qui depuis le 2026-08-20 est
+    // diagnostiqué « contrat trop récent » — un état DIFFÉRENT, et voulu. Il faut donc un
+    // payload structurellement faux, pas seulement mal versionné : c'est ce cas-ci qui doit
+    // rester `invalid`.
+    const res = await fetchSummary(
+      source(),
+      jsonFetch(200, { contractVersion: 1, app: { id: "MAJUSCULES" } }),
+    );
     expect(res.state).toBe("invalid");
   });
 
@@ -171,5 +178,48 @@ describe("fetchAllSummaries", () => {
     expect(results).toHaveLength(2);
     expect(results[0]?.state).toBe("ok");
     expect(results[1]?.state).toBe("unconfigured"); // driveai sans jeton
+  });
+});
+
+describe("contrat trop récent — le seul échec qui n'est pas la faute de l'app", () => {
+  it("un summary d'une version future donne `contract-too-new`, PAS `invalid`", async () => {
+    // Confondus jusqu'au 2026-08-20 : le hub affichait « réponse invalide », ce qui accuse
+    // l'app alors que c'est le hub qui est en retard d'un re-pin. Le diagnostic envoyait
+    // corriger le mauvais dépôt.
+    const futur = { ...validSummary(), contractVersion: 2 };
+    const res = await fetchSummary(source(), jsonFetch(200, futur));
+    expect(res.state).toBe("contract-too-new");
+    if (res.state === "contract-too-new") {
+      expect(res.published).toBe(2);
+      expect(res.supported).toBe(1);
+    }
+  });
+
+  it("un vrai payload hors contrat reste `invalid`", async () => {
+    const casse = { ...validSummary(), app: { ...validSummary().app, color: "rouge" } };
+    const res = await fetchSummary(source(), jsonFetch(200, casse));
+    expect(res.state).toBe("invalid");
+  });
+
+  it("n'est JAMAIS masqué par le cache de résilience", async () => {
+    // Le cache existe pour absorber un accroc TRANSITOIRE. Un contrat trop récent est une
+    // configuration à corriger : le masquer 30 min cacherait exactement ce qu'on vient de
+    // rendre visible, et le re-pin attendrait de ne plus être caché.
+    const s = source();
+    expect((await fetchSummary(s, okFetch())).state).toBe("ok"); // remplit le cache
+
+    const futur = { ...validSummary(), contractVersion: 2 };
+    const res = await fetchSummary(s, jsonFetch(200, futur));
+    expect(res.state).toBe("contract-too-new");
+  });
+
+  it("à l'inverse, un `invalid` transitoire EST couvert par le cache", async () => {
+    // Contrôle négatif : sans lui, le test ci-dessus passerait même si le cache était cassé.
+    const s = source();
+    expect((await fetchSummary(s, okFetch())).state).toBe("ok");
+
+    const res = await fetchSummary(s, jsonFetch(200, { pas: "un summary" }));
+    expect(res.state).toBe("ok");
+    if (res.state === "ok") expect(res.stale).toBe(true);
   });
 });

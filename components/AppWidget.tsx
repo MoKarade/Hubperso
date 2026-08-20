@@ -43,6 +43,8 @@ function ProblemBody({ result }: { result: SummaryResult }) {
         return `App injoignable — ${result.detail}.`;
       case "invalid":
         return `Réponse non conforme au contrat — ${result.detail}.`;
+      case "contract-too-new":
+        return `L’app publie la version ${result.published} du contrat, ce hub lit jusqu’à la ${result.supported}. Re-pinner le hub — l’app va bien.`;
       default:
         return "";
     }

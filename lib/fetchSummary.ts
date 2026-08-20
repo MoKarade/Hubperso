@@ -15,6 +15,7 @@
 // comme live). Passé ce délai, on préfère l'erreur honnête à une donnée trop vieille masquée.
 
 import {
+  ContractTooNewError,
   HUB_TOKEN_HEADER,
   validateSummary,
   type HubSummary,
@@ -34,7 +35,19 @@ export type SummaryResult =
   | { state: "unconfigured"; source: HubSource }
   | { state: "unauthorized"; source: HubSource }
   | { state: "unreachable"; source: HubSource; detail: string }
-  | { state: "invalid"; source: HubSource; detail: string };
+  | { state: "invalid"; source: HubSource; detail: string }
+  /**
+   * L'app publie une version du contrat que CE build du hub ne sait pas lire. C'est le seul
+   * état d'échec où **l'app n'a rien fait de mal** : elle a été déployée avant que le hub ne
+   * soit re-pinné. Confondu avec `invalid` jusqu'au 2026-08-20, il affichait « réponse
+   * invalide » — un diagnostic qui accuse l'app et envoie corriger le mauvais dépôt.
+   */
+  | {
+      state: "contract-too-new";
+      source: HubSource;
+      published: number;
+      supported: number;
+    };
 
 /**
  * Budget d'attente d'une app. Doit rester AU-DESSUS du timeout interne du broker le plus lent
@@ -83,7 +96,9 @@ export async function fetchSummary(
   }
 
   // Accroc transitoire (injoignable / invalide) : sers le dernier bon résumé s'il est encore
-  // récent. `unauthorized` / `unconfigured` NE sont PAS masqués (vrais problèmes à corriger).
+  // récent. `unauthorized` / `unconfigured` / `contract-too-new` NE sont PAS masqués (vrais
+  // problèmes à corriger). Masquer « contrat trop récent » pendant 30 min cacherait exactement
+  // ce qu'on vient de rendre visible — et le re-pin attendrait de ne plus être caché.
   if (live.state === "unreachable" || live.state === "invalid") {
     const cached = lastGood.get(source.id);
     if (cached) {
@@ -148,6 +163,14 @@ async function fetchLive(source: HubSource, fetchImpl: typeof fetch): Promise<Su
   try {
     return { state: "ok", source, summary: validateSummary(data) };
   } catch (err) {
+    if (err instanceof ContractTooNewError) {
+      return {
+        state: "contract-too-new",
+        source,
+        published: err.published,
+        supported: err.supported,
+      };
+    }
     return {
       state: "invalid",
       source,
