@@ -1,0 +1,44 @@
+# Vérifie que la CONSTELLATION est cohérente — pas qu'une app répond, mais que ce que le hub
+# croit d'elle et ce qu'elle publie d'elle-même concordent.
+#
+# SÉPARÉ du gate, volontairement, et pour la même raison que le job `audit` : ce contrôle
+# dépend de la disponibilité de CINQ apps. Mêlé au gate, un déploiement en cours ailleurs
+# peindrait en rouge une PR qui n'y est pour rien — et on prendrait l'habitude du rouge.
+name: Constellation
+
+on:
+  schedule:
+    # Une fois par jour. Les incohérences visées (identité divergente, contrat trop récent,
+    # périodes de coût mélangées) ne se réparent pas toutes seules et ne clignotent pas :
+    # elles durent des semaines. Un run quotidien suffit, un run par heure ne dirait rien de plus.
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Cohérence hub ↔ apps
+    runs-on: ubuntu-latest
+    # Cinq apps derrière des réveils à froid, 9 s de budget chacune : large, mais borné.
+    # Sans plafond le défaut GitHub est de SIX HEURES.
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Interroger les cinq apps et juger la cohérence
+        env:
+          HUB_TOKEN_FINANCEAI: ${{ secrets.HUB_TOKEN_FINANCEAI }}
+          HUB_TOKEN_DRIVEAI: ${{ secrets.HUB_TOKEN_DRIVEAI }}
+          HUB_TOKEN_BATCHCHEF: ${{ secrets.HUB_TOKEN_BATCHCHEF }}
+          HUB_TOKEN_CARAI: ${{ secrets.HUB_TOKEN_CARAI }}
+          HUB_TOKEN_JOBAI: ${{ secrets.HUB_TOKEN_JOBAI }}
+        run: npm run constellation

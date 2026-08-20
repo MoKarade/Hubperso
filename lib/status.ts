@@ -23,6 +23,10 @@ export function statusBadge(result: SummaryResult): StatusBadgeInfo {
       return { tone: "danger", label: "Injoignable" };
     case "invalid":
       return { tone: "danger", label: "Réponse invalide" };
+    // `warn` et pas `danger` : l'app fonctionne, c'est le hub qui est en retard d'un re-pin.
+    // Le ton dit à qui est le problème.
+    case "contract-too-new":
+      return { tone: "warn", label: "Contrat trop récent" };
     case "ok":
       // Résumé servi depuis le cache (app pas jointe à temps) : honnête, jamais « À jour ».
       if (result.stale) return { tone: "warn", label: "En cache" };
