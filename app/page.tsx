@@ -3,7 +3,8 @@ import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
-import { enregistrerReleve } from "@/lib/historiqueDb";
+import { enregistrerReleve, lireHistoriqueTous } from "@/lib/historiqueDb";
+import type { Releve } from "@/lib/historique";
 import { aggregateUsage } from "@/lib/usage";
 import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
@@ -44,15 +45,26 @@ export const dynamic = "force-dynamic";
 /** Une carte : attend SA promesse, sans bloquer les autres. */
 async function StreamedWidget({
   promise,
+  historiques,
   index,
   featured,
 }: {
   promise: Promise<SummaryResult>;
+  /** La mémoire de TOUTES les apps, lue en une requête. Attendue ICI, pas dans la page :
+   *  une lecture d'historique lente ne doit pas retenir la coquille ni les autres cartes. */
+  historiques: Promise<Map<string, Releve[]>>;
   index: number;
   featured: boolean;
 }) {
-  const result = await promise;
-  return <AppWidget result={result} index={index} featured={featured} />;
+  const [result, memoire] = await Promise.all([promise, historiques]);
+  return (
+    <AppWidget
+      result={result}
+      historique={memoire.get(result.source.id) ?? []}
+      index={index}
+      featured={featured}
+    />
+  );
 }
 
 /** Compteur d'en-tête : a besoin de TOUTES les réponses, donc il arrive en dernier. */
@@ -116,6 +128,10 @@ export default async function Page() {
   // doit pas attendre une écriture qui ne sert qu'à demain. `enregistrerReleve` n'échoue
   // jamais vers l'appelant — le `catch` ci-dessous ne couvre donc que l'imprévu, pour
   // qu'une promesse rejetée ne remonte pas en avertissement Node.
+  // Lue une seule fois pour les cinq cartes, et NON attendue ici : chaque carte l'attend de
+  // son côté, ce qui préserve le rendu en flux.
+  const historiques = lireHistoriqueTous(sources.map((s) => s.id));
+
   for (const { promise } of jobs) {
     void promise
       .then((resultat) => enregistrerReleve(resultat))
@@ -155,7 +171,7 @@ export default async function Page() {
             key={source.id}
             fallback={<WidgetSkeleton name={source.name} featured={source.hero} />}
           >
-            <StreamedWidget promise={promise} index={index} featured={source.hero} />
+            <StreamedWidget historiques={historiques} promise={promise} index={index} featured={source.hero} />
           </Suspense>
         ))}
       </section>

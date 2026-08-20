@@ -1026,3 +1026,110 @@ a:focus-visible,
   color: var(--text-faint);
   max-width: 70ch;
 }
+
+/* ── LE HÉROS DE LA CARTE ────────────────────────────────────────────────────────────
+   La métrique que l'app publie en premier occupe le haut de la carte, avec sa courbe et
+   ce que la mémoire en dit. Le reste des métriques passe en grille secondaire, plus
+   dense : une carte qui traite ses six métriques à égalité n'a pas de hiérarchie, et
+   l'œil ne sait pas où se poser. */
+.heros {
+  display: grid;
+  gap: 0.25rem;
+}
+.heros__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+.heros__valeur {
+  font-weight: 700;
+  font-size: clamp(2rem, 1.4rem + 2.2vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La courbe s'étire sur toute la largeur : on lit une FORME, pas des valeurs — celles-ci
+   sont écrites juste en dessous. Hauteur fixe et modeste pour qu'elle accompagne le
+   chiffre sans lui disputer la vedette. */
+.heros__courbe {
+  height: 34px;
+  margin: 0.15rem 0 0.1rem;
+}
+.sparkline {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.sparkline__trace {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.heros__note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+}
+.heros__delta {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.heros__delta[data-dir="up"] {
+  color: var(--ok);
+}
+.heros__delta[data-dir="down"] {
+  color: var(--danger);
+}
+
+/* « Pas encore d'historique » n'est pas une erreur : c'est une mémoire encore jeune. Ton
+   discret, jamais alarmant — et surtout jamais remplacé par « 0 % », qui affirmerait une
+   stabilité qu'on n'a pas observée. */
+.heros__attente {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* « Inchangé depuis 14 j » est NEUTRE, délibérément. Beaucoup de métriques ne bougent
+   légitimement jamais ; les peindre en orange apprendrait à ignorer l'orange. Voir
+   l'en-tête de lib/carte.ts. */
+.heros__fige {
+  color: var(--text-faint);
+  border-left: 1px solid var(--border);
+  padding-left: 0.7rem;
+}
+
+/* Les alertes au-delà de la première sont COMPTÉES, jamais escamotées sans trace. */
+.widget__reste {
+  font-size: 0.76rem;
+  color: var(--text-soft);
+}
+
+.widget__cache {
+  color: var(--warn);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* La courbe se dessine à l'entrée de la carte. Purement décoratif : elle est déjà
+     complète et lisible sans animation, et `prefers-reduced-motion` la supprime. */
+  .sparkline__trace {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+    animation: trace 900ms var(--ease-out) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+  @keyframes trace {
+    from {
+      stroke-dashoffset: 1000;
+    }
+  }
+}

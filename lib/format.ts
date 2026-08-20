@@ -74,3 +74,20 @@ export function formatDateTime(iso: string): string {
     minute: "2-digit",
   }).format(date);
 }
+
+/**
+ * Une durée en français, courte et lisible : « 3 min », « 5 h », « 14 j ».
+ *
+ * Arrondie à l'unité la plus parlante, jamais plus précise qu'utile : « inchangé depuis
+ * 14 j 3 h 12 min » se lit moins vite que « 14 j » et n'apprend rien de plus. Sous la
+ * minute on écrit « moins d'une minute » plutôt que « 0 min », qui se lirait comme
+ * « instantané ».
+ */
+export function formatDuree(ms: number): string {
+  if (ms < 60_000) return "moins d'une minute";
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 60) return `${minutes} min`;
+  const heures = Math.round(ms / 3_600_000);
+  if (heures < 24) return `${heures} h`;
+  return `${Math.round(ms / 86_400_000)} j`;
+}

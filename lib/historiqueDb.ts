@@ -20,7 +20,7 @@
 // endroits où avaler une erreur est le bon choix, et il est nommé pour qu'on ne l'imite pas
 // ailleurs. Un `throw` ici ferait tomber le tableau de bord pour cause d'échec d'archivage.
 
-import { and, desc, gt, sql } from "drizzle-orm";
+import { and, desc, gt, inArray, sql } from "drizzle-orm";
 import { db, baseConfiguree } from "./db";
 import { releves } from "./db/schema";
 import type { Releve } from "./historique";
@@ -105,6 +105,45 @@ export async function lireHistorique(appId: string, limite = 400): Promise<Relev
     // l'écran, et c'est acceptable : les deux disent honnêtement « je ne sais pas ».
     console.error("[historique] lecture impossible", err);
     return [];
+  }
+}
+
+
+/**
+ * L'historique de PLUSIEURS apps, en UNE requête.
+ *
+ * Le tableau de bord affiche cinq cartes : cinq lectures séparées feraient cinq allers-retours
+ * là où un `IN` suffit. Le résultat est groupé par app, et une app sans relevé rend un tableau
+ * vide plutôt que d'être absente de la Map — l'appelant n'a ainsi pas à distinguer « pas
+ * d'historique » de « clé manquante ».
+ */
+export async function lireHistoriqueTous(
+  appIds: string[],
+  limiteParApp = 400,
+): Promise<Map<string, Releve[]>> {
+  const vide = new Map<string, Releve[]>(appIds.map((id) => [id, []]));
+  if (!baseConfiguree() || appIds.length === 0) return vide;
+
+  try {
+    const lignes = await db
+      .select()
+      .from(releves)
+      .where(
+        and(
+          inArray(releves.appId, appIds),
+          gt(releves.releveLe, sql`now() - make_interval(days => ${RETENTION_JOURS})`),
+        ),
+      )
+      .orderBy(desc(releves.releveLe))
+      .limit(limiteParApp * appIds.length);
+
+    for (const ligne of lignes) {
+      vide.get(ligne.appId)?.push(versReleve(ligne));
+    }
+    return vide;
+  } catch (err) {
+    console.error("[historique] lecture groupée impossible", err);
+    return vide;
   }
 }
 
