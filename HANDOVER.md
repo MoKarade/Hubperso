@@ -81,7 +81,7 @@ que Cloudflare protège pendant que l'app serait ouverte.
 
 ## Où lire la suite
 
-- `decisions/0001-*.md` — l'ADR, **avec son amendement** : deux prémisses de l'étape 3
+- `docs/adr/0001-*.md` — l'ADR, **avec son amendement** : deux prémisses de l'étape 3
   étaient fausses, et le coffre à jetons a été écrit puis retiré avant d'être livré.
 - `docs/ACCES-PAR-APP.md` — le modèle d'accès par app.
 - `docs/CONNEXION-UNIQUE.md` — le cookie partagé entre les apps.

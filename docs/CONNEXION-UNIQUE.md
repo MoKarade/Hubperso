@@ -2,7 +2,7 @@
 
 > ⚠️ **Ce document décrit l'état du 13/08/2026.** Ce qui concerne le **cookie de session
 > partagé** reste exact et en production — c'est la brique 1 de l'
-> [ADR 0001](../decisions/0001-centraliser-l-authentification-dans-hubperso.md).
+> [ADR 0001](./adr/0001-centraliser-l-authentification-dans-hubperso.md).
 >
 > Ce qui concerne le **client OAuth partagé et les portées par app** ne s'est pas fait, et
 > ne se fera pas. La cible intermédiaire (« un client unique + un prêt de jetons depuis
