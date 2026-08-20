@@ -4,6 +4,8 @@ import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
 import { enregistrerReleve, lireHistoriqueTous } from "@/lib/historiqueDb";
+import { attentions } from "@/lib/attention";
+import { BandeauAttention } from "@/components/BandeauAttention";
 import type { Releve } from "@/lib/historique";
 import { aggregateUsage } from "@/lib/usage";
 import { formatDateTime } from "@/lib/format";
@@ -78,6 +80,16 @@ async function OnlineCount({ promises }: { promises: Promise<SummaryResult>[] })
       {online}/{results.length} en ligne · rafraîchi {formatDateTime(new Date().toISOString())}
     </>
   );
+}
+
+/**
+ * Le bandeau « attention » : agrégat, donc il attend toutes les réponses — et il est streamé
+ * pour ça. Il ne rend RIEN quand tout va bien : un bandeau permanent qui annonce « 0 problème »
+ * cesse d'être vu en trois jours, et le jour où il passe à « 1 » l'œil ne s'y arrête plus.
+ */
+async function StreamedAttention({ promises }: { promises: Promise<SummaryResult>[] }) {
+  const results = await Promise.all(promises);
+  return <BandeauAttention liste={attentions(results)} />;
 }
 
 /** Carte des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
@@ -155,6 +167,12 @@ export default async function Page() {
           <SignOutButton />
         </div>
       </header>
+
+      {/* Rien à afficher tant que les réponses n'arrivent pas : pas de squelette non plus,
+          puisque le bandeau est souvent vide et qu'un squelette promettrait du contenu. */}
+      <Suspense fallback={null}>
+        <StreamedAttention promises={promises} />
+      </Suspense>
 
       <Suspense fallback={<div className="costs costs--loading" aria-busy="true" />}>
         <StreamedCosts promises={promises} />
