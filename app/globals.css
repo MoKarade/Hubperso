@@ -1321,3 +1321,77 @@ a:focus-visible,
   font-size: 0.76rem;
   color: var(--text-faint);
 }
+
+/* ── PALETTE DE COMMANDES (Ctrl+K) ───────────────────────────────────────────────────
+   Volontairement sobre : elle s'ouvre, on tape trois lettres, elle disparaît. Tout ce qui
+   attire l'œil plus d'une seconde y est de trop. */
+.palette__fond {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(3rem, 12vh, 9rem) 1rem 1rem;
+  background: oklch(0% 0 0 / 0.38);
+  backdrop-filter: blur(3px);
+}
+.palette {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  overflow: hidden;
+}
+.palette__champ {
+  width: 100%;
+  padding: 1rem 1.15rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+.palette__liste {
+  list-style: none;
+  padding: 0.35rem;
+  margin: 0;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+}
+.palette__ligne {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+/* Le surlignage suit le CLAVIER autant que la souris : `onMouseEnter` déplace le curseur,
+   donc les deux ne se contredisent jamais — sans ça, la souris posée sur la liste laisserait
+   deux lignes surlignées et Entrée ouvrirait l'autre. */
+.palette__ligne[data-actif] {
+  background: color-mix(in oklch, var(--accent, var(--info)) 14%, transparent);
+}
+.palette__libelle {
+  font-weight: 600;
+}
+.palette__contexte {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette__externe {
+  margin-left: auto;
+  color: var(--text-faint);
+}
+.palette__vide {
+  padding: 1.1rem 1.15rem;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
