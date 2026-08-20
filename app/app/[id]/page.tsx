@@ -77,6 +77,9 @@ export default async function DetailAppPage({
             {result.state === "unreachable" && `App injoignable — ${result.detail}.`}
             {result.state === "invalid" &&
               `Réponse non conforme au contrat — ${result.detail}.`}
+            {result.state === "contract-too-new" &&
+              `L’app publie la version ${result.published} du contrat ; ce hub lit jusqu’à la ${result.supported}. ` +
+                "C’est le hub qui est à re-pinner — l’app va bien."}
           </p>
           <p className="detail__endpoint">
             Endpoint interrogé : <code>{source.summaryUrl}</code>

@@ -95,6 +95,7 @@ npm run test       # vitest
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint .
 npm run build      # build de production
+npm run constellation  # interroge les 5 apps et juge la cohérence (jetons requis)
 ```
 
 ## 5. Vérifications avant commit
@@ -107,8 +108,9 @@ npm run typecheck && npm run test && npm run lint && npm run build
 `ignores` de `eslint.config.mjs` est indispensable — l'ESLint CLI n'ignore pas
 `node_modules`/`.next` implicitement, contrairement à `next lint`.)*
 
-La **CI** (`.github/workflows/ci.yml`) rejoue exactement ce gate, plus un job `audit`
-séparé (`npm audit --omit=dev`, aussi en hebdomadaire). Séparé volontairement : un avis
+La **CI** (`.github/workflows/ci.yml`) rejoue exactement ce gate, plus deux workflows
+séparés — `constellation.yml` (quotidien, cf. §7) et un job `audit` (`npm audit --omit=dev`,
+aussi en hebdomadaire). Séparés volontairement : un avis
 de sécurité paraît sans qu'une ligne n'ait changé — mêlé au gate, il peindrait le dépôt
 en rouge sans rapport avec le code, et on prendrait l'habitude du rouge.
 
@@ -149,6 +151,25 @@ les clés inconnues).
 principe de la §1. Quand une app publie `mois` alors que les autres publient `total`, elle
 se retrouve seule dans sa colonne et le hub ne peut afficher aucun montant unique. C'est ce
 qui a fait basculer DriveAI vers le cumul le 20/08/2026.
+
+**« Contrat trop récent » n'est PAS « réponse invalide ».** Depuis `hub-contract` v1.2.0,
+`validateSummary` sonde la version avant la structure et lève un `ContractTooNewError` distinct
+quand l'app publie une version que ce build ne lit pas. `fetchSummary` en fait l'état
+`contract-too-new` (ton `warn`, pas `danger`) : **l'app va bien, c'est le hub qui est à
+re-pinner.** Confondus jusque-là, le widget affichait « réponse invalide » — un diagnostic qui
+accuse l'app et envoie corriger le mauvais dépôt. Cet état n'est **jamais** masqué par le cache
+de résilience : le masquer 30 min cacherait exactement ce qu'on vient de rendre visible.
+
+**Ce que le hub croit d'une app et ce qu'elle publie d'elle-même ne sont vérifiés nulle part
+— sauf par `npm run constellation`.** `lib/sources.ts` déclare `id: "driveai"`, l'app publie son
+`app.id` de son côté, et la correspondance est tenue à la main. Une divergence ne se voit pas à
+l'écran : le widget s'affiche, avec le bon contenu, sous le bon nom. `lib/constellation.ts`
+(PUR, testé sans réseau) juge identités, versions et comparabilité des coûts ; le script et le
+workflow quotidien ne sont que le transport. C'est ce contrôle qui aurait attrapé le décalage
+« mois vs total » de DriveAI avant qu'un montant faux ne s'affiche.
+
+⚠️ Le vérificateur **échoue si aucun jeton n'est présent** plutôt que de rendre 0 : un run qui
+ne vérifie rien ne doit pas ressembler à un run vert.
 
 ## 8. Documentation (où vit quoi)
 
