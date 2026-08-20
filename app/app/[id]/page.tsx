@@ -18,10 +18,15 @@ import { notFound, redirect } from "next/navigation";
 import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
-import { fetchSummary } from "@/lib/fetchSummary";
+import { fetchAllSummaries, fetchSummary } from "@/lib/fetchSummary";
+import { lireHistorique } from "@/lib/historiqueDb";
+import { serieMetrique, variation, inchangeDepuisMs } from "@/lib/historique";
+import { FENETRE_VARIATION_MS, SEUIL_INCHANGE_MS } from "@/lib/carte";
+import { verifierConstellation } from "@/lib/constellation";
+import { Sparkline } from "@/components/Sparkline";
 import { statusBadge, severityTone } from "@/lib/status";
 import { quotaRatio, toCad } from "@/lib/usage";
-import { formatCad, formatDateTime, formatMetricValue, formatTrend } from "@/lib/format";
+import { formatCad, formatDateTime, formatDuree, formatMetricValue, formatTrend } from "@/lib/format";
 import { safeHttpUrl } from "@/lib/url";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionList } from "@/components/ActionList";
@@ -42,9 +47,20 @@ export default async function DetailAppPage({
   // 404 plutôt qu'une page vide : un identifiant inconnu est une URL fausse, pas un état.
   if (!source) notFound();
 
-  const result = await fetchSummary(source);
+  const maintenantMs = Date.now();
+  // Le résumé de CETTE app et sa mémoire, en parallèle : l'un n'a pas à attendre l'autre.
+  const [result, historique] = await Promise.all([
+    fetchSummary(source),
+    lireHistorique(source.id),
+  ]);
   const badge = statusBadge(result);
   const summary = result.state === "ok" ? result.summary : null;
+
+  // La cohérence se juge sur l'ENSEMBLE (une période de coût n'est incomparable que par
+  // rapport aux autres apps), puis on ne garde que ce qui concerne celle-ci.
+  const incoherences = verifierConstellation(await fetchAllSummaries(getSources())).filter(
+    (inc) => inc.source === source.id,
+  );
   const nom = summary?.app.name ?? source.name;
   const accent = summary?.app.color;
   const lienApp = summary ? safeHttpUrl(summary.app.url) : null;
@@ -105,27 +121,56 @@ export default async function DetailAppPage({
             {summary.metrics.length === 0 ? (
               <p className="detail__vide">Cette app ne publie aucune métrique.</p>
             ) : (
-              <div className="detail__metriques">
-                {summary.metrics.map((m, i) => (
-                  <div key={`${m.label}-${i}`} className="metric">
-                    <span className="metric__label">{m.label}</span>
-                    <span
-                      className="metric__value"
-                      data-tone={m.severity ? severityTone(m.severity) : undefined}
-                    >
-                      {formatMetricValue(m)}
-                    </span>
-                    {m.trend !== undefined && (
-                      <span
-                        className="metric__trend"
-                        data-dir={m.trend >= 0 ? "up" : "down"}
-                      >
-                        {formatTrend(m.trend)}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <ul className="detail__metriques">
+                {summary.metrics.map((metrique, i) => {
+                  // L'historique de CETTE métrique. Vide = mémoire encore jeune, jamais une
+                  // courbe inventée : la ligne le dit en toutes lettres.
+                  const serie = serieMetrique(historique, metrique.label);
+                  const evolution = variation(
+                    historique,
+                    metrique.label,
+                    FENETRE_VARIATION_MS,
+                    maintenantMs,
+                  );
+                  const fige = inchangeDepuisMs(historique, metrique.label, maintenantMs);
+                  return (
+                    <li className="detail__metrique" key={`${metrique.label}-${i}`}>
+                      <div className="detail__metrique-tete">
+                        <span className="metric__label">{metrique.label}</span>
+                        <span
+                          className="metric__value"
+                          data-tone={metrique.severity ? severityTone(metrique.severity) : undefined}
+                        >
+                          {formatMetricValue(metrique)}
+                        </span>
+                        {metrique.trend !== undefined && (
+                          <span className="metric__trend" data-dir={metrique.trend >= 0 ? "up" : "down"}>
+                            {formatTrend(metrique.trend)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="detail__metrique-courbe">
+                        <Sparkline points={serie} label={metrique.label} />
+                      </div>
+                      <p className="detail__metrique-note">
+                        {evolution ? (
+                          <span data-dir={evolution.deltaAbsolu >= 0 ? "up" : "down"}>
+                            {evolution.deltaRelatif === null
+                              ? `${evolution.deltaAbsolu >= 0 ? "+" : ""}${evolution.deltaAbsolu}`
+                              : formatTrend(evolution.deltaRelatif * 100)}{" "}
+                            sur {formatDuree(FENETRE_VARIATION_MS)}
+                          </span>
+                        ) : (
+                          <span className="detail__attente">pas encore d’historique</span>
+                        )}
+                        {fige !== null && fige >= SEUIL_INCHANGE_MS && (
+                          <span className="detail__fige">inchangé depuis {formatDuree(fige)}</span>
+                        )}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </section>
 
@@ -221,6 +266,28 @@ export default async function DetailAppPage({
                   );
                 })}
               </>
+            )}
+          </section>
+
+          <section className="detail__bloc" aria-label="Cohérence">
+            <h2 className="detail__titre">Cohérence</h2>
+            {/* `verifierConstellation` existait depuis le 20/08 et n'était visible NULLE PART :
+                seul un workflow quotidien le lisait, dans des journaux que personne n'ouvre.
+                Ce que le hub CROIT d'une app (son `id` dans sources.ts) et ce qu'elle publie
+                d'elle-même n'étaient donc rapprochés qu'en coulisses. Une divergence ne se voit
+                pas à l'écran : le widget s'affiche, avec le bon contenu, sous le bon nom. */}
+            {incoherences.length === 0 ? (
+              <p className="detail__vide">
+                Ce que le hub déclare et ce que l’app publie concordent.
+              </p>
+            ) : (
+              <ul className="detail__incoherences">
+                {incoherences.map((inc, i) => (
+                  <li key={`${inc.genre}-${i}`} data-gravite={inc.gravite}>
+                    <span className="detail__genre">{inc.genre}</span> {inc.detail}
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 

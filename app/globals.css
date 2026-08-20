@@ -1238,3 +1238,86 @@ a:focus-visible,
     gap: 0.25rem;
   }
 }
+
+/* ── PAGE DE DÉTAIL : l'historique par métrique, et la cohérence ─────────────────────
+   La page listait des valeurs sans jamais dire d'où elles venaient ni où elles allaient.
+   Chaque métrique porte maintenant sa courbe et son écart ; « pas encore d'historique »
+   est écrit en clair plutôt que remplacé par un trait plat. */
+.detail__metriques {
+  display: grid;
+  gap: 0.9rem;
+  list-style: none;
+  padding: 0;
+}
+.detail__metrique {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.detail__metrique-tete {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+}
+.detail__metrique-tete .metric__label {
+  flex: 1 1 auto;
+}
+.detail__metrique-courbe {
+  height: 30px;
+}
+.detail__metrique-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+.detail__metrique-note [data-dir="up"] {
+  color: var(--ok);
+  font-weight: 600;
+}
+.detail__metrique-note [data-dir="down"] {
+  color: var(--danger);
+  font-weight: 600;
+}
+.detail__attente {
+  color: var(--text-faint);
+  font-style: italic;
+}
+/* Neutre, comme sur la carte : montrer le fait sans le peindre en alarme. Voir lib/carte.ts. */
+.detail__fige {
+  color: var(--text-faint);
+  border-left: 1px solid var(--border);
+  padding-left: 0.7rem;
+}
+
+.detail__incoherences {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+  padding: 0;
+  font-size: 0.86rem;
+}
+.detail__incoherences li {
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  background: var(--surface);
+}
+.detail__incoherences li[data-gravite="bloquant"] {
+  border-left-color: var(--danger);
+}
+.detail__incoherences li[data-gravite="avertissement"] {
+  border-left-color: var(--warn);
+}
+.detail__genre {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.76rem;
+  color: var(--text-faint);
+}
