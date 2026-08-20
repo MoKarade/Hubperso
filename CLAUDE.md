@@ -5,7 +5,12 @@ Dashboard central du hub perso. Il **consomme** le contrat
 pas. Rôle unique : fetch server-side des `GET .../hub/summary`, validation, rendu de
 widgets 100 % génériques.
 
-## Principes non négociables
+**Stack** : Next.js 15 (App Router, Server Components) · Neon + Drizzle · Auth.js v5 · Vitest.
+**Destination** : `hubperso.com`.
+
+> 📐 Structure de ce fichier et de `docs/` : [convention commune aux huit dépôts](https://github.com/MoKarade/claude-config/blob/main/conventions/STRUCTURE-DEPOT.md).
+
+## 1. Principes non négociables
 
 - **Générique par le contrat.** Le hub ne connaît AUCUNE app en particulier :
   il rend ce que le summary contient (metrics/alerts/actions, `app.color`, `status`).
@@ -59,26 +64,40 @@ widgets 100 % génériques.
   toute future agrégation (devises, fenêtres de temps) — sommer d'abord ce qui est comparable,
   afficher l'unité, jamais un chiffre unique qui mélange.
 
-## Ajouter une app
+## 2. Conventions de code
 
-1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
-   `defaultUrl`, `urlEnv`, `tokenEnv`).
-2. La variable de jeton correspondante dans l'environnement (jamais en dur).
+- **TypeScript strict**, pas de `any` silencieux.
+- **Erreurs honnêtes** : `fetchSummary` distingue chaque mode d'échec et n'en avale aucun.
+  Un widget « injoignable » et un widget « invalide » ne disent pas la même chose.
+- **Fonctions pures d'un côté, I/O de l'autre.** `aggregateUsage`, `safeHttpUrl`,
+  `isPublicPath` se testent sans base, sans réseau et sans horloge — la date se passe en
+  paramètre (cf. `peutSeConnecter(email, env, maintenantMs, lecture)`).
+- **Design : direction bento assumée** (voir `app/globals.css`), pas de template générique.
+  Ne pas imposer le dark mode : les deux thèmes suivent `prefers-color-scheme`.
 
-C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît
-dans `/administration` — `APPS_DISPONIBLES` (`lib/administration.ts`) dérive de `SOURCE_DEFS`
-plutôt que d'être une seconde liste écrite à la main. Une liste séparée aurait fini par
-diverger, et une app absente de la page d'administration serait une app dont personne ne
-peut recevoir l'accès.
+## 3. Workflow git
 
-## Évolution du contrat
+- Branches `claude/<slug>` pour le travail automatisé, `feature/<slug>` pour Marc.
+- Commits en français, préfixés (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`).
+- **PR en draft** pour itérer.
+- ❌ Jamais `--force` sur `main`. ❌ Jamais `--no-verify`.
+- ⚠️ **`git fetch origin main` AVANT de committer.** Plusieurs sessions travaillent en
+  parallèle sur l'écosystème ; le 20/08/2026, deux d'entre elles ont produit la même
+  correction de CI, mot pour mot, dans la même heure — et une branche partie d'un `main`
+  périmé est entrée en conflit sur `.github/workflows/ci.yml`, ce qui a **empêché GitHub de
+  créer le moindre run CI** pendant que Vercel continuait de déployer. Rien n'était rouge.
 
-Quand `hub-contract` publie un nouveau tag, re-pinner ici
-(`npm install github:MoKarade/hub-contract#vX.Y.Z`) seulement si on veut consommer un
-nouveau champ. Un champ additif optionnel est ignoré sans re-pin (les schémas strippent
-les clés inconnues).
+## 4. Commandes utiles
 
-## Vérifications avant commit
+```bash
+npm run dev        # http://localhost:3000
+npm run test       # vitest
+npm run typecheck  # tsc --noEmit
+npm run lint       # eslint .
+npm run build      # build de production
+```
+
+## 5. Vérifications avant commit
 
 ```bash
 npm run typecheck && npm run test && npm run lint && npm run build
@@ -93,7 +112,11 @@ séparé (`npm audit --omit=dev`, aussi en hebdomadaire). Séparé volontairemen
 de sécurité paraît sans qu'une ligne n'ait changé — mêlé au gate, il peindrait le dépôt
 en rouge sans rapport avec le code, et on prendrait l'habitude du rouge.
 
-## Après un merge : vérifier le DÉPLOIEMENT, pas seulement la CI
+⚠️ **Borner les jobs CI** (`timeout-minutes`). Sans plafond, un job figé tourne SIX HEURES
+avant d'échouer — vécu sur DriveAI le 19/08/2026, où l'installation d'un navigateur
+Playwright s'est bloquée 2 h 15 pendant que la PR restait « en attente » sans rien de rouge.
+
+## 6. Après un merge : vérifier le DÉPLOIEMENT, pas seulement la CI
 
 **CI verte ne veut pas dire « en ligne ».** Ce sont deux systèmes indépendants : la CI
 juge le code, Vercel construit et sert. Un merge peut passer le gate et ne jamais être
@@ -112,10 +135,73 @@ créé et qu'il est `READY`, puis **contrôler l'effet sur la réponse HTTP rée
 en-tête se lit dans la réponse, il ne se déduit pas du fichier source. Rattrapage :
 tableau de bord Vercel → Deployments → « … » → Redeploy.
 
-## Style (hérité du CLAUDE.md global de Marc)
+Corollaire : un merge qui ne change QUE de la doc n'a pas de déploiement à vérifier. Le dire
+plutôt que de laisser croire qu'on a vérifié.
+
+## 7. Le contrat, et ce qu'on en consomme
+
+Quand `hub-contract` publie un nouveau tag, re-pinner ici
+(`npm install github:MoKarade/hub-contract#vX.Y.Z`) seulement si on veut consommer un
+nouveau champ. Un champ additif optionnel est ignoré sans re-pin (les schémas strippent
+les clés inconnues).
+
+**Le hub somme les coûts PAR PÉRIODE et n'expose aucun total global** — voir le dernier
+principe de la §1. Quand une app publie `mois` alors que les autres publient `total`, elle
+se retrouve seule dans sa colonne et le hub ne peut afficher aucun montant unique. C'est ce
+qui a fait basculer DriveAI vers le cumul le 20/08/2026.
+
+## 8. Documentation (où vit quoi)
+
+| Fichier | Contenu |
+|---|---|
+| `README.md` | À quoi sert le hub, pour un lecteur extérieur. |
+| `CLAUDE.md` | Ce fichier. Se charge à **chaque session** → il reste **court**. |
+| `HANDOVER.md` | L'état RÉEL de l'auth et des accès, et comment le vérifier. À lire en premier. |
+| `BACKLOG.md` | Ce qui est décidé mais pas fait. |
+| `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement**. |
+| `docs/ACCES-PAR-APP.md` | Le modèle d'accès par app, en détail. |
+| `docs/CONNEXION-UNIQUE.md` | Le cookie de session partagé entre les apps. |
+
+⚠️ **Doc périmée = pire que pas de doc.** Un audit du 19/08/2026 a trouvé la même règle
+d'accès écrite dans quatre fichiers de ce dépôt, avec **trois états de vérité différents** :
+« une seule adresse admise » survivait dans le README et le HANDOVER alors que le code avait
+deux étages depuis cinq jours. Mettre à jour la doc touchée dans la MÊME PR que le code.
+
+⚠️ **Un chiffre au présent rote.** Le HANDOVER annonçait « 42 tests » quand il y en avait
+170. Soit on date le chiffre, soit on renvoie à la source qui fait foi.
+
+## 9. Leçons apprises
+
+**1. Le test « je me connecte, ça marche » ne prouve presque rien.** Il n'exerce que le
+chemin du PROPRIÉTAIRE, celui qui fonctionne même base en panne — puisqu'il est vérifié
+sans réseau, par construction. Ce qui se vérifie vraiment est l'invitation : accorder un
+accès dans `/administration` et constater que la personne entre dans la minute, puis le
+retirer et constater qu'elle ressort. La procédure est dans `HANDOVER.md`.
+
+**2. Une page ajoutée sans garde ne se découvre pas en production.** Elle s'affiche, tout
+simplement. C'est pourquoi `tests/gardePages.test.ts` énumère les fichiers réels de `app/`
+et échoue si l'un d'eux n'appelle pas `exigerAccesHub()` — deux exceptions nommées, `/login`
+et `/sans-acces`. Ne pas supprimer ce test pour faire passer une page.
+
+**3. Une exception dans le matcher du middleware et une exception dans `isPublicPath` ne
+sont pas la même chose.** `/api/acces` traverse le garde par `isPublicPath`, le matcher
+reste inchangé. La distinction compte : l'endpoint n'est pas ouvert, il est authentifié
+autrement — par le `HUB_TOKEN` de l'app appelante, parce qu'un serveur qui appelle un
+serveur n'a pas de cookie de session à présenter.
+
+## 10. Style (hérité du CLAUDE.md global de Marc)
 
 - Réponses, commits et docs **en français** (`feat:`, `fix:`, `docs:`, …).
-- TypeScript strict, pas de `any` silencieux.
-- Erreurs honnêtes : `fetchSummary` distingue chaque mode d'échec, ne les avale pas.
-- Design : direction **bento** assumée (voir `app/globals.css`), pas de template
-  générique. Ne pas imposer le dark mode : les deux thèmes suivent `prefers-color-scheme`.
+- Ton direct, technique mais clair. Pas de flatterie.
+
+## 11. Ajouter une app
+
+1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
+   `defaultUrl`, `urlEnv`, `tokenEnv`).
+2. La variable de jeton correspondante dans l'environnement (jamais en dur).
+
+C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît
+dans `/administration` — `APPS_DISPONIBLES` (`lib/administration.ts`) dérive de `SOURCE_DEFS`
+plutôt que d'être une seconde liste écrite à la main. Une liste séparée aurait fini par
+diverger, et une app absente de la page d'administration serait une app dont personne ne
+peut recevoir l'accès.
