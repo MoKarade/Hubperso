@@ -8,6 +8,13 @@
       "when": 1786737498906,
       "tag": "0000_lyrical_hiroim",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787258449625,
+      "tag": "0001_orange_oracle",
+      "breakpoints": true
     }
   ]
 }

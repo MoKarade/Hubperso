@@ -3,6 +3,7 @@ import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
+import { enregistrerReleve } from "@/lib/historiqueDb";
 import { aggregateUsage } from "@/lib/usage";
 import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
@@ -107,6 +108,19 @@ export default async function Page() {
   // Appariées à leur source pour qu'aucun index ne puisse se désynchroniser.
   const jobs = sources.map((source) => ({ source, promise: fetchSummary(source) }));
   const promises = jobs.map((j) => j.promise);
+
+  // ── ARCHIVAGE : effet de bord, jamais un préalable à l'affichage ────────────────────
+  //
+  // Chaque résultat est proposé à la mémoire du hub (`lib/historiqueDb.ts`), qui n'écrit
+  // qu'une fois par app et par quart d'heure. Volontairement SANS `await` : le rendu ne
+  // doit pas attendre une écriture qui ne sert qu'à demain. `enregistrerReleve` n'échoue
+  // jamais vers l'appelant — le `catch` ci-dessous ne couvre donc que l'imprévu, pour
+  // qu'une promesse rejetée ne remonte pas en avertissement Node.
+  for (const { promise } of jobs) {
+    void promise
+      .then((resultat) => enregistrerReleve(resultat))
+      .catch((err) => console.error("[historique] archivage ignoré", err));
+  }
 
   return (
     <main className="page">
