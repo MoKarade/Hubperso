@@ -97,6 +97,23 @@ export async function fetchSummary(
   return live;
 }
 
+/**
+ * Un fetch qui COURT-CIRCUITE le cache de résilience.
+ *
+ * `fetchSummary` peut resservir un résumé vieux de 30 minutes : c'est exactement ce qu'il
+ * faut pour AFFICHER, et exactement ce qu'il ne faut pas pour AUTORISER. Une action que
+ * l'app a retirée resterait déclenchable une demi-heure après sa disparition, sur la foi
+ * d'un résumé périmé. Une décision d'autorisation se prend sur ce que l'app dit
+ * MAINTENANT — cf. `lib/declencher.ts`, verrou 2.
+ */
+export function fetchSummaryLive(
+  source: HubSource,
+  fetchImpl: typeof fetch = fetch,
+): Promise<SummaryResult> {
+  if (!source.token) return Promise.resolve({ state: "unconfigured", source });
+  return fetchLive(source, fetchImpl);
+}
+
 /** Un seul aller-retour réseau + validation contrat. Sans cache : la résilience est au-dessus. */
 async function fetchLive(source: HubSource, fetchImpl: typeof fetch): Promise<SummaryResult> {
   let response: Response;

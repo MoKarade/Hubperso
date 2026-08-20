@@ -24,6 +24,7 @@ import { quotaRatio, toCad } from "@/lib/usage";
 import { formatCad, formatDateTime, formatMetricValue, formatTrend } from "@/lib/format";
 import { safeHttpUrl } from "@/lib/url";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ActionList } from "@/components/ActionList";
 
 export const dynamic = "force-dynamic";
 
@@ -167,23 +168,11 @@ export default async function DetailAppPage({
           {summary.actions.length > 0 && (
             <section className="detail__bloc" aria-label="Actions">
               <h2 className="detail__titre">Actions ({summary.actions.length}/6)</h2>
-              <div className="actions">
-                {summary.actions.map((a, i) => {
-                  const href = safeHttpUrl(a.href);
-                  if (!href) return null;
-                  return (
-                    <a
-                      key={`${a.label}-${i}`}
-                      className="action"
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      {a.label}
-                    </a>
-                  );
-                })}
-              </div>
+              {/* Passe par ActionList plutôt que de refaire le rendu à la main : cette page
+                  rendait TOUTE action en lien, `trigger` compris — donc un endpoint fait
+                  pour un POST ouvert en GET, qui ne déclenche rien tout en ayant l'air de
+                  marcher. Deux rendus à tenir en parallèle finissent toujours par diverger. */}
+              <ActionList actions={summary.actions} appId={source.id} />
             </section>
           )}
 

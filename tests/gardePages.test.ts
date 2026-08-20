@@ -27,18 +27,21 @@ const EXCEPTIONS: Record<string, string> = {
     "elle s'adresse précisément à qui est connecté SANS accès au hub — l'y renvoyer serait une boucle",
 };
 
-function pagesDeApp(dossier: string): string[] {
-  const trouvees: string[] = [];
+function fichiersDeApp(dossier: string, nom: string): string[] {
+  const trouves: string[] = [];
   for (const entree of readdirSync(dossier)) {
     const chemin = join(dossier, entree);
     if (statSync(chemin).isDirectory()) {
-      trouvees.push(...pagesDeApp(chemin));
-    } else if (entree === "page.tsx") {
-      trouvees.push(chemin);
+      trouves.push(...fichiersDeApp(chemin, nom));
+    } else if (entree === nom) {
+      trouves.push(chemin);
     }
   }
-  return trouvees;
+  return trouves;
 }
+
+const pagesDeApp = (dossier: string) => fichiersDeApp(dossier, "page.tsx");
+const actionsDeApp = (dossier: string) => fichiersDeApp(dossier, "actions.ts");
 
 describe("toute page du hub est gardée", () => {
   const pages = pagesDeApp(RACINE_APP).map((p) => ({
@@ -83,6 +86,43 @@ describe("toute page du hub est gardée", () => {
     const relatifs = pages.map((p) => p.relatif);
     for (const exception of Object.keys(EXCEPTIONS)) {
       expect(relatifs, `exception morte : ${exception}`).toContain(exception);
+    }
+  });
+});
+
+// ── LES SERVER ACTIONS SONT DES POINTS D'ENTRÉE, PAS DES DÉTAILS DE PAGE ────────────
+//
+// Le bloc ci-dessus n'énumère que les `page.tsx`. Or un fichier `"use server"` expose des
+// fonctions appelables en POST **sans passer par la page qui affiche le bouton** : cacher
+// le bouton ne garde rien. Le trou est plus discret que celui d'une page non gardée —
+// il n'y a même pas d'URL à visiter pour s'en apercevoir.
+//
+// On n'exige pas `exigerAccesHub()` ici : cette fonction `redirect()`, ce qui a du sens
+// pour une page et pas pour une action, qui doit RENDRE une erreur. On exige donc la
+// preuve minimale qu'une décision d'autorisation est prise : lire la session ET la
+// confronter au modèle d'accès.
+describe("toute Server Action revérifie l'autorisation", () => {
+  const actions = actionsDeApp(RACINE_APP).map((p) => ({
+    relatif: relative(RACINE_APP, p).replace(/\\/g, "/"),
+    source: readFileSync(p, "utf8"),
+  }));
+
+  it("trouve bien les fichiers d'actions (sinon ce test ne prouverait rien)", () => {
+    expect(actions.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("chacun lit la session et interroge le modèle d'accès", () => {
+    for (const action of actions) {
+      expect(action.source, `${action.relatif} ne déclare pas "use server"`).toContain(
+        '"use server"',
+      );
+      expect(action.source, `${action.relatif} n'appelle pas auth()`).toContain("auth()");
+      const decide =
+        action.source.includes("aAcces(") || action.source.includes("estProprietaire(");
+      expect(
+        decide,
+        `${action.relatif} lit la session mais n'en tire aucune décision (ni aAcces ni estProprietaire)`,
+      ).toBe(true);
     }
   });
 });
