@@ -442,6 +442,36 @@ a:focus-visible,
   cursor: not-allowed;
 }
 
+/* Une action `trigger` MUTE l'app : elle se distingue d'un lien, qui ne fait qu'ouvrir.
+   Le bouton vit dans un <form> ; sans ce `contents`, la flexbox de `.actions` verrait le
+   formulaire au lieu du bouton et l'alignement partirait. */
+.action-trigger {
+  display: contents;
+}
+.action--trigger {
+  cursor: pointer;
+  font-family: inherit;
+  border-style: dashed;
+}
+.action--trigger:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+/* Le retour occupe toute la largeur sous les actions : un message d'erreur qui doit se
+   lire n'a pas à se battre pour la place avec les boutons. */
+.action-trigger__retour {
+  flex-basis: 100%;
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.action-trigger__retour--succes {
+  color: var(--text-dim, var(--text));
+}
+.action-trigger__retour--erreur {
+  color: var(--danger, #b91c1c);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .widget,
   .page__head,

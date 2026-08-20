@@ -16,6 +16,14 @@ l'état réel avant de coder.
   alignées — la note ne s'affiche donc plus. Elle reste juste et utile le jour où une app
   repassera à `mois`, mais rien ne le teste en conditions réelles.
 
+- **[H-03] Aucune app ne publie encore d'action `trigger`.** Le hub sait en exécuter une
+  depuis le 20/08 (ADR 0002) : verrous SSRF posés, testés, et le bouton apparaît tout seul
+  dès qu'une app en publie. Côté hub il n'y a donc **rien à faire de plus** — l'étape
+  suivante est chez une app, et c'est un choix délibéré, app par app. Le candidat le plus
+  évident est DriveAI (relancer une campagne en pause), justement parce qu'une campagne
+  arrêtée au frein est passée inaperçue deux semaines. À ratifier avec Marc avant de livrer
+  la première : c'est le moment où le hub cesse d'être en lecture seule pour de bon.
+
 ## Fait
 
 - ~~Accès par app (base Neon, `POST /api/acces`, `/administration`, `exigerAccesHub`)~~ —

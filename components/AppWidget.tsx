@@ -13,7 +13,7 @@ import { AlertList } from "./AlertList";
 import { AlertBanner } from "./AlertBanner";
 import { ActionList } from "./ActionList";
 
-function OkBody({ summary }: { summary: HubSummary }) {
+function OkBody({ summary, appId }: { summary: HubSummary; appId: string }) {
   const empty =
     summary.metrics.length === 0 &&
     summary.alerts.length === 0 &&
@@ -26,7 +26,7 @@ function OkBody({ summary }: { summary: HubSummary }) {
       {bandeau && <AlertBanner alert={bandeau} />}
       <MetricList metrics={summary.metrics} />
       <AlertList alerts={reste} />
-      <ActionList actions={summary.actions} />
+      <ActionList actions={summary.actions} appId={appId} />
       {empty && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
   );
@@ -118,7 +118,7 @@ export function AppWidget({
       </Link>
       <div className="widget__body">
         {result.state === "ok" ? (
-          <OkBody summary={result.summary} />
+          <OkBody summary={result.summary} appId={result.source.id} />
         ) : (
           <ProblemBody result={result} />
         )}

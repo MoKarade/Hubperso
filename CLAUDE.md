@@ -50,6 +50,19 @@ widgets 100 % génériques.
   d'une autre.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via
   `safeHttpUrl` (http/https uniquement). Ne jamais rendre un href brut.
+- **Un `href` que le HUB va appeler se juge bien plus sévèrement qu'un href cliquable.**
+  Pour une action `kind: "trigger"` (ADR 0002, `lib/declencher.ts`), `safeHttpUrl` ne suffit
+  pas : c'est le serveur du hub qui part, depuis son réseau, avec le jeton de l'app. Quatre
+  verrous, et il faut les quatre — (1) http(s) ; (2) l'action doit figurer dans un résumé
+  **refetché live**, jamais tiré du cache de résilience (un cache sert à AFFICHER, pas à
+  AUTORISER) ; (3) **même origine que le `summaryUrl`** ; (4) **aucune redirection suivie**.
+  Le verrou 3 est le seul qui tienne quand l'app est compromise — sans lui, une app qui publie
+  `http://169.254.169.254/…` fait du hub un relais SSRF vers ce qu'elle ne peut pas atteindre
+  elle-même. Le verrou 4 est ce qui empêche de contourner le 3 par un simple `302`.
+- **Une Server Action est un point d'entrée POST, pas un détail de page.** Elle est
+  atteignable sans passer par la page qui affiche le bouton : cacher le bouton ne garde rien.
+  Chacune revérifie la session ET le modèle d'accès côté serveur, et `tests/gardePages.test.ts`
+  énumère désormais les `actions.ts` en plus des `page.tsx` pour l'exiger.
 - **Les dates s'affichent à l'heure du Québec, jamais à celle du serveur.** Tout
   `Intl.DateTimeFormat` doit passer `timeZone: FUSEAU` (`lib/fuseau.ts`). Sans lui, `Intl`
   prend le fuseau de la machine — et le hub rend ses dates côté serveur, où Vercel tourne
@@ -179,7 +192,7 @@ ne vérifie rien ne doit pas ressembler à un run vert.
 | `CLAUDE.md` | Ce fichier. Se charge à **chaque session** → il reste **court**. |
 | `HANDOVER.md` | L'état RÉEL de l'auth et des accès, et comment le vérifier. À lire en premier. |
 | `BACKLOG.md` | Ce qui est décidé mais pas fait. |
-| `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement**. |
+| `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement** ; l'ADR 0002, le déclenchement d'actions et ses verrous SSRF. |
 | `docs/ACCES-PAR-APP.md` | Le modèle d'accès par app, en détail. |
 | `docs/CONNEXION-UNIQUE.md` | Le cookie de session partagé entre les apps. |
 
@@ -204,7 +217,14 @@ simplement. C'est pourquoi `tests/gardePages.test.ts` énumère les fichiers ré
 et échoue si l'un d'eux n'appelle pas `exigerAccesHub()` — deux exceptions nommées, `/login`
 et `/sans-acces`. Ne pas supprimer ce test pour faire passer une page.
 
-**3. Une exception dans le matcher du middleware et une exception dans `isPublicPath` ne
+**3. Le test qui garde les pages ne gardait pas les Server Actions.** Il énumérait les
+`page.tsx` — donc pas `app/administration/actions.ts`, qui expose des écritures en POST
+depuis le 14/08. Le trou était plus discret que celui d'une page non gardée : il n'y a même
+pas d'URL à visiter pour s'en apercevoir. Corrigé le 20/08 en énumérant aussi les
+`actions.ts`. La leçon générale : **un test d'exhaustivité ne couvre que la forme de fichier
+qu'on lui a apprise**, et cette forme se périme quand le framework en ajoute une.
+
+**4. Une exception dans le matcher du middleware et une exception dans `isPublicPath` ne
 sont pas la même chose.** `/api/acces` traverse le garde par `isPublicPath`, le matcher
 reste inchangé. La distinction compte : l'endpoint n'est pas ouvert, il est authentifié
 autrement — par le `HUB_TOKEN` de l'app appelante, parce qu'un serveur qui appelle un
