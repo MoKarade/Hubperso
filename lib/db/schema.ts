@@ -21,7 +21,7 @@
 // une garantie qui n'existe pas.
 
 import { sql } from "drizzle-orm";
-import { boolean, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, jsonb, numeric, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Les personnes admises dans l'écosystème.
@@ -69,4 +69,66 @@ export const acces = pgTable(
       .default(sql`now()`),
   },
   (t) => [primaryKey({ columns: [t.email, t.appId] })],
+);
+
+/**
+ * L'historique des résumés — la MÉMOIRE du hub.
+ *
+ * ── POURQUOI UNE TROISIÈME TABLE, APRÈS AVOIR ÉCRIT « DEUX SUFFISENT » ───────────────
+ *
+ * Parce que le hub ne savait dire que « maintenant », et que les trois pannes qui ont
+ * vraiment coûté cher le 20/08/2026 étaient toutes des CHANGEMENTS SILENCIEUX :
+ *
+ *   - une campagne DriveAI arrêtée à 322 documents sur 1207, en pause depuis deux
+ *     semaines — le tableau affichait « en pause » comme un état parfaitement normal ;
+ *   - un coût publié sous « ce mois-ci » au lieu de « cumulé », donc rangé dans la
+ *     mauvaise colonne sans que le montant ait l'air faux ;
+ *   - un plafond de budget périmé depuis trois semaines dans une doc que personne ne relit.
+ *
+ * Aucun n'était rouge. Aucun n'aurait pu l'être : un instantané ne peut pas signaler
+ * qu'il ressemble à celui d'hier. Il faut une mémoire pour ça, et c'est tout ce que cette
+ * table sert à faire.
+ *
+ * ── CE QU'ON STOCKE, ET CE QU'ON NE STOCKE PAS ──────────────────────────────────────
+ *
+ * Les métriques en `jsonb`, telles que l'app les publie. PAS de colonne par métrique :
+ * le hub est générique par le contrat (§1), et une colonne `documents_traites` y
+ * introduirait la connaissance d'une app en particulier — exactement ce que tout le
+ * dépôt s'interdit.
+ *
+ * Le coût est éclaté en trois colonnes parce qu'on veut le TRIER et le SOMMER, et parce
+ * que sa `period` doit rester collée à son montant : le principe « jamais d'agrégat entre
+ * unités incomparables » vaut pour l'historique comme pour l'affichage. Un `montant` sans
+ * sa `periode` serait un chiffre qu'on finirait par additionner.
+ *
+ * ── CE QUI BORNE LA CROISSANCE ──────────────────────────────────────────────────────
+ *
+ * Le hub interroge les apps toutes les ~15 s tant qu'un onglet est ouvert. Écrire à chaque
+ * fois ferait 5 760 lignes par jour et par app pour, l'essentiel du temps, redire la même
+ * chose. L'écriture est donc espacée (`INTERVALLE_RELEVE_MS`) et l'insertion est
+ * CONDITIONNELLE en SQL — voir `lib/historique.ts`. Les vieux relevés sont élagués.
+ */
+export const releves = pgTable(
+  "releves",
+  {
+    appId: text("app_id").notNull(),
+    releveLe: timestamp("releve_le", { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+    /**
+     * L'état vu par le hub (`ok`, `unreachable`, `invalid`, `contract-too-new`, …), et non
+     * le seul `status` du contrat : une app injoignable ne publie AUCUN statut, et c'est
+     * précisément le genre de trou qu'on veut pouvoir relire.
+     */
+    etat: text("etat").notNull(),
+    /** Fraîcheur déclarée par l'app. Distincte de `releveLe`, qui est l'heure du HUB. */
+    dataAsOf: timestamp("data_as_of", { withTimezone: true }),
+    /** Les métriques publiées, telles quelles. `[]` quand l'app n'en publie pas. */
+    metriques: jsonb("metriques").notNull().default(sql`'[]'::jsonb`),
+    /** Montant, devise et période INSÉPARABLES — voir l'en-tête. Null si non suivi. */
+    coutMontant: numeric("cout_montant"),
+    coutDevise: text("cout_devise"),
+    coutPeriode: text("cout_periode"),
+  },
+  (t) => [primaryKey({ columns: [t.appId, t.releveLe] })],
 );

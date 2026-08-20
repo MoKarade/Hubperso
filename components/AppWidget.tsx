@@ -2,37 +2,93 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "@/lib/fetchSummary";
+import type { Releve } from "@/lib/historique";
+import { etatCarte, FENETRE_VARIATION_MS } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
-import { separerAlertes } from "@/lib/alertes";
 import { safeHttpUrl } from "@/lib/url";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatDuree, formatMetricValue, formatTrend } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
-import { AlertList } from "./AlertList";
 import { AlertBanner } from "./AlertBanner";
 import { ActionList } from "./ActionList";
+import { Sparkline } from "./Sparkline";
 
-function OkBody({ summary, appId }: { summary: HubSummary; appId: string }) {
-  const empty =
-    summary.metrics.length === 0 &&
-    summary.alerts.length === 0 &&
-    summary.actions.length === 0;
-  // L'alerte la plus grave (sévérité `alert`) sort de la liste pour devenir un bandeau, en
-  // tête de carte. `reste` ne la contient plus : jamais affichée deux fois.
-  const { bandeau, reste } = separerAlertes(summary.alerts);
+/**
+ * Le bloc dominant de la carte : la métrique que l'app a choisi de publier en premier, sa
+ * courbe, et ce que la mémoire en dit.
+ *
+ * ⚠️ « Inchangé depuis N j » est NEUTRE, jamais un avertissement. Beaucoup de métriques ne
+ * bougent légitimement jamais (« 3 véhicules ») ; les peindre en orange apprendrait à ignorer
+ * l'orange. Et décider qu'une métrique DEVRAIT bouger demanderait de savoir ce qu'elle
+ * mesure — la connaissance app par app que le hub s'interdit. On montre le fait, le jugement
+ * reste humain. Voir l'en-tête de `lib/carte.ts`.
+ */
+function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["heros"]> }) {
+  const { metrique, serie, variation, inchangeDepuisMs } = heros;
+  return (
+    <div className="heros">
+      <span className="heros__label">{metrique.label}</span>
+      <span className="heros__valeur">{formatMetricValue(metrique)}</span>
+
+      <div className="heros__courbe">
+        <Sparkline points={serie} label={metrique.label} />
+      </div>
+
+      <p className="heros__note">
+        {variation ? (
+          <span className="heros__delta" data-dir={variation.deltaAbsolu >= 0 ? "up" : "down"}>
+            {variation.deltaRelatif === null
+              ? // Départ à zéro : un pourcentage y serait infini. On dit l'écart brut, qui
+                // est la seule chose vraie.
+                `${variation.deltaAbsolu >= 0 ? "+" : ""}${variation.deltaAbsolu}`
+              : formatTrend(variation.deltaRelatif * 100)}{" "}
+            sur {formatDuree(FENETRE_VARIATION_MS)}
+          </span>
+        ) : (
+          // Pas « 0 % » : on ne SAIT pas encore. La distinction est le cœur du no-fake-data.
+          <span className="heros__attente">pas encore d’historique</span>
+        )}
+        {inchangeDepuisMs !== null && (
+          <span className="heros__fige">inchangé depuis {formatDuree(inchangeDepuisMs)}</span>
+        )}
+      </p>
+    </div>
+  );
+}
+
+function CorpsOk({
+  summary,
+  historique,
+  maintenantMs,
+}: {
+  summary: HubSummary;
+  historique: Releve[];
+  maintenantMs: number;
+}) {
+  const etat = etatCarte(summary, historique, maintenantMs);
+  const vide =
+    etat.heros === null && etat.alertePrincipale === null && etat.actions.length === 0;
+
   return (
     <>
-      {bandeau && <AlertBanner alert={bandeau} />}
-      <MetricList metrics={summary.metrics} />
-      <AlertList alerts={reste} />
-      <ActionList actions={summary.actions} appId={appId} />
-      {empty && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
+      {etat.heros && <Heros heros={etat.heros} />}
+      {etat.alertePrincipale && <AlertBanner alert={etat.alertePrincipale} />}
+      {etat.autresAlertes > 0 && (
+        // Compté, jamais escamoté : une alerte cachée sans trace est une alerte perdue.
+        <p className="widget__reste">
+          + {etat.autresAlertes} autre{etat.autresAlertes > 1 ? "s" : ""} alerte
+          {etat.autresAlertes > 1 ? "s" : ""}
+        </p>
+      )}
+      <MetricList metrics={etat.secondaires} />
+      <ActionList actions={etat.actions} appId={summary.app.id} />
+      {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
   );
 }
 
-function ProblemBody({ result }: { result: SummaryResult }) {
+function CorpsProbleme({ result }: { result: SummaryResult }) {
   const message = (() => {
     switch (result.state) {
       case "unconfigured":
@@ -44,7 +100,8 @@ function ProblemBody({ result }: { result: SummaryResult }) {
       case "invalid":
         return `Réponse non conforme au contrat — ${result.detail}.`;
       case "contract-too-new":
-        return `L’app publie la version ${result.published} du contrat, ce hub lit jusqu’à la ${result.supported}. Re-pinner le hub — l’app va bien.`;
+        // Le ton dit à qui est le problème : l'app va bien, c'est le hub qui est en retard.
+        return `Cette app publie la version ${result.published} du contrat ; ce hub lit jusqu’à ${result.supported}. Re-pinner le hub.`;
       default:
         return "";
     }
@@ -52,36 +109,62 @@ function ProblemBody({ result }: { result: SummaryResult }) {
   return <p className="widget__problem">{message}</p>;
 }
 
-/** « il y a 3 min » / « il y a 40 s » — âge lisible d'un résumé servi depuis le cache. */
-function humanAge(ms: number): string {
-  const min = Math.round(ms / 60000);
-  return min >= 1 ? `il y a ${min} min` : `il y a ${Math.max(1, Math.round(ms / 1000))} s`;
-}
+/**
+ * Le pied : la fraîcheur, qui n'est plus une mention discrète.
+ *
+ * `dataAsOf` PASSE DEVANT `generatedAt` quand l'app le publie. Le second dit seulement quand
+ * la réponse a été fabriquée — c'est toujours « à l'instant », donc ça ne renseigne sur rien.
+ * Le premier dit quand la DONNÉE a bougé pour la dernière fois, et c'est la différence entre
+ * « à jour » et « figé depuis trois jours ».
+ */
+function Pied({
+  summary,
+  cachedAgeMs,
+  maintenantMs,
+}: {
+  summary: HubSummary;
+  cachedAgeMs?: number;
+  maintenantMs: number;
+}) {
+  const ageDonnee = summary.dataAsOf
+    ? maintenantMs - new Date(summary.dataAsOf).getTime()
+    : null;
 
-function Footer({ summary, cachedAgeMs }: { summary: HubSummary; cachedAgeMs?: number }) {
   return (
     <footer className="widget__foot">
-      {cachedAgeMs !== undefined ? (
-        <span title="L’app n’a pas répondu à temps : dernier résumé connu.">
-          En cache · {humanAge(cachedAgeMs)}
+      {cachedAgeMs !== undefined && (
+        <span className="widget__cache" title="L’app n’a pas répondu à temps : dernier résumé connu.">
+          En cache · {formatDuree(cachedAgeMs)}
+        </span>
+      )}
+      {ageDonnee !== null ? (
+        <span title={`Données du ${formatDateTime(summary.dataAsOf!)}`}>
+          Données d’il y a {formatDuree(ageDonnee)}
         </span>
       ) : (
-        <span>Généré {formatDateTime(summary.generatedAt)}</span>
+        // L'app ne publie pas `dataAsOf` : le hub ne SAIT pas si la donnée est fraîche, et il
+        // le dit plutôt que d'afficher l'heure de génération comme si c'était la même chose.
+        <span title="Cette app ne publie pas dataAsOf — la fraîcheur réelle est inconnue.">
+          Généré {formatDateTime(summary.generatedAt)}
+        </span>
       )}
-      {summary.dataAsOf && <span>Données du {formatDateTime(summary.dataAsOf)}</span>}
     </footer>
   );
 }
 
 export function AppWidget({
   result,
+  historique = [],
+  maintenantMs = Date.now(),
   index = 0,
   featured = false,
 }: {
   result: SummaryResult;
-  /** Position dans la grille — pilote le délai de l'animation d'entrée en cascade. */
+  /** La mémoire de CETTE app. Vide = pas encore d'historique, jamais une courbe inventée. */
+  historique?: Releve[];
+  /** Injecté pour que le rendu reste testable sans horloge. */
+  maintenantMs?: number;
   index?: number;
-  /** Vignette « héros » (grand format) : une seule sur la grille. */
   featured?: boolean;
 }) {
   const okMetrics = result.state === "ok" ? result.summary.metrics.length : 0;
@@ -118,13 +201,21 @@ export function AppWidget({
       </Link>
       <div className="widget__body">
         {result.state === "ok" ? (
-          <OkBody summary={result.summary} appId={result.source.id} />
+          <CorpsOk
+            summary={result.summary}
+            historique={historique}
+            maintenantMs={maintenantMs}
+          />
         ) : (
-          <ProblemBody result={result} />
+          <CorpsProbleme result={result} />
         )}
       </div>
       {result.state === "ok" && (
-        <Footer summary={result.summary} cachedAgeMs={result.stale ? result.cachedAgeMs : undefined} />
+        <Pied
+          summary={result.summary}
+          cachedAgeMs={result.stale ? result.cachedAgeMs : undefined}
+          maintenantMs={maintenantMs}
+        />
       )}
     </article>
   );
