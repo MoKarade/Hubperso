@@ -21,8 +21,22 @@ l'état réel avant de coder.
   items est un usage courant du parc (FinanceAI écrit `[FX-A][RETIREMENT-B] …`).
   Trouvé, comme le premier, **en appliquant le contrôle à sa propre PR** — c'est le seul
   moyen qui marche. Trois tests de régression, prouvés discriminants (2 échecs si on remet
-  l'ancien motif). Leçon à emporter avant chaque propagation : ce script se valide sur les
-  VRAIS commits et les VRAIS backlogs du dépôt visé, jamais sur ce qu'on croit qu'ils sont.
+  l'ancien motif).
+
+  ⚠️ **Troisième angle mort, le plus sérieux, corrigé dans la foulée** : `entreeTouchee`
+  exigeait que l'identifiant figure DANS une ligne modifiée. Or mettre une entrée à jour,
+  c'est écrire dans son CORPS — cocher, dater, ajouter une raison — sans retaper l'id, qui
+  vit sur la ligne de titre restée inchangée. Le contrôle refusait donc **exactement le
+  geste qu'il est censé encourager**, en affirmant « la tâche a avancé sans que son entrée
+  ne soit relue » alors qu'elle venait de l'être. `entreesTouchees` situe désormais chaque
+  ligne modifiée dans le BLOC auquel elle appartient (en-têtes `@@` + contenu du fichier).
+  Et quand le diff n'a pas d'en-tête `@@`, elle ne répond pas « rien n'est touché » — elle
+  ne SAIT pas, et retombe sur le critère littéral : « je ne sais pas » ne doit jamais
+  devenir « non », surtout quand ce non refuse une PR.
+
+  **Leçon à emporter avant chaque propagation** : ce script se valide sur les VRAIS commits
+  et les VRAIS backlogs du dépôt visé, jamais sur ce qu'on croit qu'ils sont. Trois angles
+  morts, trois fois découverts en s'en servant pour de vrai, zéro fois par relecture.
 
 - **[H-08] Deux avertissements de lint dans `tests/autoMerge.test.ts`.** `isDraft` et
   `isCrossRepository` assignés sans être utilisés (lignes 75 et 86). 0 erreur, le gate passe
