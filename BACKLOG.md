@@ -15,9 +15,12 @@ l'état réel avant de coder.
   (auto-merge : un contrôle mal réglé y bloquerait tout).
 
 - **[H-05] Propager l'auto-merge aux sept autres dépôts.** Livré ici le 21/08
-  (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). L'auto-merge NATIF de
-  GitHub n'est pas utilisable : il demande un plan payant sur les dépôts privés, et les huit
-  le sont. D'où un workflow — mais réécrit, pas copié de DriveAI : le sien se déclenchait sur
+  (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). ⚠️ **Correction du 21/08 au soir : la raison invoquée ici était fausse.**
+  Ce point disait que l'auto-merge NATIF de GitHub était inutilisable, faute de plan payant
+  sur des dépôts privés. Il a pourtant été armé avec succès sur FinanceAI#689 le 21/08 à
+  17:53, en squash, et la PR a fusionné seule. Le diagnostic de départ ne tenait pas.
+  Le workflow reste néanmoins justifié — il refuse par défaut, connaît les quotas et se teste
+  sans réseau — mais on ne le garde plus « parce que le natif est impossible ». D'où un workflow — mais réécrit, pas copié de DriveAI : le sien se déclenchait sur
   le succès du seul workflow « CI » et ignorait les autres, ce qui aurait mergé une PR dont
   le contrôle de doc avait échoué. Chaque dépôt demande une vérification propre : DriveAI
   dispatche `deploy.yml` après le merge (le moteur Apps Script), BatchChef a sa racine dans
@@ -43,6 +46,17 @@ l'état réel avant de coder.
   la première : c'est le moment où le hub cesse d'être en lecture seule pour de bon.
 
 ## Fait
+
+- ~~**[H-06]** Plafonner les jobs de CI (`timeout-minutes`)~~ — 21/08/2026. La §5 de
+  `CLAUDE.md` le prescrit depuis l'incident DriveAI du 19/08 ; ce dépôt ne le faisait pas.
+  `gate` à 15 min, `audit` à 10 min, calibrés sur les durées réellement observées (1 min 36 s
+  et 29 s), pas sur un chiffre choisi au hasard.
+- ~~**[H-07]** Cesser de consommer le quota Vercel avec des PR de branche~~ — 21/08/2026.
+  `git.deploymentEnabled: { "claude/*": false }` dans `vercel.json`. Le quota (100/jour,
+  **partagé entre les six projets**) a été épuisé le 21/08 par huit PR de documentation.
+  ⚠️ `scripts/build-necessaire.sh` ne protégeait **pas** de ça : il tourne en `ignoreCommand`,
+  donc PENDANT le déploiement, alors que le refus tombe à sa CRÉATION. Il économise du temps
+  de build, pas du quota. Croire l'inverse laissait le trou ouvert en pensant l'avoir bouché.
 
 - ~~Accès par app (base Neon, `POST /api/acces`, `/administration`, `exigerAccesHub`)~~ —
   étape 2, PRs #28 à #33.
