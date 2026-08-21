@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 // Geist est embarquée dans le paquet npm (aucune requête externe au build ni au runtime).
 import { GeistSans } from "geist/font/sans";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { PaletteMontee } from "@/components/PaletteMontee";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -44,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr-CA" className={GeistSans.variable}>
       <body>
         {children}
+        {/* Gardée côté serveur : elle liste les apps, donc elle exige l'accès au hub — pas
+            seulement une session. Voir components/PaletteMontee.tsx. */}
+        <PaletteMontee />
         <ServiceWorker />
         <Analytics />
       </body>
