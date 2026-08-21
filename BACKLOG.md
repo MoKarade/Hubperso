@@ -14,6 +14,21 @@ l'état réel avant de coder.
   proposé : CarAI et BatchChef (proches de Hubperso), puis JobAI et FinanceAI, puis DriveAI
   (auto-merge : un contrôle mal réglé y bloquerait tout).
 
+  ⚠️ **Deuxième angle mort corrigé le 21/08 au soir** : `idDeSujet` n'acceptait qu'UN seul
+  identifiant en tête de sujet — elle exigeait une espace après le crochet fermant, donc
+  `[H-06][H-07] …` ne portait aucun id à ses yeux et le contrôle bloquait un commit
+  parfaitement conforme, en affirmant l'inverse de la vérité. Or un commit qui ferme deux
+  items est un usage courant du parc (FinanceAI écrit `[FX-A][RETIREMENT-B] …`).
+  Trouvé, comme le premier, **en appliquant le contrôle à sa propre PR** — c'est le seul
+  moyen qui marche. Trois tests de régression, prouvés discriminants (2 échecs si on remet
+  l'ancien motif). Leçon à emporter avant chaque propagation : ce script se valide sur les
+  VRAIS commits et les VRAIS backlogs du dépôt visé, jamais sur ce qu'on croit qu'ils sont.
+
+- **[H-08] Deux avertissements de lint dans `tests/autoMerge.test.ts`.** `isDraft` et
+  `isCrossRepository` assignés sans être utilisés (lignes 75 et 86). 0 erreur, le gate passe
+  — c'est du bruit, pas une panne. Découvert le 21/08 en passant le gate pour [H-06]/[H-07] ;
+  laissé tel quel, c'est du périmètre non demandé.
+
 - **[H-05] Propager l'auto-merge aux sept autres dépôts.** Livré ici le 21/08
   (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). ⚠️ **Correction du 21/08 au soir : la raison invoquée ici était fausse.**
   Ce point disait que l'auto-merge NATIF de GitHub était inutilisable, faute de plan payant

@@ -39,17 +39,45 @@ export const HORS_BACKLOG = "HORS-BACKLOG";
  * contrôle accuserait des tâches qui n'existent pas. Un faux positif ici coûte cher : il
  * apprend à contourner le contrôle.
  */
+export function idsDeSujet(sujet) {
+  const ids = [];
+  let reste = sujet.trim();
+  // Forme à crochets, RÉPÉTABLE : « [H-06][H-07] … ». Un commit peut légitimement fermer
+  // deux items, et c'est un usage établi dans le parc (FinanceAI écrit couramment
+  // « [FX-FALLBACK-SILENCIEUX][RETIREMENT-GROSSINCOME-DEDUIT] … »).
+  const crochet = /^\[([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\]\s*/;
+  let m;
+  while ((m = crochet.exec(reste))) {
+    ids.push(m[1]);
+    reste = reste.slice(m[0].length);
+  }
+  if (ids.length > 0) return ids;
+  // Forme nue : « C28-49: … » ou « C28-49 … », et l'échappatoire « HORS-BACKLOG: … ».
+  const nu = /^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\s*:?\s/.exec(reste);
+  return nu ? [nu[1]] : [];
+}
+
+/**
+ * Le PREMIER ID en tête de sujet, ou `null`.
+ *
+ * ⚠️ La version du 21/08 n'acceptait qu'UN SEUL identifiant : elle exigeait une espace
+ * après le crochet fermant, donc « [H-06][H-07] … » ne portait aucun ID à ses yeux. Le
+ * contrôle bloquait un commit parfaitement conforme, en affichant « aucun commit ne porte
+ * d'identifiant » alors qu'il en portait deux. Découvert en l'appliquant à sa propre PR —
+ * c'est-à-dire par le seul moyen qui marche : s'en servir pour de vrai.
+ */
 export function idDeSujet(sujet) {
-  const m = /^\[?([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\]?\s*[:\]]?\s/.exec(sujet.trim());
-  return m ? m[1] : null;
+  const [premier] = idsDeSujet(sujet);
+  return premier ?? null;
 }
 
 /** Les IDs distincts portés par une liste de sujets de commit, dans l'ordre d'apparition. */
 export function idsDesCommits(sujets) {
   const vus = [];
   for (const sujet of sujets) {
-    const id = idDeSujet(sujet);
-    if (id && id !== HORS_BACKLOG && !vus.includes(id)) vus.push(id);
+    for (const id of idsDeSujet(sujet)) {
+      if (id !== HORS_BACKLOG && !vus.includes(id)) vus.push(id);
+    }
   }
   return vus;
 }

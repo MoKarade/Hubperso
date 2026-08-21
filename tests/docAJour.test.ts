@@ -12,6 +12,29 @@ import {
   verifier,
 } from "../scripts/docAJour.mjs";
 
+describe("un sujet peut porter PLUSIEURS identifiants", () => {
+  // Régression du 21/08/2026, trouvée en appliquant le contrôle à sa propre PR : la
+  // première version exigeait une espace après le crochet fermant, donc « [H-06][H-07] … »
+  // ne portait AUCUN id à ses yeux. Le contrôle bloquait un commit parfaitement conforme
+  // en affirmant l'inverse de la vérité. Or un commit qui ferme deux items est un usage
+  // courant ici — FinanceAI écrit « [FX-A][RETIREMENT-B] … » régulièrement.
+  it("relève les deux, pas seulement le premier", () => {
+    expect(idsDesCommits(["[H-06][H-07] fix: plafonds et quota"])).toEqual(["H-06", "H-07"]);
+  });
+
+  it("trois d'affilée, et le corps du sujet n'est pas confondu avec un id", () => {
+    expect(idsDesCommits(["[A-1][B-2][C-3] feat: TROIS ITEMS D'UN COUP"])).toEqual([
+      "A-1",
+      "B-2",
+      "C-3",
+    ]);
+  });
+
+  it("un seul id entre crochets reste un seul id", () => {
+    expect(idsDesCommits(["[H-01] Re-pinner le contrat"])).toEqual(["H-01"]);
+  });
+});
+
 describe("idDeSujet — cherché EN TÊTE, jamais n'importe où", () => {
   it("reconnaît les conventions réelles de l'écosystème", () => {
     expect(idDeSujet("C28-49: feat: missions de curation")).toBe("C28-49");
