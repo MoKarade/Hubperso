@@ -32,6 +32,9 @@ permissions:
 
 jobs:
   gate:
+    # Plafond : sans lui, un job fige tourne SIX HEURES avant d'echouer (vecu sur
+    # DriveAI le 19/08/2026). Calibre sur la duree reelle — 1 min 36 s observe.
+    timeout-minutes: 15
     name: Gate (typecheck · tests · lint · build)
     # Le cron ne concerne que l'audit : inutile de rejouer le gate sur un code inchangé.
     if: github.event_name != 'schedule'
@@ -71,6 +74,9 @@ jobs:
         run: npm run build
 
   audit:
+    # Plafond : sans lui, un job fige tourne SIX HEURES avant d'echouer (vecu sur
+    # DriveAI le 19/08/2026). Calibre sur la duree reelle — 29 s observe.
+    timeout-minutes: 10
     name: Audit des dépendances de production
     runs-on: ubuntu-latest
     # Job SÉPARÉ du gate, volontairement. Un avis de sécurité est publié sans qu'aucun

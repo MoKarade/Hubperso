@@ -14,10 +14,42 @@ l'état réel avant de coder.
   proposé : CarAI et BatchChef (proches de Hubperso), puis JobAI et FinanceAI, puis DriveAI
   (auto-merge : un contrôle mal réglé y bloquerait tout).
 
+  ⚠️ **Deuxième angle mort corrigé le 21/08 au soir** : `idDeSujet` n'acceptait qu'UN seul
+  identifiant en tête de sujet — elle exigeait une espace après le crochet fermant, donc
+  `[H-06][H-07] …` ne portait aucun id à ses yeux et le contrôle bloquait un commit
+  parfaitement conforme, en affirmant l'inverse de la vérité. Or un commit qui ferme deux
+  items est un usage courant du parc (FinanceAI écrit `[FX-A][RETIREMENT-B] …`).
+  Trouvé, comme le premier, **en appliquant le contrôle à sa propre PR** — c'est le seul
+  moyen qui marche. Trois tests de régression, prouvés discriminants (2 échecs si on remet
+  l'ancien motif).
+
+  ⚠️ **Troisième angle mort, le plus sérieux, corrigé dans la foulée** : `entreeTouchee`
+  exigeait que l'identifiant figure DANS une ligne modifiée. Or mettre une entrée à jour,
+  c'est écrire dans son CORPS — cocher, dater, ajouter une raison — sans retaper l'id, qui
+  vit sur la ligne de titre restée inchangée. Le contrôle refusait donc **exactement le
+  geste qu'il est censé encourager**, en affirmant « la tâche a avancé sans que son entrée
+  ne soit relue » alors qu'elle venait de l'être. `entreesTouchees` situe désormais chaque
+  ligne modifiée dans le BLOC auquel elle appartient (en-têtes `@@` + contenu du fichier).
+  Et quand le diff n'a pas d'en-tête `@@`, elle ne répond pas « rien n'est touché » — elle
+  ne SAIT pas, et retombe sur le critère littéral : « je ne sais pas » ne doit jamais
+  devenir « non », surtout quand ce non refuse une PR.
+
+  **Leçon à emporter avant chaque propagation** : ce script se valide sur les VRAIS commits
+  et les VRAIS backlogs du dépôt visé, jamais sur ce qu'on croit qu'ils sont. Trois angles
+  morts, trois fois découverts en s'en servant pour de vrai, zéro fois par relecture.
+
+- **[H-08] Deux avertissements de lint dans `tests/autoMerge.test.ts`.** `isDraft` et
+  `isCrossRepository` assignés sans être utilisés (lignes 75 et 86). 0 erreur, le gate passe
+  — c'est du bruit, pas une panne. Découvert le 21/08 en passant le gate pour [H-06]/[H-07] ;
+  laissé tel quel, c'est du périmètre non demandé.
+
 - **[H-05] Propager l'auto-merge aux sept autres dépôts.** Livré ici le 21/08
-  (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). L'auto-merge NATIF de
-  GitHub n'est pas utilisable : il demande un plan payant sur les dépôts privés, et les huit
-  le sont. D'où un workflow — mais réécrit, pas copié de DriveAI : le sien se déclenchait sur
+  (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). ⚠️ **Correction du 21/08 au soir : la raison invoquée ici était fausse.**
+  Ce point disait que l'auto-merge NATIF de GitHub était inutilisable, faute de plan payant
+  sur des dépôts privés. Il a pourtant été armé avec succès sur FinanceAI#689 le 21/08 à
+  17:53, en squash, et la PR a fusionné seule. Le diagnostic de départ ne tenait pas.
+  Le workflow reste néanmoins justifié — il refuse par défaut, connaît les quotas et se teste
+  sans réseau — mais on ne le garde plus « parce que le natif est impossible ». D'où un workflow — mais réécrit, pas copié de DriveAI : le sien se déclenchait sur
   le succès du seul workflow « CI » et ignorait les autres, ce qui aurait mergé une PR dont
   le contrôle de doc avait échoué. Chaque dépôt demande une vérification propre : DriveAI
   dispatche `deploy.yml` après le merge (le moteur Apps Script), BatchChef a sa racine dans
@@ -43,6 +75,17 @@ l'état réel avant de coder.
   la première : c'est le moment où le hub cesse d'être en lecture seule pour de bon.
 
 ## Fait
+
+- ~~**[H-06]** Plafonner les jobs de CI (`timeout-minutes`)~~ — 21/08/2026. La §5 de
+  `CLAUDE.md` le prescrit depuis l'incident DriveAI du 19/08 ; ce dépôt ne le faisait pas.
+  `gate` à 15 min, `audit` à 10 min, calibrés sur les durées réellement observées (1 min 36 s
+  et 29 s), pas sur un chiffre choisi au hasard.
+- ~~**[H-07]** Cesser de consommer le quota Vercel avec des PR de branche~~ — 21/08/2026.
+  `git.deploymentEnabled: { "claude/*": false }` dans `vercel.json`. Le quota (100/jour,
+  **partagé entre les six projets**) a été épuisé le 21/08 par huit PR de documentation.
+  ⚠️ `scripts/build-necessaire.sh` ne protégeait **pas** de ça : il tourne en `ignoreCommand`,
+  donc PENDANT le déploiement, alors que le refus tombe à sa CRÉATION. Il économise du temps
+  de build, pas du quota. Croire l'inverse laissait le trou ouvert en pensant l'avoir bouché.
 
 - ~~Accès par app (base Neon, `POST /api/acces`, `/administration`, `exigerAccesHub`)~~ —
   étape 2, PRs #28 à #33.

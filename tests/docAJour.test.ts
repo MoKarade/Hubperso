@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   HORS_BACKLOG,
   entreeTouchee,
+  entreesTouchees,
   estCode,
   idDeSujet,
   idsDesCommits,
@@ -11,6 +12,29 @@ import {
   suggestion,
   verifier,
 } from "../scripts/docAJour.mjs";
+
+describe("un sujet peut porter PLUSIEURS identifiants", () => {
+  // Régression du 21/08/2026, trouvée en appliquant le contrôle à sa propre PR : la
+  // première version exigeait une espace après le crochet fermant, donc « [H-06][H-07] … »
+  // ne portait AUCUN id à ses yeux. Le contrôle bloquait un commit parfaitement conforme
+  // en affirmant l'inverse de la vérité. Or un commit qui ferme deux items est un usage
+  // courant ici — FinanceAI écrit « [FX-A][RETIREMENT-B] … » régulièrement.
+  it("relève les deux, pas seulement le premier", () => {
+    expect(idsDesCommits(["[H-06][H-07] fix: plafonds et quota"])).toEqual(["H-06", "H-07"]);
+  });
+
+  it("trois d'affilée, et le corps du sujet n'est pas confondu avec un id", () => {
+    expect(idsDesCommits(["[A-1][B-2][C-3] feat: TROIS ITEMS D'UN COUP"])).toEqual([
+      "A-1",
+      "B-2",
+      "C-3",
+    ]);
+  });
+
+  it("un seul id entre crochets reste un seul id", () => {
+    expect(idsDesCommits(["[H-01] Re-pinner le contrat"])).toEqual(["H-01"]);
+  });
+});
 
 describe("idDeSujet — cherché EN TÊTE, jamais n'importe où", () => {
   it("reconnaît les conventions réelles de l'écosystème", () => {
@@ -59,6 +83,54 @@ describe("idsDuBacklog — les DEUX formats du parc", () => {
     // Mutation : ne gérer qu'un seul format rendrait le contrôle aveugle sur la moitié du
     // parc — et un contrôle aveugle qui passe au vert est pire qu'aucun contrôle.
     expect(idsDuBacklog("| C28-61 — CI : le job E2E se fige | 🔧 bordé |").has("C28-61")).toBe(true);
+  });
+});
+
+describe("entreesTouchees — situer la modification, pas chercher la chaîne", () => {
+  // Régression du 21/08/2026, trouvée en appliquant le contrôle à sa propre PR.
+  // Mettre une entrée à jour, c'est écrire dans son CORPS — cocher, dater, ajouter une
+  // raison — sans retaper son identifiant, qui vit sur la ligne de titre INCHANGÉE.
+  // L'ancien critère (« l'id figure-t-il dans une ligne modifiée ? ») refusait donc
+  // exactement le geste qu'il est censé encourager.
+  const backlog = [
+    "# BACKLOG",
+    "",
+    "## À faire",
+    "",
+    "- **[H-01] Premier item.** Sa description tient",
+    "  sur deux lignes.",
+    "",
+    "- **[H-02] Second item.** Intact.",
+    "",
+  ].join("\n");
+
+  it("une ligne ajoutée DANS le corps de H-01 touche H-01, sans que « H-01 » y figure", () => {
+    const diff = [
+      "--- a/BACKLOG.md",
+      "+++ b/BACKLOG.md",
+      "@@ -5,2 +5,3 @@",
+      " - **[H-01] Premier item.** Sa description tient",
+      "   sur deux lignes.",
+      "+  Fait le 21/08, gate vert.",
+    ].join("\n");
+    expect(entreesTouchees(diff, backlog).has("H-01")).toBe(true);
+    // Et le critère littéral, lui, se trompait :
+    expect(entreeTouchee(diff, "H-01")).toBe(false);
+    expect(entreeTouchee(diff, "H-01", backlog)).toBe(true);
+  });
+
+  it("l'entrée VOISINE n'est pas déclarée touchée pour autant", () => {
+    const diff = [
+      "@@ -5,2 +5,3 @@",
+      " - **[H-01] Premier item.** Sa description tient",
+      "   sur deux lignes.",
+      "+  Fait le 21/08.",
+    ].join("\n");
+    expect(entreesTouchees(diff, backlog).has("H-02")).toBe(false);
+  });
+
+  it("un diff vide ne touche rien", () => {
+    expect(entreesTouchees("", backlog).size).toBe(0);
   });
 });
 

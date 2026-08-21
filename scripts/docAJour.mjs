@@ -39,17 +39,45 @@ export const HORS_BACKLOG = "HORS-BACKLOG";
  * contrôle accuserait des tâches qui n'existent pas. Un faux positif ici coûte cher : il
  * apprend à contourner le contrôle.
  */
+export function idsDeSujet(sujet) {
+  const ids = [];
+  let reste = sujet.trim();
+  // Forme à crochets, RÉPÉTABLE : « [H-06][H-07] … ». Un commit peut légitimement fermer
+  // deux items, et c'est un usage établi dans le parc (FinanceAI écrit couramment
+  // « [FX-FALLBACK-SILENCIEUX][RETIREMENT-GROSSINCOME-DEDUIT] … »).
+  const crochet = /^\[([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\]\s*/;
+  let m;
+  while ((m = crochet.exec(reste))) {
+    ids.push(m[1]);
+    reste = reste.slice(m[0].length);
+  }
+  if (ids.length > 0) return ids;
+  // Forme nue : « C28-49: … » ou « C28-49 … », et l'échappatoire « HORS-BACKLOG: … ».
+  const nu = /^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\s*:?\s/.exec(reste);
+  return nu ? [nu[1]] : [];
+}
+
+/**
+ * Le PREMIER ID en tête de sujet, ou `null`.
+ *
+ * ⚠️ La version du 21/08 n'acceptait qu'UN SEUL identifiant : elle exigeait une espace
+ * après le crochet fermant, donc « [H-06][H-07] … » ne portait aucun ID à ses yeux. Le
+ * contrôle bloquait un commit parfaitement conforme, en affichant « aucun commit ne porte
+ * d'identifiant » alors qu'il en portait deux. Découvert en l'appliquant à sa propre PR —
+ * c'est-à-dire par le seul moyen qui marche : s'en servir pour de vrai.
+ */
 export function idDeSujet(sujet) {
-  const m = /^\[?([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\]?\s*[:\]]?\s/.exec(sujet.trim());
-  return m ? m[1] : null;
+  const [premier] = idsDeSujet(sujet);
+  return premier ?? null;
 }
 
 /** Les IDs distincts portés par une liste de sujets de commit, dans l'ordre d'apparition. */
 export function idsDesCommits(sujets) {
   const vus = [];
   for (const sujet of sujets) {
-    const id = idDeSujet(sujet);
-    if (id && id !== HORS_BACKLOG && !vus.includes(id)) vus.push(id);
+    for (const id of idsDeSujet(sujet)) {
+      if (id !== HORS_BACKLOG && !vus.includes(id)) vus.push(id);
+    }
   }
   return vus;
 }
@@ -85,11 +113,90 @@ export function idsDuBacklog(contenu) {
 }
 
 /** Un ID apparaît-il dans les lignes AJOUTÉES ou RETIRÉES du diff de BACKLOG.md ? */
-export function entreeTouchee(diffBacklog, id) {
+export function entreeTouchee(diffBacklog, id, contenuBacklog = "") {
+  // Chemin PRÉCIS : on situe chaque ligne modifiée dans le fichier et on regarde de quelle
+  // entrée elle relève. Demande le contenu du backlog ET des en-têtes de section `@@`,
+  // sans lesquels aucune ligne ne peut être située.
+  //
+  // ⚠️ Sans `@@`, on ne répond PAS « rien n'est touché » : on ne SAIT pas, et « je ne sais
+  // pas » ne doit jamais se transformer en « non » — ici ce non deviendrait un refus de PR.
+  // On retombe alors sur le critère littéral, moins fin mais qui ne prétend rien.
+  if (contenuBacklog && /^@@ /m.test(diffBacklog)) {
+    return entreesTouchees(diffBacklog, contenuBacklog).has(id);
+  }
+
+  // Repli : l'identifiant figure-t-il littéralement dans une ligne modifiée ? C'était le
+  // SEUL critère jusqu'au 21/08 au soir, et il produisait un refus À TORT dès qu'on
+  // modifiait le CORPS d'une entrée sans retaper son identifiant — c'est-à-dire la façon
+  // normale de mettre une entrée à jour. Gardé comme filet quand on n'a pas le fichier.
   return diffBacklog
     .split("\n")
     .filter((l) => (l.startsWith("+") || l.startsWith("-")) && !l.startsWith("+++") && !l.startsWith("---"))
     .some((l) => l.includes(id));
+}
+
+/** La ligne DÉCLARE-t-elle une entrée ? Mêmes trois formats que `idsDuBacklog`. */
+function idDeclare(ligne) {
+  const m =
+    /^\s*[-*|]?\s*(?:~~)?\s*(?:\*\*)?\s*(?:`([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)`|\[([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\]|([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)(?=\s*[—:|]))/.exec(
+      ligne,
+    );
+  return m ? m[1] || m[2] || m[3] : null;
+}
+
+/**
+ * Les entrées dont le BLOC contient au moins une ligne modifiée.
+ *
+ * ── POURQUOI PAS « L'IDENTIFIANT EST-IL DANS UNE LIGNE MODIFIÉE » ───────────────────
+ *
+ * Parce que mettre une entrée à jour, c'est en général écrire dans son CORPS — cocher une
+ * case, ajouter une raison, dater une décision — sans retaper son identifiant, qui vit sur
+ * la ligne de titre restée inchangée. Le critère littéral refusait donc exactement le geste
+ * qu'il est censé encourager, en affirmant « la tâche a avancé sans que son entrée ne soit
+ * relue » alors qu'elle venait de l'être. Constaté le 21/08/2026 en appliquant le contrôle
+ * à sa propre PR — troisième angle mort de ce script trouvé de cette façon, et la seule qui
+ * marche : s'en servir pour de vrai.
+ *
+ * Un garde-fou qui refuse à tort est pire qu'absent : on apprend à le contourner, et le
+ * jour où il a raison plus personne ne le lit.
+ */
+export function entreesTouchees(diffBacklog, contenuBacklog) {
+  // 1. Quelle entrée « possède » chaque ligne du fichier, dans sa version d'arrivée.
+  const proprietaire = [];
+  let courante = null;
+  for (const ligne of contenuBacklog.split("\n")) {
+    const declare = idDeclare(ligne);
+    if (declare) courante = declare;
+    // Un titre de section (« ## Fait ») ferme l'entrée en cours : ce qui suit ne lui
+    // appartient plus.
+    else if (/^#{1,6}\s/.test(ligne)) courante = null;
+    proprietaire.push(courante);
+  }
+
+  // 2. Les numéros de ligne réellement touchés, lus dans les en-têtes de section du diff.
+  const touchees = new Set();
+  let numero = 0;
+  for (const ligne of diffBacklog.split("\n")) {
+    const entete = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(ligne);
+    if (entete) {
+      numero = Number(entete[1]);
+      continue;
+    }
+    if (ligne.startsWith("+++") || ligne.startsWith("---")) continue;
+    if (ligne.startsWith("+")) {
+      const id = proprietaire[numero - 1];
+      if (id) touchees.add(id);
+      numero += 1;
+    } else if (ligne.startsWith("-")) {
+      // Une suppression n'a pas de ligne d'arrivée : on l'impute à l'entrée qui occupe la
+      // position, ce qui est juste dès que le titre de l'entrée survit à la suppression.
+      const id = proprietaire[Math.max(0, numero - 1)];
+      if (id) touchees.add(id);
+    } else if (ligne.startsWith(" ")) {
+      numero += 1;
+    }
+  }
+  return touchees;
 }
 
 /**
@@ -141,7 +248,7 @@ export function verifier({
       );
       continue;
     }
-    if (!entreeTouchee(diffBacklog, id)) {
+    if (!entreeTouchee(diffBacklog, id, contenuBacklog)) {
       bloquants.push(
         `La tâche \`${id}\` a avancé sans que son entrée de BACKLOG.md ne soit relue — c'est le ` +
           `cas « faite mais pas cochée ». Coche-la, ou mets son statut à jour.`,
