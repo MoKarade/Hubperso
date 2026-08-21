@@ -26,6 +26,40 @@ export const LABEL_FREIN = "do-not-merge";
 const CONCLUSIONS_OK = new Set(["SUCCESS", "NEUTRAL", "SKIPPED"]);
 
 /**
+ * Un check en échec pour cause de QUOTA ne dit rien sur le code.
+ *
+ * ── LA DISTINCTION, ET POURQUOI ELLE N'EST PAS UNE DÉROGATION ───────────────────────
+ *
+ * « Vercel a échoué » et « Vercel n'a rien tenté » ne sont pas le même fait. Quand le
+ * plafond du compte est atteint, le déploiement est refusé À LA CRÉATION — aucun build, donc
+ * aucune information sur la PR. Ce n'est pas un feu rouge, c'est un feu ABSENT, et le traiter
+ * comme un échec est aussi faux que de le traiter comme un succès.
+ *
+ * Vécu deux fois en dix-huit heures les 20 et 21/08 : plus rien ne pouvait être fusionné
+ * pendant que tout était vert côté code.
+ *
+ * ⚠️ CE QUI REND CETTE NEUTRALISATION ACCEPTABLE, ET RIEN D'AUTRE : le gate GitHub de ces
+ * dépôts exécute DÉJÀ le build (`npm run build`). Une prévisualisation Vercel sautée ne
+ * laisse donc pas le build non vérifié — elle enlève la vérification du DÉPLOIEMENT, pas
+ * celle de la compilation. Dans un dépôt dont la CI ne construirait pas, cette neutralisation
+ * serait fausse et il faudrait la retirer.
+ *
+ * Et le garde-fou reste : `auMoinsUnePreuve` exige qu'il subsiste au moins un check
+ * réellement vert. On ne fusionne jamais une PR dont TOUS les signaux sont absents.
+ */
+const MOTIFS_QUOTA = [
+  /rate limit/i,
+  /resource is limited/i,
+  /api-deployments-free-per-day/i,
+  /try again in 24 hours/i,
+];
+
+function estUnQuota(c) {
+  const texte = `${(c && c.description) || ""} ${(c && c.title) || ""} ${(c && c.output) || ""}`;
+  return MOTIFS_QUOTA.some((motif) => motif.test(texte));
+}
+
+/**
  * États de fusion acceptés.
  *
  * `CLEAN` : tout est vert et à jour. `HAS_HOOKS` : idem, avec des hooks côté dépôt.
@@ -86,13 +120,23 @@ export function decision(pr) {
   // TOUS les checks, pas seulement ceux d'un workflow nommé. C'est le défaut du premier
   // auto-merge du parc : il se déclenchait sur le succès de « CI » et ignorait les autres
   // workflows du dépôt. Hubperso en a deux depuis le 21/08.
+  let auMoinsUnePreuve = false;
+
   for (const c of checks) {
-    const nom = (c && c.name) || "check sans nom";
+    const nom = (c && c.name) || (c && c.context) || "check sans nom";
+
+    // Un échec de QUOTA est un signal ABSENT, pas un signal négatif. Voir MOTIFS_QUOTA.
+    if (estUnQuota(c)) {
+      continue;
+    }
 
     // Les statuts « legacy » (Vercel, par exemple) n'ont pas de `status`/`conclusion` mais
     // un `state`. Les deux formes sont acceptées ; une forme inconnue REFUSE.
     if (c && typeof c.state === "string" && c.status === undefined) {
-      if (c.state === "SUCCESS") continue;
+      if (c.state === "SUCCESS") {
+        auMoinsUnePreuve = true;
+        continue;
+      }
       if (c.state === "PENDING") return { merger: false, raison: `${nom} en cours` };
       return { merger: false, raison: `${nom} : ${c.state}` };
     }
@@ -103,6 +147,14 @@ export function decision(pr) {
     if (!CONCLUSIONS_OK.has(c.conclusion)) {
       return { merger: false, raison: `${nom} : ${c.conclusion || "conclusion absente"}` };
     }
+    if (c.conclusion === "SUCCESS") auMoinsUnePreuve = true;
+  }
+
+  // Tous les checks neutralisés ou sautés ⇒ rien n'a été prouvé. Le cas se produit si le
+  // quota tombe avant que la CI ne démarre : la PR aurait l'air « sans échec » alors qu'elle
+  // n'a rien passé du tout.
+  if (!auMoinsUnePreuve) {
+    return { merger: false, raison: "aucun check réellement vert — rien n'a été prouvé" };
   }
 
   if (!ETATS_OK.has(pr.mergeStateStatus)) {

@@ -30,6 +30,21 @@ on:
     workflows: ["*"]
   pull_request_target:
     types: [ready_for_review]
+  # ── LA PASSE DE RATTRAPAGE, ET C'EST ELLE QUI REND L'ENSEMBLE FIABLE ───────────────
+  #
+  # `workflow_run` NE SE REJOUE JAMAIS. Un appel d'API bloqué par la limite de débit GitHub,
+  # un webhook perdu, et la PR reste ouverte EN SILENCE avec une CI verte — vécu sur DriveAI
+  # le 17/08, et vécu par moi-même toute la journée du 21/08 sur mes propres écritures.
+  #
+  # Elle rattrape aussi le RETOUR DU QUOTA VERCEL : une PR bloquée hier parce que le plafond
+  # du compte était atteint repart d'elle-même le lendemain, sans que personne n'y touche.
+  #
+  # Toutes les 30 minutes : assez pour ne rien laisser traîner une demi-journée, assez rare
+  # pour ne pas peser sur le quota d'Actions.
+  schedule:
+    - cron: "*/30 * * * *"
+  # Pour pouvoir la déclencher à la main quand on veut débloquer tout de suite.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -48,6 +63,8 @@ jobs:
     # par son auteur. La décision revérifie `isCrossRepository` de toute façon — défense en
     # profondeur, la même promesse codée à deux endroits.
     if: >
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request_target' ||
       (github.event.workflow_run.event == 'pull_request' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
@@ -81,16 +98,28 @@ jobs:
             return 1
           }
 
-          numero="$(avec_retry gh pr list --repo "$REPO" --head "$BRANCHE" --state open \
-            --json number --jq '.[0].number // empty')" || {
-              echo "::error::Impossible de lister les PR après 5 essais — on ne merge pas à l'aveugle."
-              exit 1
-            }
-          if [ -z "$numero" ]; then
-            echo "Aucune PR ouverte pour $BRANCHE — rien à faire."
+          # Sur événement : LA PR de la branche concernée. Sur passe planifiée : TOUTES les
+          # PR ouvertes, puisqu'on cherche justement celles qu'un événement a manquées.
+          if [ -n "$BRANCHE" ]; then
+            numeros="$(avec_retry gh pr list --repo "$REPO" --head "$BRANCHE" --state open \
+              --json number --jq '.[].number')" || {
+                echo "::error::Impossible de lister les PR après 5 essais — on ne merge pas à l'aveugle."
+                exit 1
+              }
+          else
+            numeros="$(avec_retry gh pr list --repo "$REPO" --state open --limit 50 \
+              --json number --jq '.[].number')" || {
+                echo "::error::Impossible de lister les PR après 5 essais — on ne merge pas à l'aveugle."
+                exit 1
+              }
+          fi
+
+          if [ -z "$numeros" ]; then
+            echo "Aucune PR ouverte à examiner."
             exit 0
           fi
 
+          for numero in $numeros; do
           # `statusCheckRollup` porte TOUS les checks de la PR, tous workflows confondus, plus
           # les statuts « legacy » (Vercel). C'est ce qui remplace le « succès du workflow CI »
           # du premier auto-merge, qui ignorait les autres workflows du dépôt.
@@ -113,20 +142,26 @@ jobs:
 
           if [ "$merger" != "true" ]; then
             echo "PR #$numero — pas de merge : $raison"
-            exit 0
+            continue
           fi
 
           echo "PR #$numero — merge : $raison"
 
           # Un essai raté peut avoir RÉUSSI côté serveur (réponse perdue) : on juge par l'ÉTAT
           # réel de la PR, jamais par le seul code de sortie.
+          fusionnee=false
           for essai in 1 2 3 4 5; do
-            if gh pr merge "$numero" --repo "$REPO" --squash --delete-branch; then exit 0; fi
+            if gh pr merge "$numero" --repo "$REPO" --squash --delete-branch; then fusionnee=true; break; fi
             if [ "$(gh pr view "$numero" --repo "$REPO" --json state --jq .state 2>/dev/null)" = "MERGED" ]; then
               echo "PR #$numero déjà mergée (l'essai précédent avait abouti côté serveur)."
-              exit 0
+              fusionnee=true; break
             fi
             sleep $((2 ** essai))
           done
-          echo "::error::Merge de la PR #$numero impossible après 5 essais — à faire à la main."
-          exit 1
+
+          # Un merge raté se SIGNALE, mais n'arrête pas l'examen des autres PR : sur une passe
+          # planifiée, une PR en conflit ne doit pas empêcher les suivantes de partir.
+          if [ "$fusionnee" != "true" ]; then
+            echo "::warning::Merge de la PR #$numero impossible après 5 essais."
+          fi
+          done
