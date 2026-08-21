@@ -49,6 +49,18 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # ⚠️ INDISPENSABLES, et absentes au premier run (21/08). Sans elles, la lecture de
+  # `statusCheckRollup` échoue avec « Resource not accessible by integration » — un message
+  # qui ne nomme ni la permission ni le champ fautif, et qui ressemble à une panne d'API.
+  #
+  # `checks: read`   → les checks des GitHub Apps (Actions, Vercel).
+  # `statuses: read` → les statuts « legacy » (commit statuses), que Vercel utilise aussi.
+  #
+  # Le workflow a échoué FERMÉ ce jour-là : cinq essais, puis refus de merger. C'est le
+  # comportement voulu — mais il aurait pu tourner des jours sans que personne ne comprenne
+  # pourquoi rien ne se fusionnait, puisque « pas de merge » ne réveille personne.
+  checks: read
+  statuses: read
 
 # Une PR à la fois : deux workflows qui finissent en même temps déclencheraient deux runs
 # concurrents sur la même PR, et le second échouerait sur une PR déjà fermée.
@@ -126,6 +138,7 @@ jobs:
           etat="$(avec_retry gh pr view "$numero" --repo "$REPO" \
             --json isDraft,isCrossRepository,labels,mergeStateStatus,state,statusCheckRollup)" || {
               echo "::error::Impossible de lire la PR #$numero après 5 essais — on ne merge pas."
+              echo "::error::Si le message parle de « Resource not accessible by integration », il MANQUE une permission au workflow (checks: read, statuses: read) — ce n'est pas une panne d'API."
               exit 1
             }
 
