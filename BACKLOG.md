@@ -5,6 +5,15 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-04] Propager le contrôle « doc à jour » aux sept autres dépôts.** Livré ici le
+  21/08 (`scripts/docAJour.mjs` + `.github/workflows/doc-a-jour.yml`), volontairement sur UN
+  seul dépôt d'abord : la première version était aveugle au format de backlog de Hubperso —
+  celui-là même où elle a été écrite — et serait passée au vert sans rien vérifier. Les
+  trois formats du parc sont désormais gérés (backticks, crochets, tableau emoji), mais
+  chaque dépôt doit être vérifié sur ses VRAIS commits avant d'y activer le blocage. Ordre
+  proposé : CarAI et BatchChef (proches de Hubperso), puis JobAI et FinanceAI, puis DriveAI
+  (auto-merge : un contrôle mal réglé y bloquerait tout).
+
 - **[H-05] Propager l'auto-merge aux sept autres dépôts.** Livré ici le 21/08
   (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). L'auto-merge NATIF de
   GitHub n'est pas utilisable : il demande un plan payant sur les dépôts privés, et les huit

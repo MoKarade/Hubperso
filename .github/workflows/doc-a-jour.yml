@@ -1,0 +1,32 @@
+# La doc suit-elle le code ? Deux oublis surveillés : une tâche faite sans que son entrée de
+# backlog soit relue, et une tâche jamais inscrite. Voir scripts/docAJour.mjs.
+#
+# SÉPARÉ du gate, comme l'audit de dépendances : un reproche de documentation et une
+# régression de code ne se lisent pas pareil, et les mêler apprendrait à voir du rouge sans
+# le lire.
+name: Doc à jour
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  doc:
+    name: La doc suit le code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Le contrôle compare la base à la tête : un clone superficiel n'aurait ni l'une
+          # ni l'autre, et le script conclurait « je ne sais pas » sur tout.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Comparer le code et la doc
+        run: node scripts/doc-a-jour.mjs "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
