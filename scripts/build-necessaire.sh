@@ -8,18 +8,10 @@
 # d'écrire ce fichier, pas supposé.
 #
 # POURQUOI IL EXISTE
-# Copié de JobAI, qui le porte depuis le 2026-08-05 : douze commits en deux heures y avaient
-# produit douze déploiements, dont plusieurs ne touchaient QUE des `.md`.
-#
-# Il arrive ici après une récidive à l'échelle du COMPTE. Le 2026-08-20, le quota gratuit
-# (100 déploiements/jour, partagé entre les six projets) a été épuisé vers 20 h 46 — et une
-# bonne part était partie sur des PR de documentation pure. Conséquence : pendant seize
-# heures, tout merge passait la CI sans être déployé. Rien n'était rouge, et hubperso.com a
-# servi une version périmée sans que rien ne le signale.
-#
-# JobAI était protégé et l'a montré : sa PR de doc du 21/08 a été marquée « Ignored », zéro
-# build, pendant que Hubperso en consommait deux pour le même changement. Le correctif
-# existait depuis trois semaines dans UN dépôt sur huit — c'est ce trajet-là qu'on ferme.
+# Le 2026-08-05, douze commits en deux heures ont produit douze déploiements de production,
+# jusqu'à épuiser le quota du compte — et plusieurs ne touchaient QUE des `.md` et des
+# tests, c'est-à-dire rien de ce que le site sert. Un quota est une ressource partagée
+# entre les six projets de Marc : le gaspiller ici, c'est bloquer les autres.
 #
 # CE QU'IL NE FAIT JAMAIS : sauter un build par erreur. Toute incertitude — historique
 # tronqué, commande qui échoue, diff illisible — se résout en LANÇANT le build. Un build de
@@ -28,14 +20,25 @@
 
 set -uo pipefail
 
+# Deux arguments FACULTATIFS : la plage à examiner. Sans eux, `HEAD^..HEAD`, c'est-à-dire ce
+# que Vercel fournit. Avec eux, on peut rejouer le script sur n'importe quel commit de
+# l'historique SANS le sortir — ce qui est la seule façon honnête de le vérifier avant de
+# l'activer. La première tentative de vérification, à coups de `git checkout`, a sali l'arbre
+# de travail et failli faire committer des fichiers venus d'anciens commits.
+BASE="${1:-}"
+TETE="${2:-HEAD}"
+
 lancer() { echo "build : $1"; exit 1; }
 ignorer() { echo "build ignoré : $1"; exit 0; }
 
 # Sans parent, on ne peut pas comparer. Le clone de Vercel est superficiel : ce cas est
 # normal, pas une anomalie — et il se résout en construisant.
-git rev-parse --verify HEAD^ >/dev/null 2>&1 || lancer "pas d'historique pour comparer"
+if [ -z "$BASE" ]; then
+  git rev-parse --verify "${TETE}^" >/dev/null 2>&1 || lancer "pas d'historique pour comparer"
+  BASE="${TETE}^"
+fi
 
-FICHIERS=$(git diff --name-only HEAD^ HEAD) || lancer "diff illisible"
+FICHIERS=$(git diff --name-only "$BASE" "$TETE") || lancer "diff illisible"
 [ -n "$FICHIERS" ] || lancer "aucun fichier lisible dans le diff"
 
 # Ce qui ne peut PAS changer ce que le site sert. Tout le reste construit — y compris ce
@@ -45,8 +48,23 @@ while IFS= read -r f; do
   case "$f" in
     *.md) ;;
     docs/*) ;;
+    # `test/` ET `tests/` : le parc écrit les deux (DriveAI au singulier, Hubperso et JobAI
+    # au pluriel). Constaté en rejouant ce script sur les douze derniers commits de DriveAI —
+    # sans le singulier, tout commit du moteur continuait de construire POUR SES TESTS, et la
+    # propagation aurait été à moitié inutile sans que rien ne le signale.
+    test/*) ;;
     tests/*) ;;
     .github/*) ;;
+    # PROPRE À HUBPERSO : `scripts/` ne contient QUE de l'outillage — ce garde-fou lui-même,
+    # le contrôle « doc à jour », la décision d'auto-merge, le vérificateur de constellation.
+    # Rien n'y est servi, et `next build` n'en lit aucun.
+    #
+    # Ajouté le 21/08 après que ce dossier a fait construire Hubperso pour rien, un jour où le
+    # quota était épuisé : la PR bloquée ne contenait que de l'outillage de CI.
+    #
+    # ⚠️ À REVOIR si un script devient un préalable au build (génération de types, de données,
+    # d'assets). Ce serait alors du code servi, et l'exemption deviendrait fausse.
+    scripts/*) ;;
     *) lancer "$f" ;;
   esac
 done <<< "$FICHIERS"
