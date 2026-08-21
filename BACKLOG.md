@@ -5,6 +5,15 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-05] Propager l'auto-merge aux sept autres dépôts.** Livré ici le 21/08
+  (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). L'auto-merge NATIF de
+  GitHub n'est pas utilisable : il demande un plan payant sur les dépôts privés, et les huit
+  le sont. D'où un workflow — mais réécrit, pas copié de DriveAI : le sien se déclenchait sur
+  le succès du seul workflow « CI » et ignorait les autres, ce qui aurait mergé une PR dont
+  le contrôle de doc avait échoué. Chaque dépôt demande une vérification propre : DriveAI
+  dispatche `deploy.yml` après le merge (le moteur Apps Script), BatchChef a sa racine dans
+  `web/`. Ne pas copier en lot.
+
 - **[H-01] Re-pinner le contrat sur `#v1.1.0`.** Le tag existe depuis le 20/08/2026 et
   pointe `3bbbf19`. Le dépôt épingle encore le SHA `2d37a61` — **valide** (le schéma est
   identique entre les deux, seuls des commentaires ont bougé), mais un tag se lit mieux

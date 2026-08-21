@@ -1,0 +1,132 @@
+# Auto-merge : fusionner une PR dès qu'elle est VRAIMENT prête, et jamais avant.
+#
+# Décision de Marc, 21/08/2026 : auto-merge partout, le BROUILLON est le seul frein.
+#
+# ── TOUTE LA DÉCISION EST DANS scripts/autoMerge.mjs, QUI EST TESTÉ ─────────────────
+#
+# Ce fichier ne fait que récolter du JSON et obéir. C'est délibéré : un `if:` de workflow ne
+# se teste pas, et le premier auto-merge du parc (DriveAI) portait sa logique dans du shell —
+# deux défauts n'ont été trouvés qu'en production, dont un `gh pr ready` qui RETIRAIT le
+# brouillon avant de merger. L'ADR-0045, ouverte en brouillon avec « statut Proposé, demande
+# ta ratification », a été fusionnée 63 secondes après sa création.
+#
+# ⚠️ IL N'Y A PAS DE `gh pr ready` ICI, ET IL NE DOIT JAMAIS Y EN AVOIR.
+#
+# ── POURQUOI `workflow_run` ET PAS `pull_request` ───────────────────────────────────
+#
+# `workflow_run` s'exécute depuis la branche PAR DÉFAUT : le workflow et le script sont lus
+# depuis `main`, jamais depuis la branche de la PR. Une PR ne peut donc pas modifier les
+# règles qui décident de son propre merge. Corollaire : ce fichier n'agit qu'une fois mergé.
+#
+# Second déclencheur `pull_request: [ready_for_review]` : une PR sortie du brouillon APRÈS
+# que sa CI soit passée ne verrait sinon plus jamais d'événement, et resterait ouverte alors
+# que tout est vert. Sans lui, le frein « brouillon » deviendrait un piège.
+
+name: Auto-merge
+
+on:
+  workflow_run:
+    types: [completed]
+    workflows: ["*"]
+  pull_request_target:
+    types: [ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Une PR à la fois : deux workflows qui finissent en même temps déclencheraient deux runs
+# concurrents sur la même PR, et le second échouerait sur une PR déjà fermée.
+concurrency:
+  group: auto-merge-${{ github.event.workflow_run.head_branch || github.event.pull_request.head.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fusionner:
+    # Le `workflow_run` doit venir d'une PR du dépôt LUI-MÊME. Le préfixe de branche est une
+    # convention, jamais une preuve d'origine : pour une PR de fork, la branche est choisie
+    # par son auteur. La décision revérifie `isCrossRepository` de toute façon — défense en
+    # profondeur, la même promesse codée à deux endroits.
+    if: >
+      github.event_name == 'pull_request_target' ||
+      (github.event.workflow_run.event == 'pull_request' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Décider, puis fusionner
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCHE: ${{ github.event.workflow_run.head_branch || github.event.pull_request.head.ref }}
+        run: |
+          set -uo pipefail
+
+          # Tout appel à l'API se rejoue. Incident DriveAI du 2026-08-17 : un 503 TRANSITOIRE
+          # sur une simple LECTURE a tué le run avant le merge — et comme `workflow_run` ne se
+          # rejoue pas, la PR est restée ouverte EN SILENCE, CI verte.
+          avec_retry() {
+            local delai=2
+            for essai in 1 2 3 4 5; do
+              if "$@"; then return 0; fi
+              echo "raté (essai $essai/5) — nouvel essai dans ${delai}s." >&2
+              sleep "$delai"; delai=$((delai * 2))
+            done
+            return 1
+          }
+
+          numero="$(avec_retry gh pr list --repo "$REPO" --head "$BRANCHE" --state open \
+            --json number --jq '.[0].number // empty')" || {
+              echo "::error::Impossible de lister les PR après 5 essais — on ne merge pas à l'aveugle."
+              exit 1
+            }
+          if [ -z "$numero" ]; then
+            echo "Aucune PR ouverte pour $BRANCHE — rien à faire."
+            exit 0
+          fi
+
+          # `statusCheckRollup` porte TOUS les checks de la PR, tous workflows confondus, plus
+          # les statuts « legacy » (Vercel). C'est ce qui remplace le « succès du workflow CI »
+          # du premier auto-merge, qui ignorait les autres workflows du dépôt.
+          etat="$(avec_retry gh pr view "$numero" --repo "$REPO" \
+            --json isDraft,isCrossRepository,labels,mergeStateStatus,state,statusCheckRollup)" || {
+              echo "::error::Impossible de lire la PR #$numero après 5 essais — on ne merge pas."
+              exit 1
+            }
+
+          verdict="$(echo "$etat" | node -e '
+            const lu = require("fs").readFileSync(0, "utf8");
+            import("./scripts/autoMerge.mjs").then(({ decision }) => {
+              const pr = JSON.parse(lu);
+              console.log(JSON.stringify(decision({ ...pr, checks: pr.statusCheckRollup })));
+            });
+          ')" || { echo "::error::Décision illisible — on ne merge pas."; exit 1; }
+
+          merger="$(echo "$verdict" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).merger')"
+          raison="$(echo "$verdict" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).raison')"
+
+          if [ "$merger" != "true" ]; then
+            echo "PR #$numero — pas de merge : $raison"
+            exit 0
+          fi
+
+          echo "PR #$numero — merge : $raison"
+
+          # Un essai raté peut avoir RÉUSSI côté serveur (réponse perdue) : on juge par l'ÉTAT
+          # réel de la PR, jamais par le seul code de sortie.
+          for essai in 1 2 3 4 5; do
+            if gh pr merge "$numero" --repo "$REPO" --squash --delete-branch; then exit 0; fi
+            if [ "$(gh pr view "$numero" --repo "$REPO" --json state --jq .state 2>/dev/null)" = "MERGED" ]; then
+              echo "PR #$numero déjà mergée (l'essai précédent avait abouti côté serveur)."
+              exit 0
+            fi
+            sleep $((2 ** essai))
+          done
+          echo "::error::Merge de la PR #$numero impossible après 5 essais — à faire à la main."
+          exit 1
