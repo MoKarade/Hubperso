@@ -35,6 +35,24 @@ Vérifs vertes en local : `npm run typecheck`, `npm run test`, `npm run lint`, `
 | `app/sans-acces/page.tsx` | Connectée, mais pas ici. |
 | `tests/` | Dont `tests/personnes.test.ts` (PGlite + les **vraies** migrations) et `tests/gardePages.test.ts`, qui fait échouer toute page ajoutée sans garde. |
 
+## La doc ne peut plus dériver en silence
+
+Depuis le 21/08, une PR échoue si elle touche du code sans que le backlog suive
+(`.github/workflows/doc-a-jour.yml`). Deux oublis surveillés, ceux que Marc a nommés : une
+tâche **faite sans que son entrée soit relue**, et une tâche **jamais inscrite**.
+
+Ce que ça change concrètement pour toi :
+
+- **Mets l'ID du backlog en tête du sujet de commit** : `H-04: feat: …`. C'est ce qui permet
+  le rapprochement exact — sans lui, « tâche jamais inscrite » n'est pas détectable.
+- **Pas de tâche ?** Écris `HORS-BACKLOG:` en tête. L'exception est nommée et greppable,
+  jamais silencieuse.
+- **Le contrôle exige que l'entrée soit RELUE, pas cochée.** Une tâche avancée sans être
+  finie reste légitimement ⬜ — c'est la ligne qui doit être rouverte.
+
+Il ne bloque QUE sur le backlog. Le HANDOVER, le CHANGELOG et le README ne produisent que
+des avertissements, et seulement quand le diff les rend plausiblement périmés.
+
 ## Ce qu'il faut poser dans Vercel
 
 Production **et** Preview :
