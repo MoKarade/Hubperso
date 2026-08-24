@@ -5,6 +5,58 @@ l'état réel avant de coder.
 
 ## À faire
 
+### Demande de Marc du 21/08/2026 — cartes, coûts, ouverture des apps
+
+⚠️ **À lire avant de coder l'un de ces items.** La plupart de ce que Marc a demandé n'est PAS
+du travail de hub : c'est du contenu que **l'app doit publier dans son summary**. Le principe
+n°1 de ce dépôt — *le hub ne connaît AUCUNE app en particulier* — n'est pas négociable, et
+une carte FinanceAI plus riche se code **dans FinanceAI**, pas ici. Chaque item porte donc
+son lieu : `[HUB]` ce dépôt · `[APP]` le dépôt de l'app · `[CONTRAT]` `hub-contract`.
+
+⚠️ **Contrainte dure du contrat, à connaître avant de promettre quoi que ce soit :**
+`metrics` est plafonné à **6 par app**, `alerts` à 10, `actions` à 6. La liste de FinanceAI
+ci-dessous en demande six à elle seule — il n'y a pas de septième place, et « liquidités PAR
+COMPTE » n'entre pas dans une métrique unique sans choix éditorial.
+
+- [ ] **[H-09] [HUB] Coûts et quotas détaillés, avec l'évolution dans le temps.** Au clic sur
+  « détails » d'une app : graphique de l'évolution de son coût ; sinon, le prix sur 7 jours.
+  Une bonne partie du socle existe déjà — `lib/historique.ts` (`serieCout`, `serieMetrique`,
+  PURES) et `lib/historiqueDb.ts` archivent un relevé par app toutes les 15 min sur 90 jours.
+  Reste le rendu. ⚠️ `serieCout` prend une `periode` ET une `devise` **exprès** : ne jamais
+  tracer une courbe qui mélange `total`, `mois` et `jour` — c'est le principe « jamais
+  d'agrégat entre unités incomparables » appliqué au temps.
+
+- [ ] **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Purement du
+  rendu, aucune dépendance au contrat : l'`app.url` est déjà dans chaque summary.
+
+- [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
+  demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
+  patrimoine pour FinanceAI). Le contrat n'a aucun moyen de l'exprimer : le hub afficherait
+  six métriques de même poids. Champ additif à concevoir dans `hub-contract` — sans lui,
+  `[H-09]` et les cartes plus riches se font au jugé, donc mal.
+
+- [ ] **[H-12] [CONTRAT] Une app peut-elle publier une RECOMMANDATION ?** Marc demande « voir
+  recommandation directe » pour FinanceAI. Aujourd'hui ça passerait par une `alert` de
+  sévérité `info`, ce qui la range visuellement avec les problèmes. À trancher : détourner
+  `alerts`, ou ajouter un champ. ⚠️ Ne pas trancher seul — c'est le contrat, six consommateurs.
+
+#### Ce qui relève des APPS, pas de ce dépôt (à propager sur feu vert de Marc)
+
+- [ ] **[H-13] [APP] FinanceAI** — publier : gagné/dépensé aujourd'hui · rendement du jour des
+  placements · total des placements avec l'écart en % et en $ depuis le début · dette restante
+  (nette de ce qui est déjà payé) · liquidités par compte · une recommandation.
+  ⚠️ Six métriques demandées pour un plafond de six : « liquidités par compte » devra être
+  agrégée, ou passer par la page de détail de FinanceAI.
+- [ ] **[H-14] [APP] DriveAI** — publier : avancement de chaque mission de tri · nombre de
+  documents classés sur 7 jours · dernier fichier classé · nombre d'erreurs.
+- [ ] **[H-15] [APP] BatchChef** — publier : recettes recommandées · recette active · nombre
+  d'aliments restant à acheter et leur prix.
+- [ ] **[H-16] [APP] CarAI** — publier : charge **et si la voiture est en train de charger**
+  (un état, pas seulement un pourcentage) · bail consommé · autonomie · odomètre.
+- [ ] **[H-17] [APP] CarAI, hors hub** — refaire l'ACCUEIL de CarAI autour de la voiture :
+  ouvrants, pression des pneus, verrouillage. C'est une page de CarAI, le hub n'y touche pas.
+- **JobAI** — rien à faire, Marc : « looks good déjà ».
+
 - **[H-04] Propager le contrôle « doc à jour » aux sept autres dépôts.** Livré ici le
   21/08 (`scripts/docAJour.mjs` + `.github/workflows/doc-a-jour.yml`), volontairement sur UN
   seul dépôt d'abord : la première version était aveugle au format de backlog de Hubperso —
