@@ -1,5 +1,12 @@
 // lib/authGuard.ts
 //
+// ⚠️ 01/09/2026 — une variable d'environnement (secret OAuth Google) changée sur Vercel
+// sans aucun commit de CODE derrière n'a jamais été reconstruite : `build-necessaire.sh`
+// ne voit que le diff git, jamais la configuration Vercel, donc « Redeploy » sur un
+// commit de doc annule le build (« build ignoré : documentation et tests uniquement »)
+// et le site continue de servir l'ancien secret. Vu en BACKLOG.md (H-18) — angle mort
+// du script, pas un geste à corriger ici.
+//
 // Logique de garde du middleware, isolée en fonctions pures pour être testable sans
 // mocker tout NextAuth. Deux responsabilités :
 //   - `isPublicPath` : ce qui reste accessible sans session (doit rester aligné avec le

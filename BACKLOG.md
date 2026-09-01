@@ -5,6 +5,19 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-18] `build-necessaire.sh` ne voit jamais une variable d'environnement changée
+  sur Vercel.** Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
+  Vercel après une panne de connexion, mais le dernier commit sur `main` (#48) ne touchait
+  que de la doc. `build-necessaire.sh` juge uniquement le diff git — il a donc annulé DEUX
+  tentatives de « Redeploy » d'affilée (« build ignoré : documentation et tests uniquement »)
+  pendant que le site continuait de servir l'ancien secret invalide. Le script n'a aucun
+  moyen de voir qu'une variable Vercel a bougé : ce n'est pas dans git.
+  Débloqué en urgence par un commit de code trivial (celui-ci) pour forcer une vraie
+  reconstruction. Reste à trancher, sans urgence : ajouter au script un avertissement
+  visible sur `Redeploy` d'un commit doc-only (« si tu changes une variable d'env, ce
+  bouton ne fera rien »), ou documenter la procédure de contournement (pousser un commit
+  de code trivial) dans le HANDOVER.
+
 ### Demande de Marc du 21/08/2026 — cartes, coûts, ouverture des apps
 
 ⚠️ **À lire avant de coder l'un de ces items.** La plupart de ce que Marc a demandé n'est PAS
