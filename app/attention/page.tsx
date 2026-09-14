@@ -13,8 +13,9 @@ import { exigerAccesHub } from "@/lib/gardeHub";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
 import { attentions, compteParGravite, type Gravite } from "@/lib/attention";
-import { CADENCE_HORLOGE_MS, continuite } from "@/lib/gel";
+import { CADENCE_HORLOGE_MS, continuite, etatObservation } from "@/lib/gel";
 import { lireHistoriqueTous } from "@/lib/historiqueDb";
+import { baseConfiguree } from "@/lib/db";
 import { formatDuree } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,15 @@ export default async function PageAttention() {
     ...continuite(historiques.get(source.id) ?? [], CADENCE_HORLOGE_MS, FENETRE_MS, maintenant),
   }));
   const totalReleves = observation.reduce((n, o) => n + o.releves, 0);
+
+  // ⚠️ MESURER PLUTÔT QUE RENVOYER CHERCHER. Cette page tourne DANS l'environnement dont la
+  // configuration est en cause : elle lit donc `DATABASE_URL` elle-même, au lieu d'envoyer
+  // ouvrir le journal d'un workflow. Sans cette lecture, « pas de base » et « l'horloge n'a
+  // pas tourné » rendent le MÊME écran — « aucun relevé » — alors que ce sont deux pannes
+  // différentes, à deux endroits différents, avec deux gestes différents pour les réparer.
+  // Mesuré le 14/09/2026 à 20:34 Z : la production répondait 503 « DATABASE_URL absente » à
+  // l'horloge, et cet écran affichait quand même « l'horloge n'a encore rien enregistré ».
+  const etat = etatObservation(baseConfiguree(), totalReleves);
 
   return (
     <main className="page">
@@ -128,7 +138,32 @@ export default async function PageAttention() {
       */}
       <section className="observation">
         <h2 className="observation__titre">Ce que le hub a pu observer</h2>
-        {totalReleves === 0 ? (
+        {etat === "sans-base" ? (
+          // ⚠️ DEUX PANNES QUI RENDAIENT LE MÊME ÉCRAN, ET C'EST LA PIRE FORME DU DÉFAUT.
+          //
+          // « Le hub n'a pas de base » et « l'horloge n'a pas encore tourné » produisent tous
+          // deux zéro relevé. Confondus, le message envoyait régler l'horloge — c'est-à-dire
+          // le dépôt GitHub — alors que rien ne pouvait être écrit nulle part : le geste est
+          // côté Vercel, et l'horloge est déjà correcte. Un diagnostic qui accuse le mauvais
+          // endroit ne fait pas perdre une minute, il fait chercher au mauvais endroit
+          // pendant que la cause reste entière.
+          //
+          // L'absence de base ne coûte pas que l'historique : `lib/personnes.ts` retombe sur
+          // le PROPRIÉTAIRE seul, vérifié sans réseau. Le hub reste donc parfaitement
+          // utilisable POUR MARC — et c'est exactement ce qui rend la panne invisible, parce
+          // que le seul chemin qu'il emprunte est le seul qui n'a pas besoin de la base.
+          // C'est la leçon n°1 du `HANDOVER.md`, rendue concrète.
+          <p className="observation__vide">
+            <strong>Le hub n’a pas de base de données.</strong> La production ne voit pas de{" "}
+            <code>DATABASE_URL</code> — mesuré, pas supposé : l’horloge reçoit un{" "}
+            <strong>503</strong> qui le dit. Rien ne peut donc être enregistré ni relu : aucun
+            relevé, aucune courbe d’évolution, aucune détection de métrique figée. Et le
+            modèle d’accès par app est inactif — seul le <strong>propriétaire</strong> peut
+            entrer, par le repli sans réseau. Le geste est côté <strong>Vercel</strong>
+            {" "}(projet du hub → Settings → Environment Variables, environnement{" "}
+            <em>Production</em>), pas côté dépôt GitHub : l’horloge, elle, est déjà correcte.
+          </p>
+        ) : etat === "horloge-muette" ? (
           // ⚠️ CE MESSAGE A DIT « IL FAUT LES SECRETS » JUSQU'AU 14/09/2026 AU SOIR, alors
           // qu'ils étaient posés et corrects. Il envoyait refaire un geste déjà fait, et
           // laissait la vraie cause invisible : `HUB_URL` désignait l'apex, qui redirige en
@@ -147,7 +182,8 @@ export default async function PageAttention() {
             de laisser deviner : <strong>401</strong> = le secret <code>CRON_SECRET</code> ne
             correspond pas à celui de Vercel, ou <code>HUB_URL</code> ne désigne pas l’origine
             canonique (un apex qui redirige vers <code>www</code> fait perdre le jeton en
-            route) ; <strong>503</strong> = une variable manque côté Vercel.
+            route) ; <strong>503</strong> = <code>CRON_SECRET</code> manque côté Vercel (la
+            base, elle, est configurée — sinon c’est l’encadré précédent qui s’afficherait).
             Sans horloge, les courbes d’évolution restent vides : le hub n’enregistre que ce
             qu’il observe.
           </p>

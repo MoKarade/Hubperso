@@ -15,6 +15,28 @@ Il est vérifié **en premier et sans toucher au réseau**, pour que ni une base
 ni une ligne supprimée par erreur ne puisse enfermer Marc dehors de sa propre
 administration — le seul endroit d'où il pourrait se réparer.
 
+⚠️ **AU 14/09/2026, CE MODÈLE À DEUX ÉTAGES N'EST PAS ACTIF EN PRODUCTION.** Ce n'est pas
+un défaut du code — c'est une variable d'environnement absente, et c'est pire, parce que rien
+ne le montre. Mesuré (run 4 du workflow `Relevé`, 20:34 Z) : `POST /api/cron/releve` répond
+`503 « DATABASE_URL absente »`. `baseConfiguree()` étant une fonction pure de
+`process.env.DATABASE_URL`, le constat est sans ambiguïté — le projet Vercel du hub ne
+fournit pas de base à son exécution de production.
+
+Conséquence : `peutSeConnecter` et `aAcces` retombent sur le **repli propriétaire**, celui
+qui ne touche pas au réseau. Marc entre, tout fonctionne pour lui, et **personne d'autre ne
+peut entrer** — pas parce qu'on le lui refuse, mais parce que la table n'est pas lisible.
+Aucun relevé n'est enregistré non plus, d'où un historique vide et aucune détection de gel.
+
+C'est la section **« Comment vérifier que ça marche vraiment »** ci-dessous, en conditions
+réelles : « je me connecte, ça marche »
+n'exerce que le chemin du propriétaire, le seul qui fonctionne base en panne. Il a été vert
+tout du long.
+
+👤 **Le geste qui répare** : poser `DATABASE_URL` dans le projet Vercel du hub (Settings →
+Environment Variables → environnement *Production*). Rien à faire côté dépôt GitHub. Voir
+`[H-23]` au backlog. La vérification qui compte ensuite n'est PAS « je me connecte » : c'est
+la procédure d'invitation décrite plus bas.
+
 Le contrat, les widgets et les jetons `HUB_TOKEN_*` sont **inchangés** : l'auth est une
 couche ajoutée par-dessus, elle ne touche pas au dashboard.
 

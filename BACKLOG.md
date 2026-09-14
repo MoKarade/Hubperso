@@ -26,6 +26,24 @@ l'état réel avant de coder.
   ⚠️ Ça change ce qui est SERVI (Next lui-même) : vérifier le déploiement de production
   après le merge, pas seulement la CI (§6).
 
+- **[H-23] La vraie cause de l'horloge muette : la production n'a pas de `DATABASE_URL`.**
+  Mesuré le 14/09/2026 à 20:34 Z, run 4 du workflow `Relevé`, avec `HUB_URL` enfin canonique :
+  plus aucune erreur d'hôte, plus aucun 401 — la route est donc **atteinte et authentifiée**,
+  et elle répond `503 {"raison":"DATABASE_URL absente — aucun relevé ne peut être écrit."}`.
+  `baseConfiguree()` est une fonction pure de `process.env.DATABASE_URL` : il n'y a pas
+  d'ambiguïté possible sur le constat. C'était la TROISIÈME cause de la même panne, après la
+  barre oblique finale ([H-19]) et l'apex qui redirige.
+  ⚠️ **Ce que l'absence de base coûte, au-delà de l'historique** : `lib/personnes.ts` retombe
+  sur le propriétaire seul (repli sans réseau), donc le modèle d'accès par app de l'ADR 0001
+  est **inactif en production**. Le hub reste parfaitement utilisable pour Marc — et c'est ce
+  qui rend la panne invisible : le seul chemin qu'il emprunte est le seul qui n'a pas besoin
+  de la base. La leçon n°1 du `HANDOVER.md`, rendue concrète.
+  **Livré côté hub** : `etatObservation` (`lib/gel.ts`, PUR) sépare les trois cas, et la page
+  « attention » affiche « le hub n'a pas de base de données » au lieu de « l'horloge n'a
+  encore rien enregistré » — deux pannes, deux endroits, deux gestes.
+  👤 **Reste un geste de Marc, côté Vercel** (projet du hub → Settings → Environment
+  Variables → environnement *Production*) : poser `DATABASE_URL`. Rien côté dépôt GitHub.
+
 - **[H-22] Le message de la page « attention » envoyait refaire un geste déjà fait.**
   Capture de Marc du 14/09 au soir : l'encadré « Ce que le hub a pu observer » affichait
   « il faut les secrets `HUB_URL` et `CRON_SECRET` » alors que les deux étaient **posés et

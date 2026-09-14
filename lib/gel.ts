@@ -222,3 +222,27 @@ function median(valeurs: number[]): number {
   const milieu = Math.floor(tri.length / 2);
   return tri.length % 2 === 1 ? tri[milieu]! : (tri[milieu - 1]! + tri[milieu]!) / 2;
 }
+
+/**
+ * Pourquoi le hub n'a rien observé — ou qu'il a observé.
+ *
+ * ⚠️ TROIS CAS, PARCE QU'ILS APPELLENT TROIS GESTES DIFFÉRENTS. Deux d'entre eux donnaient
+ * le MÊME écran jusqu'au 14/09/2026 au soir : « aucun relevé ». Or « le hub n'a pas de base
+ * de données » se répare côté Vercel, et « l'horloge n'a pas encore tourné » se répare côté
+ * dépôt GitHub. Les confondre ne fait pas perdre une minute — ça fait chercher au mauvais
+ * endroit pendant que la cause reste entière, et c'est précisément le défaut que la page
+ * « attention » existe pour combattre.
+ *
+ * L'ordre n'est pas cosmétique : SANS BASE, `totalReleves` vaut nécessairement 0 puisque
+ * rien n'a jamais pu être lu. Juger l'horloge d'abord attribuerait donc toujours la panne à
+ * l'horloge, y compris quand elle est parfaitement configurée — ce qui est arrivé.
+ *
+ * `base` se passe en paramètre plutôt que d'être lu ici : ce module reste PUR.
+ */
+export type EtatObservation = "sans-base" | "horloge-muette" | "observe";
+
+export function etatObservation(base: boolean, totalReleves: number): EtatObservation {
+  if (!base) return "sans-base";
+  if (totalReleves <= 0) return "horloge-muette";
+  return "observe";
+}
