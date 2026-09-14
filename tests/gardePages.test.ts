@@ -126,3 +126,100 @@ describe("toute Server Action revérifie l'autorisation", () => {
     }
   });
 });
+
+// ── LES ROUTE HANDLERS SONT UNE TROISIÈME FORME DE FICHIER ──────────────────────────
+//
+// La leçon n°3 du CLAUDE.md dit qu'un test d'exhaustivité ne couvre que la forme de fichier
+// qu'on lui a apprise. Elle a été écrite le 20/08 après avoir découvert que ce test
+// n'énumérait pas les `actions.ts`. Elle restait vraie : `app/**/route.ts` est une TROISIÈME
+// forme, et elle n'était pas énumérée non plus — alors que `app/api/acces/route.ts` expose
+// une lecture du modèle d'accès depuis le 14/08.
+//
+// Un route handler n'a pas de session à exiger quand il est appelé par une machine : les
+// exceptions sont donc légitimes. Mais une exception ne veut pas dire « rien à prouver » —
+// on exige la PREUVE d'une authentification de remplacement, c'est-à-dire une comparaison
+// de secret à temps constant. Sans cette exigence, la liste d'exceptions deviendrait une
+// porte de sortie : il suffirait d'y ajouter une ligne pour qu'une route n'ait plus rien à
+// démontrer, ce qui est exactement le contournement que ce fichier existe pour empêcher.
+describe("tout route handler est gardé, ou authentifié autrement et le prouve", () => {
+  /** Routes appelées par une MACHINE (pas de cookie de session), et leur auth de remplacement. */
+  const ROUTES_A_JETON: Record<string, string> = {
+    "api/acces/route.ts":
+      "serveur à serveur : une app demande si une adresse a accès chez elle, identifiée par son HUB_TOKEN",
+    "api/cron/releve/route.ts":
+      "l'horloge du hub, appelée par un workflow GitHub Actions et authentifiée par CRON_SECRET",
+  };
+
+  /**
+   * Routes qui SONT le mécanisme d'authentification — troisième catégorie, et elle ne
+   * prouve rien d'autre qu'elle-même : exiger une session pour se connecter serait une
+   * boucle, et exiger une comparaison de secret n'aurait pas de sens (Auth.js gère son
+   * propre état). Elle est nommée séparément pour qu'on ne puisse pas y glisser une route
+   * ordinaire en profitant de la dispense.
+   */
+  const ROUTES_D_AUTH: Record<string, string> = {
+    "api/auth/[...nextauth]/route.ts":
+      "le handler d'Auth.js : c'est le flux de connexion lui-même, il ne peut pas exiger d'être déjà connecté",
+  };
+
+  const routes = fichiersDeApp(RACINE_APP, "route.ts").map((p) => ({
+    relatif: relative(RACINE_APP, p).replace(/\\/g, "/"),
+    source: readFileSync(p, "utf8"),
+  }));
+
+  it("trouve bien les route handlers (sinon ce test ne prouverait rien)", () => {
+    expect(routes.length).toBeGreaterThanOrEqual(2);
+    expect(routes.map((r) => r.relatif)).toContain("api/acces/route.ts");
+  });
+
+  it("chacun exige l'accès au hub, ou figure dans la liste à jeton", () => {
+    for (const route of routes) {
+      if (ROUTES_A_JETON[route.relatif] || ROUTES_D_AUTH[route.relatif]) continue;
+      const gardee =
+        route.source.includes("exigerAccesHub()") ||
+        route.source.includes("exigerProprietaire()") ||
+        route.source.includes("auth()");
+      expect(
+        gardee,
+        `${route.relatif} n'est ni gardé ni déclaré comme route à jeton (voir ROUTES_A_JETON)`,
+      ).toBe(true);
+    }
+  });
+
+  it("les routes d'authentification déclarées existent vraiment", () => {
+    const relatifs = routes.map((r) => r.relatif);
+    for (const [exception, raison] of Object.entries(ROUTES_D_AUTH)) {
+      expect(relatifs, `exception morte : ${exception} (${raison})`).toContain(exception);
+    }
+  });
+
+  it("une route à jeton PROUVE sa comparaison de secret à temps constant", () => {
+    // `===` sur un secret s'arrête au premier octet différent, ce qui laisse mesurer sa
+    // progression et deviner le jeton octet par octet. `memeJeton` (lib/jetonApp.ts) est la
+    // seule forme admise dans ce dépôt, et l'exiger ici empêche qu'une future route à jeton
+    // reparte d'une comparaison naïve.
+    for (const [relatif, raison] of Object.entries(ROUTES_A_JETON)) {
+      const route = routes.find((r) => r.relatif === relatif);
+      expect(route, `exception morte : ${relatif} (${raison})`).toBeDefined();
+      expect(
+        route!.source.includes("memeJeton") || route!.source.includes("appDuJeton"),
+        `${relatif} est déclaré à jeton mais ne compare aucun secret à temps constant`,
+      ).toBe(true);
+    }
+  });
+
+  it("chaque route à jeton est aussi laissée passer par isPublicPath, et réciproquement", () => {
+    // Le couplage qui se périme en silence : une route à jeton que `isPublicPath` ne laisse
+    // pas passer renvoie une redirection HTML vers /login au lieu de son JSON (c'était le
+    // défaut n°1 du squelette d'app du 27/07). Et une route laissée passer par
+    // `isPublicPath` sans figurer ici serait une route publique que personne n'a voulue.
+    const source = readFileSync(resolve(process.cwd(), "lib/authGuard.ts"), "utf8");
+    const declaresDansLeGarde = [...source.matchAll(/pathname === "(\/api\/[^"]+)"/g)].map(
+      (m) => m[1]!,
+    );
+    const attendus = Object.keys(ROUTES_A_JETON).map(
+      (relatif) => `/${relatif.replace(/\/route\.ts$/, "")}`,
+    );
+    expect([...declaresDansLeGarde].sort()).toEqual([...attendus].sort());
+  });
+});

@@ -21,9 +21,33 @@
 //     qui est à re-pinner. Le ton dit à qui est le problème, comme partout ailleurs ;
 //   - non configurée                                  → IGNORÉE : une app sans jeton est un
 //     choix, pas une panne. La signaler chaque jour apprendrait à ignorer la liste.
+//
+// ── ET L'APP QUI VA BIEN EN SERVANT DE LA DONNÉE MORTE ──────────────────────────────
+//
+// Le raisonnement ci-dessus s'arrêtait un cran trop tôt. Il couvrait l'app MUETTE, pas
+// l'app BAVARDE : celle qui répond en 200 ms, publie `status: "ok"`, et sert le même
+// instantané depuis sept heures. Elle n'a aucun état d'échec et ne publie aucune alerte —
+// elle n'a rien à signaler, de son point de vue tout fonctionne. Résultat : la liste
+// restait vide, et elle avait l'air rassurante, exactement comme dans le cas de l'app
+// injoignable qu'on venait de corriger.
+//
+// C'est la panne mesurée le 14/09/2026 sur CarAI : poll annoncé aux 30 min, trou réel de
+// 6 h 53, tous les runs GitHub verts, rien à l'écran. `fraicheur` (`lib/gel.ts`) compare
+// l'âge de `dataAsOf` au seuil que l'APP déclare (`expectedMaxAgeSec`, contrat v1.3) —
+// jamais à un seuil écrit ici, qui serait de la connaissance d'app codée en dur.
+//
+//   - donnée figée au-delà du seuil déclaré  → `warn` : la donnée est vieille, PAS fausse,
+//     et l'app n'est pas en panne. `alert` mettrait un poll en retard au même niveau qu'un
+//     jeton refusé ;
+//   - horloge de l'app en avance             → `warn` : ça rend la donnée éternellement
+//     « fraîche », donc ça désarme silencieusement toute la détection ;
+//   - âge connu mais non jugé / non datée    → IGNORÉES : l'app n'a pas encore déclaré son
+//     rythme. Le hub ne SAIT pas, et supposer un seuil serait inventer le diagnostic.
 
-import type { HubAlert } from "@mokarade/hub-contract";
+import type { HubAlert, HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "./fetchSummary";
+import { fraicheur } from "./gel";
+import { formatDuree } from "./format";
 import { safeHttpUrl } from "./url";
 
 export type Gravite = "alert" | "warn" | "info";
@@ -49,7 +73,7 @@ const RANG: Record<Gravite, number> = { alert: 0, warn: 1, info: 2 };
  * entrées de même gravité gardent leur ordre d'arrivée. Sans ça, la liste danserait à chaque
  * rafraîchissement et on ne pourrait plus cliquer sur une ligne qu'on vient de lire.
  */
-export function attentions(resultats: SummaryResult[]): Attention[] {
+export function attentions(resultats: SummaryResult[], maintenantMs: number): Attention[] {
   const entrees: Attention[] = [];
 
   for (const resultat of resultats) {
@@ -67,6 +91,16 @@ export function attentions(resultats: SummaryResult[]): Attention[] {
           duHub: false,
         });
       }
+
+      // ⚠️ Jamais sur un résumé servi depuis le CACHE de résilience. Son `dataAsOf` est
+      // celui du dernier instantané REÇU, pas celui d'une mesure d'il y a trente minutes :
+      // le juger ferait apparaître « donnée figée » alors que le vrai problème est déjà
+      // affiché ailleurs (badge « En cache »), et accuserait l'app d'un gel qui est en
+      // réalité une panne de réponse.
+      if (!resultat.stale) {
+        const gel = entreeDeGel(resultat.summary, appId, appNom, maintenantMs);
+        if (gel) entrees.push(gel);
+      }
       continue;
     }
 
@@ -79,6 +113,47 @@ export function attentions(resultats: SummaryResult[]): Attention[] {
 
 function hrefAlerte(alerte: HubAlert): string | null {
   return alerte.href ? safeHttpUrl(alerte.href) : null;
+}
+
+/**
+ * L'app répond, et sa donnée est-elle vivante ? — ou `null` quand il n'y a rien à dire.
+ *
+ * Le libellé porte les DEUX nombres, l'âge réel et le seuil déclaré, parce qu'aucun des
+ * deux ne suffit. « Donnée figée depuis 7 h » ne dit pas si c'est anormal (ça ne l'est pas
+ * pour une app qui se rafraîchit une fois par jour) ; « donnée en retard » ne dit pas de
+ * combien, donc ne permet pas de décider s'il faut agir maintenant. Ensemble, ils se
+ * lisent d'un coup d'œil et désignent l'app à réparer.
+ */
+function entreeDeGel(
+  summary: HubSummary,
+  appId: string,
+  appNom: string,
+  maintenantMs: number,
+): Attention | null {
+  const base = { appId, appNom, href: null, duHub: true as const };
+  const f = fraicheur(summary, maintenantMs);
+
+  switch (f.genre) {
+    case "figee":
+      return {
+        ...base,
+        gravite: "warn",
+        libelle: `Donnée figée depuis ${formatDuree(f.ageMs)} — l’app en annonce au plus ${formatDuree(f.limiteMs)}`,
+      };
+    case "horloge-en-avance":
+      return {
+        ...base,
+        gravite: "warn",
+        libelle: `Horloge de l’app en avance de ${formatDuree(f.avanceMs)} — sa donnée paraît toujours fraîche`,
+      };
+    // « Je ne sais pas » ne s'affiche pas comme un problème. Une app qui n'a pas encore
+    // déclaré son rythme n'est pas en retard : elle est non instrumentée, et c'est un
+    // travail de re-pin, pas une panne à signaler tous les jours.
+    case "fraiche":
+    case "age-connu-non-juge":
+    case "non-datee":
+      return null;
+  }
 }
 
 /**

@@ -41,13 +41,25 @@ widgets 100 % génériques.
   Le propriétaire est vérifié **en premier et SANS réseau** : une panne de base ne doit
   jamais enfermer Marc dehors de sa propre administration, seul endroit d'où il pourrait
   se réparer.
-- **`/api/acces` traverse le garde, et ce n'est pas une exception au principe ci-dessus.**
-  Le matcher est inchangé ; c'est `isPublicPath` (`lib/authGuard.ts`) qui laisse passer
-  cette seule route. Elle n'est pas ouverte : elle est authentifiée **autrement**, par le
-  `HUB_TOKEN` de l'app appelante — c'est un serveur qui appelle un serveur, il n'a pas de
-  cookie de session à présenter. Le jeton **identifie** l'appelant, donc l'`appId` vient du
-  jeton et **jamais du corps de la requête** : une app ne peut pas interroger les accès
-  d'une autre.
+- **Deux routes traversent le garde, et ce n'est pas une exception au principe ci-dessus.**
+  Le matcher reste inchangé ; c'est `isPublicPath` (`lib/authGuard.ts`) qui les laisse
+  passer. Aucune des deux n'est ouverte : elles sont authentifiées **autrement**, parce
+  qu'un serveur qui appelle un serveur n'a pas de cookie de session à présenter.
+  - `POST /api/acces` — une app demande si une adresse a accès chez elle. Authentifiée par
+    le `HUB_TOKEN` de l'app appelante. Le jeton **identifie** l'appelant, donc l'`appId`
+    vient du jeton et **jamais du corps de la requête** : une app ne peut pas interroger
+    les accès d'une autre.
+  - `POST /api/cron/releve` — l'**horloge** du hub, appelée par
+    `.github/workflows/releve.yml` (ADR 0003). Authentifiée par un secret **DÉDIÉ**
+    (`CRON_SECRET`), pas par un `HUB_TOKEN_*` : ce qu'elle déclenche est une ÉCRITURE dans
+    la mémoire du hub, un pouvoir qu'aucune app n'a de raison d'avoir — et qui se
+    propagerait à chaque app ajoutée. 503 si le secret manque côté serveur, 401 s'il est
+    faux : la distinction EST le diagnostic (l'un envoie sur Vercel, l'autre sur GitHub).
+
+  ⚠️ Cette section a écrit « c'est la SEULE exception » jusqu'au 14/09/2026. En ajouter une
+  deuxième **oblige à corriger la phrase dans la même PR** : une règle qu'on sait fausse
+  cesse d'être lue comme une règle, et la session suivante la prendrait pour un interdit —
+  donc passerait par le matcher, ce qu'il ne faut jamais faire.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via
   `safeHttpUrl` (http/https uniquement). Ne jamais rendre un href brut.
 - **Un `href` que le HUB va appeler se juge bien plus sévèrement qu'un href cliquable.**
@@ -192,7 +204,7 @@ ne vérifie rien ne doit pas ressembler à un run vert.
 | `CLAUDE.md` | Ce fichier. Se charge à **chaque session** → il reste **court**. |
 | `HANDOVER.md` | L'état RÉEL de l'auth et des accès, et comment le vérifier. À lire en premier. |
 | `BACKLOG.md` | Ce qui est décidé mais pas fait. |
-| `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement** ; l'ADR 0002, le déclenchement d'actions et ses verrous SSRF. |
+| `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement** ; l'ADR 0002, le déclenchement d'actions et ses verrous SSRF ; l'ADR 0003, l'horloge du hub, la deuxième route à jeton et la détection de gel. |
 | `docs/ACCES-PAR-APP.md` | Le modèle d'accès par app, en détail. |
 | `docs/CONNEXION-UNIQUE.md` | Le cookie de session partagé entre les apps. |
 
@@ -225,10 +237,26 @@ pas d'URL à visiter pour s'en apercevoir. Corrigé le 20/08 en énumérant auss
 qu'on lui a apprise**, et cette forme se périme quand le framework en ajoute une.
 
 **4. Une exception dans le matcher du middleware et une exception dans `isPublicPath` ne
-sont pas la même chose.** `/api/acces` traverse le garde par `isPublicPath`, le matcher
-reste inchangé. La distinction compte : l'endpoint n'est pas ouvert, il est authentifié
-autrement — par le `HUB_TOKEN` de l'app appelante, parce qu'un serveur qui appelle un
-serveur n'a pas de cookie de session à présenter.
+sont pas la même chose.** `/api/acces` et `/api/cron/releve` traversent le garde par
+`isPublicPath` ; le matcher reste inchangé. La distinction compte : ces endpoints ne sont
+pas ouverts, ils sont authentifiés autrement — par le `HUB_TOKEN` de l'app appelante pour
+le premier, par `CRON_SECRET` pour le second — parce qu'un serveur qui appelle un serveur
+n'a pas de cookie de session à présenter.
+
+**5. L'observateur était requis pour l'observation.** `enregistrerReleve` n'était appelée
+que depuis `app/page.tsx` : rien ne s'enregistrait sans onglet ouvert. Tout l'appareil
+conçu pour repérer une métrique GELÉE (`inchangeDepuisMs`, `figeDepuisMs`) a besoin de deux
+relevés qui ENCADRENT le gel — il n'en a jamais eu. Un code correct, testé, et qui ne
+pouvait rien détecter faute d'être appelé. Réparé par `/api/cron/releve` (ADR 0003). La
+leçon générale : **du code de surveillance se juge à sa cadence d'appel, pas à ses tests.**
+
+**6. Le test qui garde les pages ne gardait pas les `route.ts` non plus.** La leçon n°3 dit
+qu'un test d'exhaustivité ne couvre que la forme de fichier qu'on lui a apprise — elle a été
+écrite le 20/08 en ajoutant les `actions.ts`, et elle est restée vraie : `app/**/route.ts`
+était une TROISIÈME forme, non énumérée, alors que `app/api/acces/route.ts` lit le modèle
+d'accès depuis le 14/08. Corrigé le 14/09. Une route à jeton peut légitimement être une
+exception, mais elle doit **prouver** son authentification de remplacement (comparaison à
+temps constant) — sinon la liste d'exceptions devient la porte de sortie du test.
 
 ## 10. Style et compte-rendu
 

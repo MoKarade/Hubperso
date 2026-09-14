@@ -27,7 +27,9 @@ flowchart LR
   conforme n'est jamais affichée comme valide.
 - **États honnêtes** (jamais de fake data) : `unconfigured` (pas de jeton),
   `unauthorized` (401), `unreachable` (réseau / 5xx / timeout 9 s), `invalid` (JSON
-  hors contrat). Chaque widget montre exactement ce qui ne va pas.
+  hors contrat), `contract-too-new` (l'app publie une version que ce build ne lit pas —
+  l'app va bien, c'est le hub qui est à re-pinner). Chaque widget montre exactement ce
+  qui ne va pas.
 - **Résilience (dernier bon résumé)** : une app derrière plusieurs couches à démarrage
   à froid (Vercel + Apps Script) peut dépasser ponctuellement le budget réseau. Plutôt
   que clignoter en « injoignable » à chaque accroc, le hub garde en mémoire le **dernier
@@ -42,6 +44,26 @@ flowchart LR
   revérifiée, jetons jamais côté client). Limite honnête : le hub relit ce que chaque
   app **publie** ; si une app n'a pas resynchronisé ses propres sources (`dataAsOf`
   ancien), ses chiffres ne bougent pas — la synchro des sources se fait dans l'app.
+- **Une horloge, pour observer sans être regardé** (`POST /api/cron/releve`, appelée par
+  `.github/workflows/releve.yml`, ADR 0003). La mémoire du hub n'était alimentée que par
+  l'affichage d'une page : rien ne s'enregistrait quand personne ne regardait, donc aucune
+  courbe d'évolution en dehors des heures de consultation et **aucune détection de
+  métrique gelée** (il faut deux relevés qui encadrent le gel). L'horloge fait ce que
+  faisait l'affichage, sans l'affichage — avec un budget réseau plus large (20 s au lieu
+  de 9 s) parce que personne n'attend devant et qu'un relevé perdu est un trou définitif.
+- **Le seuil de « donnée en retard » vient de l'APP, jamais du hub** (`lib/gel.ts`, PUR).
+  Chaque app déclare `expectedMaxAgeSec` (contrat v1.3) ; le hub ne fait que comparer. Un
+  seuil écrit dans le hub serait faux pour au moins une app — 40 min est sain pour un
+  véhicule qui se rafraîchit aux 30-60 min, catastrophique pour un moteur qui passe aux
+  5 min — et surtout ce serait de la connaissance d'app codée en dur. Une app qui n'a pas
+  déclaré son rythme n'est **pas** signalée : « je ne sais pas » ne s'affiche pas comme un
+  problème.
+- **Les trous de l'observation sont affichés, pas lissés** (page `/attention`, section
+  « Ce que le hub a pu observer »). La cadence d'un `schedule` GitHub Actions n'est pas
+  garantie — mesuré à environ trois fois plus lent que déclaré, avec un trou de 6 h 53,
+  tous les runs verts. Le hub compte donc ses relevés et ses trous plutôt que de tracer
+  une courbe lisse : une ligne qui relie deux points par-dessus un silence de sept heures
+  n'est pas une approximation, c'est une affirmation fausse.
 - **Widgets génériques** : la taille bento dérive de la richesse du summary, la
   couleur d'accent vient de `app.color`, les métriques sont formatées en fr-CA.
 

@@ -67,6 +67,18 @@ Production **et** Preview :
 - `AUTH_URL` — **optionnelle** (`trustHost` est actif). Seulement pour forcer le domaine
   canonique : `https://hubperso.com`.
 - Les jetons `HUB_TOKEN_*` des apps : inchangés.
+- `CRON_SECRET` — **nouveau, 14/09/2026**. Secret de l'horloge du hub (ADR 0003). La MÊME
+  valeur doit être posée en **deux** endroits, sinon rien ne tourne :
+  - ici, sur Vercel (production) ;
+  - dans le dépôt GitHub : *Settings → Secrets and variables → Actions*, avec `HUB_URL`
+    (= `https://hubperso.com`).
+
+  ⚠️ Secret **dédié**, jamais un `HUB_TOKEN_*` d'app : ce qu'il déclenche est une ÉCRITURE
+  dans la mémoire du hub, un pouvoir qu'aucune app n'a de raison d'avoir.
+
+  Sans lui, `POST /api/cron/releve` répond **503** et le workflow échoue en **ROUGE** —
+  c'est voulu : une horloge qui n'enregistre rien ne doit pas ressembler à une horloge qui
+  fonctionne.
 
 **Redirect URIs Google** (client OAuth) :
 
@@ -89,6 +101,28 @@ marcherait même si toute la base était en panne. Ce qui compte est l'autre :
 
 Chaque étape teste une porte différente. Les confondre, c'est croire qu'on a vérifié
 l'autorisation alors qu'on n'a vérifié que la connexion.
+
+## Comment vérifier que l'HORLOGE marche vraiment
+
+Même piège qu'au-dessus, transposé : « le workflow est vert » ne prouve presque rien. Il
+serait vert aussi s'il déclenchait un relevé qui n'écrit jamais rien. Ce qui se vérifie :
+
+1. **Un run déclenché à la main écrit.** GitHub → *Actions* → *Relevé* → *Run workflow*.
+   Attendu dans le journal : `HTTP 200` et un corps portant `"ecrits":5`. Un `"ecrits":0`
+   avec un avertissement est NORMAL si un relevé vient d'être écrit (l'espacement minimal
+   est de 15 min) — relancer quinze minutes plus tard pour lever le doute.
+2. **La page le confirme.** `/attention` → section « Ce que le hub a pu observer ». Le
+   nombre de relevés doit AUGMENTER d'un run à l'autre. Si elle affiche « Aucun relevé sur
+   les 7 derniers jours », les secrets ne sont pas posés ou `DATABASE_URL` manque.
+3. **La détection de gel se teste par l'absence**, et c'est le contre-intuitif : tant
+   qu'aucune app n'est re-pinnée sur `hub-contract` v1.3 et ne publie
+   `expectedMaxAgeSec`, AUCUNE ligne « donnée figée » ne doit apparaître — même sur une
+   app dont la donnée a trois jours. C'est correct : le hub sait l'âge et ne peut pas le
+   juger. Voir une telle ligne avant le re-pin des apps serait le signe d'un seuil deviné
+   côté hub, exactement ce que l'ADR 0003 interdit.
+4. **Le retard se lit, il ne se devine pas.** Après trois jours, comparer le nombre de
+   relevés à ce que la cadence promet (336 sur 7 jours). L'écart est attendu — GitHub
+   étale ses `schedule` — et c'est précisément pour ça qu'il est affiché.
 
 ## Note Cloudflare Access
 

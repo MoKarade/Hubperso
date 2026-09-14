@@ -32,11 +32,26 @@ export function isPublicPath(pathname: string): boolean {
   // (app/api/acces/route.ts). C'est le même genre d'authentification que celle que chaque
   // app applique à son propre `/hub/summary`.
   //
-  // ⚠️ C'est la SEULE exception, et elle est ici plutôt que dans le matcher du middleware
-  // (CLAUDE.md : ne jamais ajouter une route aux exclusions du matcher). La requête
-  // continue donc de traverser la middleware — le refus global quand l'auth n'est pas
-  // configurée s'applique toujours.
+  // ⚠️ Elle est ici plutôt que dans le matcher du middleware (CLAUDE.md : ne jamais ajouter
+  // une route aux exclusions du matcher). La requête continue donc de traverser la
+  // middleware — le refus global quand l'auth n'est pas configurée s'applique toujours.
   if (pathname === "/api/acces") return true;
+
+  // POST /api/cron/releve : l'HORLOGE du hub, appelée par un workflow GitHub Actions
+  // (.github/workflows/releve.yml). Deuxième route dans ce cas, et pour exactement la même
+  // raison que ci-dessus : un workflow n'a pas de cookie de session à présenter.
+  //
+  // Elle n'est pas ouverte non plus : elle exige `Authorization: Bearer <CRON_SECRET>`,
+  // comparé à temps constant, et répond 401 sans lui / 503 si le secret n'est pas configuré
+  // (lib/cronAuth.ts). Le secret est DÉDIÉ et non un `HUB_TOKEN_*` d'app : ce qu'elle
+  // déclenche est une écriture dans la mémoire du hub, un pouvoir qu'aucune app n'a de
+  // raison d'avoir.
+  //
+  // ⚠️ Il y a donc DEUX exceptions, plus une seule. Le CLAUDE.md a longtemps écrit « c'est
+  // la SEULE exception » ; il est corrigé en même temps que cette ligne, parce qu'une règle
+  // qu'on sait fausse cesse d'être lue comme une règle. Ce qui n'a PAS changé, et qui est
+  // le vrai garde-fou : le matcher du middleware ne gagne aucune exclusion (leçon n°4).
+  if (pathname === "/api/cron/releve") return true;
   if (
     pathname.startsWith("/_next/static/") ||
     pathname.startsWith("/_next/image") ||

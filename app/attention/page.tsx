@@ -13,6 +13,9 @@ import { exigerAccesHub } from "@/lib/gardeHub";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
 import { attentions, compteParGravite, type Gravite } from "@/lib/attention";
+import { CADENCE_HORLOGE_MS, continuite } from "@/lib/gel";
+import { lireHistoriqueTous } from "@/lib/historiqueDb";
+import { formatDuree } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +25,28 @@ const LIBELLE: Record<Gravite, string> = {
   info: "Pour information",
 };
 
+/** Fenêtre sur laquelle on juge la continuité de l'observation. */
+const FENETRE_MS = 7 * 24 * 3_600_000;
+
 export default async function PageAttention() {
   await exigerAccesHub();
 
-  const resultats = await fetchAllSummaries(getSources());
-  const liste = attentions(resultats);
+  const sources = getSources();
+  const maintenant = Date.now();
+  const [resultats, historiques] = await Promise.all([
+    fetchAllSummaries(sources),
+    lireHistoriqueTous(sources.map((s) => s.id)),
+  ]);
+  const liste = attentions(resultats, maintenant);
   const compte = compteParGravite(liste);
+
+  // Ce que le hub a pu observer, et ce qu'il a MANQUÉ. Voir le bloc de rendu plus bas.
+  const observation = sources.map((source) => ({
+    id: source.id,
+    nom: source.name,
+    ...continuite(historiques.get(source.id) ?? [], CADENCE_HORLOGE_MS, FENETRE_MS, maintenant),
+  }));
+  const totalReleves = observation.reduce((n, o) => n + o.releves, 0);
 
   return (
     <main className="page">
@@ -91,6 +110,57 @@ export default async function PageAttention() {
           ))}
         </ul>
       )}
+
+      {/*
+        CE QUE LE HUB A PU OBSERVER — et c'est inconfortable exprès.
+
+        Cette section ne juge pas les apps, elle juge le HUB. Sa mémoire n'était alimentée
+        que par l'affichage d'une page : rien ne s'enregistrait quand personne ne regardait,
+        donc l'observateur était requis pour l'observation. L'horloge
+        (`.github/workflows/releve.yml` → `POST /api/cron/releve`, ADR 0003) répare la
+        cause ; ce bloc rend le RÉSIDU visible, parce que la cadence d'un `schedule` GitHub
+        n'est pas garantie — mesuré à environ trois fois plus lent que déclaré, tous les
+        runs verts.
+
+        L'afficher plutôt que de lisser est le principe « no fake data » appliqué au temps :
+        une courbe qui relie deux points par-dessus un silence de sept heures n'est pas une
+        approximation, c'est une affirmation fausse sur ce qui s'est passé entre les deux.
+      */}
+      <section className="observation">
+        <h2 className="observation__titre">Ce que le hub a pu observer</h2>
+        {totalReleves === 0 ? (
+          <p className="observation__vide">
+            Aucun relevé sur les 7 derniers jours. L’horloge n’a pas encore tourné — il faut
+            les secrets <code>HUB_URL</code> et <code>CRON_SECRET</code> (dépôt GitHub et
+            Vercel). Sans elle, les courbes d’évolution restent vides : le hub n’enregistre
+            que ce qu’il observe.
+          </p>
+        ) : (
+          <>
+            <ul className="observation__liste">
+              {observation.map((o) => (
+                <li className="observation__ligne" key={o.id}>
+                  <span className="observation__app">{o.nom}</span>
+                  <span className="observation__chiffres">
+                    {o.releves === 0
+                      ? "aucun relevé"
+                      : `${o.releves} relevés · ${o.trous === 0 ? "aucun trou" : `${o.trous} trou${o.trous > 1 ? "s" : ""}`}${
+                          o.ecartMaxMs === null
+                            ? ""
+                            : ` · le pire écart ${formatDuree(o.ecartMaxMs)}`
+                        }`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="observation__note">
+              Sur 7 jours, une cadence de {formatDuree(CADENCE_HORLOGE_MS)} donnerait 336
+              relevés. Un « trou » est un écart de plus du double de cette cadence, donc au
+              moins un passage perdu — les courbes d’évolution en portent la trace.
+            </p>
+          </>
+        )}
+      </section>
     </main>
   );
 }

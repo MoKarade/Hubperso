@@ -5,6 +5,41 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-20] Next 15.5.22 → 15.5.25 : RCE critique NON AUTHENTIFIÉE, et le chemin visé est
+  public par conception.** Deux avis parus entre le 07/09 (dernier audit hebdomadaire vert
+  sur `main`) et le 14/09, **sans qu'une ligne du dépôt n'ait changé** — exactement le
+  scénario pour lequel le job `audit` existe.
+  - `next` ≤ 15.5.23 — **critique** : GHSA-2xp9-vwfh-vxw4, exécution de code à distance non
+    authentifiée dans l'API d'optimisation d'images quand des fichiers AVIF sont utilisés.
+    ⚠️ Ce n'est PAS théorique ici : `isPublicPath` laisse passer `/_next/image` **exprès**
+    (c'est requis pour que les images se chargent), donc le point d'entrée est joignable
+    sans session sur hubperso.com. L'autre avis, GHSA-p293-qw3h-jr36, ne vise que les
+    serveurs Windows et ne s'applique pas à Vercel.
+  - `sharp` < 0.35.4 — **haute** : GHSA-rgj7-g3m4-5g8c (libheif), dépendance de
+    l'optimisation d'images de Next.
+
+  Corrigé le 14/09 par `npm audit fix` : **lockfile uniquement**, `package.json` inchangé
+  (`next: "^15.5.22"` résout désormais 15.5.25, `sharp` 0.35.4). `npm audit --omit=dev` :
+  0 vulnérabilité. Gate rejoué entier après le bump.
+  Établi comme PRÉEXISTANT avant d'agir, pas supposé : l'audit rejoué sur `origin/main`
+  dans un worktree séparé rend les deux mêmes avis, à l'identique.
+  ⚠️ Ça change ce qui est SERVI (Next lui-même) : vérifier le déploiement de production
+  après le merge, pas seulement la CI (§6).
+
+- **[H-19] Le hub observe sans toi, et il dit quand il a mal observé.** Diagnostic du
+  14/09/2026 : `enregistrerReleve` n'était appelée que depuis `app/page.tsx`, donc rien ne
+  s'enregistrait sans onglet ouvert — l'observateur était requis pour l'observation. Trois
+  conséquences, toutes invisibles à l'écran : aucune courbe en dehors des heures de
+  consultation, aucune détection de métrique GELÉE (il faut deux relevés qui encadrent le
+  gel), aucune trace d'une app tombée le vendredi.
+  **Livré** : `POST /api/cron/releve` + `.github/workflows/releve.yml` (l'horloge),
+  `lib/gel.ts` (`fraicheur`, `rythmeDonnee`, `continuite`, PURES), la donnée figée inscrite
+  dans le bandeau « attention », et `tests/gardePages.test.ts` étendu aux `route.ts`.
+  **Reste** : poser les deux secrets `HUB_URL` et `CRON_SECRET` (dépôt GitHub + Vercel) —
+  sans eux le workflow échoue en rouge, c'est voulu ; puis vérifier sur trois jours que la
+  cadence réelle tient, puisque GitHub n'en garantit aucune (mesuré à ~3× plus lent sur
+  CarAI, tous les runs verts).
+
 - **[H-18] `build-necessaire.sh` ne voit jamais une variable d'environnement changée
   sur Vercel.** Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
   Vercel après une panne de connexion, mais le dernier commit sur `main` (#48) ne touchait
@@ -26,10 +61,20 @@ n°1 de ce dépôt — *le hub ne connaît AUCUNE app en particulier* — n'est 
 une carte FinanceAI plus riche se code **dans FinanceAI**, pas ici. Chaque item porte donc
 son lieu : `[HUB]` ce dépôt · `[APP]` le dépôt de l'app · `[CONTRAT]` `hub-contract`.
 
-⚠️ **Contrainte dure du contrat, à connaître avant de promettre quoi que ce soit :**
-`metrics` est plafonné à **6 par app**, `alerts` à 10, `actions` à 6. La liste de FinanceAI
-ci-dessous en demande six à elle seule — il n'y a pas de septième place, et « liquidités PAR
-COMPTE » n'entre pas dans une métrique unique sans choix éditorial.
+⚠️ **Contrainte du contrat, à connaître avant de promettre quoi que ce soit :** `metrics`
+reste plafonné à **6 par app**, `alerts` à 10, `actions` à 6. La liste de FinanceAI
+ci-dessous en demande six à elle seule — il n'y a pas de septième place SUR LA CARTE, et
+« liquidités PAR COMPTE » n'entre pas dans une métrique unique sans choix éditorial.
+
+✅ **Ce n'est plus une impasse depuis `hub-contract` v1.3.0 (14/09/2026).** Le plafond de 6
+protège la lisibilité de la CARTE ; il n'avait aucune raison de borner ce qu'on consulte en
+cliquant. Le champ `details` porte désormais jusqu'à 6 sections titrées de 8 lignes chacune,
+avec un `hint` par ligne pour dire l'unité ou la période. La carte garde ses 6 métriques, le
+reste va dans la vue détaillée.
+⚠️ Les libellés de détail servent de CLÉ à l'historique : la clé est le couple (titre de
+section, libellé). Deux lignes homonymes dans une même section donneraient une courbe qui
+saute d'une grandeur à l'autre — un graphe faux, sans rien d'anormal à l'écran. Le contrat
+les rejette ; le même libellé dans deux sections différentes reste accepté.
 
 - [ ] **[H-09] [HUB] Coûts et quotas détaillés, avec l'évolution dans le temps.** Au clic sur
   « détails » d'une app : graphique de l'évolution de son coût ; sinon, le prix sur 7 jours.
@@ -44,14 +89,26 @@ COMPTE » n'entre pas dans une métrique unique sans choix éditorial.
 
 - [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
   demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
-  patrimoine pour FinanceAI). Le contrat n'a aucun moyen de l'exprimer : le hub afficherait
-  six métriques de même poids. Champ additif à concevoir dans `hub-contract` — sans lui,
-  `[H-09]` et les cartes plus riches se font au jugé, donc mal.
+  patrimoine pour FinanceAI). Le contrat n'avait aucun moyen de l'exprimer : le hub
+  affichait six métriques de même poids.
+  **Tranché et livré côté contrat** (`hub-contract` v1.3.0, 14/09/2026) : un DRAPEAU
+  `primary: true` porté par la métrique, et non un `primaryMetric: "<label>"` à la racine —
+  une référence par libellé peut pendre dans le vide, un drapeau ne peut désigner que ce à
+  quoi il est attaché. Au plus un par summary, sinon le summary est rejeté.
+  **Reste, côté HUB** : le rendu (aujourd'hui le hub retombe toujours sur la première
+  métrique, ce qu'il faisait déjà — la nouveauté est qu'une app peut enfin le dire).
 
 - [ ] **[H-12] [CONTRAT] Une app peut-elle publier une RECOMMANDATION ?** Marc demande « voir
-  recommandation directe » pour FinanceAI. Aujourd'hui ça passerait par une `alert` de
-  sévérité `info`, ce qui la range visuellement avec les problèmes. À trancher : détourner
-  `alerts`, ou ajouter un champ. ⚠️ Ne pas trancher seul — c'est le contrat, six consommateurs.
+  recommandation directe » pour FinanceAI. Ça passait par une `alert` de sévérité `info`,
+  ce qui la rangeait visuellement avec les problèmes.
+  **Tranché et livré côté contrat** (`hub-contract` v1.3.0, 14/09/2026) : un CHAMP
+  `recommendation` dédié, et volontairement SINGULIER. Une alerte dit ce qui va mal, une
+  recommandation dit ce qu'il y a de mieux à faire — et le plus souvent rien ne va mal. Les
+  fondre laissait deux issues, mauvaises toutes les deux : un bon conseil mis en forme comme
+  un problème, ou une liste de problèmes diluée qu'on apprend à ne plus lire. Un tableau
+  aurait été rempli de cinq conseils, et un tableau de bord qui en affiche cinq n'en affiche
+  aucune.
+  **Reste, côté HUB** : le rendu sur la carte et dans la vue détaillée.
 
 #### Ce qui relève des APPS, pas de ce dépôt (à propager sur feu vert de Marc)
 
@@ -98,6 +155,18 @@ COMPTE » n'entre pas dans une métrique unique sans choix éditorial.
   Et quand le diff n'a pas d'en-tête `@@`, elle ne répond pas « rien n'est touché » — elle
   ne SAIT pas, et retombe sur le critère littéral : « je ne sais pas » ne doit jamais
   devenir « non », surtout quand ce non refuse une PR.
+
+  ⚠️ **Quatrième angle mort, corrigé le 14/09/2026** : `idDeclare` n'admettait, avant
+  l'identifiant, que la puce, un `~~` de rayure et les `**` du gras. Une entrée écrite
+  `- 🟦 **[H-19] …` — avec l'un des quatre marqueurs de statut que la convention de
+  compte-rendu §8 déclare EXPLICITEMENT légitimes dans `BACKLOG.md` et `HANDOVER.md`, et
+  dont elle précise qu'ils sont **lus par ce script** — n'était donc pas reconnue comme une
+  déclaration. Son corps n'appartenait à aucun bloc, et le contrôle affirmait « la tâche a
+  avancé sans que son entrée ne soit relue » alors qu'elle venait d'être ÉCRITE dans la même
+  PR. Le motif tolère désormais un marqueur de statut et une case Markdown en tête.
+  Trouvé, comme les trois autres, **en appliquant le contrôle à sa propre PR** — quatre sur
+  quatre par le même moyen, ce qui commence à être une méthode plutôt qu'une coïncidence.
+  Quatre tests de régression, prouvés discriminants (3 échecs si on remet l'ancien motif).
 
   **Leçon à emporter avant chaque propagation** : ce script se valide sur les VRAIS commits
   et les VRAIS backlogs du dépôt visé, jamais sur ce qu'on croit qu'ils sont. Trois angles

@@ -15,7 +15,7 @@
     "constellation": "tsx scripts/verifier-constellation.ts"
   },
   "dependencies": {
-    "@mokarade/hub-contract": "github:MoKarade/hub-contract#fcfeedbb2554c830ede91c1183cdb46fdcaca468",
+    "@mokarade/hub-contract": "github:MoKarade/hub-contract#v1.3.0",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
