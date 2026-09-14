@@ -93,7 +93,14 @@ Production **et** Preview :
   valeur doit être posée en **deux** endroits, sinon rien ne tourne :
   - ici, sur Vercel (production) ;
   - dans le dépôt GitHub : *Settings → Secrets and variables → Actions*, avec `HUB_URL`
-    (= `https://hubperso.com`).
+    = l'**origine canonique**, celle que Vercel sert SANS redirection — soit
+    `https://www.hubperso.com`.
+
+  ⚠️ Cette ligne a dit `https://hubperso.com` jusqu'au 14/09/2026 au soir, et cette valeur
+  **ne fonctionne pas** : l'apex redirige en 308 vers `www`, `curl` retire l'en-tête
+  `Authorization` dès que l'hôte change, et le hub répond 401 « secret refusé » — donc on
+  va régénérer un secret qui était bon. Le workflow diagnostique désormais le changement
+  d'hôte AVANT de juger le statut, mais la valeur juste évite le détour.
 
   ⚠️ Secret **dédié**, jamais un `HUB_TOKEN_*` d'app : ce qu'il déclenche est une ÉCRITURE
   dans la mémoire du hub, un pouvoir qu'aucune app n'a de raison d'avoir.
