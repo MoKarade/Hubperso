@@ -28,9 +28,19 @@
 # un commentaire faux — ce qui est promis est « au mieux toutes les 30 minutes ».
 #
 # ── PRÉREQUIS (deux secrets de dépôt : Settings → Secrets and variables → Actions) ───
-#   HUB_URL      = https://hubperso.com
+#   HUB_URL      = l'ORIGINE CANONIQUE du hub, sans barre oblique finale et sans chemin.
+#                  Celle que Vercel sert SANS redirection — si le hub redirige l'apex vers
+#                  `www` (ou l'inverse), c'est la cible du 308 qu'il faut mettre ici.
 #   CRON_SECRET  = la MÊME valeur que la variable CRON_SECRET du projet Vercel du hub
 # Sans eux le workflow échoue FRANCHEMENT, plutôt que de tourner à vide en vert.
+#
+# ⚠️ POURQUOI L'ORIGINE EXACTE COMPTE, ET CE N'EST PAS DU FORMALISME. Vécu au premier run
+# réel, le 14/09/2026 : les deux secrets étaient POSÉS et corrects, et le run a quand même
+# échoué sur un « HTTP 308 Redirecting ». Un 308 est la normalisation canonique de
+# Vercel/Next — une barre oblique finale (`…/` + `/api/…` = `//api/…`) ou un apex qui
+# renvoie vers `www`. Et un jeton ne franchit PAS une redirection de domaine : `curl` retire
+# l'en-tête `Authorization` dès que l'hôte change (c'est une protection, pas un défaut). Une
+# URL « presque bonne » ne coûte donc pas un détour, elle coûte l'authentification.
 
 name: Relevé
 
@@ -75,19 +85,46 @@ jobs:
             exit 1
           fi
 
+          # Barres obliques finales retirées : `https://hub.example/` donnerait
+          # `https://hub.example//api/cron/releve`, que Next normalise par un 308 — donc un
+          # aller-retour inutile au mieux, et la perte du jeton si l'hôte change au pire.
+          # C'est la cause la plus banale du 308 vécu le 14/09, et la seule qu'on puisse
+          # corriger ICI plutôt que de demander à Marc de retoucher un secret.
+          base=$(printf '%s' "$HUB_URL" | sed 's:/*$::')
+          cible="${base}/api/cron/releve"
+
           # -w écrit le code HTTP en dernière ligne : le corps ET le statut sont jugés.
           # Un 200 seul ne suffirait pas — la route répond 200 avec `ok:true, ecrits:0`
           # quand le dernier relevé est trop récent, ce qui est NORMAL et ne doit pas
           # teindre le run. C'est le corps qui porte le motif.
-          reponse=$(curl -sS --max-time 120 -X POST -w '\n%{http_code}' \
+          #
+          # -L suit les redirections, --max-redirs 2 les borne, et on N'UTILISE JAMAIS
+          # --location-trusted : `curl` doit continuer de RETIRER l'en-tête Authorization
+          # quand l'hôte change. Envoyer le secret du hub à l'hôte qu'une redirection
+          # désigne serait lui faire confiance pour ça — et une redirection est justement ce
+          # qu'on ne contrôle pas. Conséquence assumée : un apex→www donne un 401 franc,
+          # diagnostiqué ci-dessous, plutôt qu'un succès obtenu en baissant la garde.
+          reponse=$(curl -sS --max-time 120 -X POST -L --max-redirs 2 \
+            -w '\n%{http_code}\n%{url_effective}' \
             -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${HUB_URL}/api/cron/releve")
+            "$cible")
 
-          statut=$(echo "$reponse" | tail -n1)
-          corps=$(echo "$reponse" | sed '$d')
+          url_finale=$(echo "$reponse" | tail -n1)
+          statut=$(echo "$reponse" | tail -n2 | head -n1)
+          corps=$(echo "$reponse" | sed '$d' | sed '$d')
 
           echo "HTTP ${statut}"
           echo "$corps"
+
+          # L'HÔTE A CHANGÉ EN ROUTE : le jeton n'est pas arrivé, et le 401 qui suivrait
+          # accuserait le secret alors que c'est l'URL qui est en cause. On le dit ICI,
+          # avant de juger le statut, parce que c'est le seul endroit où l'on sait POURQUOI.
+          hote_demande=$(printf '%s' "$cible" | sed -E 's#^[a-z]+://([^/]+).*#\1#')
+          hote_final=$(printf '%s' "$url_finale" | sed -E 's#^[a-z]+://([^/]+).*#\1#')
+          if [ -n "$hote_final" ] && [ "$hote_demande" != "$hote_final" ]; then
+            echo "::error::HUB_URL désigne « ${hote_demande} », qui redirige vers « ${hote_final} ». Mettre l'origine CANONIQUE dans le secret HUB_URL — le jeton ne franchit pas un changement d'hôte."
+            exit 1
+          fi
 
           # 401 = le secret du dépôt ne correspond pas à celui de Vercel.
           # 503 = CRON_SECRET ou DATABASE_URL absente côté Vercel.
@@ -98,6 +135,16 @@ jobs:
             echo "::error::Configuration de l'horloge incorrecte (HTTP ${statut})."
             exit 1
           fi
+
+          # Une redirection SURVIVANTE (même hôte, donc suivie, et pourtant un 3xx final) :
+          # --max-redirs est épuisé, ou la cible reboucle. « Réponse inattendue » enverrait
+          # chercher un bug d'application là où c'est une URL ou une règle de réécriture.
+          case "$statut" in
+            30*)
+              echo "::error::Redirection non résolue (HTTP ${statut}) vers « ${url_finale} ». Vérifier HUB_URL et les réécritures du projet Vercel."
+              exit 1
+              ;;
+          esac
 
           if [ "$statut" != "200" ]; then
             echo "::error::Réponse inattendue (HTTP ${statut})."
