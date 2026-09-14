@@ -26,6 +26,17 @@ l'état réel avant de coder.
   ⚠️ Ça change ce qui est SERVI (Next lui-même) : vérifier le déploiement de production
   après le merge, pas seulement la CI (§6).
 
+- **[H-22] Le message de la page « attention » envoyait refaire un geste déjà fait.**
+  Capture de Marc du 14/09 au soir : l'encadré « Ce que le hub a pu observer » affichait
+  « il faut les secrets `HUB_URL` et `CRON_SECRET` » alors que les deux étaient **posés et
+  corrects**. La vraie cause était la VALEUR de `HUB_URL` — l'apex, qui redirige en 308 vers
+  `www`, et `curl` retire l'en-tête `Authorization` dès que l'hôte change (401 « secret
+  refusé »). Le message accusait donc le premier suspect, qui était innocent, et laissait la
+  cause invisible.
+  C'est le défaut que cette page existe pour combattre, commis par cette page. **Livré** :
+  l'encadré ne devine plus, il renvoie au dernier run du workflow `Relevé`, qui NOMME le
+  blocage (401 vs 503) et compare les deux hôtes depuis [H-19].
+
 - **[H-21] L'auto-merge était MORT, et c'est pour ça que cinq PR ont dû être fusionnées à
   la main.** Mesuré le 14/09 : les runs 361 à 364 d'`auto-merge.yml` ont TOUS échoué entre
   18h53 et 19h42 Z — passes planifiées et `pull_request_target` comprises — sur

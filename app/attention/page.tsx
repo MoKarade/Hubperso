@@ -129,11 +129,27 @@ export default async function PageAttention() {
       <section className="observation">
         <h2 className="observation__titre">Ce que le hub a pu observer</h2>
         {totalReleves === 0 ? (
+          // ⚠️ CE MESSAGE A DIT « IL FAUT LES SECRETS » JUSQU'AU 14/09/2026 AU SOIR, alors
+          // qu'ils étaient posés et corrects. Il envoyait refaire un geste déjà fait, et
+          // laissait la vraie cause invisible : `HUB_URL` désignait l'apex, qui redirige en
+          // 308 vers `www` — et `curl` retire l'en-tête `Authorization` dès que l'hôte
+          // change, donc le hub répondait 401 « secret refusé ». C'est exactement le défaut
+          // que cette page existe pour combattre, commis par cette page.
+          //
+          // Il ne DEVINE donc plus la cause : il renvoie à l'endroit qui la NOMME. Le
+          // workflow, depuis la même journée, compare l'hôte demandé à l'hôte final et écrit
+          // les deux dans son journal — un diagnostic mesuré vaut mieux qu'une liste de
+          // suspects, surtout quand le premier suspect est innocent.
           <p className="observation__vide">
-            Aucun relevé sur les 7 derniers jours. L’horloge n’a pas encore tourné — il faut
-            les secrets <code>HUB_URL</code> et <code>CRON_SECRET</code> (dépôt GitHub et
-            Vercel). Sans elle, les courbes d’évolution restent vides : le hub n’enregistre
-            que ce qu’il observe.
+            Aucun relevé sur les 7 derniers jours : l’horloge n’a encore rien enregistré. La
+            raison est écrite dans le dernier run du workflow{" "}
+            <code>Relevé</code> (onglet Actions du dépôt) — il nomme ce qui bloque plutôt que
+            de laisser deviner : <strong>401</strong> = le secret <code>CRON_SECRET</code> ne
+            correspond pas à celui de Vercel, ou <code>HUB_URL</code> ne désigne pas l’origine
+            canonique (un apex qui redirige vers <code>www</code> fait perdre le jeton en
+            route) ; <strong>503</strong> = une variable manque côté Vercel.
+            Sans horloge, les courbes d’évolution restent vides : le hub n’enregistre que ce
+            qu’il observe.
           </p>
         ) : (
           <>
