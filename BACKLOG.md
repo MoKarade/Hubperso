@@ -5,6 +5,27 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-20] Next 15.5.22 → 15.5.25 : RCE critique NON AUTHENTIFIÉE, et le chemin visé est
+  public par conception.** Deux avis parus entre le 07/09 (dernier audit hebdomadaire vert
+  sur `main`) et le 14/09, **sans qu'une ligne du dépôt n'ait changé** — exactement le
+  scénario pour lequel le job `audit` existe.
+  - `next` ≤ 15.5.23 — **critique** : GHSA-2xp9-vwfh-vxw4, exécution de code à distance non
+    authentifiée dans l'API d'optimisation d'images quand des fichiers AVIF sont utilisés.
+    ⚠️ Ce n'est PAS théorique ici : `isPublicPath` laisse passer `/_next/image` **exprès**
+    (c'est requis pour que les images se chargent), donc le point d'entrée est joignable
+    sans session sur hubperso.com. L'autre avis, GHSA-p293-qw3h-jr36, ne vise que les
+    serveurs Windows et ne s'applique pas à Vercel.
+  - `sharp` < 0.35.4 — **haute** : GHSA-rgj7-g3m4-5g8c (libheif), dépendance de
+    l'optimisation d'images de Next.
+
+  Corrigé le 14/09 par `npm audit fix` : **lockfile uniquement**, `package.json` inchangé
+  (`next: "^15.5.22"` résout désormais 15.5.25, `sharp` 0.35.4). `npm audit --omit=dev` :
+  0 vulnérabilité. Gate rejoué entier après le bump.
+  Établi comme PRÉEXISTANT avant d'agir, pas supposé : l'audit rejoué sur `origin/main`
+  dans un worktree séparé rend les deux mêmes avis, à l'identique.
+  ⚠️ Ça change ce qui est SERVI (Next lui-même) : vérifier le déploiement de production
+  après le merge, pas seulement la CI (§6).
+
 - **[H-19] Le hub observe sans toi, et il dit quand il a mal observé.** Diagnostic du
   14/09/2026 : `enregistrerReleve` n'était appelée que depuis `app/page.tsx`, donc rien ne
   s'enregistrait sans onglet ouvert — l'observateur était requis pour l'observation. Trois
