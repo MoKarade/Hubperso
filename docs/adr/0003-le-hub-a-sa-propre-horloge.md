@@ -137,6 +137,17 @@ c'est une affirmation fausse sur ce qui s'est passé entre les deux.
 - **Deux secrets à poser à la main** (`HUB_URL`, `CRON_SECRET`, côté dépôt GitHub et côté
   Vercel). Sans eux le workflow échoue en ROUGE : un run qui n'enregistre rien ne doit pas
   ressembler à un run vert. C'est la même règle que pour `npm run constellation`.
+
+  ⚠️ **Et `HUB_URL` doit être l'origine CANONIQUE, pas « l'adresse du hub ».** Mesuré au
+  premier run réel, le 14/09/2026 : les deux secrets étaient posés et corrects, et le run a
+  échoué sur un `HTTP 308 Redirecting`. Un 308 est la normalisation de Vercel/Next — une
+  barre oblique finale, ou un apex qui renvoie vers `www`. Le workflow normalise désormais la
+  barre oblique lui-même, suit les redirections de MÊME hôte, et **refuse explicitement** un
+  changement d'hôte : `curl` retire l'en-tête `Authorization` dès que l'hôte change (une
+  protection, pas un défaut), donc une redirection de domaine ne produirait pas un détour mais
+  un 401 — c'est-à-dire un diagnostic qui accuse le secret alors que l'URL est en cause.
+  `--location-trusted` aurait « réglé » ça en confiant le secret du hub à la cible d'une
+  redirection qu'on ne contrôle pas : refusé.
 - **Une deuxième route hors session.** La surface d'attaque grandit d'un endroit. Contrepartie
   acceptée parce que la route n'expose AUCUNE donnée (elle répond un décompte d'écritures),
   exige un secret comparé à temps constant, et que `tests/gardePages.test.ts` vérifie
