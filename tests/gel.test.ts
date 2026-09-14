@@ -6,6 +6,7 @@ import {
   FACTEUR_TROU,
   TOLERANCE_AVANCE_MS,
   continuite,
+  etatObservation,
   fraicheur,
   rythmeDonnee,
 } from "@/lib/gel";
@@ -242,5 +243,33 @@ describe("continuite — les trous dans l'observation du hub lui-même", () => {
     // si l'ordre d'arrivée était pris pour l'ordre chronologique.
     expect(c.ecartMaxMs).toBe(2 * HEURE);
     expect(c.trous).toBe(2);
+  });
+});
+
+describe("etatObservation", () => {
+  it("dit « sans base » quand la base manque, MÊME si des relevés étaient comptés", () => {
+    // Le cas qui compte : c'est l'ordre des deux tests dans la fonction qui est éprouvé ici,
+    // pas le résultat évident. Sans base, `totalReleves` vaut 0 en pratique — mais si le
+    // jugement de l'horloge passait d'abord, il gagnerait dans tous les cas réels et la
+    // panne serait TOUJOURS attribuée à l'horloge. Un total non nul et volontairement
+    // incohérent est le seul moyen de faire échouer une fonction qui inverserait l'ordre.
+    expect(etatObservation(false, 0)).toBe("sans-base");
+    expect(etatObservation(false, 42)).toBe("sans-base");
+  });
+
+  it("dit « horloge muette » quand la base est là et que rien n'a été enregistré", () => {
+    expect(etatObservation(true, 0)).toBe("horloge-muette");
+  });
+
+  it("dit « observé » dès un seul relevé", () => {
+    expect(etatObservation(true, 1)).toBe("observe");
+    expect(etatObservation(true, 336)).toBe("observe");
+  });
+
+  it("traite un total négatif comme une absence d'observation, jamais comme une observation", () => {
+    // Un compteur négatif ne devrait pas exister ; s'il apparaît (soustraction fautive en
+    // amont), il ne doit surtout pas franchir la porte en se faisant passer pour des données
+    // réelles. `<= 0` et non `=== 0` : c'est la différence entre un garde et une égalité.
+    expect(etatObservation(true, -1)).toBe("horloge-muette");
   });
 });

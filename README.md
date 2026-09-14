@@ -122,8 +122,19 @@ Aucune n'est committée.
 | `GOOGLE_CLIENT_SECRET` | Secret du client OAuth | (Google Cloud Console) |
 | `AUTH_SECRET` | Signature des JWT de session | `npx auth secret` |
 | `AUTHORIZED_EMAIL` | Le **propriétaire** : accès à tout, toujours, sans passer par la base (`lib/personnes.ts`) | `marc.richard4@gmail.com` |
-| `DATABASE_URL` | **Optionnelle** — base Neon (connection string *pooled*) pour la liste des personnes et leurs accès. Absente : seul le propriétaire entre, et l'app le dit |
+| `DATABASE_URL` | Base Neon (connection string ***pooled***). **Techniquement optionnelle, pratiquement indispensable** — voir l'avertissement sous ce tableau | (Neon) |
 | `AUTH_URL` | **Optionnelle** — la config utilise `trustHost`, le host de la requête suffit (local et Vercel). À poser seulement pour forcer un domaine canonique en prod, avec le protocole : `https://hubperso.com` |
+
+⚠️ **« Optionnelle » se lisait comme « accessoire », et ça a coûté une soirée.** Le mot
+était juste — l'app démarre sans — mais il cachait ce que l'absence emporte : **aucun
+relevé** (donc aucune courbe, aucune détection de métrique gelée), **aucune personne autre
+que le propriétaire** ne peut entrer, et l'horloge répond `503` à chaque passage. Et
+comme le propriétaire est vérifié **sans réseau**, tout continue de fonctionner pour lui :
+la panne n'a aucun symptôme du seul point de vue depuis lequel on la regarde. Mesuré le
+14/09/2026 à 20:34 Z sur la production.
+
+Les migrations s'appliquent au démarrage (`lib/migrations.ts`) : **aucune commande à
+lancer**, ni en local ni sur Vercel.
 
 **Redirect URIs à configurer côté Google Cloud Console** (client OAuth) :
 

@@ -138,6 +138,14 @@ c'est une affirmation fausse sur ce qui s'est passé entre les deux.
   Vercel). Sans eux le workflow échoue en ROUGE : un run qui n'enregistre rien ne doit pas
   ressembler à un run vert. C'est la même règle que pour `npm run constellation`.
 
+  ⚠️ **Trois choses, pas deux — et la troisième n'est pas un secret.** L'horloge a aussi
+  besoin de `DATABASE_URL` côté Vercel, puisqu'elle ÉCRIT. Mesuré le 14/09/2026 à 20:34 Z,
+  une fois `HUB_URL` enfin canonique : la route répond `503 « DATABASE_URL absente »`. Les
+  trois causes de cette même panne se sont donc présentées l'une après l'autre, chacune
+  masquant la suivante — barre oblique finale, apex qui redirige, base absente. Chacune a
+  son code HTTP et son message propre, et c'est la seule raison pour laquelle on a pu les
+  démêler une par une au lieu de chercher au hasard.
+
   ⚠️ **Et `HUB_URL` doit être l'origine CANONIQUE, pas « l'adresse du hub ».** Mesuré au
   premier run réel, le 14/09/2026 : les deux secrets étaient posés et corrects, et le run a
   échoué sur un `HTTP 308 Redirecting`. Un 308 est la normalisation de Vercel/Next — une
