@@ -135,12 +135,31 @@ export function entreeTouchee(diffBacklog, id, contenuBacklog = "") {
     .some((l) => l.includes(id));
 }
 
-/** La ligne DÉCLARE-t-elle une entrée ? Mêmes trois formats que `idsDuBacklog`. */
+/**
+ * La ligne DÉCLARE-t-elle une entrée ? Mêmes trois formats que `idsDuBacklog`.
+ *
+ * ⚠️ QUATRIÈME ANGLE MORT, trouvé le 14/09/2026 de la même façon que les trois autres :
+ * en appliquant ce contrôle à ma propre PR. Le motif n'admettait, avant l'identifiant, que
+ * la puce, un `~~` de rayure et les `**` du gras. Une entrée écrite
+ * `- 🟦 **[H-19] …` — avec l'un des marqueurs de statut que la convention de compte-rendu
+ * §8 déclare EXPLICITEMENT légitimes dans `BACKLOG.md` et `HANDOVER.md` — n'était donc pas
+ * reconnue comme une déclaration. Conséquence : l'entrée n'appartenait à aucun bloc, et le
+ * script affirmait « la tâche a avancé sans que son entrée ne soit relue » alors qu'elle
+ * venait d'être ÉCRITE dans la même PR.
+ *
+ * Un garde-fou qui refuse à tort est pire qu'absent : on apprend à le contourner, et le
+ * jour où il a raison plus personne ne le lit. Le motif tolère donc désormais une case
+ * Markdown (`[ ]`, `[x]`) et un marqueur de statut en tête.
+ */
 function idDeclare(ligne) {
-  const m =
-    /^\s*[-*|]?\s*(?:~~)?\s*(?:\*\*)?\s*(?:`([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)`|\[([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\]|([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)(?=\s*[—:|]))/.exec(
-      ligne,
-    );
+  // Les quatre marqueurs de la convention (⬜ 🟦 ✅ ⏸️) plus la case Markdown, en nombre
+  // quelconque et dans n'importe quel ordre : c'est du décor de tête, pas une grammaire.
+  const tete = "(?:\\[[ xX]?\\]|[\\u2b1c\\u{1f7e6}\\u2705\\u23f8\\ufe0f]|~~|\\*\\*|\\s)*";
+  const id = "[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+";
+  const m = new RegExp(
+    `^\\s*[-*|]?${tete}(?:\`(${id})\`|\\[(${id})\\]|(${id})(?=\\s*[\u2014:|]))`,
+    "u",
+  ).exec(ligne);
   return m ? m[1] || m[2] || m[3] : null;
 }
 

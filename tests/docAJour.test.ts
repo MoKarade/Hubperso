@@ -276,3 +276,49 @@ describe("suggestion", () => {
     expect(suggestion(["C28-49"], new Set(["C28-49"]))).toBeNull();
   });
 });
+
+// ── QUATRIÈME ANGLE MORT : LE MARQUEUR DE STATUT EN TÊTE D'ENTRÉE ───────────────────
+//
+// Trouvé le 14/09/2026 en appliquant ce contrôle à sa propre PR, comme les trois autres.
+// La convention de compte-rendu §8 déclare ⬜ 🟦 ✅ ⏸️ légitimes dans BACKLOG.md et
+// HANDOVER.md, et précise qu'ils sont LUS par ce script. Il ne les lisait pas : une entrée
+// écrite `- 🟦 **[H-19] …` n'était pas reconnue comme une déclaration, n'appartenait donc à
+// aucun bloc, et le script affirmait « la tâche a avancé sans que son entrée ne soit
+// relue » alors qu'elle venait d'être écrite dans la même PR.
+describe("entreesTouchees — un marqueur de statut ne cache pas l'identifiant", () => {
+  const corps = (tete: string) => `${tete}**[H-19] Une entrée**\n  son corps\n`;
+  const diff = (tete: string) =>
+    `@@ -1,0 +1,2 @@\n+${tete}**[H-19] Une entrée**\n+  son corps\n`;
+
+  it("reconnaît l'entrée derrière chacun des quatre marqueurs de la convention", () => {
+    for (const marqueur of ["- ⬜ ", "- 🟦 ", "- ✅ ", "- ⏸️ "]) {
+      expect(
+        [...entreesTouchees(diff(marqueur), corps(marqueur))],
+        `marqueur ${marqueur.trim()}`,
+      ).toEqual(["H-19"]);
+    }
+  });
+
+  it("reconnaît aussi la case Markdown, seule ou avec un marqueur", () => {
+    for (const tete of ["- [ ] ", "- [x] ", "- [ ] ✅ "]) {
+      expect([...entreesTouchees(diff(tete), corps(tete))], `tête « ${tete} »`).toEqual([
+        "H-19",
+      ]);
+    }
+  });
+
+  it("le corps d'une entrée marquée lui est bien IMPUTÉ, pas ignoré", () => {
+    // Le vrai geste de mise à jour : on écrit dans le corps sans retaper l'identifiant.
+    // Si la ligne de titre n'était pas reconnue comme déclaration, ce corps
+    // n'appartiendrait à personne et la modification passerait pour inexistante.
+    const contenu = "- 🟦 **[H-19] Une entrée**\n  ligne d'origine\n  ligne ajoutée\n";
+    const diffCorps = "@@ -1,2 +1,3 @@\n - 🟦 **[H-19] Une entrée**\n   ligne d'origine\n+  ligne ajoutée\n";
+    expect([...entreesTouchees(diffCorps, contenu)]).toEqual(["H-19"]);
+  });
+
+  it("n'invente pas d'entrée quand il n'y a pas d'identifiant", () => {
+    const contenu = "- 🟦 Une note sans identifiant\n  son corps\n";
+    const d = "@@ -1,0 +1,2 @@\n+- 🟦 Une note sans identifiant\n+  son corps\n";
+    expect([...entreesTouchees(d, contenu)]).toEqual([]);
+  });
+});

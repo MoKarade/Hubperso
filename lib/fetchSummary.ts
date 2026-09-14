@@ -58,6 +58,22 @@ export type SummaryResult =
  */
 const TIMEOUT_MS = 9000;
 
+/**
+ * Budget d'attente de l'HORLOGE (`/api/cron/releve`), plus généreux — et ce n'est pas un
+ * réglage de confort.
+ *
+ * Les 9 s ci-dessus sont calibrées sur une personne qui attend devant une page. L'horloge,
+ * elle, n'a personne devant : rien ne se dégrade si elle met vingt secondes, et ce qui se
+ * perd quand elle coupe trop tôt est un relevé, c'est-à-dire un TROU définitif dans la
+ * mémoire du hub — il ne se rattrape pas au prochain passage.
+ *
+ * Le cas concret : le broker de DriveAI abandonne à 8,7 s, choisis pour rester juste sous
+ * les 9 s du hub. La marge est de 300 ms et ne couvre même pas l'aller-retour réseau, si
+ * bien qu'un réveil à froid d'Apps Script se solde régulièrement par « délai dépassé ».
+ * Pour l'affichage, le repli est le cache de résilience ; pour l'horloge, il n'y en a pas.
+ */
+export const TIMEOUT_CRON_MS = 20_000;
+
 /** Au-delà, un résumé en cache est trop vieux pour masquer une panne : on montre l'erreur honnête. */
 const STALE_MAX_MS = 30 * 60 * 1000; // 30 min
 
@@ -84,10 +100,11 @@ export async function fetchSummary(
   source: HubSource,
   fetchImpl: typeof fetch = fetch,
   now: () => number = Date.now,
+  timeoutMs: number = TIMEOUT_MS,
 ): Promise<SummaryResult> {
   if (!source.token) return { state: "unconfigured", source };
 
-  const live = await fetchLive(source, fetchImpl);
+  const live = await fetchLive(source, fetchImpl, timeoutMs);
 
   // Succès : on rafraîchit le cache et on sert la donnée live.
   if (live.state === "ok") {
@@ -126,23 +143,27 @@ export function fetchSummaryLive(
   fetchImpl: typeof fetch = fetch,
 ): Promise<SummaryResult> {
   if (!source.token) return Promise.resolve({ state: "unconfigured", source });
-  return fetchLive(source, fetchImpl);
+  return fetchLive(source, fetchImpl, TIMEOUT_MS);
 }
 
 /** Un seul aller-retour réseau + validation contrat. Sans cache : la résilience est au-dessus. */
-async function fetchLive(source: HubSource, fetchImpl: typeof fetch): Promise<SummaryResult> {
+async function fetchLive(
+  source: HubSource,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
+): Promise<SummaryResult> {
   let response: Response;
   try {
     response = await fetchImpl(source.summaryUrl, {
       headers: { [HUB_TOKEN_HEADER]: source.token!, accept: "application/json" },
       cache: "no-store",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
     const detail =
       err instanceof Error
         ? err.name === "TimeoutError"
-          ? `délai dépassé (${TIMEOUT_MS} ms)`
+          ? `délai dépassé (${timeoutMs} ms)`
           : err.message
         : String(err);
     return { state: "unreachable", source, detail };
@@ -179,10 +200,18 @@ async function fetchLive(source: HubSource, fetchImpl: typeof fetch): Promise<Su
   }
 }
 
-/** Interroge toutes les sources en parallèle (pas de cascade). */
+/**
+ * Interroge toutes les sources en parallèle (pas de cascade).
+ *
+ * `timeoutMs` n'est donné que par l'horloge, qui a besoin de plus de temps que l'affichage
+ * — voir `TIMEOUT_CRON_MS`. Par défaut, le budget de la page.
+ */
 export function fetchAllSummaries(
   sources: HubSource[],
   fetchImpl?: typeof fetch,
+  timeoutMs: number = TIMEOUT_MS,
 ): Promise<SummaryResult[]> {
-  return Promise.all(sources.map((source) => fetchSummary(source, fetchImpl)));
+  return Promise.all(
+    sources.map((source) => fetchSummary(source, fetchImpl, Date.now, timeoutMs)),
+  );
 }

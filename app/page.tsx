@@ -89,7 +89,7 @@ async function OnlineCount({ promises }: { promises: Promise<SummaryResult>[] })
  */
 async function StreamedAttention({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
-  return <BandeauAttention liste={attentions(results)} />;
+  return <BandeauAttention liste={attentions(results, Date.now())} />;
 }
 
 /** Carte des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */

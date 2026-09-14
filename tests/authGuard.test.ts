@@ -28,6 +28,38 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api/acces-admin")).toBe(false);
     expect(isPublicPath("/api/acces/tout")).toBe(false);
   });
+
+  // La DEUXIÈME exception de serveur à serveur : l'horloge du hub, appelée par un workflow
+  // GitHub Actions qui n'a pas de cookie de session. Même forme que ci-dessus, et pour la
+  // même raison : le chemin est nommé exactement, jamais un préfixe — un
+  // `startsWith("/api/cron")` ouvrirait n'importe quelle future route de cron sans session.
+  //
+  // ⚠️ Elle n'est pas OUVERTE : la route exige `Authorization: Bearer <CRON_SECRET>`,
+  // comparé à temps constant (lib/cronAuth.ts, app/api/cron/releve/route.ts). Ce test
+  // vérifie le chemin ; `tests/gardePages.test.ts` vérifie que l'auth de remplacement
+  // existe vraiment, et que ces deux listes ne divergent pas.
+  it("laisse passer /api/cron/releve — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/cron/releve")).toBe(true);
+    expect(isPublicPath("/api/cron/releve/")).toBe(false);
+    expect(isPublicPath("/api/cron")).toBe(false);
+    expect(isPublicPath("/api/cron/autre")).toBe(false);
+    expect(isPublicPath("/api/cron/releve-tout")).toBe(false);
+  });
+
+  it("n'ouvre pas d'autre route /api que les deux exceptions nommées", () => {
+    // Le filet global : si une troisième exception apparaît sans passer par une décision
+    // consciente, ce test la voit. La liste vit ici et dans `tests/gardePages.test.ts`,
+    // qui vérifie en plus que chacune prouve son authentification de remplacement.
+    for (const chemin of [
+      "/api/summaries",
+      "/api/admin",
+      "/api/acces-admin",
+      "/api/cron",
+      "/api/declencher",
+    ]) {
+      expect(isPublicPath(chemin), `${chemin} ne doit pas être public`).toBe(false);
+    }
+  });
 });
 
 describe("decideGuard", () => {

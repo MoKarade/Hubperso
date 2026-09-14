@@ -1,0 +1,120 @@
+# L'HORLOGE DU HUB — elle enregistre un relevé même quand personne ne regarde.
+#
+# ── POURQUOI CE FICHIER EXISTE ───────────────────────────────────────────────────────
+#
+# La mémoire du hub (`lib/historiqueDb.ts`) n'était alimentée que par l'affichage de
+# `app/page.tsx` : rien ne s'enregistrait sans un onglet ouvert. L'observateur était requis
+# pour l'observation, avec trois conséquences invisibles à l'écran — aucune courbe possible
+# en dehors des heures de consultation, aucune détection de métrique GELÉE (il faut deux
+# relevés qui encadrent le gel), et aucune trace d'une app tombée le vendredi.
+#
+# Ce workflow appelle `POST /api/cron/releve`, qui fait ce que faisait l'affichage, sans
+# l'affichage.
+#
+# ── GITHUB ACTIONS PLUTÔT QU'UN CRON VERCEL, ET CE N'EST PAS GRATUIT ────────────────
+#
+# Le plan Vercel Hobby n'autorise que des crons QUOTIDIENS : un relevé par jour ne
+# mesurerait rien. GitHub Actions donne la fréquence sans rien payer.
+#
+# ⚠️ MAIS SA CADENCE N'EST PAS GARANTIE, ET C'EST MESURÉ. Le 14/09/2026, le poll Smartcar
+# de CarAI — déclaré `*/30`, soit 48 passages par jour — en faisait environ 15, avec un
+# trou de 6 h 53 le jour même. Les 518 runs étaient TOUS verts. GitHub étale les `schedule`
+# sous charge et ne le signale nulle part.
+#
+# Le choix de Marc (14/09) est de garder ce mécanisme et de rendre le retard VISIBLE côté
+# hub plutôt que de prétendre l'avoir réglé : `continuite` (`lib/gel.ts`) compte les trous
+# et affiche le pire écart, au lieu d'une courbe lisse qui affirmerait faussement ce qui
+# s'est passé entre deux points. Écrire ici « un relevé toutes les 30 minutes » serait donc
+# un commentaire faux — ce qui est promis est « au mieux toutes les 30 minutes ».
+#
+# ── PRÉREQUIS (deux secrets de dépôt : Settings → Secrets and variables → Actions) ───
+#   HUB_URL      = https://hubperso.com
+#   CRON_SECRET  = la MÊME valeur que la variable CRON_SECRET du projet Vercel du hub
+# Sans eux le workflow échoue FRANCHEMENT, plutôt que de tourner à vide en vert.
+
+name: Relevé
+
+on:
+  # Déclenchement manuel — pour valider la configuration avant de laisser tourner.
+  workflow_dispatch:
+
+  schedule:
+    # L'espacement minimal côté serveur est de 15 min (`INTERVALLE_RELEVE_MS`). Demander
+    # plus souvent que 30 min ne produirait pas plus de relevés, seulement plus d'appels :
+    # la route répondrait « aucun relevé écrit » et on brûlerait du quota pour rien.
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  # Deux relevés simultanés n'écriraient pas deux lignes — le `WHERE NOT EXISTS` de
+  # l'insertion tranche côté base — mais ils interrogeraient les cinq apps deux fois.
+  group: releve
+  cancel-in-progress: false
+
+jobs:
+  relever:
+    name: Interroger les apps et archiver
+    runs-on: ubuntu-latest
+    # Plafond : sans lui, le défaut GitHub est de SIX HEURES — vécu sur DriveAI le
+    # 19/08/2026, où une installation figée a tourné 2 h 15 pendant que la PR restait
+    # « en attente » sans rien de rouge. Calibré sur la durée réelle : cinq apps à 20 s de
+    # budget chacune, en parallèle, plus le réveil à froid du hub.
+    timeout-minutes: 5
+    steps:
+      - name: Déclencher un relevé
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${HUB_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Secrets HUB_URL et CRON_SECRET requis (voir l'en-tête de ce fichier)."
+            exit 1
+          fi
+
+          # -w écrit le code HTTP en dernière ligne : le corps ET le statut sont jugés.
+          # Un 200 seul ne suffirait pas — la route répond 200 avec `ok:true, ecrits:0`
+          # quand le dernier relevé est trop récent, ce qui est NORMAL et ne doit pas
+          # teindre le run. C'est le corps qui porte le motif.
+          reponse=$(curl -sS --max-time 120 -X POST -w '\n%{http_code}' \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${HUB_URL}/api/cron/releve")
+
+          statut=$(echo "$reponse" | tail -n1)
+          corps=$(echo "$reponse" | sed '$d')
+
+          echo "HTTP ${statut}"
+          echo "$corps"
+
+          # 401 = le secret du dépôt ne correspond pas à celui de Vercel.
+          # 503 = CRON_SECRET ou DATABASE_URL absente côté Vercel.
+          # Les deux sont des erreurs de CONFIGURATION, pas des pannes d'app : elles doivent
+          # teindre le run en ROUGE, sinon une horloge qui n'enregistre plus rien resterait
+          # verte — exactement la panne silencieuse que ce workflow existe pour supprimer.
+          if [ "$statut" = "401" ] || [ "$statut" = "503" ]; then
+            echo "::error::Configuration de l'horloge incorrecte (HTTP ${statut})."
+            exit 1
+          fi
+
+          if [ "$statut" != "200" ]; then
+            echo "::error::Réponse inattendue (HTTP ${statut})."
+            exit 1
+          fi
+
+          # Aucune ligne écrite : le dernier relevé date de moins de l'espacement minimal.
+          # Légitime lors d'un rattrapage GitHub ou d'un déclenchement manuel rapproché.
+          # Avertissement visible dans le résumé du run, run vert.
+          if echo "$corps" | grep -q '"ecrits":0'; then
+            echo "::warning::Relevé sans écriture — voir le champ 'raison' ci-dessus."
+          fi
+
+          # ⚠️ Une app injoignable n'est PAS une erreur de ce workflow : le relevé
+          # enregistre l'état `unreachable`, ce qui est précisément l'information qu'on
+          # veut garder. La faire échouer ici rendrait l'horloge rouge à cause d'une panne
+          # qu'elle a correctement archivée — et on prendrait l'habitude du rouge.
+          if echo "$corps" | grep -q '"etat":"unreachable"'; then
+            echo "::warning::Au moins une app était injoignable — l'état est archivé, c'est voulu."
+          fi
