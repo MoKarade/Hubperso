@@ -5,6 +5,7 @@
 // s'en aperçoit qu'après, parce qu'un merge ne se rejoue pas.
 
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { LABEL_FREIN, decision, type EtatPR } from "../scripts/autoMerge.mjs";
 
 /** Une PR parfaitement mergeable. Chaque test n'en dégrade qu'UN aspect. */
@@ -209,5 +210,62 @@ describe("decision — les entrées dégénérées refusent, jamais l'inverse", 
     expect(decision(undefined).merger).toBe(false);
     expect(decision(prVerte({ state: "MERGED" })).merger).toBe(false);
     expect(decision(prVerte({ state: "CLOSED" })).merger).toBe(false);
+  });
+});
+
+// ══ LES PERMISSIONS DU WORKFLOW, ET POURQUOI ELLES SONT TESTÉES ═══════════════════════
+//
+// Le reste de ce fichier teste la DÉCISION. Ces trois cas-ci testent le CARBURANT : sans
+// les bonnes permissions, la décision n'est jamais prise, parce que la lecture de la PR
+// échoue AVANT. Les deux incidents connus ont eu lieu à cet étage-là, pas dans la décision.
+//
+// ⚠️ C'est arrivé DEUX FOIS, et la seconde n'a été vue que par accident.
+//   • 21/08 : `checks: read` et `statuses: read` manquaient au premier run.
+//   • 14/09 : `actions: read` manquait. Mesuré sur CE dépôt — runs 361 à 364 d'« Auto-merge »
+//     tous en échec entre 18h53 et 19h42 Z, passes planifiées comprises, sur
+//     « Resource not accessible by integration (…checkSuite.workflowRun) ».
+//     `gh pr view --json statusCheckRollup` descend jusqu'à ce champ, qui relève de l'API
+//     Actions et NON de `checks`. Les cinq PR du lot 3 ont dû être fusionnées à la main.
+//
+// Les deux fois, le workflow a échoué FERMÉ : aucune PR mal fusionnée, mais aucune PR
+// fusionnée du tout, et rien de rouge là où quelqu'un regarde. Une permission manquante ne
+// se manifeste jamais par « il manque une permission » — elle se manifeste par du SILENCE.
+// D'où cette garde : elle rougit dans le gate, que tout le monde lit.
+//
+// Diagnostic d'origine : CarAI #108, trouvé par une autre session le même jour. La garde est
+// portée ici avec les mesures de ce dépôt.
+describe("les permissions du workflow — sans elles, aucune décision n'est prise", () => {
+  const workflow = readFileSync(".github/workflows/auto-merge.yml", "utf8");
+  const bloc = workflow.slice(
+    workflow.indexOf("\npermissions:"),
+    workflow.indexOf("\nconcurrency:"),
+  );
+
+  it("le bloc de permissions est bien celui du workflow (anti-vacuité)", () => {
+    // Sans ce contrôle, « toutes les permissions sont là » se prouverait aussi bien à partir
+    // de « le découpage a rendu le fichier entier » que de « il n'a rien rendu du tout ».
+    expect(bloc.length).toBeGreaterThan(50);
+    expect(bloc.length).toBeLessThan(workflow.length / 2);
+    expect(bloc).toContain("permissions:");
+    expect(bloc).not.toContain("concurrency:");
+  });
+
+  it("les cinq permissions nécessaires sont déclarées", () => {
+    // Écrire, pour fusionner et pour commenter.
+    expect(bloc).toMatch(/^ {2}contents: write$/m);
+    expect(bloc).toMatch(/^ {2}pull-requests: write$/m);
+    // Lire l'état des checks — les TROIS sources que `statusCheckRollup` traverse.
+    expect(bloc).toMatch(/^ {2}actions: read$/m);
+    expect(bloc).toMatch(/^ {2}checks: read$/m);
+    expect(bloc).toMatch(/^ {2}statuses: read$/m);
+  });
+
+  it("le message d'erreur du workflow n'accuse plus les permissions du PREMIER incident", () => {
+    // Il disait « il MANQUE une permission (checks: read, statuses: read) » — vrai le 21/08,
+    // FAUX le 14/09, et il envoyait vérifier deux permissions déjà présentes. Un diagnostic
+    // périmé coûte plus cher qu'aucun diagnostic : on le croit.
+    const script = workflow.slice(workflow.indexOf("\njobs:"));
+    expect(script).toContain("checkSuite.workflowRun");
+    expect(script).toContain("actions: read");
   });
 });

@@ -26,6 +26,25 @@ l'état réel avant de coder.
   ⚠️ Ça change ce qui est SERVI (Next lui-même) : vérifier le déploiement de production
   après le merge, pas seulement la CI (§6).
 
+- **[H-21] L'auto-merge était MORT, et c'est pour ça que cinq PR ont dû être fusionnées à
+  la main.** Mesuré le 14/09 : les runs 361 à 364 d'`auto-merge.yml` ont TOUS échoué entre
+  18h53 et 19h42 Z — passes planifiées et `pull_request_target` comprises — sur
+  « Resource not accessible by integration (…**checkSuite.workflowRun**) ». Cinq essais,
+  échec fermé, aucune PR fusionnée. `gh pr view --json statusCheckRollup` descend jusqu'à ce
+  champ, qui relève de l'API **Actions** et non de `checks` : il manquait `actions: read`.
+  **C'est la DEUXIÈME fois** — le 21/08, c'étaient `checks: read` et `statuses: read`. Une
+  permission manquante ne se manifeste jamais par « il manque une permission » : elle se
+  manifeste par du SILENCE, puisque le seul signal est un run d'Actions en échec que
+  personne n'ouvre.
+  **Livré** : `actions: read`, la liste des cinq permissions verrouillée par
+  `tests/autoMerge.test.ts` (6 mutations jouées, 6 attrapées), et le message d'erreur du
+  workflow corrigé — il accusait encore les permissions du PREMIER incident, donc envoyait
+  vérifier deux permissions déjà présentes.
+  ⚠️ **Diagnostic trouvé par une AUTRE session** (CarAI #108, le même jour) et porté ici
+  avec les mesures de ce dépôt. `scripts/autoMerge.mjs` se dit « identique dans les huit
+  dépôts » : **DriveAI, JobAI, BatchChef, FinanceAI, hub-contract et app-template sont donc
+  probablement dans le même état**, non vérifiés. À porter — ou à vérifier avant de conclure.
+
 - **[H-19] Le hub observe sans toi, et il dit quand il a mal observé.** Diagnostic du
   14/09/2026 : `enregistrerReleve` n'était appelée que depuis `app/page.tsx`, donc rien ne
   s'enregistrait sans onglet ouvert — l'observateur était requis pour l'observation. Trois

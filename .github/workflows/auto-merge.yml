@@ -55,10 +55,37 @@ permissions:
   #
   # `checks: read`   → les checks des GitHub Apps (Actions, Vercel).
   # `statuses: read` → les statuts « legacy » (commit statuses), que Vercel utilise aussi.
+  # `actions: read`  → `checkSuite.workflowRun`, que `gh pr view --json statusCheckRollup`
+  #                    demande. Ce champ relève de l'API Actions, PAS de `checks`.
   #
   # Le workflow a échoué FERMÉ ce jour-là : cinq essais, puis refus de merger. C'est le
   # comportement voulu — mais il aurait pu tourner des jours sans que personne ne comprenne
   # pourquoi rien ne se fusionnait, puisque « pas de merge » ne réveille personne.
+  #
+  # ⚠️⚠️ ET C'EST EXACTEMENT CE QUI S'EST PASSÉ LE 14/09, `actions: read` EN MOINS.
+  # Mesuré sur CE dépôt : les runs 361, 362, 363 et 364 d'« Auto-merge » ont tous échoué
+  # entre 18h53 et 19h42 Z — passes planifiées et `pull_request_target` comprises — sur la
+  # même erreur, au même chemin GraphQL :
+  #   Resource not accessible by integration
+  #   (repository.pullRequest.statusCheckRollup.nodes.0.commit
+  #    .statusCheckRollup.contexts.nodes.0.checkSuite.workflowRun)
+  # Cinq essais, échec fermé, aucune PR fusionnée — et RIEN de rouge là où quelqu'un
+  # regarde : le seul signal est un run d'Actions en échec, que personne n'ouvre. Les cinq
+  # PR du lot 3 ont dû être fusionnées à la main sans que personne sache pourquoi
+  # l'automatisation se taisait.
+  #
+  # ⚠️ Le message d'erreur du script, lui, accuse encore « checks: read, statuses: read » —
+  # les permissions du PREMIER incident. Il est donc faux depuis celui-ci, et il envoie
+  # vérifier deux permissions déjà présentes. Corrigé plus bas, dans le même commit.
+  #
+  # La leçon du 21/08 se répète mot pour mot, un champ plus loin : une permission manquante
+  # ne se manifeste JAMAIS par « il manque une permission ». La liste est désormais
+  # VERROUILLÉE par `tests/autoMerge.test.ts` — une permission retirée fait rougir le gate
+  # au lieu d'arrêter les merges en silence.
+  #
+  # Diagnostic et correctif d'origine : CarAI #108, trouvé par une autre session le même
+  # jour. Porté ici avec les mesures de CE dépôt, pas les siennes.
+  actions: read
   checks: read
   statuses: read
 
@@ -138,7 +165,7 @@ jobs:
           etat="$(avec_retry gh pr view "$numero" --repo "$REPO" \
             --json isDraft,isCrossRepository,labels,mergeStateStatus,state,statusCheckRollup)" || {
               echo "::error::Impossible de lire la PR #$numero après 5 essais — on ne merge pas."
-              echo "::error::Si le message parle de « Resource not accessible by integration », il MANQUE une permission au workflow (checks: read, statuses: read) — ce n'est pas une panne d'API."
+              echo "::error::Si le message parle de « Resource not accessible by integration », il MANQUE une permission au workflow — ce n'est pas une panne d'API. Le CHEMIN GraphQL cité dans l'erreur nomme le champ fautif : ...checkSuite.workflowRun ⇒ actions: read ; ...checkSuite/checkRuns ⇒ checks: read ; ...status/contexts ⇒ statuses: read."
               exit 1
             }
 
