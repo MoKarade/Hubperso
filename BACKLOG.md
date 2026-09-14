@@ -35,10 +35,18 @@ l'état réel avant de coder.
   **Livré** : `POST /api/cron/releve` + `.github/workflows/releve.yml` (l'horloge),
   `lib/gel.ts` (`fraicheur`, `rythmeDonnee`, `continuite`, PURES), la donnée figée inscrite
   dans le bandeau « attention », et `tests/gardePages.test.ts` étendu aux `route.ts`.
-  **Reste** : poser les deux secrets `HUB_URL` et `CRON_SECRET` (dépôt GitHub + Vercel) —
-  sans eux le workflow échoue en rouge, c'est voulu ; puis vérifier sur trois jours que la
-  cadence réelle tient, puisque GitHub n'en garantit aucune (mesuré à ~3× plus lent sur
-  CarAI, tous les runs verts).
+  **Mesuré le 14/09 au soir, premier run réel** : les deux secrets étaient POSÉS et corrects
+  (masqués dans le journal, donc non vides), et le run a quand même échoué sur un
+  `HTTP 308 Redirecting`. `HUB_URL` désignait `hubperso.com`, qui redirige vers
+  `www.hubperso.com` — le domaine canonique du projet Vercel. Et un jeton ne franchit PAS une
+  redirection de domaine : `curl` retire l'en-tête `Authorization` dès que l'hôte change
+  (protection, pas défaut). Le workflow normalise désormais la barre oblique finale, suit les
+  redirections de MÊME hôte (bornées, jamais `--location-trusted`) et REFUSE un changement
+  d'hôte en nommant les deux — sinon le 401 qui suit accuse le secret alors que l'URL est en
+  cause. Le diagnostic a été produit par le correctif lui-même, en exécution réelle.
+  **Reste** : 👤 `HUB_URL` = `https://www.hubperso.com` (le seul geste manquant) ; puis
+  vérifier sur trois jours que la cadence réelle tient, puisque GitHub n'en garantit aucune
+  (mesuré à ~3× plus lent sur CarAI, tous les runs verts).
 
 - **[H-18] `build-necessaire.sh` ne voit jamais une variable d'environnement changée
   sur Vercel.** Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
