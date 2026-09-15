@@ -162,6 +162,27 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
 - [ ] **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Purement du
   rendu, aucune dépendance au contrat : l'`app.url` est déjà dans chaque summary.
 
+- **[H-26] « +7,1 % sur 7 j » était faux, et sur deux autres points ambigu.** Signalé par
+  Marc le 15/09/2026, capture à l'appui : « je comprends pas les +X % pour chaque app ». Il
+  avait raison de ne pas comprendre — trois défauts dans une seule ligne de six mots.
+  - 🔴 **« sur 7 j » était un mensonge.** `FENETRE_VARIATION_MS` est la fenêtre de
+    RECHERCHE, pas la durée couverte : `variation` prend le premier et le dernier relevé
+    trouvés dedans. L'historique avait quatre heures d'âge ce jour-là et la carte annonçait
+    « sur 7 j ». C'est « no fake data » appliqué au temps, le même défaut que l'heure sans
+    fuseau. La durée affichée est désormais `apres.t - avant.t`.
+  - Un **pourcentage relatif sur une métrique qui EST un pourcentage** est indécidable :
+    « Charge 90 %, +7,1 % » — sept points ou sept pour cent de 84 ? Sur `format: "percent"`,
+    l'écart s'exprime en **points**. Le relatif reste pour les compteurs, où il est juste.
+  - **« 0 % » était peint en VERT** : `deltaAbsolu >= 0` rangeait zéro du côté des hausses,
+    donc une métrique immobile s'affichait comme une amélioration. C'est ce qu'on voit sur la
+    carte JobAI de la capture. Un troisième sens `plat`, ni vert ni rouge.
+
+  Et la ligne dit enfin **de quoi à quoi** : `avant` et `apres` étaient dans le type depuis
+  le début sans jamais être affichés — l'information qui manquait pour comprendre le
+  pourcentage était déjà calculée, elle n'était pas montrée.
+  `variationLisible` (`lib/carte.ts`, PURE) porte les quatre décisions ; 7 tests, 6 mutations
+  jouées et attrapées.
+
 - **[H-24] Les blocs `details` sont affichés — dans la vue détaillée seulement.** Livré le
   15/09/2026 (lot 2), sur arbitrage de Marc. Les cinq apps publient des sections `details`
   depuis le 14/09 (campagnes de DriveAI, placements par compte de FinanceAI, dernière passe

@@ -3,11 +3,11 @@ import Link from "next/link";
 import type { HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "@/lib/fetchSummary";
 import type { Releve } from "@/lib/historique";
-import { etatCarte, FENETRE_VARIATION_MS } from "@/lib/carte";
+import { etatCarte, variationLisible } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
-import { formatDateTime, formatDuree, formatMetricValue, formatTrend } from "@/lib/format";
+import { formatDateTime, formatDuree, formatMetricValue } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertBanner } from "./AlertBanner";
@@ -27,6 +27,7 @@ import { Sparkline } from "./Sparkline";
  */
 function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["heros"]> }) {
   const { metrique, serie, variation, inchangeDepuisMs } = heros;
+  const lisible = variationLisible(metrique, variation);
   return (
     <div className="heros">
       <span className="heros__label">{metrique.label}</span>
@@ -37,14 +38,14 @@ function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["her
       </div>
 
       <p className="heros__note">
-        {variation ? (
-          <span className="heros__delta" data-dir={variation.deltaAbsolu >= 0 ? "up" : "down"}>
-            {variation.deltaRelatif === null
-              ? // Départ à zéro : un pourcentage y serait infini. On dit l'écart brut, qui
-                // est la seule chose vraie.
-                `${variation.deltaAbsolu >= 0 ? "+" : ""}${variation.deltaAbsolu}`
-              : formatTrend(variation.deltaRelatif * 100)}{" "}
-            sur {formatDuree(FENETRE_VARIATION_MS)}
+        {lisible ? (
+          // ⚠️ LA DURÉE VIENT DES DEUX POINTS COMPARÉS, PAS DE LA FENÊTRE DE RECHERCHE.
+          // Cette ligne affichait « sur 7 j » quelle que soit l'étendue réelle de
+          // l'historique — un écart de 4 h annoncé comme un écart de 7 jours. Voir
+          // `variationLisible` dans `lib/carte.ts`, qui porte les trois corrections.
+          <span className="heros__delta" data-dir={lisible.sens}>
+            {lisible.ecart} <span className="heros__entre">{lisible.entre}</span> en{" "}
+            {lisible.sur}
           </span>
         ) : (
           // Pas « 0 % » : on ne SAIT pas encore. La distinction est le cœur du no-fake-data.

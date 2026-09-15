@@ -2,7 +2,13 @@
 
 import { describe, expect, it } from "vitest";
 import type { HubAlert, HubMetric, HubSummary } from "@mokarade/hub-contract";
-import { SEUIL_INCHANGE_MS, etatCarte, recommandation, traceSparkline } from "@/lib/carte";
+import {
+  SEUIL_INCHANGE_MS,
+  etatCarte,
+  recommandation,
+  traceSparkline,
+  variationLisible,
+} from "@/lib/carte";
 import type { Releve } from "@/lib/historique";
 
 const JOUR = 24 * 60 * 60_000;
@@ -220,5 +226,96 @@ describe("traceSparkline", () => {
     ]);
     expect(d).toBe("M0.00,50.00 L50.00,50.00 L100.00,50.00");
     expect(d).not.toContain("NaN");
+  });
+});
+
+describe("variationLisible — la ligne que Marc ne comprenait pas", () => {
+  const HEURE = 60 * 60_000;
+
+  /** Deux relevés espacés de `ecartMs`, portant la même métrique à deux valeurs. */
+  function deuxReleves(label: string, avant: number, apres: number, ecartMs: number) {
+    return [
+      releve(-ecartMs, [{ label, value: avant, format: "percent" }]),
+      releve(0, [{ label, value: apres, format: "percent" }]),
+    ];
+  }
+
+  it("dit la durée RÉELLEMENT couverte, pas la fenêtre de recherche", () => {
+    // LE MENSONGE MESURÉ LE 15/09/2026. La carte affichait « sur 7 j » alors que
+    // l'historique avait quatre heures. `FENETRE_VARIATION_MS` est la fenêtre dans laquelle
+    // on CHERCHE des relevés, jamais la durée de l'écart trouvé.
+    const historique = deuxReleves("Charge", 84, 90, 4 * HEURE);
+    const v = etatCarte(
+      summary([{ label: "Charge", value: 90, format: "percent" }]),
+      historique,
+      T0,
+    ).heros!.variation;
+
+    const lisible = variationLisible({ label: "Charge", value: 90, format: "percent" }, v);
+    expect(lisible!.sur).toBe("4 h");
+    expect(lisible!.sur).not.toContain("j");
+  });
+
+  it("parle en POINTS sur un pourcentage, jamais en pourcentage relatif", () => {
+    // « Charge 90 %, +7,1 % » est indécidable : 7,1 points ou 7,1 % de 84 ? Les deux
+    // lectures sont plausibles et donnent des nombres différents.
+    const metrique = { label: "Charge", value: 90, format: "percent" } as const;
+    const v = etatCarte(summary([metrique]), deuxReleves("Charge", 84, 90, 4 * HEURE), T0)
+      .heros!.variation;
+
+    const lisible = variationLisible(metrique, v);
+    expect(lisible!.ecart).toBe("+6 points");
+    // La formulation relative ne doit PAS apparaître : c'est elle qui était ambiguë.
+    expect(lisible!.ecart).not.toContain("%");
+    expect(lisible!.sens).toBe("hausse");
+  });
+
+  it("accorde le singulier : un seul point ne prend pas de s", () => {
+    const metrique = { label: "Charge", value: 85, format: "percent" } as const;
+    const v = etatCarte(summary([metrique]), deuxReleves("Charge", 84, 85, HEURE), T0)
+      .heros!.variation;
+    expect(variationLisible(metrique, v)!.ecart).toBe("+1 point");
+  });
+
+  it("dit DE QUOI À QUOI — l'information qui manquait pour comprendre l'écart", () => {
+    const metrique = { label: "Charge", value: 90, format: "percent" } as const;
+    const v = etatCarte(summary([metrique]), deuxReleves("Charge", 84, 90, 4 * HEURE), T0)
+      .heros!.variation;
+    expect(variationLisible(metrique, v)!.entre).toBe("de 84 % à 90 %");
+  });
+
+  it("traite l'absence de changement comme PLATE, jamais comme une hausse", () => {
+    // `deltaAbsolu >= 0` rangeait zéro du côté des hausses : une métrique immobile
+    // s'affichait en VERT, comme une amélioration. C'est le cas de JobAI sur la capture du
+    // 15/09 — « 0 % sur 7 j », en vert.
+    const metrique = { label: "Charge", value: 78, format: "percent" } as const;
+    const v = etatCarte(summary([metrique]), deuxReleves("Charge", 78, 78, 2 * HEURE), T0)
+      .heros!.variation;
+
+    const lisible = variationLisible(metrique, v);
+    expect(lisible!.sens).toBe("plat");
+    expect(lisible!.sens).not.toBe("hausse");
+    expect(lisible!.ecart).toBe("inchangé");
+  });
+
+  it("garde le pourcentage relatif pour ce qui n'est PAS un pourcentage", () => {
+    // La correction ne supprime pas le relatif : sur un compteur, « +25 % » est la bonne
+    // formulation. Ce qui était ambigu, c'était le relatif SUR un pourcentage.
+    const metrique = { label: "Offres suivies", value: 1500, format: "number" } as const;
+    const v = etatCarte(
+      summary([metrique]),
+      [
+        releve(-2 * HEURE, [{ label: "Offres suivies", value: 1200, format: "number" }]),
+        releve(0, [{ label: "Offres suivies", value: 1500, format: "number" }]),
+      ],
+      T0,
+    ).heros!.variation;
+    expect(variationLisible(metrique, v)!.ecart).toBe("+25 %");
+  });
+
+  it("rend null quand il n'y a pas de variation — pas une ligne vide", () => {
+    // La carte doit alors dire « pas encore d'historique », jamais « 0 % » : on ne SAIT
+    // pas, et l'ignorance ne s'affiche pas comme une stabilité.
+    expect(variationLisible({ label: "X", value: 1, format: "number" }, null)).toBeNull();
   });
 });
