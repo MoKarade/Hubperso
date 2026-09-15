@@ -41,8 +41,26 @@ l'état réel avant de coder.
   **Livré côté hub** : `etatObservation` (`lib/gel.ts`, PUR) sépare les trois cas, et la page
   « attention » affiche « le hub n'a pas de base de données » au lieu de « l'horloge n'a
   encore rien enregistré » — deux pannes, deux endroits, deux gestes.
-  👤 **Reste un geste de Marc, côté Vercel** (projet du hub → Settings → Environment
-  Variables → environnement *Production*) : poser `DATABASE_URL`. Rien côté dépôt GitHub.
+  ✅ **`DATABASE_URL` posée et redéployée le 15/09/2026 à 12:39 Z** — le second geste était
+  nécessaire et mon mode d'emploi l'avait omis.
+  🔴 **MAIS CE N'ÉTAIT PAS FINI, ET J'AI ANNONCÉ LE CONTRAIRE.** J'ai lu le `HTTP 200` du run
+  11 avec `ecrits: 0` et j'en ai fait une preuve. C'était faux : les journaux Vercel montrent
+  les cinq insertions en échec sur `relation "releves" does not exist` (`42P01`). La table
+  n'existait pas — `/api/cron/releve` n'appelait pas `assurerMigrations()`, et le regroupement
+  des requêtes Vercel prouve qu'aucune page n'avait été chargée depuis le déploiement. La
+  leçon n°5 un étage plus bas : l'observateur était requis pour le SCHÉMA.
+  Le message ne pouvait pas être juste : `enregistrerReleve` rendait un booléen, donc
+  « espacé » et « échoué » arrivaient sous la même forme. Corrigé par un TYPE
+  (`IssueReleve`), pas par une reformulation — plus `HTTP 500` sur échec, deux autres
+  instances du même oubli trouvées par le nouveau test, et `elaguerHistorique` qui rend `null`
+  au lieu de `0` quand il n'a rien pu juger.
+  ⚠️ Une mesure fausse de plus au passage, la mienne : le relevé lancé à 12:39:51 Z a rendu
+  `503` parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
+  d'écart. Le correctif porte donc aussi sur le MODE D'EMPLOI — la page, le README et le
+  HANDOVER disent maintenant « poser PUIS redéployer », parce que Vercel fige les variables à
+  la création d'un déploiement (`[H-18]`).
+  👤 **Ce qui reste à vérifier, et ce n'est pas « je me connecte »** : la procédure
+  d'invitation du `HANDOVER.md` n'a encore jamais été exécutée contre une vraie base.
 
 - **[H-22] Le message de la page « attention » envoyait refaire un geste déjà fait.**
   Capture de Marc du 14/09 au soir : l'encadré « Ce que le hub a pu observer » affichait

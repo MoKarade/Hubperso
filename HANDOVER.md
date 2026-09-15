@@ -15,27 +15,54 @@ Il est vérifié **en premier et sans toucher au réseau**, pour que ni une base
 ni une ligne supprimée par erreur ne puisse enfermer Marc dehors de sa propre
 administration — le seul endroit d'où il pourrait se réparer.
 
-⚠️ **AU 14/09/2026, CE MODÈLE À DEUX ÉTAGES N'EST PAS ACTIF EN PRODUCTION.** Ce n'est pas
-un défaut du code — c'est une variable d'environnement absente, et c'est pire, parce que rien
-ne le montre. Mesuré (run 4 du workflow `Relevé`, 20:34 Z) : `POST /api/cron/releve` répond
-`503 « DATABASE_URL absente »`. `baseConfiguree()` étant une fonction pure de
-`process.env.DATABASE_URL`, le constat est sans ambiguïté — le projet Vercel du hub ne
-fournit pas de base à son exécution de production.
+⚠️ **CE MODÈLE À DEUX ÉTAGES N'A JAMAIS ENCORE TOURNÉ CONTRE UNE VRAIE BASE, ET LA RAISON
+A CHANGÉ TROIS FOIS EN VINGT-QUATRE HEURES.** Chaque cause masquait la suivante, et deux
+fois j'ai annoncé que c'était réglé alors que ce ne l'était pas. La leçon est là :
+**`HTTP 200` n'est pas une preuve** quand le code qui le rend ne sait pas distinguer un
+succès d'un échec.
 
-Conséquence : `peutSeConnecter` et `aAcces` retombent sur le **repli propriétaire**, celui
-qui ne touche pas au réseau. Marc entre, tout fonctionne pour lui, et **personne d'autre ne
-peut entrer** — pas parce qu'on le lui refuse, mais parce que la table n'est pas lisible.
-Aucun relevé n'est enregistré non plus, d'où un historique vide et aucune détection de gel.
+| # | Cause | Signature | État |
+|---|---|---|---|
+| 1 | Barre oblique finale dans `HUB_URL` | `HTTP 308` | corrigé, `[H-19]` |
+| 2 | `HUB_URL` désignait l'apex, qui redirige vers `www` — `curl` retire l'en-tête `Authorization` | `HTTP 401` | corrigé, secret changé |
+| 3 | `DATABASE_URL` absente du projet Vercel | `HTTP 503 « DATABASE_URL absente »` | corrigé, posée **et redéployée** le 15/09 à 12:39 Z |
+| 4 | **La table `releves` n'existe pas** — `/api/cron/releve` n'appelait pas `assurerMigrations()` | `HTTP 200` **et zéro ligne écrite** | corrigé, `[H-23]` |
 
-C'est la section **« Comment vérifier que ça marche vraiment »** ci-dessous, en conditions
-réelles : « je me connecte, ça marche »
-n'exerce que le chemin du propriétaire, le seul qui fonctionne base en panne. Il a été vert
-tout du long.
+**La quatrième est la pire, parce qu'elle ressemblait à un succès.** Les cinq insertions
+échouaient sur `relation "releves" does not exist` (Postgres `42P01`), et la route répondait
+`HTTP 200` avec « aucun relevé écrit — le dernier date de moins de l'espacement minimal ».
+Elle ne mentait pas par choix : `enregistrerReleve` rendait un **booléen**, donc « espacement
+respecté » (sain) et « écriture échouée » (grave) arrivaient sous la même forme, et la seule
+phrase disponible était celle du cas sain. **Aucune rédaction ne pouvait être juste** — c'est
+le type qu'il fallait changer, pas le message.
 
-👤 **Le geste qui répare** : poser `DATABASE_URL` dans le projet Vercel du hub (Settings →
-Environment Variables → environnement *Production*). Rien à faire côté dépôt GitHub. Voir
-`[H-23]` au backlog. La vérification qui compte ensuite n'est PAS « je me connecte » : c'est
-la procédure d'invitation décrite plus bas.
+Cause racine : `lib/gardeHub.ts` appelle `assurerMigrations()` à chaque page, mais la route
+cron — **la seule conçue pour tourner sans personne devant** — ne le faisait pas. Le
+regroupement des requêtes Vercel l'a prouvé : depuis le déploiement, une seule route servie,
+`/api/cron/releve`. Aucune page chargée, donc aucune migration jouée, donc aucune table.
+C'est la **leçon n°5 un étage plus bas** : l'observateur était requis pour l'observation,
+puis pour le *schéma*.
+
+`tests/migrationsAppelees.test.ts`, écrit pour ce trou, en a trouvé **deux autres** au
+passage : `app/actions.ts` et `app/administration/actions.ts` lisaient ou écrivaient le modèle
+d'accès sans assurer le schéma. Les trois sont corrigés.
+
+⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER.** Vercel fige les variables
+d'environnement au moment où un déploiement est créé ; celui qui sert déjà ne les voit jamais
+apparaître. C'est le piège de `[H-18]` — et il a coûté une mesure fausse de plus le 15/09 :
+le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée, simplement
+parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
+d'écart, et une conclusion « ça n'a pas marché » qui aurait été fausse.
+
+👤 **CE QUI PROUVERA QUE C'EST RÉGLÉ, ET RIEN D'AUTRE** : un run du workflow `Relevé` à
+`"ecrits": 5`. Depuis `[H-23]`, un échec d'écriture rend `HTTP 500` et **teint le run en
+rouge** — il ne peut plus se déguiser en `200`.
+
+👤 **CE QUI RESTE À VÉRIFIER, ET CE N'EST PAS « JE ME CONNECTE ».** Le chemin du propriétaire
+était vert tout du long, base absente comprise — il ne prouve donc rien. Ce qui prouve
+quelque chose est la procédure d'invitation décrite plus bas : accorder un accès dans
+`/administration`, constater que la personne entre dans la minute, le retirer, constater
+qu'elle ressort. **Elle n'a encore jamais été exécutée contre une vraie base.**
 
 Le contrat, les widgets et les jetons `HUB_TOKEN_*` sont **inchangés** : l'auth est une
 couche ajoutée par-dessus, elle ne touche pas au dashboard.

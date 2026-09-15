@@ -27,6 +27,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { posterAction, type ResultatDeclenchement } from "@/lib/declencher";
 import { fetchSummaryLive } from "@/lib/fetchSummary";
+import { assurerMigrations } from "@/lib/migrations";
 import { APP_HUB, aAcces } from "@/lib/personnes";
 import { getSources } from "@/lib/sources";
 
@@ -51,6 +52,19 @@ export async function actionDeclencher(
   const session = await auth();
   const email = session?.user?.email;
   if (!email) return { statut: "erreur", message: "Session expirée." };
+
+  // ⚠️ LE SCHÉMA AVANT LA PREMIÈRE LECTURE DE LA BASE, ET CE FICHIER L'OUBLIAIT.
+  //
+  // Les pages passent par `exigerAccesHub()`, qui appelle `assurerMigrations()` en premier.
+  // Cette Server Action est un point d'entrée POST à part entière : elle peut être la
+  // PREMIÈRE chose servie par un déploiement neuf, avant toute page. `aAcces` lirait alors
+  // des tables inexistantes — et comme le modèle d'accès échoue FERMÉ, une personne
+  // légitimement invitée se verrait refuser l'action sans que rien n'explique pourquoi.
+  //
+  // Trouvé le 15/09/2026 par `tests/migrationsAppelees.test.ts`, écrit pour le même oubli
+  // dans `/api/cron/releve`. Deux instances du même défaut, dont une qu'on ne cherchait pas.
+  // Mémorisé par processus : après le premier appel, c'est un no-op.
+  await assurerMigrations();
 
   if (!(await aAcces(email, APP_HUB))) {
     return { statut: "erreur", message: "Accès au hub requis." };

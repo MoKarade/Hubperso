@@ -33,13 +33,30 @@ export const INTERVALLE_RELEVE_MS = 15 * 60_000;
 export const RETENTION_JOURS = 90;
 
 /**
+ * Ce qu'une tentative d'enregistrement a réellement produit.
+ *
+ * ⚠️ TROIS ISSUES, PARCE QU'UN BOOLÉEN EN CONFONDAIT DEUX — ET LA CONFUSION A COÛTÉ UN FAUX
+ * DIAGNOSTIC LE 15/09/2026. `false` voulait dire « espacement respecté, rien à écrire »
+ * (sain) ET « l'écriture a ÉCHOUÉ » (grave). L'appelant, `/api/cron/releve`, ne pouvait donc
+ * qu'annoncer le cas sain : il a rendu `HTTP 200` avec « le dernier relevé date de moins de
+ * l'espacement minimal » alors que les CINQ insertions venaient d'échouer sur
+ * `relation "releves" does not exist`. Run vert, rien de rouge, zéro ligne écrite.
+ *
+ * C'est le mode de panne que tout cet appareil existe pour supprimer, commis par le code le
+ * plus récent. Un type qui ne peut pas distinguer les deux cas rend le mensonge structurel :
+ * aucune formulation du message ne pouvait être juste.
+ */
+export type IssueReleve = "ecrit" | "espace" | "echec";
+
+/**
  * Enregistre un relevé, SI le dernier date de plus d'`INTERVALLE_RELEVE_MS`.
  *
- * Rend `true` quand une ligne a été écrite — utile aux tests et au diagnostic, jamais à
- * l'affichage.
+ * Rend l'issue RÉELLE — jamais un booléen. Voir `IssueReleve`.
  */
-export async function enregistrerReleve(resultat: SummaryResult): Promise<boolean> {
-  if (!baseConfiguree()) return false;
+export async function enregistrerReleve(resultat: SummaryResult): Promise<IssueReleve> {
+  // Sans base, ce n'est ni un échec ni un espacement : il n'y a simplement nulle part où
+  // écrire, et l'appelant l'a déjà constaté (503) avant d'arriver ici.
+  if (!baseConfiguree()) return "echec";
 
   const appId = resultat.source.id;
   const summary = resultat.state === "ok" ? resultat.summary : null;
@@ -48,7 +65,7 @@ export async function enregistrerReleve(resultat: SummaryResult): Promise<boolea
   // c'est le même instantané resservi parce que l'app n'a pas répondu. L'archiver ferait
   // croire à une continuité qui n'existe pas, et `inchangeDepuisMs` compterait un gel là
   // où il y a en réalité une panne. On ne relève que du LIVE.
-  if (resultat.state === "ok" && resultat.stale) return false;
+  if (resultat.state === "ok" && resultat.stale) return "espace";
 
   const cout = summary?.usage?.cost ?? null;
 
@@ -75,11 +92,12 @@ export async function enregistrerReleve(resultat: SummaryResult): Promise<boolea
       )
       RETURNING app_id
     `);
-    return (insere.rows?.length ?? 0) > 0;
+    return (insere.rows?.length ?? 0) > 0 ? "ecrit" : "espace";
   } catch (err) {
-    // Voir l'en-tête : l'archivage ne fait pas tomber l'affichage.
+    // Voir l'en-tête : l'archivage ne fait pas tomber l'affichage. Mais il ne se DÉGUISE
+    // plus en espacement — c'est tout l'objet d'`IssueReleve`.
     console.error("[historique] relevé non enregistré", err);
-    return false;
+    return "echec";
   }
 }
 
@@ -147,9 +165,16 @@ export async function lireHistoriqueTous(
   }
 }
 
-/** Élague ce qui a dépassé la rétention. Sans effet s'il n'y a rien à retirer. */
-export async function elaguerHistorique(): Promise<number> {
-  if (!baseConfiguree()) return 0;
+/**
+ * Élague ce qui a dépassé la rétention. Sans effet s'il n'y a rien à retirer.
+ *
+ * ⚠️ Rend `null` quand l'élagage n'a PAS PU être jugé — base absente ou requête en échec.
+ * Il rendait `0` dans ces cas, c'est-à-dire « rien à retirer », soit exactement ce que rend
+ * un élagage parfaitement réussi sur une table propre. Le même mensonge qu'`IssueReleve`
+ * répare pour l'écriture : une incertitude affichée comme un succès.
+ */
+export async function elaguerHistorique(): Promise<number | null> {
+  if (!baseConfiguree()) return null;
   try {
     const retires = await db
       .delete(releves)
@@ -158,7 +183,7 @@ export async function elaguerHistorique(): Promise<number> {
     return retires.length;
   } catch (err) {
     console.error("[historique] élagage impossible", err);
-    return 0;
+    return null;
   }
 }
 
