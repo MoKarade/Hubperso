@@ -1452,3 +1452,103 @@ a:focus-visible,
   border: 1px solid var(--border);
   background: var(--surface);
 }
+
+/* ── RECOMMANDATION ────────────────────────────────────────────────────────────────────
+   Une recommandation dit ce qu'il y a de MIEUX à faire ; une alerte dit ce qui va MAL.
+   Son style doit donc être reconnaissable SANS lire le texte, et ne rien emprunter au
+   vocabulaire des alertes : ni rouge, ni orange, ni pictogramme d'avertissement, aucune
+   pastille de gravité. Un filet à gauche et une flèche — l'idiome du « va par là », pas
+   celui du « attention ».
+   Les deux thèmes suivent `prefers-color-scheme` par les variables : aucune couleur écrite
+   en dur, sinon le mode sombre le paierait. */
+.reco {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--info);
+  background: var(--surface);
+}
+.reco__fleche {
+  flex: none;
+  line-height: 1.35;
+  color: var(--info);
+}
+.reco__texte {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.reco__label {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+.reco__pourquoi {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+/* Sur la carte : plus resserré, et le libellé peut être long (80 caractères au contrat)
+   sans faire grandir la carte indéfiniment. */
+.reco[data-compact] {
+  padding: 0.55rem 0.7rem;
+}
+.reco[data-compact] .reco__label {
+  font-size: 0.88rem;
+}
+
+/* ── LIGNES DES BLOCS `details` ───────────────────────────────────────────────────────
+   Une liste, pas une grille : ces lignes sont des paires libellé/valeur qu'on LIT de haut
+   en bas (les campagnes d'une app, les postes d'un compte). Une grille les mettrait côte à
+   côte et casserait l'ordre publié, qui est porteur de sens. */
+.detail__lignes {
+  display: grid;
+  gap: 0.1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.detail__ligne {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.detail__ligne:last-child {
+  border-bottom: 0;
+}
+.detail__ligne-label {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+.detail__ligne-hint {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+.detail__ligne-valeur {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+/* Note de diagnostic sous un bloc de la vue détaillée : un refus, une limite atteinte.
+   Discrète mais LISIBLE — un refus silencieux ne se corrige jamais, puisque personne ne
+   sait qu'il a eu lieu. */
+.detail__note {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-soft);
+}

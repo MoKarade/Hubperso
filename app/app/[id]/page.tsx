@@ -21,7 +21,7 @@ import { getSources } from "@/lib/sources";
 import { fetchAllSummaries, fetchSummary } from "@/lib/fetchSummary";
 import { lireHistorique } from "@/lib/historiqueDb";
 import { serieMetrique, variation, inchangeDepuisMs } from "@/lib/historique";
-import { FENETRE_VARIATION_MS, SEUIL_INCHANGE_MS } from "@/lib/carte";
+import { FENETRE_VARIATION_MS, SEUIL_INCHANGE_MS, recommandation } from "@/lib/carte";
 import { verifierConstellation } from "@/lib/constellation";
 import { Sparkline } from "@/components/Sparkline";
 import { statusBadge, severityTone } from "@/lib/status";
@@ -30,6 +30,7 @@ import { formatCad, formatDateTime, formatDuree, formatMetricValue, formatTrend 
 import { safeHttpUrl } from "@/lib/url";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionList } from "@/components/ActionList";
+import { Recommandation } from "@/components/Recommandation";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,8 @@ export default async function DetailAppPage({
   ]);
   const badge = statusBadge(result);
   const summary = result.state === "ok" ? result.summary : null;
+  // Lien déjà jugé par `safeHttpUrl` dans la fonction pure — cette page n'en rejuge aucun.
+  const reco = summary ? recommandation(summary) : null;
 
   // La cohérence se juge sur l'ENSEMBLE (une période de coût n'est incomparable que par
   // rapport aux autres apps), puis on ne garde que ce qui concerne celle-ci.
@@ -114,6 +117,29 @@ export default async function DetailAppPage({
                 courant.
               </span>
             </div>
+          )}
+
+          {/* LA RECOMMANDATION AVANT LES MÉTRIQUES, ici seulement.
+              Sur la carte elle vient APRÈS les chiffres, parce qu'on y arrive par un coup
+              d'œil. Sur cette page on arrive par une question — « qu'est-ce que je fais de
+              cette app ? » — et la réponse doit être la première chose lue. Ce n'est pas une
+              incohérence : c'est le même contenu placé selon ce qu'on est venu chercher.
+              Le « pourquoi » n'est rendu qu'ICI (`compact` absent) : la place existe. */}
+          {reco && (
+            <section className="detail__bloc" aria-label="Recommandation">
+              <h2 className="detail__titre">Recommandation</h2>
+              <Recommandation reco={reco} />
+              {reco.href === null && summary.recommendation?.href !== undefined && (
+                // Refus VISIBLE, jamais silencieux : l'app a publié un lien que
+                // `safeHttpUrl` a écarté (autre chose que http/https). Le taire donnerait un
+                // conseil qui semble simplement ne pas être cliquable, et personne
+                // n'irait corriger l'app.
+                <p className="detail__note">
+                  ⚠️ Le lien publié avec cette recommandation a été refusé (ni <code>http</code>
+                  {" "}ni <code>https</code>). Le texte reste affiché, le lien non.
+                </p>
+              )}
+            </section>
           )}
 
           <section className="detail__bloc" aria-label="Métriques">
@@ -223,6 +249,55 @@ export default async function DetailAppPage({
               <ActionList actions={summary.actions} appId={source.id} />
             </section>
           )}
+
+          {/* LES BLOCS `details` DE L'APP — ce que les 6 métriques ne peuvent pas porter.
+              Le plafond de `metrics` est SIX, et il est volontaire : une carte qui en
+              affiche vingt n'en affiche aucune. Mais une app a souvent des lignes qui
+              méritent d'être lues sans mériter la carte — les campagnes de rangement de
+              DriveAI, les placements par compte de FinanceAI, la dernière passe de veille de
+              JobAI. Le contrat v1.3 leur donne `details` : jusqu'à 6 sections de 8 lignes,
+              chacune titrée par l'app.
+              Rendu ICI et nulle part ailleurs (choix de Marc, 15/09) : 48 lignes sur une
+              carte bento casseraient la grille, et le lien « détail » y mène en un clic.
+              GÉNÉRIQUE, comme tout le reste : le hub ne connaît aucun de ces titres, il rend
+              ce qu'on lui publie. Aucune section n'est réordonnée ni fusionnée — l'ordre est
+              celui de l'app, qui seule sait ce qui compte le plus chez elle. */}
+          {summary.details?.map((section, s) => (
+            <section
+              className="detail__bloc"
+              aria-label={section.title}
+              key={`${section.title}-${s}`}
+            >
+              <h2 className="detail__titre">{section.title}</h2>
+              <ul className="detail__lignes">
+                {section.items.map((item, i) => {
+                  const tone = item.severity ? severityTone(item.severity) : null;
+                  return (
+                    <li className="detail__ligne" key={`${item.label}-${i}`}>
+                      <span className="detail__ligne-label">
+                        {item.label}
+                        {/* Le `hint` est la précision courte que l'app attache à la ligne.
+                            Rendu en texte, jamais en infobulle : une infobulle ne se lit pas
+                            au clavier et ne s'imprime pas. */}
+                        {item.hint && <span className="detail__ligne-hint">{item.hint}</span>}
+                      </span>
+                      <span className="detail__ligne-valeur" data-tone={tone ?? undefined}>
+                        {formatMetricValue(item)}
+                        {item.trend !== undefined && (
+                          <span
+                            className="metric__trend"
+                            data-dir={item.trend >= 0 ? "up" : "down"}
+                          >
+                            {formatTrend(item.trend)}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
 
           <section className="detail__bloc" aria-label="Coûts et quotas">
             <h2 className="detail__titre">Coûts &amp; quotas</h2>

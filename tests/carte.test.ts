@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { HubAlert, HubMetric, HubSummary } from "@mokarade/hub-contract";
-import { SEUIL_INCHANGE_MS, etatCarte, traceSparkline } from "@/lib/carte";
+import { SEUIL_INCHANGE_MS, etatCarte, recommandation, traceSparkline } from "@/lib/carte";
 import type { Releve } from "@/lib/historique";
 
 const JOUR = 24 * 60 * 60_000;
@@ -12,7 +12,11 @@ function m(label: string, value: number | string): HubMetric {
   return { label, value, format: typeof value === "number" ? "number" : "text" };
 }
 
-function summary(metrics: HubMetric[], alerts: HubAlert[] = []): HubSummary {
+function summary(
+  metrics: HubMetric[],
+  alerts: HubAlert[] = [],
+  reste: Partial<HubSummary> = {},
+): HubSummary {
   return {
     contractVersion: 1,
     app: { id: "batchchef", name: "BatchChef", url: "https://batchchef.hubperso.com", color: "#c2410c" },
@@ -21,6 +25,7 @@ function summary(metrics: HubMetric[], alerts: HubAlert[] = []): HubSummary {
     metrics,
     alerts,
     actions: [],
+    ...reste,
   };
 }
 
@@ -48,6 +53,84 @@ describe("etatCarte — le héros", () => {
   it("rend null quand l'app ne publie aucune métrique", () => {
     const etat = etatCarte(summary([]), [], T0);
     expect(etat.heros).toBeNull();
+  });
+
+  it("obéit à `primary: true` MÊME quand la métrique est publiée en dernier", () => {
+    // Le cas qui compte : avant le contrat v1.3, une app devait réordonner sa liste pour
+    // changer de héros, donc mêler « ce qui domine » à « dans quel ordre je publie ». Mettre
+    // la désignée en PREMIÈRE position rendrait ce test vert même si le drapeau était
+    // ignoré — d'où la dernière place.
+    const etat = etatCarte(
+      summary([m("Recettes", 12), m("Batchs", 3), { ...m("Charge", 84), primary: true }]),
+      [],
+      T0,
+    );
+    expect(etat.heros!.metrique.label).toBe("Charge");
+    // Et la désignée ne doit pas aussi figurer dans les secondaires : elle s'afficherait
+    // deux fois sur la même carte, une fois en grand et une fois en petit.
+    expect(etat.secondaires.map((x) => x.label)).toEqual(["Recettes", "Batchs"]);
+  });
+
+  it("ignore un `primary: false` explicite et retombe sur la première", () => {
+    // `primary: false` n'est pas « ne me choisis pas » : c'est l'absence de désignation. Le
+    // traiter comme une candidature ferait du drapeau une valeur à trois états.
+    const etat = etatCarte(
+      summary([m("Recettes", 12), { ...m("Batchs", 3), primary: false }]),
+      [],
+      T0,
+    );
+    expect(etat.heros!.metrique.label).toBe("Recettes");
+  });
+});
+
+describe("recommandation", () => {
+  it("rend null quand l'app n'en publie pas — le cas le plus courant", () => {
+    expect(recommandation(summary([]))).toBeNull();
+    expect(etatCarte(summary([]), [], T0).recommandation).toBeNull();
+  });
+
+  it("porte le libellé, le pourquoi et un lien http(s) validé", () => {
+    const reco = recommandation(
+      summary([], [], {
+        recommendation: {
+          label: "Cotiser 5 000 $ au CELI avant décembre",
+          why: "L'espace inutilisé ne se reporte qu'une fois.",
+          href: "https://finance.hubperso.com/celi",
+        },
+      }),
+    );
+    expect(reco).toEqual({
+      label: "Cotiser 5 000 $ au CELI avant décembre",
+      pourquoi: "L'espace inutilisé ne se reporte qu'une fois.",
+      href: "https://finance.hubperso.com/celi",
+    });
+  });
+
+  it("REFUSE un href non http(s) sans masquer le conseil", () => {
+    // Le champ traverse `z.string().url()` au contrat, qui accepte `javascript:`. Sans
+    // `safeHttpUrl`, chaque app deviendrait un vecteur d'exécution dans le hub.
+    //
+    // Et le conseil reste LISIBLE : refuser le lien n'est pas refuser le texte. Rendre
+    // `null` pour toute la recommandation ferait disparaître un contenu légitime à cause
+    // d'un seul champ fautif, et personne ne saurait qu'il y avait quelque chose à lire.
+    const reco = recommandation(
+      summary([], [], {
+        recommendation: { label: "Cliquez ici", href: "javascript:alert(1)" },
+      }),
+    );
+    expect(reco).not.toBeNull();
+    expect(reco!.label).toBe("Cliquez ici");
+    expect(reco!.href).toBeNull();
+  });
+
+  it("rend `pourquoi` à null quand l'app ne le publie pas, jamais une chaîne vide", () => {
+    // `""` s'afficherait comme un paragraphe vide sous le libellé — une ligne blanche que
+    // personne ne peut expliquer.
+    const reco = recommandation(
+      summary([], [], { recommendation: { label: "Réviser les quotas" } }),
+    );
+    expect(reco!.pourquoi).toBeNull();
+    expect(reco!.href).toBeNull();
   });
 });
 

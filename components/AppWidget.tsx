@@ -12,6 +12,7 @@ import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertBanner } from "./AlertBanner";
 import { ActionList } from "./ActionList";
+import { Recommandation } from "./Recommandation";
 import { Sparkline } from "./Sparkline";
 
 /**
@@ -68,7 +69,12 @@ function CorpsOk({
 }) {
   const etat = etatCarte(summary, historique, maintenantMs);
   const vide =
-    etat.heros === null && etat.alertePrincipale === null && etat.actions.length === 0;
+    etat.heros === null &&
+    etat.alertePrincipale === null &&
+    etat.actions.length === 0 &&
+    // Sans cette ligne, une app qui ne publie QU'une recommandation afficherait « aucune
+    // donnée à afficher » juste au-dessus d'un conseil parfaitement lisible.
+    etat.recommandation === null;
 
   return (
     <>
@@ -82,6 +88,11 @@ function CorpsOk({
         </p>
       )}
       <MetricList metrics={etat.secondaires} />
+      {/* APRÈS les métriques et AVANT les actions, et l'ordre est le message : une
+          recommandation se lit une fois les chiffres vus, et elle mène souvent au geste qui
+          suit. La mettre en tête l'aurait fait passer pour un titre ; en queue, sous les
+          boutons, elle aurait disparu. */}
+      {etat.recommandation && <Recommandation reco={etat.recommandation} compact />}
       <ActionList actions={etat.actions} appId={summary.app.id} />
       {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
