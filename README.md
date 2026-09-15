@@ -140,8 +140,13 @@ lancer**, ni en local ni sur Vercel.
 d'environnement au moment où un déploiement est CRÉÉ — celui qui sert déjà ne verra jamais
 apparaître la nouvelle. C'est le piège de `[H-18]`, et il a encore produit une mesure fausse
 le 15/09 : un relevé lancé 46 secondes avant la fin du redéploiement a rendu `503` alors que
-la variable était bonne. Résolu le 15/09/2026 à 12:39 Z — l'horloge répond `200` et les cinq
-apps sont en `etat: "ok"`.
+la variable était bonne.
+
+⚠️ **Et `HTTP 200` n'a PAS suffi à le prouver.** Le 15/09, la variable posée et redéployée, la
+route répondait `200` « aucun relevé écrit — espacement minimal » avec **zéro ligne écrite** :
+la table n'existait pas (`relation "releves" does not exist`), parce que la route cron
+n'appelait pas `assurerMigrations()`. Corrigé (`[H-23]`) — un échec d'écriture rend désormais
+`500` et teint le run en rouge. La seule preuve qui compte est un run à `"ecrits": 5`.
 
 **Redirect URIs à configurer côté Google Cloud Console** (client OAuth) :
 

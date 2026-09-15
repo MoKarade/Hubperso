@@ -146,6 +146,18 @@ jobs:
               ;;
           esac
 
+          # 500 = la route a été ATTEINTE, AUTHENTIFIÉE, et l'écriture a ÉCHOUÉ. C'est le cas
+          # le plus trompeur de tous, parce qu'il ressemblait à un succès : jusqu'au
+          # 15/09/2026, un échec d'écriture rendait `HTTP 200` avec « le dernier relevé date
+          # de moins de l'espacement minimal » — la phrase du cas SAIN — alors que les cinq
+          # insertions tombaient sur `relation "releves" does not exist`. Le corps porte
+          # désormais `echecs` et l'état des migrations : c'est là qu'est le diagnostic, pas
+          # dans le code HTTP.
+          if [ "$statut" = "500" ]; then
+            echo "::error::L'écriture des relevés a ÉCHOUÉ (HTTP 500) — voir 'raison' et 'migrations' ci-dessus, puis les journaux Vercel."
+            exit 1
+          fi
+
           if [ "$statut" != "200" ]; then
             echo "::error::Réponse inattendue (HTTP ${statut})."
             exit 1

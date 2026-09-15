@@ -15,30 +15,37 @@ Il est vérifié **en premier et sans toucher au réseau**, pour que ni une base
 ni une ligne supprimée par erreur ne puisse enfermer Marc dehors de sa propre
 administration — le seul endroit d'où il pourrait se réparer.
 
-✅ **LE MODÈLE À DEUX ÉTAGES EST ACTIF EN PRODUCTION DEPUIS LE 15/09/2026, 12:39 Z.** Il ne
-l'était pas la veille au soir, et c'est une histoire qui mérite ses quatre lignes parce
-qu'elle s'est répétée trois fois de suite.
+⚠️ **CE MODÈLE À DEUX ÉTAGES N'A JAMAIS ENCORE TOURNÉ CONTRE UNE VRAIE BASE, ET LA RAISON
+A CHANGÉ TROIS FOIS EN VINGT-QUATRE HEURES.** Chaque cause masquait la suivante, et deux
+fois j'ai annoncé que c'était réglé alors que ce ne l'était pas. La leçon est là :
+**`HTTP 200` n'est pas une preuve** quand le code qui le rend ne sait pas distinguer un
+succès d'un échec.
 
-`DATABASE_URL` manquait au projet Vercel. Le hub fonctionnait pourtant parfaitement **pour
-le propriétaire** — `peutSeConnecter` et `aAcces` retombaient sur le repli sans réseau — donc
-la panne n'avait aucun symptôme depuis le seul point de vue depuis lequel on la regardait.
-Personne d'autre ne pouvait entrer : pas parce qu'on le lui refusait, mais parce que la table
-n'était pas lisible. Et aucun relevé ne s'enregistrait.
+| # | Cause | Signature | État |
+|---|---|---|---|
+| 1 | Barre oblique finale dans `HUB_URL` | `HTTP 308` | corrigé, `[H-19]` |
+| 2 | `HUB_URL` désignait l'apex, qui redirige vers `www` — `curl` retire l'en-tête `Authorization` | `HTTP 401` | corrigé, secret changé |
+| 3 | `DATABASE_URL` absente du projet Vercel | `HTTP 503 « DATABASE_URL absente »` | corrigé, posée **et redéployée** le 15/09 à 12:39 Z |
+| 4 | **La table `releves` n'existe pas** — `/api/cron/releve` n'appelait pas `assurerMigrations()` | `HTTP 200` **et zéro ligne écrite** | corrigé, `[H-23]` |
 
-Vérification, run 11 du workflow `Relevé` :
+**La quatrième est la pire, parce qu'elle ressemblait à un succès.** Les cinq insertions
+échouaient sur `relation "releves" does not exist` (Postgres `42P01`), et la route répondait
+`HTTP 200` avec « aucun relevé écrit — le dernier date de moins de l'espacement minimal ».
+Elle ne mentait pas par choix : `enregistrerReleve` rendait un **booléen**, donc « espacement
+respecté » (sain) et « écriture échouée » (grave) arrivaient sous la même forme, et la seule
+phrase disponible était celle du cas sain. **Aucune rédaction ne pouvait être juste** — c'est
+le type qu'il fallait changer, pas le message.
 
-```
-HTTP 200
-{"ok":true,"ecrits":0,"elagues":0,"releves":[
-  {"appId":"financeai","etat":"ok"},{"appId":"driveai","etat":"ok"},
-  {"appId":"batchchef","etat":"ok"},{"appId":"carai","etat":"ok"},
-  {"appId":"jobai","etat":"ok"}]}
-```
+Cause racine : `lib/gardeHub.ts` appelle `assurerMigrations()` à chaque page, mais la route
+cron — **la seule conçue pour tourner sans personne devant** — ne le faisait pas. Le
+regroupement des requêtes Vercel l'a prouvé : depuis le déploiement, une seule route servie,
+`/api/cron/releve`. Aucune page chargée, donc aucune migration jouée, donc aucune table.
+C'est la **leçon n°5 un étage plus bas** : l'observateur était requis pour l'observation,
+puis pour le *schéma*.
 
-`ecrits: 0` n'est pas un échec mais une preuve : la raison est « le dernier relevé date de
-moins de l'espacement minimal », or il faut qu'une ligne EXISTE dans les 15 dernières minutes
-pour que l'écriture soit supprimée. La base répond, les migrations ont créé les tables,
-l'écriture passe.
+`tests/migrationsAppelees.test.ts`, écrit pour ce trou, en a trouvé **deux autres** au
+passage : `app/actions.ts` et `app/administration/actions.ts` lisaient ou écrivaient le modèle
+d'accès sans assurer le schéma. Les trois sont corrigés.
 
 ⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER.** Vercel fige les variables
 d'environnement au moment où un déploiement est créé ; celui qui sert déjà ne les voit jamais
@@ -46,6 +53,10 @@ apparaître. C'est le piège de `[H-18]` — et il a coûté une mesure fausse d
 le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée, simplement
 parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
 d'écart, et une conclusion « ça n'a pas marché » qui aurait été fausse.
+
+👤 **CE QUI PROUVERA QUE C'EST RÉGLÉ, ET RIEN D'AUTRE** : un run du workflow `Relevé` à
+`"ecrits": 5`. Depuis `[H-23]`, un échec d'écriture rend `HTTP 500` et **teint le run en
+rouge** — il ne peut plus se déguiser en `200`.
 
 👤 **CE QUI RESTE À VÉRIFIER, ET CE N'EST PAS « JE ME CONNECTE ».** Le chemin du propriétaire
 était vert tout du long, base absente comprise — il ne prouve donc rien. Ce qui prouve

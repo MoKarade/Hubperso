@@ -42,7 +42,8 @@ import { NextResponse } from "next/server";
 import { decideCron } from "@/lib/cronAuth";
 import { fetchAllSummaries, TIMEOUT_CRON_MS } from "@/lib/fetchSummary";
 import { baseConfiguree } from "@/lib/db";
-import { elaguerHistorique, enregistrerReleve } from "@/lib/historiqueDb";
+import { elaguerHistorique, enregistrerReleve, type IssueReleve } from "@/lib/historiqueDb";
+import { assurerMigrations, etatMigrations } from "@/lib/migrations";
 import { memeJeton } from "@/lib/jetonApp";
 import { getSources } from "@/lib/sources";
 
@@ -86,6 +87,25 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // ⚠️ LES MIGRATIONS, ET C'EST LA LEÇON N°5 UN ÉTAGE PLUS BAS.
+  //
+  // `lib/gardeHub.ts` appelle `assurerMigrations()` à chaque page et `app/api/acces/route.ts`
+  // le fait aussi. Cette route, la SEULE conçue pour tourner sans personne devant, ne le
+  // faisait pas. Conséquence mesurée le 15/09/2026 : la base venait d'être créée, aucune page
+  // n'avait été chargée depuis le déploiement — le regroupement des requêtes Vercel montrait
+  // `/api/cron/releve` comme unique route servie — donc AUCUNE table n'existait, et les cinq
+  // insertions échouaient sur `relation "releves" does not exist`.
+  //
+  // « L'observateur était requis pour l'observation » s'appliquait donc encore, non plus aux
+  // données mais au SCHÉMA. Une horloge qui ne peut pas créer sa propre table dépend d'un
+  // humain pour commencer à mesurer — exactement ce qu'elle existe pour supprimer.
+  //
+  // Bénéfice de bord, et ce n'est pas un détail : cet import fait entrer `drizzle/*.sql` dans
+  // le traçage de fichiers de Next pour CETTE fonction. Vérifié sur le build — le `.nft.json`
+  // de cette route en comptait ZÉRO, celui de `app/page.tsx` en compte cinq. Aucun
+  // `outputFileTracingIncludes` n'est nécessaire.
+  await assurerMigrations();
+
   // Budget plus large que celui de l'affichage : personne n'attend devant, et un relevé
   // perdu est un trou définitif. Voir `TIMEOUT_CRON_MS`.
   const resultats = await fetchAllSummaries(getSources(), undefined, TIMEOUT_CRON_MS);
@@ -94,12 +114,12 @@ export async function POST(request: Request): Promise<Response> {
   // fenêtre d'espacement (`INTERVALLE_RELEVE_MS`), et cinq écritures simultanées sur des
   // `app_id` différents ne se gênent pas — mais l'ordre rend le journal lisible et la
   // charge sur un Neon gratuit reste dérisoire. Aucune raison de paralléliser.
-  const releves: { appId: string; etat: string; ecrit: boolean }[] = [];
+  const releves: { appId: string; etat: string; issue: IssueReleve }[] = [];
   for (const resultat of resultats) {
     releves.push({
       appId: resultat.source.id,
       etat: resultat.state,
-      ecrit: await enregistrerReleve(resultat),
+      issue: await enregistrerReleve(resultat),
     });
   }
 
@@ -107,13 +127,41 @@ export async function POST(request: Request): Promise<Response> {
   // L'accrocher à l'affichage ferait payer à une page le nettoyage de la table.
   const elagues = await elaguerHistorique();
 
-  const ecrits = releves.filter((r) => r.ecrit).length;
+  const ecrits = releves.filter((r) => r.issue === "ecrit").length;
+  const echecs = releves.filter((r) => r.issue === "echec").length;
 
-  // ⚠️ `ok: true` avec `ecrits: 0` est un cas NORMAL, pas un échec : l'espacement des
-  // relevés (15 min) est plus court que la cadence de l'horloge, mais deux passages
-  // rapprochés — un rattrapage GitHub, un déclenchement manuel — tombent légitimement dans
-  // la même fenêtre. Le workflow le signale en avertissement sans teindre le run en rouge :
-  // c'est au champ `raison` de dire pourquoi, jamais au code HTTP de le deviner.
+  // ⚠️ UN ÉCHEC D'ÉCRITURE N'EST PAS UN ESPACEMENT, ET CETTE ROUTE A CONFONDU LES DEUX.
+  //
+  // Le 15/09/2026, les cinq insertions échouaient sur `relation "releves" does not exist` et
+  // cette route répondait `HTTP 200` avec « le dernier relevé date de moins de l'espacement
+  // minimal ». Elle ne mentait pas par choix : `enregistrerReleve` rendait un BOOLÉEN, donc
+  // le cas sain et le cas grave arrivaient ici sous la même forme, et la seule phrase
+  // disponible était celle du cas sain. Le run était vert, le workflow content, et zéro ligne
+  // était écrite — la panne silencieuse dans le code écrit pour la supprimer.
+  //
+  // 500 et non 200 : le workflow échoue en ROUGE sur tout ce qui n'est pas 200, et c'est
+  // exactement ce qu'on veut. `etatMigrations()` est joint parce que la cause la plus probable
+  // d'un échec d'écriture est un schéma absent ou en retard — le diagnostic accompagne le
+  // symptôme au lieu de se faire chercher dans les journaux d'une autre plateforme.
+  if (echecs > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        raison: `${echecs} relevé(s) sur ${releves.length} n'ont PAS pu être écrits — voir les journaux Vercel.`,
+        migrations: etatMigrations(),
+        ecrits,
+        echecs,
+        elagues,
+        releves,
+      },
+      { status: 500 },
+    );
+  }
+
+  // ⚠️ `ok: true` avec `ecrits: 0` est un cas NORMAL — mais seulement maintenant qu'un échec
+  // ne peut plus s'y cacher. L'espacement (15 min) est plus court que la cadence de
+  // l'horloge, et deux passages rapprochés — un rattrapage GitHub, un déclenchement manuel —
+  // tombent légitimement dans la même fenêtre.
   return NextResponse.json({
     ok: true,
     ...(ecrits === 0
