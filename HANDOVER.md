@@ -15,27 +15,43 @@ Il est vérifié **en premier et sans toucher au réseau**, pour que ni une base
 ni une ligne supprimée par erreur ne puisse enfermer Marc dehors de sa propre
 administration — le seul endroit d'où il pourrait se réparer.
 
-⚠️ **AU 14/09/2026, CE MODÈLE À DEUX ÉTAGES N'EST PAS ACTIF EN PRODUCTION.** Ce n'est pas
-un défaut du code — c'est une variable d'environnement absente, et c'est pire, parce que rien
-ne le montre. Mesuré (run 4 du workflow `Relevé`, 20:34 Z) : `POST /api/cron/releve` répond
-`503 « DATABASE_URL absente »`. `baseConfiguree()` étant une fonction pure de
-`process.env.DATABASE_URL`, le constat est sans ambiguïté — le projet Vercel du hub ne
-fournit pas de base à son exécution de production.
+✅ **LE MODÈLE À DEUX ÉTAGES EST ACTIF EN PRODUCTION DEPUIS LE 15/09/2026, 12:39 Z.** Il ne
+l'était pas la veille au soir, et c'est une histoire qui mérite ses quatre lignes parce
+qu'elle s'est répétée trois fois de suite.
 
-Conséquence : `peutSeConnecter` et `aAcces` retombent sur le **repli propriétaire**, celui
-qui ne touche pas au réseau. Marc entre, tout fonctionne pour lui, et **personne d'autre ne
-peut entrer** — pas parce qu'on le lui refuse, mais parce que la table n'est pas lisible.
-Aucun relevé n'est enregistré non plus, d'où un historique vide et aucune détection de gel.
+`DATABASE_URL` manquait au projet Vercel. Le hub fonctionnait pourtant parfaitement **pour
+le propriétaire** — `peutSeConnecter` et `aAcces` retombaient sur le repli sans réseau — donc
+la panne n'avait aucun symptôme depuis le seul point de vue depuis lequel on la regardait.
+Personne d'autre ne pouvait entrer : pas parce qu'on le lui refusait, mais parce que la table
+n'était pas lisible. Et aucun relevé ne s'enregistrait.
 
-C'est la section **« Comment vérifier que ça marche vraiment »** ci-dessous, en conditions
-réelles : « je me connecte, ça marche »
-n'exerce que le chemin du propriétaire, le seul qui fonctionne base en panne. Il a été vert
-tout du long.
+Vérification, run 11 du workflow `Relevé` :
 
-👤 **Le geste qui répare** : poser `DATABASE_URL` dans le projet Vercel du hub (Settings →
-Environment Variables → environnement *Production*). Rien à faire côté dépôt GitHub. Voir
-`[H-23]` au backlog. La vérification qui compte ensuite n'est PAS « je me connecte » : c'est
-la procédure d'invitation décrite plus bas.
+```
+HTTP 200
+{"ok":true,"ecrits":0,"elagues":0,"releves":[
+  {"appId":"financeai","etat":"ok"},{"appId":"driveai","etat":"ok"},
+  {"appId":"batchchef","etat":"ok"},{"appId":"carai","etat":"ok"},
+  {"appId":"jobai","etat":"ok"}]}
+```
+
+`ecrits: 0` n'est pas un échec mais une preuve : la raison est « le dernier relevé date de
+moins de l'espacement minimal », or il faut qu'une ligne EXISTE dans les 15 dernières minutes
+pour que l'écriture soit supprimée. La base répond, les migrations ont créé les tables,
+l'écriture passe.
+
+⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER.** Vercel fige les variables
+d'environnement au moment où un déploiement est créé ; celui qui sert déjà ne les voit jamais
+apparaître. C'est le piège de `[H-18]` — et il a coûté une mesure fausse de plus le 15/09 :
+le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée, simplement
+parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
+d'écart, et une conclusion « ça n'a pas marché » qui aurait été fausse.
+
+👤 **CE QUI RESTE À VÉRIFIER, ET CE N'EST PAS « JE ME CONNECTE ».** Le chemin du propriétaire
+était vert tout du long, base absente comprise — il ne prouve donc rien. Ce qui prouve
+quelque chose est la procédure d'invitation décrite plus bas : accorder un accès dans
+`/administration`, constater que la personne entre dans la minute, le retirer, constater
+qu'elle ressort. **Elle n'a encore jamais été exécutée contre une vraie base.**
 
 Le contrat, les widgets et les jetons `HUB_TOKEN_*` sont **inchangés** : l'auth est une
 couche ajoutée par-dessus, elle ne touche pas au dashboard.

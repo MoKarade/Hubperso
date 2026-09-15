@@ -153,15 +153,30 @@ export default async function PageAttention() {
           // utilisable POUR MARC — et c'est exactement ce qui rend la panne invisible, parce
           // que le seul chemin qu'il emprunte est le seul qui n'a pas besoin de la base.
           // C'est la leçon n°1 du `HANDOVER.md`, rendue concrète.
+          //
+          // ⚠️ ET LE GESTE EST EN DEUX TEMPS, SINON IL SEMBLE NE RIEN FAIRE. Vercel FIGE les
+          // variables d'environnement au moment où un déploiement est créé : le déploiement
+          // qui sert déjà ne verra jamais apparaître celle qu'on vient de poser. Ce message a
+          // omis le redéploiement jusqu'au 15/09/2026 — et l'omission a produit une mesure
+          // fausse le jour même, un `503` relevé 46 secondes avant la fin du redéploiement,
+          // qui a failli faire conclure que la variable était mauvaise. C'est le piège de
+          // `[H-18]` : le 01/09, deux « Redeploy » d'affilée avaient été ANNULÉS par
+          // `scripts/build-necessaire.sh`, parce qu'il ne juge que le diff git et qu'aucune
+          // variable Vercel n'est dans git. Dire « pose la variable » sans dire « puis
+          // redéploie » décrit donc un geste qui, seul, ne change rien.
           <p className="observation__vide">
             <strong>Le hub n’a pas de base de données.</strong> La production ne voit pas de{" "}
             <code>DATABASE_URL</code> — mesuré, pas supposé : l’horloge reçoit un{" "}
             <strong>503</strong> qui le dit. Rien ne peut donc être enregistré ni relu : aucun
             relevé, aucune courbe d’évolution, aucune détection de métrique figée. Et le
             modèle d’accès par app est inactif — seul le <strong>propriétaire</strong> peut
-            entrer, par le repli sans réseau. Le geste est côté <strong>Vercel</strong>
-            {" "}(projet du hub → Settings → Environment Variables, environnement{" "}
-            <em>Production</em>), pas côté dépôt GitHub : l’horloge, elle, est déjà correcte.
+            entrer, par le repli sans réseau.
+            {" "}Le geste est côté <strong>Vercel</strong>, pas côté dépôt GitHub — l’horloge,
+            elle, est déjà correcte — et il se fait en <strong>deux temps</strong> :
+            (1) poser <code>DATABASE_URL</code> (projet du hub → Settings → Environment
+            Variables, environnement <em>Production</em>) ; (2) <strong>redéployer</strong>.
+            Sans le second, rien ne change : Vercel fige les variables au moment où un
+            déploiement est créé, donc celui qui sert déjà ne verra jamais la nouvelle.
           </p>
         ) : etat === "horloge-muette" ? (
           // ⚠️ CE MESSAGE A DIT « IL FAUT LES SECRETS » JUSQU'AU 14/09/2026 AU SOIR, alors

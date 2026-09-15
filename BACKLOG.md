@@ -41,8 +41,18 @@ l'état réel avant de coder.
   **Livré côté hub** : `etatObservation` (`lib/gel.ts`, PUR) sépare les trois cas, et la page
   « attention » affiche « le hub n'a pas de base de données » au lieu de « l'horloge n'a
   encore rien enregistré » — deux pannes, deux endroits, deux gestes.
-  👤 **Reste un geste de Marc, côté Vercel** (projet du hub → Settings → Environment
-  Variables → environnement *Production*) : poser `DATABASE_URL`. Rien côté dépôt GitHub.
+  ✅ **RÉSOLU le 15/09/2026 à 12:39 Z.** Marc a posé `DATABASE_URL` **et redéployé** — le
+  second geste était nécessaire et mon mode d'emploi l'avait omis. Run 11 du workflow
+  `Relevé` : `HTTP 200`, `ok: true`, les cinq apps en `etat: "ok"`. `ecrits: 0` avec la raison
+  « le dernier date de moins de l'espacement minimal » est une PREUVE et non un échec : il
+  faut qu'une ligne existe dans les 15 dernières minutes pour que l'écriture soit supprimée.
+  ⚠️ Une mesure fausse de plus au passage, la mienne : le relevé lancé à 12:39:51 Z a rendu
+  `503` parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
+  d'écart. Le correctif porte donc aussi sur le MODE D'EMPLOI — la page, le README et le
+  HANDOVER disent maintenant « poser PUIS redéployer », parce que Vercel fige les variables à
+  la création d'un déploiement (`[H-18]`).
+  👤 **Ce qui reste à vérifier, et ce n'est pas « je me connecte »** : la procédure
+  d'invitation du `HANDOVER.md` n'a encore jamais été exécutée contre une vraie base.
 
 - **[H-22] Le message de la page « attention » envoyait refaire un geste déjà fait.**
   Capture de Marc du 14/09 au soir : l'encadré « Ce que le hub a pu observer » affichait
