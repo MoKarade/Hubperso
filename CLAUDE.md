@@ -99,6 +99,29 @@ widgets 100 % génériques.
   paramètre (cf. `peutSeConnecter(email, env, maintenantMs, lecture)`).
 - **Design : direction bento assumée** (voir `app/globals.css`), pas de template générique.
   Ne pas imposer le dark mode : les deux thèmes suivent `prefers-color-scheme`.
+- ⚠️ **Une couleur reçue du contrat ne porte JAMAIS du texte sans passer par `texteSur`**
+  (`lib/couleur.ts`, PURE). `app.color` arrive à l'exécution et le hub ne connaît aucune
+  app : mesuré le 15/09, deux des six couleurs rendent le texte blanc illisible (JobAI
+  `#f2a31b` → 2,09 ; DriveAI `#8ab4f8` → 2,11, pour un seuil de 4,5). Un `color: #fff` codé
+  en dur cassait donc un tiers du tableau de bord — et un bouton illisible s'affiche
+  parfaitement, rien ne le signale. Le module prouve aussi que le **meilleur du noir et du
+  blanc rend toujours au moins 4,58**, quelle que soit la couleur publiée : le hub n'a donc
+  ni liste à maintenir, ni confiance à accorder aux apps sur ce point.
+  Même règle pour l'anneau de focus, qui prenait `var(--accent)` : invisible sur les deux
+  couleurs claires, et ça ne se voit qu'au clavier.
+- ⚠️ **La carte entière est cliquable par un `::after` posé sur le lien « Détail ».** Trois
+  conséquences à ne pas défaire : (1) ce lien ne doit porter NI `position`, NI `transform`,
+  NI `filter` — les trois créent un bloc conteneur et la nappe se replie sur le bouton, donc
+  la carte cesse d'être cliquable **sans que rien ne change à l'écran** ; (2) tout ce qui est
+  cliquable dans une carte est remonté par une règle de FORME
+  (`.widget :is(a, button):not(.widget__detail)`) et non par une liste de classes, qui se
+  périmerait au prochain lien ajouté (leçon n° 6) ; (3) `--cible: 44px` est le seul jeton de
+  hauteur tactile — les quatre pages le partagent, trois valeurs séparées divergeraient.
+- **La gravité écrase la couleur de l'app sur une carte** (`--teinte`, redéfinie par
+  `[data-gravite]`) — rouge ET orange, arbitrage de Marc du 15/09 contre ma recommandation.
+  Conséquence assumée : les couleurs d'app disparaissent dès qu'une app est en cache.
+  ⚠️ `/attention` en est exemptée : elle ne liste que des problèmes, déjà codés par gravité,
+  et deux codes couleur sur le même écran s'annulent.
 
 ## 3. Workflow git
 

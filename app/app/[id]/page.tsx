@@ -28,6 +28,7 @@ import { statusBadge, severityTone } from "@/lib/status";
 import { quotaRatio, toCad } from "@/lib/usage";
 import { formatCad, formatDateTime, formatDuree, formatMetricValue, formatTrend } from "@/lib/format";
 import { safeHttpUrl } from "@/lib/url";
+import { texteSur } from "@/lib/couleur";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionList } from "@/components/ActionList";
 import { Recommandation } from "@/components/Recommandation";
@@ -66,10 +67,23 @@ export default async function DetailAppPage({
   );
   const nom = summary?.app.name ?? source.name;
   const accent = summary?.app.color;
+  // Le pendant de la carte : le texte lisible sur cette couleur, CALCULÉ (`lib/couleur.ts`).
+  // Deux des six couleurs de l'écosystème rendent le blanc illisible.
+  const accentTexte = texteSur(accent);
   const lienApp = summary ? safeHttpUrl(summary.app.url) : null;
 
   return (
-    <main className="page" style={accent ? ({ "--accent": accent } as React.CSSProperties) : undefined}>
+    <main
+      className="page page--app"
+      style={
+        accent
+          ? ({
+              "--accent": accent,
+              ...(accentTexte ? { "--accent-texte": accentTexte } : {}),
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
       <header className="page__head">
         <div>
           <p className="page__eyebrow">hubperso.com</p>

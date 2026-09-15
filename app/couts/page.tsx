@@ -65,7 +65,15 @@ export default async function CoutsPage() {
 
       <section className="couts" aria-label="Coûts et quotas par application">
         {digest.apps.map((a) => (
-          <article key={a.id} className="couts__app">
+          <article
+            key={a.id}
+            className="couts__app"
+            /* La couleur de l'app habille toute sa fiche, plus seulement une pastille de
+               11 px — même demande que pour les cartes du tableau de bord (Marc, 15/09).
+               Aucun texte n'est posé sur cette couleur ici, donc `texteSur` n'est pas
+               nécessaire : ce sont des fonds de 7 %, pas des boutons pleins. */
+            style={a.color ? ({ "--accent": a.color } as React.CSSProperties) : undefined}
+          >
             <header className="couts__apphead">
               <span className="couts__dot" style={a.color ? { background: a.color } : undefined} aria-hidden />
               <h2 className="couts__appname">{a.name}</h2>
