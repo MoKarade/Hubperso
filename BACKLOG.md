@@ -342,6 +342,15 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
 
 ## Fait
 
+- ~~**[H-27]** MemoryAI entre dans la constellation — sixième source du hub~~ — 15/09/2026.
+  Entrée `memoryai` dans `lib/sources.ts` (`MEMORYAI_SUMMARY_URL`, `HUB_TOKEN_MEMORYAI`),
+  `.env.example`, README, `CLAUDE.md` et `docs/ACCES-PAR-APP.md` passés de cinq à six apps.
+  ⚠️ MemoryAI n'a **pas d'invités** (propriétaire seul, `providers: []`, aucun appel à
+  `POST /api/acces`) : l'app apparaît dans `/administration` parce que `APPS_DISPONIBLES`
+  dérive de `SOURCE_DEFS`, mais lui accorder un accès n'ouvre rien. Dit dans `.env.example` ;
+  un drapeau `sansInvites` sur `SourceDef` serait plus propre — à faire si un second cas
+  apparaît. Rien n'est servi tant que `HUB_TOKEN_MEMORYAI` n'est pas posé côté Vercel.
+
 - ~~**[H-06]** Plafonner les jobs de CI (`timeout-minutes`)~~ — 21/08/2026. La §5 de
   `CLAUDE.md` le prescrit depuis l'incident DriveAI du 19/08 ; ce dépôt ne le faisait pas.
   `gate` à 15 min, `audit` à 10 min, calibrés sur les durées réellement observées (1 min 36 s
