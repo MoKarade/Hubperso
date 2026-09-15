@@ -162,6 +162,27 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
 - [ ] **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Purement du
   rendu, aucune dépendance au contrat : l'`app.url` est déjà dans chaque summary.
 
+- **[H-24] Les blocs `details` sont affichés — dans la vue détaillée seulement.** Livré le
+  15/09/2026 (lot 2), sur arbitrage de Marc. Les cinq apps publient des sections `details`
+  depuis le 14/09 (campagnes de DriveAI, placements par compte de FinanceAI, dernière passe
+  de veille de JobAI…) et le hub ne les rendait nulle part : **publié n'est pas affiché**.
+  Rendues dans `/app/<id>` en suivant le gabarit des blocs existants. Pas sur la carte : le
+  contrat autorise 6 sections × 8 lignes, soit jusqu'à 48 lignes par app — de quoi casser la
+  grille bento, alors que le lien « détail » y mène en un clic.
+  Générique de bout en bout : aucun titre de section n'est connu du hub, aucune n'est
+  réordonnée ni fusionnée. L'ordre publié est celui de l'app, qui seule sait ce qui compte
+  chez elle.
+
+- [ ] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
+  principe est écrit en §1 du `CLAUDE.md` et respecté partout à ce jour (vérifié à la main le
+  15/09 : `ActionList`, `AlertList`, `Recommandation`, la vue détaillée). Mais rien ne le
+  FAIT respecter — c'est un rappel, pas un contrôle, et la leçon n°2 dit qu'un rappel ne
+  tient pas. Un test d'exhaustivité sur `components/` et `app/` serait faisable (chercher un
+  `href={` alimenté par un champ de summary sans passage par `safeHttpUrl`), mais il est
+  délicat à rendre discriminant sans devenir une sonde sur la formulation — le piège attrapé
+  par mutation le 15/09 sur `tests/migrationsAppelees.test.ts`. À concevoir posément, pas
+  dans la foulée.
+
 - [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
   demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
   patrimoine pour FinanceAI). Le contrat n'avait aucun moyen de l'exprimer : le hub
@@ -170,8 +191,13 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   `primary: true` porté par la métrique, et non un `primaryMetric: "<label>"` à la racine —
   une référence par libellé peut pendre dans le vide, un drapeau ne peut désigner que ce à
   quoi il est attaché. Au plus un par summary, sinon le summary est rejeté.
-  **Reste, côté HUB** : le rendu (aujourd'hui le hub retombe toujours sur la première
-  métrique, ce qu'il faisait déjà — la nouveauté est qu'une app peut enfin le dire).
+  ✅ **Livré côté HUB le 15/09/2026** (lot 2). `etatCarte` (`lib/carte.ts`, PUR) élit la
+  métrique portant `primary: true`, et retombe sur la première publiée à défaut — un repli et
+  non une tolérance : aucune app n'est obligée de désigner, et une app pinnée sur un contrat
+  antérieur n'en a pas le moyen. La désignée est retirée des secondaires, sinon elle
+  s'afficherait deux fois sur la même carte, en grand et en petit.
+  ⚠️ `primary: false` est traité comme une ABSENCE de désignation, pas comme une candidature
+  négative — sinon le drapeau deviendrait une valeur à trois états. Verrouillé par test.
 
 - [ ] **[H-12] [CONTRAT] Une app peut-elle publier une RECOMMANDATION ?** Marc demande « voir
   recommandation directe » pour FinanceAI. Ça passait par une `alert` de sévérité `info`,
@@ -183,7 +209,17 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   un problème, ou une liste de problèmes diluée qu'on apprend à ne plus lire. Un tableau
   aurait été rempli de cinq conseils, et un tableau de bord qui en affiche cinq n'en affiche
   aucune.
-  **Reste, côté HUB** : le rendu sur la carte et dans la vue détaillée.
+  ✅ **Livré côté HUB le 15/09/2026** (lot 2), aux deux endroits, sur arbitrage de Marc.
+  `components/Recommandation.tsx` : un filet à gauche et une flèche, **aucun code de
+  gravité** — on doit reconnaître une suggestion sans lire le texte, ce qui est tout l'objet
+  de ce champ. Sur la carte, après les métriques et avant les actions, sans le « pourquoi » ;
+  dans la vue détaillée, **en premier** et avec le « pourquoi » complet. L'ordre diffère
+  volontairement : on arrive sur une carte par un coup d'œil et sur la vue détaillée par une
+  question.
+  ⚠️ Le `href` passe par `safeHttpUrl` dans la fonction PURE, pas dans le composant — le
+  contrat l'accepte en `z.string().url()`, ce qui laisse passer `javascript:`. Un lien refusé
+  n'efface PAS le conseil : le texte reste lisible et la vue détaillée dit que le lien a été
+  écarté, parce qu'un refus silencieux ne se corrige jamais.
 
 #### Ce qui relève des APPS, pas de ce dépôt (à propager sur feu vert de Marc)
 
