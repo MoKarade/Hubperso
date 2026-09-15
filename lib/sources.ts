@@ -77,6 +77,16 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
     urlEnv: "JOBAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_JOBAI",
   },
+  {
+    // La mémoire (ADR 0001 de MemoryAI, 15/09/2026). Route `/hub/summary` sans `/api`, comme
+    // CarAI. ⚠️ MemoryAI est une app SANS invités : elle n'appelle jamais `POST /api/acces`,
+    // donc l'accorder à quelqu'un dans /administration n'ouvre rien chez elle.
+    id: "memoryai",
+    name: "MemoryAI",
+    defaultUrl: "https://memoryai.hubperso.com/hub/summary",
+    urlEnv: "MEMORYAI_SUMMARY_URL",
+    tokenEnv: "HUB_TOKEN_MEMORYAI",
+  },
 ];
 
 type Env = Record<string, string | undefined>;

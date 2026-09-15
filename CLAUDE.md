@@ -120,7 +120,7 @@ npm run test       # vitest
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint .
 npm run build      # build de production
-npm run constellation  # interroge les 5 apps et juge la cohérence (jetons requis)
+npm run constellation  # interroge les 6 apps et juge la cohérence (jetons requis)
 ```
 
 ## 5. Vérifications avant commit

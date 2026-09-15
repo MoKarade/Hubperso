@@ -184,11 +184,13 @@ secrets (variables d'environnement uniquement, jamais committés).
 | `HUB_TOKEN_BATCHCHEF` | Jeton `x-hub-token` de BatchChef |
 | `HUB_TOKEN_CARAI` | Jeton `x-hub-token` de CarAI |
 | `HUB_TOKEN_JOBAI` | Jeton `x-hub-token` de JobAI |
+| `HUB_TOKEN_MEMORYAI` | Jeton `x-hub-token` de MemoryAI (app sans invités : ne consulte jamais `/api/acces`) |
 | `FINANCEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://finance.hubperso.com/hub/summary` |
 | `DRIVEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://drive.hubperso.com/hub/summary` |
 | `BATCHCHEF_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://batchchef.hubperso.com/api/hub/summary` |
 | `CARAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://carai.hubperso.com/hub/summary` |
 | `JOBAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://emploi.hubperso.com/api/hub/summary` |
+| `MEMORYAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://memoryai.hubperso.com/hub/summary` |
 
 Sans jeton, l'app concernée s'affiche « non configurée » — les autres continuent de
 fonctionner. Ajouter une app = une entrée dans `lib/sources.ts` + sa variable de jeton.

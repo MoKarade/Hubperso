@@ -27,7 +27,7 @@ Deux tables dans la base du hub (`lib/db/schema.ts`), et rien d'autre :
 
 **Pas de distinction lecture/écriture.** C'est un choix : six apps × deux niveaux, ce sont
 douze cases à cocher et une occasion de se tromper à chaque invitation. On accorde une app
-entière, ou rien. (Six = le hub lui-même + les cinq de `SOURCE_DEFS`, cf. `APPS_DISPONIBLES`
+entière, ou rien. (Sept = le hub lui-même + les six de `SOURCE_DEFS`, cf. `APPS_DISPONIBLES`
 dans `lib/administration.ts`.)
 
 **`AUTHORIZED_EMAIL` est le propriétaire**, pas « la seule adresse admise ». Il a accès à
@@ -89,7 +89,7 @@ utilité — elle n'est donc simplement pas créée.
 **Obtenir une session ne dit rien de ce qu'on peut voir dans le hub.** La connexion est
 UNIQUE (le hub est la porte d'entrée de toutes les apps) ; les accès sont PAR APP. Quelqu'un
 invité sur BatchChef doit pouvoir se connecter — sinon impossible d'atteindre BatchChef —
-sans que ça lui ouvre le tableau de bord du hub, qui affiche les données des cinq apps. Le
+sans que ça lui ouvre le tableau de bord du hub, qui affiche les données des six apps. Le
 hub se traite donc lui-même comme une app parmi les autres, sous l'identifiant `APP_HUB`
 (`"hubperso"`) : ses pages exigent en plus `aAcces(email, APP_HUB)`, via `exigerAccesHub()`
 (`lib/gardeHub.ts`), appelée par `app/page.tsx`, `app/couts/page.tsx` et `app/app/[id]/page.tsx`.
