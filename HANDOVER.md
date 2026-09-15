@@ -15,11 +15,14 @@ Il est vérifié **en premier et sans toucher au réseau**, pour que ni une base
 ni une ligne supprimée par erreur ne puisse enfermer Marc dehors de sa propre
 administration — le seul endroit d'où il pourrait se réparer.
 
-⚠️ **CE MODÈLE À DEUX ÉTAGES N'A JAMAIS ENCORE TOURNÉ CONTRE UNE VRAIE BASE, ET LA RAISON
-A CHANGÉ TROIS FOIS EN VINGT-QUATRE HEURES.** Chaque cause masquait la suivante, et deux
-fois j'ai annoncé que c'était réglé alors que ce ne l'était pas. La leçon est là :
-**`HTTP 200` n'est pas une preuve** quand le code qui le rend ne sait pas distinguer un
-succès d'un échec.
+✅ **CE MODÈLE À DEUX ÉTAGES A ÉTÉ ÉPROUVÉ CONTRE UNE VRAIE BASE LE 15/09/2026, et c'est la
+première fois.** Marc a exécuté la procédure d'invitation décrite plus bas et rapporte que
+les trois étapes passent : la personne invitée entre, l'accès retiré la renvoie sur
+`/sans-acces`. Le hub n'est donc plus seulement gardé en théorie.
+
+⚠️ **IL A FALLU QUATRE CAUSES, ET DEUX FAUSSES ANNONCES DE MA PART.** Chacune masquait la
+suivante. La leçon à garder : **`HTTP 200` n'est pas une preuve** quand le code qui le rend
+ne sait pas distinguer un succès d'un échec.
 
 | # | Cause | Signature | État |
 |---|---|---|---|
@@ -58,11 +61,18 @@ d'écart, et une conclusion « ça n'a pas marché » qui aurait été fausse.
 `"ecrits": 5`. Depuis `[H-23]`, un échec d'écriture rend `HTTP 500` et **teint le run en
 rouge** — il ne peut plus se déguiser en `200`.
 
-👤 **CE QUI RESTE À VÉRIFIER, ET CE N'EST PAS « JE ME CONNECTE ».** Le chemin du propriétaire
-était vert tout du long, base absente comprise — il ne prouve donc rien. Ce qui prouve
-quelque chose est la procédure d'invitation décrite plus bas : accorder un accès dans
-`/administration`, constater que la personne entre dans la minute, le retirer, constater
-qu'elle ressort. **Elle n'a encore jamais été exécutée contre une vraie base.**
+✅ **LA PROCÉDURE D'INVITATION A ÉTÉ EXÉCUTÉE, le 15/09/2026, et elle passe.** Rapportée par
+Marc, pas mesurée par moi — la distinction compte, et aujourd'hui l'a assez démontré. Les
+trois étapes de la section « Comment vérifier que ça marche vraiment » sont donc vertes pour
+la première fois : ajout dans `/administration`, entrée de la personne invitée, retrait de
+l'accès et renvoi sur `/sans-acces`.
+
+⚠️ **Et « je me connecte, ça marche » ne prouve toujours rien.** Le chemin du propriétaire est
+resté vert pendant TOUTE la panne — base absente comprise, puisqu'il est vérifié sans réseau
+par construction. C'est la leçon n°1 ci-dessous, et le 14-15/09 en est la démonstration la
+plus complète qu'on ait : quatre causes successives, et aucune n'a jamais empêché Marc
+d'entrer. Refaire la procédure d'invitation reste la seule vérification qui vaille après
+toute modification de l'auth, du modèle d'accès ou de la base.
 
 Le contrat, les widgets et les jetons `HUB_TOKEN_*` sont **inchangés** : l'auth est une
 couche ajoutée par-dessus, elle ne touche pas au dashboard.

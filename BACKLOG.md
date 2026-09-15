@@ -59,8 +59,9 @@ l'état réel avant de coder.
   d'écart. Le correctif porte donc aussi sur le MODE D'EMPLOI — la page, le README et le
   HANDOVER disent maintenant « poser PUIS redéployer », parce que Vercel fige les variables à
   la création d'un déploiement (`[H-18]`).
-  👤 **Ce qui reste à vérifier, et ce n'est pas « je me connecte »** : la procédure
-  d'invitation du `HANDOVER.md` n'a encore jamais été exécutée contre une vraie base.
+  ✅ **La procédure d'invitation a été exécutée le 15/09/2026 et elle passe** — rapportée par
+  Marc : la personne invitée entre, l'accès retiré la renvoie sur `/sans-acces`. Première fois
+  contre une vraie base. Deux leçons ajoutées au `CLAUDE.md` (n°7 et n°8).
 
 - **[H-22] Le message de la page « attention » envoyait refaire un geste déjà fait.**
   Capture de Marc du 14/09 au soir : l'encadré « Ce que le hub a pu observer » affichait
