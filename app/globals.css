@@ -1084,11 +1084,24 @@ a:focus-visible,
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.heros__delta[data-dir="up"] {
+.heros__delta[data-dir="hausse"] {
   color: var(--ok);
 }
-.heros__delta[data-dir="down"] {
+.heros__delta[data-dir="baisse"] {
   color: var(--danger);
+}
+/* ⚠️ « plat » N'EST PAS UNE HAUSSE, et il l'était : le composant rangeait `delta >= 0` du
+   côté des hausses, donc une métrique qui n'avait pas bougé s'affichait en VERT comme une
+   amélioration. Ton neutre — le fait est dit, aucun jugement n'est suggéré. */
+.heros__delta[data-dir="plat"] {
+  color: var(--text-soft);
+}
+/* Les deux valeurs comparées. Plus discrètes que l'écart : l'écart est la réponse, elles
+   sont la justification. Sans elles, « +7,1 % » ne se vérifiait pas — c'est précisément ce
+   qui manquait pour comprendre la ligne (Marc, 15/09/2026). */
+.heros__entre {
+  font-weight: 400;
+  color: var(--text-soft);
 }
 
 /* « Pas encore d'historique » n'est pas une erreur : c'est une mémoire encore jeune. Ton

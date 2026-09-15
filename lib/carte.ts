@@ -21,6 +21,7 @@
 // manquait le jour où une campagne est restée à 322 documents sur 1207 pendant deux semaines.
 
 import type { HubAlert, HubMetric, HubSummary } from "@mokarade/hub-contract";
+import { formatDuree, formatMetricValue, formatTrend } from "./format";
 import { safeHttpUrl } from "./url";
 import { inchangeDepuisMs, serieMetrique, variation, type Point, type Releve, type Variation } from "./historique";
 
@@ -185,4 +186,83 @@ export function recommandation(summary: HubSummary): Recommandation | null {
     pourquoi: brute.why ?? null,
     href: safeHttpUrl(brute.href),
   };
+}
+
+/**
+ * La variation du héros, mise en mots. PURE, donc testée.
+ *
+ * ── TROIS DÉFAUTS CORRIGÉS D'UN COUP, ET LE PREMIER ÉTAIT UN MENSONGE ───────────────
+ *
+ * La carte affichait « +7,1 % sur 7 j ». Marc, 15/09/2026 : « je comprends pas les +X %
+ * pour chaque app ». Il avait raison de ne pas comprendre — la ligne était fausse sur un
+ * point et ambiguë sur deux autres.
+ *
+ * 1. ⚠️ « SUR 7 J » ÉTAIT FAUX. `FENETRE_VARIATION_MS` est la fenêtre de RECHERCHE, pas la
+ *    durée couverte. `variation` prend le premier et le dernier relevé TROUVÉS dedans : le
+ *    15/09, l'historique avait quatre heures d'âge et la carte annonçait quand même « sur
+ *    7 j ». Un écart de 4 h présenté comme un écart de 7 jours — c'est « no fake data »
+ *    appliqué au temps, le même défaut que l'heure sans fuseau. On affiche donc l'écart
+ *    RÉELLEMENT couvert, `apres.t - avant.t`.
+ *
+ * 2. UN POURCENTAGE RELATIF SUR UNE MÉTRIQUE QUI EST DÉJÀ UN POURCENTAGE est indécidable.
+ *    « Charge 90 %, +7,1 % » : sept virgule un POINTS (83 → 90) ou sept virgule un pour
+ *    cent en relatif (84 → 90) ? Les deux lectures sont plausibles et donnent des nombres
+ *    différents, donc aucune n'est lisible. Pour `format: "percent"`, l'écart en POINTS est
+ *    la seule formulation non ambiguë.
+ *
+ * 3. « 0 % » ÉTAIT PEINT EN VERT. `deltaAbsolu >= 0` rangeait zéro du côté des hausses :
+ *    une métrique qui n'a pas bougé s'affichait comme une amélioration. Le sens `plat`
+ *    existe pour ça, et il n'est ni vert ni rouge.
+ *
+ * Et la ligne dit désormais DE QUOI À QUOI. `avant` et `apres` étaient dans le type depuis
+ * le début sans jamais être affichés : l'information qui manquait pour comprendre le
+ * pourcentage était déjà calculée, elle n'était simplement pas montrée.
+ */
+export interface VariationLisible {
+  /** « +6 points », « +7,1 % », « +12 » ou « inchangé ». */
+  ecart: string;
+  /** « de 84 % à 90 % » — les deux valeurs réellement comparées. */
+  entre: string;
+  /** Durée RÉELLEMENT couverte, déjà mise en mots (« 4 h », « 3 j »). */
+  sur: string;
+  /** `plat` n'est ni une hausse ni une baisse, et ne doit pas être coloré comme telle. */
+  sens: "hausse" | "baisse" | "plat";
+}
+
+export function variationLisible(
+  metrique: HubMetric,
+  v: Variation | null,
+): VariationLisible | null {
+  if (!v) return null;
+
+  const valeur = (n: number) => formatMetricValue({ ...metrique, value: n });
+  const sens = v.deltaAbsolu > 0 ? "hausse" : v.deltaAbsolu < 0 ? "baisse" : "plat";
+
+  const ecart = (() => {
+    if (v.deltaAbsolu === 0) return "inchangé";
+    // Cas 2 de l'en-tête : sur un pourcentage, on parle en POINTS.
+    if (metrique.format === "percent") {
+      const signe = v.deltaAbsolu > 0 ? "+" : "−";
+      const abs = Math.abs(v.deltaAbsolu);
+      return `${signe}${arrondiLisible(abs)} point${abs >= 2 ? "s" : ""}`;
+    }
+    // Départ à zéro : un pourcentage relatif y serait infini. L'écart brut est la seule
+    // chose vraie — déjà le cas avant, conservé.
+    if (v.deltaRelatif === null) {
+      return `${v.deltaAbsolu > 0 ? "+" : "−"}${valeur(Math.abs(v.deltaAbsolu))}`;
+    }
+    return formatTrend(v.deltaRelatif * 100);
+  })();
+
+  return {
+    ecart,
+    entre: `de ${valeur(v.avant.v)} à ${valeur(v.apres.v)}`,
+    sur: formatDuree(v.apres.t - v.avant.t),
+    sens,
+  };
+}
+
+/** Un point et demi s'écrit « 1,5 », trois points s'écrivent « 3 » — pas « 3,0 ». */
+function arrondiLisible(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
 }
