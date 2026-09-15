@@ -126,6 +126,9 @@ Production **et** Preview :
 - `AUTH_URL` — **optionnelle** (`trustHost` est actif). Seulement pour forcer le domaine
   canonique : `https://hubperso.com`.
 - Les jetons `HUB_TOKEN_*` des apps : inchangés.
+- `HUB_TOKEN_MEMORYAI` — **nouveau, 15/09/2026** (`[H-27]`). Sixième app, `memoryai.hubperso.com`.
+  La MÊME valeur que `HUB_TOKEN` dans le projet Vercel `memory-ai`. Tant qu'il manque, le
+  widget MemoryAI affiche « non autorisé » — c'est l'état honnête, pas une panne.
 - `CRON_SECRET` — **nouveau, 14/09/2026**. Secret de l'horloge du hub (ADR 0003). La MÊME
   valeur doit être posée en **deux** endroits, sinon rien ne tourne :
   - ici, sur Vercel (production) ;
