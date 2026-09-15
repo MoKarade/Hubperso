@@ -258,6 +258,27 @@ d'accès depuis le 14/08. Corrigé le 14/09. Une route à jeton peut légitimeme
 exception, mais elle doit **prouver** son authentification de remplacement (comparaison à
 temps constant) — sinon la liste d'exceptions devient la porte de sortie du test.
 
+**7. Un code de retour n'est une preuve que si le code qui le rend sait ce qu'il dit.** Le
+15/09/2026, `POST /api/cron/releve` rendait `HTTP 200` avec « aucun relevé écrit — le dernier
+date de moins de l'espacement minimal » pendant que les CINQ insertions échouaient sur
+`relation "releves" does not exist`. Zéro ligne écrite, run GitHub vert. La route ne mentait
+pas par choix : `enregistrerReleve` rendait un BOOLÉEN, donc « espacement respecté » (sain) et
+« écriture échouée » (grave) lui arrivaient sous la même forme, et la seule phrase disponible
+était celle du cas sain. **Aucune rédaction ne pouvait être juste — c'était le type qu'il
+fallait changer**, pas le message (`IssueReleve`, plus un `500` qui teint le run en rouge).
+Corollaire de méthode, appris à mes frais deux fois dans la même journée : quand un statut
+annonce un succès, **chercher la trace de l'effet** (une ligne écrite, un journal
+d'exécution) avant de conclure. Un `200` dont personne n'a vérifié la conséquence vaut un
+commentaire.
+
+**8. La cause suivante attend derrière celle qu'on vient de corriger.** Quatre causes se sont
+succédé sur la même panne entre le 14 et le 15/09 — barre oblique finale, apex qui redirige,
+`DATABASE_URL` absente, table inexistante — et chacune ne s'est montrée qu'une fois la
+précédente réparée. J'ai annoncé « c'est réglé » deux fois de trop. **Une réparation n'est
+finie qu'avec la mesure de son effet, pas avec le correctif.** Et une mesure lancée dans la
+minute qui suit un déploiement peut mesurer l'ANCIEN : le 15/09, un relevé lancé 46 secondes
+avant la fin d'un redéploiement a rendu un `503` qui n'était plus vrai.
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :
