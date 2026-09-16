@@ -159,8 +159,9 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   tracer une courbe qui mélange `total`, `mois` et `jour` — c'est le principe « jamais
   d'agrégat entre unités incomparables » appliqué au temps.
 
-- [ ] **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Purement du
-  rendu, aucune dépendance au contrat : l'`app.url` est déjà dans chaque summary.
+- **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Livré le
+  15/09/2026 avec `[H-27]` — le bouton « Détail » est devenu une cible de 44 px remplie de
+  la couleur de l'app, et le titre de la carte continue d'ouvrir l'app elle-même.
 
 - **[H-26] « +7,1 % sur 7 j » était faux, et sur deux autres points ambigu.** Signalé par
   Marc le 15/09/2026, capture à l'appui : « je comprends pas les +X % pour chaque app ». Il
@@ -193,6 +194,64 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   Générique de bout en bout : aucun titre de section n'est connu du hub, aucune n'est
   réordonnée ni fusionnée. L'ordre publié est celui de l'app, qui seule sait ce qui compte
   chez elle.
+
+- **[H-27] « Tous les boutons sont trop petits », et la couleur des apps ne se voyait pas.**
+  Demande de Marc, 15/09/2026, cadrée en huit questions. Livré sur les quatre pages qu'il a
+  nommées : le tableau de bord, `/app/<id>`, `/attention`, `/couts`.
+  - **Le « Détail » était le plus petit élément cliquable du hub** : un texte nu de 0,78 rem
+    en `--text-faint`, sans fond ni rembourrage — environ 14 px de haut. Il est devenu un
+    bouton de 44 px rempli de la couleur de l'app, et **toute la carte est cliquable** par
+    un `::after` qui la recouvre. ⚠️ Ce `::after` impose que le bouton n'ait NI `position`,
+    NI `transform`, NI `filter` : les trois créent un bloc conteneur et la nappe se
+    replierait sur le bouton. Le commentaire du CSS le dit, parce que le symptôme serait
+    muet — la carte cesserait d'être cliquable sans que rien ne change à l'écran.
+  - **Le contraste du texte des boutons est CALCULÉ** (`lib/couleur.ts`, PURE, 20 tests).
+    Mesuré : deux des six couleurs rendent le blanc illisible (JobAI 2,09 ; DriveAI 2,11,
+    pour un seuil de 4,5). Un `color: #fff` codé en dur aurait cassé un tiers du tableau de
+    bord en silence. Le test balaie 4 096 couleurs et prouve l'invariant qui dispense de
+    faire confiance aux apps : **prendre le meilleur du noir et du blanc rend toujours au
+    moins 4,58**, quelle que soit la couleur publiée.
+  - **Seul le rouge écrase la couleur de l'app** ; l'orange ne prend que le liseré. ⚠️ Cette
+    règle a été **inversée en cours de route** : Marc avait tranché le 15/09 que l'orange
+    effaçait aussi, contre ma recommandation, puis il est revenu dessus le 16/09 quand je lui
+    ai chiffré la conséquence — « En cache » et « Données en retard » étant fréquents, la
+    moitié des cartes y passe sur une journée ordinaire, donc les six couleurs auraient
+    disparu la plupart du temps et la demande qui a lancé ce lot se serait annulée toute
+    seule. Une seule variable `--teinte` porte la règle, pas trois propriétés à accorder.
+    ⚠️ Et le survol doit RÉ-AFFIRMER le liseré orange, sinon il reprend la couleur de l'app
+    et le seul signal d'une app en retard s'efface sous le curseur.
+  - **Les trois choix que j'avais pris sans feu vert ont été confirmés par Marc le 16/09** :
+    boutons d'action en contour (pas en fond plein), « Détail » gardant la couleur de l'app
+    même sur une carte rouge, et `/attention` sans couleur d'app.
+  - **La recommandation quitte la carte.** Seul bloc que Marc a choisi de retirer sur les
+    quatre proposés : c'était le plus verbeux, et le seul dont l'absence ne coûte aucune
+    donnée puisqu'il est déjà en tête de `/app/<id>`. La phrase de variation, le pied de
+    fraîcheur et les métriques secondaires RESTENT — il les a gardés explicitement.
+  - **L'anneau de focus ne prend plus la couleur de l'app** : il valait `2px solid
+    var(--accent)`, donc ~2,1 de contraste sur les deux couleurs claires. Un anneau de focus
+    invisible se voit uniquement au clavier, jamais à la souris.
+  - ⚠️ **`/attention` ne reçoit AUCUNE couleur d'app, et c'est un choix.** Cette page ne
+    liste que des problèmes, déjà codés par gravité : y ajouter six teintes mettrait deux
+    codes couleur en concurrence, alors que Marc venait de trancher l'inverse. Elle reçoit
+    les cibles de 44 px, rien d'autre.
+  - 🔴 **J'ai corrigé TROIS classes cliquables sur NEUF au premier passage, en croyant avoir
+    fini.** Marc, le 16/09 : « les boutons sont toujours difficilement utilisable sur tel ».
+    Le recensement a trouvé `.refresh`, `.signout`, `.page__retour`, `.alert__link` encore à
+    ~26 px, et `.bandeau-attention` à ~42 px — cette dernière étant l'une des cibles les plus
+    utiles du téléphone. Rien ne pouvait me contredire : un bouton trop petit s'affiche
+    parfaitement. C'est la leçon n° 6 appliquée au CSS, ma « forme » ayant été « les classes
+    dont je me souviens ». `tests/ciblesTactiles.test.ts` part désormais de la SOURCE — les
+    `className` posés sur un `<button>`, un `<a>` ou un `<Link>` — et exige `var(--cible)`
+    pour chacune. Il a lui-même trouvé deux classes de plus que mon recensement manuel.
+  - **La hauteur ne suffisait pas : il fallait la LARGEUR.** Une cible de 48 × 100 px se rate
+    LATÉRALEMENT — un pouce est large et arrive de biais. Sous 560 px (le seuil où la grille
+    passe déjà à une colonne), les boutons prennent toute la largeur de leur carte, les
+    actions s'empilent, et `--cible` monte à 48 px (le minimum de Material contre 44 chez
+    Apple). Un seul jeton : les neuf classes suivent.
+  - ⚠️ **Aucun test ne couvre l'apparence.** Les tests de ce dépôt portent tous sur des
+    fonctions pures, et ce lot n'en a pas monté d'infrastructure de rendu. Deux choses sont
+    prouvées — le contraste du texte, et la hauteur des cibles tactiles ; le reste se juge à
+    l'écran. Dit avant le merge, pas après.
 
 - [ ] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
   principe est écrit en §1 du `CLAUDE.md` et respecté partout à ce jour (vérifié à la main le

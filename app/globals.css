@@ -26,6 +26,18 @@
     "Segoe UI", Roboto, sans-serif;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── CIBLES TACTILES (Marc, 15/09 : « tous les boutons sont trop petits ») ──────────
+     44 px est le minimum recommandé pour le pouce, et Marc regarde le hub autant sur
+     téléphone que sur ordinateur — donc la valeur s'applique PARTOUT, pas derrière une
+     media query. Un bouton de 44 px sur grand écran n'a jamais gêné personne ; un bouton
+     de 28 px sur téléphone se rate une fois sur trois.
+     ⚠️ Un seul jeton pour les quatre pages : trois valeurs écrites séparément auraient
+     divergé au premier ajustement, et c'est exactement ce qui a produit le « Détail » de
+     0,78 rem en gris pâle à côté de boutons corrects ailleurs. */
+  --cible: 44px;
+  /* Intensité du lavis coloré d'une carte. Un seul endroit pour l'accorder. */
+  --lavis: 7%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +51,12 @@
     --border: oklch(31% 0.02 265);
     --shadow: 0 1px 2px oklch(0% 0 0 / 0.3), 0 10px 30px -12px oklch(0% 0 0 / 0.5);
     --shadow-hover: 0 2px 6px oklch(0% 0 0 / 0.4), 0 22px 52px -16px oklch(0% 0 0 / 0.62);
+    /* ⚠️ LAVIS PLUS FORT EN THÈME SOMBRE, et ce n'est pas un réglage au feeling : la
+       surface claire porte une chroma de 0,003, la sombre en porte 0,018 — six fois plus.
+       La teinte de l'app doit donc s'imposer sur un fond qui est DÉJÀ légèrement bleuté
+       (teinte 265), là où sur clair elle se pose sur du quasi-blanc. À 7 % des deux côtés,
+       le sombre paraîtrait neutre — exactement le reproche de Marc sur la barre de 3 px. */
+    --lavis: 12%;
   }
 }
 
@@ -68,9 +86,15 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ⚠️ L'ANNEAU DE FOCUS NE PREND PAS LA COULEUR DE L'APP. Il valait
+   `2px solid var(--accent)` — or deux des six couleurs sont claires (JobAI #f2a31b,
+   DriveAI #8ab4f8) : sur un fond clair, l'anneau y descendait à ~2,1 de contraste, donc
+   invisible. Un anneau de focus invisible, c'est la navigation au clavier perdue, et ça ne
+   se voit jamais à la souris. `--text` contraste par construction avec le fond dans les
+   deux thèmes, quelle que soit la couleur que l'app publie. */
 a:focus-visible,
 .action:focus-visible {
-  outline: 2px solid var(--accent, var(--info));
+  outline: 3px solid var(--text);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -170,13 +194,31 @@ a:focus-visible,
 }
 .widget {
   --accent: oklch(60% 0.02 265);
+  /* ── LA TEINTE DE LA CARTE, ET QUI GAGNE ─────────────────────────────────────────
+     `--teinte` est la couleur qui habille la carte : son lavis de fond, sa barre du
+     haut, son liseré au survol. Par défaut c'est la couleur de l'app.
+
+     ⚠️ SEUL LE ROUGE L'ÉCRASE. Une panne (injoignable, en erreur, non autorisée,
+     réponse invalide) remplace la couleur de l'app par le rouge. Une seule variable
+     redéfinie par `[data-gravite]` suffit, plutôt que de répéter la règle sur chacune
+     des trois propriétés : sans ça, on en oublierait une, et une carte « injoignable »
+     garderait un souvenir de sa couleur d'app quelque part.
+
+     ⚠️ L'ORANGE NE L'ÉCRASE PAS, ET CETTE RÈGLE A ÉTÉ INVERSÉE UNE FOIS. Marc avait
+     d'abord tranché que l'orange effaçait aussi, contre ma recommandation ; il est
+     revenu dessus le 16/09 en voyant la conséquence chiffrée — « En cache » et
+     « Données en retard » sont des états FRÉQUENTS, et sur une journée ordinaire la
+     moitié des cartes y passent. Les six couleurs d'app auraient donc disparu la
+     plupart du temps, ce qui annulait exactement la demande qui a lancé ce lot.
+     L'orange ne prend que le liseré : il se voit, il ne recouvre rien. */
+  --teinte: var(--accent);
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   padding: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--teinte) var(--lavis), var(--surface));
+  border: 1px solid color-mix(in oklch, var(--teinte) 18%, var(--border));
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -187,19 +229,40 @@ a:focus-visible,
   animation: rise-in 520ms var(--ease-out) backwards;
   animation-delay: var(--enter-delay, 0ms);
 }
+/* L'orange se signale par son LISERÉ, et `--teinte` reste la couleur de l'app : le lavis
+   de fond et la barre du haut ne bougent pas. 2 px suffisent à le voir sur une grille de
+   six cartes, sans effacer l'identité de celle qui traîne. */
+.widget[data-gravite="warn"] {
+  border-color: var(--warn);
+  border-width: 2px;
+}
+.widget[data-gravite="danger"] {
+  --teinte: var(--danger);
+}
+/* `ok`, `info` et `neutral` gardent la couleur de l'app — « à jour », « en construction »
+   et « non configurée » ne sont pas des problèmes à signaler par la couleur. */
 .widget::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), transparent 72%);
-  opacity: 0.85;
+  /* 3 px → 5 px : la barre était la SEULE trace de la couleur de l'app, à 85 %
+     d'opacité, et Marc ne la voyait pas. Elle reste une barre, pas un bandeau : le lavis
+     de fond porte désormais l'identité, celle-ci ne fait que la souligner. */
+  height: 5px;
+  background: linear-gradient(90deg, var(--teinte), transparent 78%);
+  opacity: 1;
   transition: opacity 240ms ease;
 }
 .widget:hover {
   box-shadow: var(--shadow-hover);
   transform: translateY(-3px);
-  border-color: color-mix(in oklch, var(--accent) 24%, var(--border));
+  border-color: color-mix(in oklch, var(--teinte) 42%, var(--border));
+}
+/* ⚠️ Sans cette ligne, le survol reprendrait `--teinte` — donc la couleur de l'app — et
+   FERAIT DISPARAÎTRE le liseré orange au moment précis où l'on pointe la carte. Le seul
+   signal d'une app en retard s'effacerait sous le curseur. */
+.widget[data-gravite="warn"]:hover {
+  border-color: var(--warn);
 }
 .widget:hover::before {
   opacity: 1;
@@ -366,7 +429,10 @@ a:focus-visible,
 .alert,
 .alert__link {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  /* Une alerte cliquable est une cible comme une autre : sur téléphone, c'est même l'une
+     des plus utiles, puisqu'elle mène droit au problème. */
+  min-height: var(--cible);
   gap: 0.5rem;
 }
 .alert {
@@ -411,24 +477,40 @@ a:focus-visible,
   gap: 0.5rem;
   margin-top: auto;
 }
+/* ── LES ACTIONS ──────────────────────────────────────────────────────────────────────
+   0,4 rem de rembourrage → environ 28 px de haut. Passées à `--cible` (44 px) comme tout
+   le reste : Marc regarde le hub autant sur téléphone que sur ordinateur.
+
+   ⚠️ CONTOUR, PAS FOND PLEIN — et c'est mon choix, pas une consigne de Marc, qui a dit
+   « aussi tous les boutons ». Deux raisons de ne pas les remplir :
+     • la HIÉRARCHIE. « Détail » est le bouton principal de la carte ; trois blocs pleins
+       de la même couleur sur une carte ne désignent plus rien.
+     • le CONTRASTE. Un fond plein exige de recalculer la couleur du texte pour chaque
+       teinte — ce que `texteSur` sait faire — mais un contour de 2 px porte la couleur
+       sans toucher au texte, donc sans jamais pouvoir devenir illisible.
+   À corriger d'un mot s'il les veut pleins. */
 .action {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.75rem;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: var(--cible);
+  padding: 0 1rem;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  border: 2px solid color-mix(in oklch, var(--accent) 55%, var(--border));
+  background: var(--surface);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 600;
   text-decoration: none;
-  transition: border-color 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 .action:hover {
   border-color: var(--accent);
-  color: var(--accent);
-  transform: translateY(-1px);
+  /* Le lavis du survol vient de la couleur de l'app, mais le TEXTE reste `--text` :
+     écrire en `--accent` sur fond teinté d'accent est précisément le cas où JobAI et
+     DriveAI deviennent illisibles. */
+  background: color-mix(in oklch, var(--accent) 12%, var(--surface));
 }
 .action__arrow {
   font-size: 0.9em;
@@ -504,15 +586,17 @@ a:focus-visible,
 .refresh {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
+  min-height: var(--cible);
+  padding: 0 1.1rem;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-soft);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.7rem;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
@@ -538,14 +622,20 @@ a:focus-visible,
 }
 
 .signout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--cible);
+  padding: 0 1.1rem;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-faint);
-  background: none;
-  border: 1px solid var(--border);
+  /* `--text-soft`, pas `--text-faint` : le plus pâle de la palette est réservé aux
+     mentions NON cliquables. */
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.7rem;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
@@ -593,6 +683,9 @@ a:focus-visible,
 .login__button {
   margin-top: 0.4rem;
   width: 100%;
+  /* Il atteignait déjà ~46 px par son rembourrage. Écrit explicitement pour qu'un
+     changement de `padding` ne le fasse pas passer sous le seuil sans qu'on le voie. */
+  min-height: var(--cible);
   font: inherit;
   font-weight: 600;
   color: var(--surface);
@@ -618,19 +711,44 @@ a:focus-visible,
 }
 
 /* --- Bouton générique (retour, liens d'action) --- */
+/* ── LE BOUTON GÉNÉRIQUE ──────────────────────────────────────────────────────────────
+   Employé par les en-têtes de page, `/administration`, `/couts`, `/attention` — donc par
+   les trois pages que Marc a inclus dans le périmètre. Il faisait 0,78 rem en
+   `--text-faint`, soit ~26 px de haut et le contraste le plus faible du hub : c'était le
+   même défaut que le « Détail », répété partout.
+
+   Pas de couleur d'app ici : ces boutons appartiennent au HUB (« Se déconnecter »,
+   « Rafraîchir », « Retirer l'accès »), pas à une app. Leur donner un accent inventerait
+   une appartenance. */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: var(--cible);
+  padding: 0 1.1rem;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-faint);
-  background: none;
-  border: 1px solid var(--border);
+  /* `--text-soft` et non `--text-faint` : le second est réservé aux mentions non
+     cliquables. Un élément sur lequel on peut appuyer ne doit jamais être le plus pâle
+     de l'écran. */
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.7rem;
   text-decoration: none;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
-.btn:hover { color: var(--text); border-color: var(--text-faint); }
+.btn:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+  background: var(--surface-2);
+}
+.btn:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
 
 /* --- Carte « Coûts & quotas » (tête du dashboard, cliquable vers /couts) --- */
 .costs {
@@ -668,9 +786,14 @@ a:focus-visible,
 
 /* --- Détail /couts --- */
 .couts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--gap); }
-.couts__app { padding: 1rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+/* La fiche prend la couleur de son app (`--accent` posé par la page). Repli sur
+   `--border` quand l'app est hors ligne et ne publie donc aucune couleur. */
+.couts__app { position: relative; padding: 1rem 1.1rem; background: color-mix(in oklch, var(--accent, var(--border)) var(--lavis), var(--surface)); border: 1px solid color-mix(in oklch, var(--accent, var(--border)) 18%, var(--border)); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.couts__app::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: linear-gradient(90deg, var(--accent, var(--border)), transparent 78%); }
 .couts__apphead { display: flex; align-items: center; gap: 0.5rem; }
-.couts__dot { width: 11px; height: 11px; border-radius: 50%; background: var(--neutral); flex: 0 0 auto; }
+/* La pastille passe à 13 px : elle était le seul porteur de la couleur, elle n'est plus
+   qu'un rappel maintenant que la fiche entière est teintée. */
+.couts__dot { width: 13px; height: 13px; border-radius: 50%; background: var(--neutral); flex: 0 0 auto; }
 .couts__appname { margin: 0; font-size: 1rem; font-weight: 700; }
 .couts__off { margin-left: auto; font-size: 0.72rem; color: var(--text-faint); }
 .couts__empty { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--text-soft); }
@@ -783,13 +906,36 @@ a:focus-visible,
 /* --- Vue détaillée d'une app (/app/[id]) ------------------------------------
    La carte du hub est contrainte par la grille ; ici on déplie. Aucune donnée
    nouvelle — juste la place de tout montrer. */
+/* ── LA VUE DÉTAILLÉE PORTE LA COULEUR DE SON APP ─────────────────────────────────────
+   Même lavis que la carte, pour qu'on sache où l'on est après avoir cliqué. Il n'y a ici
+   AUCUN écrasement par la gravité, et c'est volontaire : la page ne montre qu'une app, et
+   les alertes y ont leur propre section avec leurs propres couleurs. Sur le tableau de
+   bord, l'écrasement servait à repérer LA carte en panne parmi six — un problème qui ne
+   se pose pas sur une page qui n'en montre qu'une.
+
+   ⚠️ `--accent` est posé par `app/app/[id]/page.tsx` sur `.page`, pas ici. Sans app
+   joignable, il n'existe pas : `color-mix` avec une variable vide échouerait, d'où le
+   repli `var(--accent, var(--border))` — le bloc reste alors simplement neutre. */
 .detail__bloc {
   margin-bottom: var(--gap);
   padding: clamp(1rem, 0.8rem + 0.6vw, 1.4rem);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--accent, var(--border)) var(--lavis), var(--surface));
+  border: 1px solid color-mix(in oklch, var(--accent, var(--border)) 18%, var(--border));
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+/* La page de détail reçoit une barre d'accent en tête, comme la carte dont elle vient. */
+.page--app .page__head {
+  position: relative;
+  padding-top: 0.9rem;
+}
+.page--app .page__head::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent, var(--border)), transparent 78%);
 }
 .detail__titre {
   margin: 0 0 0.85rem;
@@ -842,15 +988,103 @@ a:focus-visible,
 .detail__endpoint { margin: 0.6rem 0 0; font-size: 0.82rem; color: var(--text-faint); }
 /* Lien « Détail » de la carte : discret au repos, il ne doit pas concurrencer
    les données ; net au survol. */
+/* ── LE BOUTON « DÉTAIL » ─────────────────────────────────────────────────────────────
+   AVANT le 15/09 : un texte nu de 0,78 rem en `--text-faint`, sans fond ni cadre ni
+   rembourrage — soit une cible d'environ 14 px de haut. Marc : « tous les boutons sont
+   trop petits par exemple bouton detail ». C'était le plus petit élément cliquable du
+   hub, et le plus utile.
+
+   MAINTENANT : un vrai bouton, fond plein dans la couleur de l'APP, `--cible` de haut,
+   et sa nappe rend toute la carte cliquable.
+
+   ⚠️ LE FOND SUIT `--accent`, PAS `--teinte`. Sur une carte en alerte, un bouton rempli
+   de rouge se lirait comme une action destructrice — alors qu'il ne fait qu'ouvrir une
+   page. Le FOND de la carte dit la gravité, le BOUTON dit dans quelle app on est. Le
+   choix est le mien, pas celui de Marc : à corriger d'un mot s'il le voit autrement. */
 .widget__detail {
   align-self: flex-start;
-  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: var(--cible);
+  padding: 0 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  /* ⚠️ CALCULÉ par `texteSur` côté serveur et posé sur la carte. Le repli `#fff` ne sert
+     qu'aux cartes SANS couleur d'app (non configurée, injoignable), dont l'accent est le
+     gris neutre de `.widget` — le blanc y passe. Il n'est JAMAIS utilisé pour une vraie
+     couleur d'app : voir `lib/couleur.ts` et son test. */
+  color: var(--accent-texte, #fff);
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--text-faint);
+  letter-spacing: -0.01em;
   text-decoration: none;
-  transition: color 160ms ease;
+  /* ⚠️ NI `position`, NI `transform`, NI `filter` SUR CE BOUTON — et ce n'est pas une
+     préférence de style, c'est ce qui fait marcher la nappe ci-dessous. Les trois créent
+     un BLOC CONTENEUR pour les descendants positionnés : le `::after` cesserait alors de
+     se mesurer sur la carte et se replierait sur le bouton lui-même. La carte redeviendrait
+     non cliquable — silencieusement, et seulement au SURVOL si l'effet est posé sur
+     `:hover`, ce qui est le pire cas à diagnostiquer. D'où un survol qui ne change que la
+     couleur de fond. */
+  transition: background-color 160ms ease;
 }
-.widget__detail:hover { color: var(--accent); }
+/* LA NAPPE : c'est elle qui rend la carte entière cliquable, sans imbriquer un `<a>` dans
+   un `<a>` — HTML invalide que les navigateurs « réparent » en cassant la navigation au
+   clavier. Un seul lien, une seule tabulation, toute la surface.
+
+   `inset: 0` se mesure sur `.widget`, qui est le plus proche ancêtre positionné (il porte
+   `position: relative` depuis toujours). C'est exactement ce qu'on veut, et c'est pour ça
+   que le bouton doit rester statique. */
+.widget__detail::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.widget:hover .widget__detail,
+.widget__detail:hover {
+  /* `color-mix` vers le noir fonce n'importe quelle teinte reçue du contrat, sans avoir à
+     accorder une seconde couleur app par app — et sans `filter`, interdit ci-dessus. */
+  background: color-mix(in oklch, var(--accent) 86%, black);
+}
+.widget__detail:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+/* ── TOUT CE QUI EST CLIQUABLE PASSE DEVANT LA NAPPE ──────────────────────────────────
+   Règle STRUCTURELLE, et non une liste de classes — leçon n° 6 du `CLAUDE.md` de ce
+   dépôt : « un test d'exhaustivité ne couvre que la forme de fichier qu'on lui a
+   apprise ». Une liste (`.widget__title a`, `.widget .actions`, …) aurait été juste
+   aujourd'hui et fausse au prochain lien ajouté dans une carte — et le symptôme serait
+   muet : le lien s'affiche, il ne répond simplement plus, parce qu'un rectangle
+   transparent est posé dessus.
+
+   Écrit une fois, en visant la FORME (« tout `a` ou `button` d'une carte ») plutôt que
+   les occurrences, la règle couvre `.bandeau__lien` d'une alerte, les actions, le titre,
+   le bouton de déclenchement — et ce qui viendra. Le `:not(.widget__detail)` est
+   indispensable : le lien du détail EST la nappe, le remonter la remonterait avec lui et
+   il recouvrirait tout le reste. */
+.widget :is(a, button):not(.widget__detail) {
+  position: relative;
+  z-index: 2;
+}
+.widget__foot {
+  position: relative;
+  z-index: 2;
+}
+/* Le lien d'une alerte devient une cible visable, comme les autres boutons. */
+.bandeau__lien {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible);
+  padding: 0 0.6rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .widget__detail {
+    transition: none;
+  }
+}
 
 /* --- Administration (/administration) ----------------------------------------
    Réservée au propriétaire (lib/gardeHub.ts). Pas de nouvelle direction visuelle :
@@ -1154,6 +1388,10 @@ a:focus-visible,
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  /* Il atteignait ~42 px par son rembourrage — sous le seuil, et c'est l'une des cibles
+     les PLUS utiles sur téléphone puisqu'elle mène droit à ce qui demande attention.
+     Trouvée par `tests/ciblesTactiles.test.ts`, pas par relecture. */
+  min-height: var(--cible);
   padding: 0.7rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -1192,16 +1430,24 @@ a:focus-visible,
   list-style: none;
   padding: 0;
 }
+/* ── /attention GARDE LE CODAGE PAR GRAVITÉ, SANS COULEUR D'APP ───────────────────────
+   C'est la seule page du périmètre du 15/09 qui n'en reçoit pas, et c'est un choix — pas
+   un oubli. Cette page ne liste QUE des problèmes, classés par gravité : y ajouter six
+   teintes d'app mettrait deux codes couleur en concurrence sur le même écran, alors que
+   Marc a précisément tranché l'inverse une heure plus tôt (« l'alerte écrase la couleur
+   de l'app »). Ce qu'elle reçoit, en revanche, ce sont les cibles de 44 px.
+   ⚠️ Le liseré de gauche passe de 3 à 5 px, comme la barre des cartes. */
 .attention__ligne {
   display: grid;
   grid-template-columns: auto auto 1fr auto;
   align-items: baseline;
   gap: 0.5rem 0.8rem;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  min-height: var(--cible);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
-  border-left-width: 3px;
+  border-left-width: 5px;
 }
 .attention__ligne[data-gravite="alert"] {
   border-left-color: var(--danger);
@@ -1233,15 +1479,27 @@ a:focus-visible,
   color: var(--text-faint);
   font-style: italic;
 }
+/* Les deux liens de chaque ligne — le nom de l'app et « voir le détail ». Ils faisaient
+   respectivement la hauteur de leur texte et 0,8 rem : impossibles à viser au pouce. */
+.attention__app,
 .attention__lien {
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible);
+  padding: 0 0.2rem;
+}
+.attention__lien {
+  font-size: 0.88rem;
   white-space: nowrap;
 }
 .attention__vide {
   color: var(--text-soft);
 }
 .page__retour {
-  font-size: 0.86rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible);
+  font-size: 0.92rem;
   color: var(--text-soft);
 }
 
@@ -1249,6 +1507,53 @@ a:focus-visible,
   .attention__ligne {
     grid-template-columns: 1fr;
     gap: 0.25rem;
+  }
+}
+
+/* ══ TÉLÉPHONE : LA HAUTEUR NE SUFFIT PAS, IL FAUT LA LARGEUR ═══════════════════════
+   Marc, 16/09 : « les boutons sont toujours difficilement utilisable sur tel » — alors
+   que les 44 px de haut étaient déjà posés. Il avait raison, et pour deux raisons que
+   la hauteur seule ne règle pas :
+
+   1. UN BOUTON DE 44 × 100 PX DEMANDE UNE VISÉE HORIZONTALE. C'est exactement ce qu'un
+      pouce ne sait pas faire : il est large, imprécis, et il arrive de biais. Une cible
+      haute mais étroite se rate latéralement. Sur téléphone, les boutons prennent donc
+      TOUTE la largeur de leur carte — la visée devient verticale, et le pouce n'a plus
+      qu'une dimension à trouver.
+   2. 44 PX EST LE MINIMUM D'APPLE ; GOOGLE EN DEMANDE 48. Sur une grille d'une seule
+      colonne il n'y a aucune place à économiser, donc autant prendre le plus exigeant
+      des deux. `--cible` est un jeton : un seul endroit à changer, les neuf classes
+      cliquables suivent.
+
+   ⚠️ 560 px et non 640 : c'est le seuil où `.bento` passe déjà à une colonne unique
+   (voir plus haut). Deux seuils différents pour la même bascule auraient produit une
+   fenêtre de 80 px où les cartes sont empilées mais les boutons encore étroits. */
+@media (max-width: 560px) {
+  :root {
+    --cible: 48px;
+  }
+  /* Le bouton principal de la carte s'étire d'un bord à l'autre. `align-self` et non
+     `width` : c'est la propriété qui commande la largeur dans une colonne flex, et un
+     `width: 100%` y aurait été ignoré selon le contexte. */
+  .widget__detail {
+    align-self: stretch;
+  }
+  /* Les actions s'empilent au lieu de se partager une ligne : deux boutons côte à côte
+     sur 360 px font 160 px chacun, et le doigt en attrape un au hasard. */
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* L'en-tête de page : les boutons se partagent toute la largeur disponible plutôt que
+     de rester collés à leur texte. `8rem` de base pour qu'ils passent à la ligne plutôt
+     que de devenir illisibles à trois. */
+  .page__aside {
+    width: 100%;
+  }
+  .page__aside .btn,
+  .page__aside .signout,
+  .page__aside .refresh {
+    flex: 1 1 8rem;
   }
 }
 

@@ -7,12 +7,12 @@ import { etatCarte, variationLisible } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
+import { texteSur } from "@/lib/couleur";
 import { formatDateTime, formatDuree, formatMetricValue } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertBanner } from "./AlertBanner";
 import { ActionList } from "./ActionList";
-import { Recommandation } from "./Recommandation";
 import { Sparkline } from "./Sparkline";
 
 /**
@@ -69,13 +69,13 @@ function CorpsOk({
   maintenantMs: number;
 }) {
   const etat = etatCarte(summary, historique, maintenantMs);
+  // ⚠️ `etat.recommandation` ne compte PLUS ici : depuis qu'elle a quitté la carte, une app
+  // qui ne publierait QU'une recommandation n'a effectivement rien à montrer SUR LA CARTE —
+  // et « aucune donnée » est alors la vérité, le conseil étant dans la vue détaillée.
   const vide =
     etat.heros === null &&
     etat.alertePrincipale === null &&
-    etat.actions.length === 0 &&
-    // Sans cette ligne, une app qui ne publie QU'une recommandation afficherait « aucune
-    // donnée à afficher » juste au-dessus d'un conseil parfaitement lisible.
-    etat.recommandation === null;
+    etat.actions.length === 0;
 
   return (
     <>
@@ -89,11 +89,11 @@ function CorpsOk({
         </p>
       )}
       <MetricList metrics={etat.secondaires} />
-      {/* APRÈS les métriques et AVANT les actions, et l'ordre est le message : une
-          recommandation se lit une fois les chiffres vus, et elle mène souvent au geste qui
-          suit. La mettre en tête l'aurait fait passer pour un titre ; en queue, sous les
-          boutons, elle aurait disparu. */}
-      {etat.recommandation && <Recommandation reco={etat.recommandation} compact />}
+      {/* ⚠️ LA RECOMMANDATION N'EST PLUS ICI — arbitrage de Marc, 15/09 : « faut aussi moins
+          de texte ». C'était le bloc le plus verbeux de la carte, et le seul dont l'absence
+          ne coûte aucune donnée : il reste entier dans `/app/[id]`, en tête, là où on vient
+          justement pour lire. Le garder sur la carte ET le mettre en détail revenait à
+          écrire deux fois la même phrase sur deux écrans successifs. */}
       <ActionList actions={etat.actions} appId={summary.app.id} />
       {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
@@ -185,13 +185,24 @@ export function AppWidget({
   const name = result.state === "ok" ? result.summary.app.name : result.source.name;
   const accent = result.state === "ok" ? result.summary.app.color : undefined;
   const appUrl = result.state === "ok" ? safeHttpUrl(result.summary.app.url) : null;
+  // ⚠️ CALCULÉ, JAMAIS CODÉ EN DUR. `app.color` arrive du contrat à l'exécution, et deux des
+  // six couleurs de l'écosystème rendent le texte blanc illisible (JobAI 2,09 ; DriveAI
+  // 2,11 — la norme demande 4,5). `texteSur` choisit le noir ou le blanc selon la luminance
+  // réelle, donc une app qui change sa couleur reste lisible sans qu'on touche au hub.
+  // `null` quand la couleur n'est pas exploitable : on ne pose alors RIEN et le bouton
+  // retombe sur le style neutre. Voir `lib/couleur.ts`.
+  const accentTexte = texteSur(accent);
   const style = {
     ...(accent ? { "--accent": accent } : null),
+    ...(accentTexte ? { "--accent-texte": accentTexte } : null),
     "--enter-delay": `${index * 70}ms`,
   } as CSSProperties;
 
   return (
-    <article className={`widget ${size}`} style={style}>
+    // `data-gravite` porte le TON du badge, et c'est la feuille de style qui en tire la
+    // teinte de la carte — arbitrage de Marc, 15/09 : le rouge ET l'orange effacent la
+    // couleur de l'app. Décider ici aurait dispersé la règle entre le composant et le CSS.
+    <article className={`widget ${size}`} style={style} data-gravite={badge.tone}>
       <header className="widget__head">
         <h2 className="widget__title">
           {appUrl ? (
@@ -208,8 +219,16 @@ export function AppWidget({
           hub. Deux destinations différentes, donc deux liens distincts plutôt qu'un seul
           ambigu. Il vaut aussi pour une app en erreur : c'est là qu'on voit l'endpoint
           interrogé et le message complet. */}
+      {/* ⚠️ CE LIEN REND TOUTE LA CARTE CLIQUABLE, par un `::after` qui la recouvre
+          (`app/globals.css`). C'est la seule façon d'y arriver sans imbriquer un `<a>` dans
+          un `<a>` — du HTML invalide, que les navigateurs « réparent » en cassant la
+          navigation au clavier. Le titre et les boutons d'action remontent au-dessus de la
+          nappe par un `z-index`, donc ils restent atteignables.
+          Contrepartie assumée (Marc, 15/09) : on ne peut plus sélectionner le texte de la
+          carte à la souris. */}
       <Link className="widget__detail" href={`/app/${result.source.id}`}>
-        Détail →
+        <span>Détail</span>
+        <span aria-hidden="true">→</span>
       </Link>
       <div className="widget__body">
         {result.state === "ok" ? (
