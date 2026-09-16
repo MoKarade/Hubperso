@@ -198,14 +198,19 @@ a:focus-visible,
      `--teinte` est la couleur qui habille la carte : son lavis de fond, sa barre du
      haut, son liseré au survol. Par défaut c'est la couleur de l'app.
 
-     ⚠️ LA GRAVITÉ L'ÉCRASE — rouge ET orange (arbitrage de Marc, 15/09). Une seule
-     variable redéfinie par `[data-gravite]` suffit, plutôt que de répéter la règle sur
-     chacune des trois propriétés : sans ça, on en oublierait une, et une carte
-     « injoignable » garderait un souvenir de sa couleur d'app quelque part.
+     ⚠️ SEUL LE ROUGE L'ÉCRASE. Une panne (injoignable, en erreur, non autorisée,
+     réponse invalide) remplace la couleur de l'app par le rouge. Une seule variable
+     redéfinie par `[data-gravite]` suffit, plutôt que de répéter la règle sur chacune
+     des trois propriétés : sans ça, on en oublierait une, et une carte « injoignable »
+     garderait un souvenir de sa couleur d'app quelque part.
 
-     Pourquoi l'orange aussi, alors que j'avais recommandé le contraire : Marc a tranché
-     que « En cache » et « Données en retard » doivent se voir autant qu'une panne. La
-     conséquence assumée est que les couleurs d'app disparaissent dès qu'une app traîne. */
+     ⚠️ L'ORANGE NE L'ÉCRASE PAS, ET CETTE RÈGLE A ÉTÉ INVERSÉE UNE FOIS. Marc avait
+     d'abord tranché que l'orange effaçait aussi, contre ma recommandation ; il est
+     revenu dessus le 16/09 en voyant la conséquence chiffrée — « En cache » et
+     « Données en retard » sont des états FRÉQUENTS, et sur une journée ordinaire la
+     moitié des cartes y passent. Les six couleurs d'app auraient donc disparu la
+     plupart du temps, ce qui annulait exactement la demande qui a lancé ce lot.
+     L'orange ne prend que le liseré : il se voit, il ne recouvre rien. */
   --teinte: var(--accent);
   position: relative;
   display: flex;
@@ -224,8 +229,12 @@ a:focus-visible,
   animation: rise-in 520ms var(--ease-out) backwards;
   animation-delay: var(--enter-delay, 0ms);
 }
+/* L'orange se signale par son LISERÉ, et `--teinte` reste la couleur de l'app : le lavis
+   de fond et la barre du haut ne bougent pas. 2 px suffisent à le voir sur une grille de
+   six cartes, sans effacer l'identité de celle qui traîne. */
 .widget[data-gravite="warn"] {
-  --teinte: var(--warn);
+  border-color: var(--warn);
+  border-width: 2px;
 }
 .widget[data-gravite="danger"] {
   --teinte: var(--danger);
@@ -248,6 +257,12 @@ a:focus-visible,
   box-shadow: var(--shadow-hover);
   transform: translateY(-3px);
   border-color: color-mix(in oklch, var(--teinte) 42%, var(--border));
+}
+/* ⚠️ Sans cette ligne, le survol reprendrait `--teinte` — donc la couleur de l'app — et
+   FERAIT DISPARAÎTRE le liseré orange au moment précis où l'on pointe la carte. Le seul
+   signal d'une app en retard s'effacerait sous le curseur. */
+.widget[data-gravite="warn"]:hover {
+  border-color: var(--warn);
 }
 .widget:hover::before {
   opacity: 1;

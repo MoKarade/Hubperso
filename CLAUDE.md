@@ -117,11 +117,18 @@ widgets 100 % génériques.
   (`.widget :is(a, button):not(.widget__detail)`) et non par une liste de classes, qui se
   périmerait au prochain lien ajouté (leçon n° 6) ; (3) `--cible: 44px` est le seul jeton de
   hauteur tactile — les quatre pages le partagent, trois valeurs séparées divergeraient.
-- **La gravité écrase la couleur de l'app sur une carte** (`--teinte`, redéfinie par
-  `[data-gravite]`) — rouge ET orange, arbitrage de Marc du 15/09 contre ma recommandation.
-  Conséquence assumée : les couleurs d'app disparaissent dès qu'une app est en cache.
-  ⚠️ `/attention` en est exemptée : elle ne liste que des problèmes, déjà codés par gravité,
-  et deux codes couleur sur le même écran s'annulent.
+- **Seul le ROUGE écrase la couleur de l'app sur une carte** (`--teinte`, redéfinie par
+  `[data-gravite="danger"]`) : injoignable, en erreur, non autorisée, réponse invalide.
+  ⚠️ **L'orange ne prend que le liseré, et cette règle a été inversée une fois.** Marc avait
+  tranché le 15/09 que l'orange effaçait aussi, contre ma recommandation, puis il est revenu
+  dessus le 16/09 en voyant la conséquence chiffrée : « En cache » et « Données en retard »
+  sont fréquents, et sur une journée ordinaire la moitié des cartes y passent — les six
+  couleurs auraient donc disparu la plupart du temps, annulant la demande qui a lancé le lot.
+  ⚠️ Le survol doit RÉ-AFFIRMER le liseré orange (`[data-gravite="warn"]:hover`) : sinon il
+  reprend `--teinte`, donc la couleur de l'app, et le seul signal d'une app en retard
+  s'efface au moment où l'on pointe la carte.
+  ⚠️ `/attention` ne reçoit aucune couleur d'app : elle ne liste que des problèmes, déjà
+  codés par gravité, et deux codes couleur sur le même écran s'annulent.
 
 ## 3. Workflow git
 

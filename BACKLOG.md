@@ -211,10 +211,18 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
     bord en silence. Le test balaie 4 096 couleurs et prouve l'invariant qui dispense de
     faire confiance aux apps : **prendre le meilleur du noir et du blanc rend toujours au
     moins 4,58**, quelle que soit la couleur publiée.
-  - **La gravité écrase la couleur de l'app** — rouge ET orange, arbitrage de Marc contre ma
-    recommandation (je proposais le rouge seul, pour que les teintes ne disparaissent pas à
-    chaque app en cache). Une seule variable `--teinte` porte la règle, pas trois propriétés
-    à tenir accordées.
+  - **Seul le rouge écrase la couleur de l'app** ; l'orange ne prend que le liseré. ⚠️ Cette
+    règle a été **inversée en cours de route** : Marc avait tranché le 15/09 que l'orange
+    effaçait aussi, contre ma recommandation, puis il est revenu dessus le 16/09 quand je lui
+    ai chiffré la conséquence — « En cache » et « Données en retard » étant fréquents, la
+    moitié des cartes y passe sur une journée ordinaire, donc les six couleurs auraient
+    disparu la plupart du temps et la demande qui a lancé ce lot se serait annulée toute
+    seule. Une seule variable `--teinte` porte la règle, pas trois propriétés à accorder.
+    ⚠️ Et le survol doit RÉ-AFFIRMER le liseré orange, sinon il reprend la couleur de l'app
+    et le seul signal d'une app en retard s'efface sous le curseur.
+  - **Les trois choix que j'avais pris sans feu vert ont été confirmés par Marc le 16/09** :
+    boutons d'action en contour (pas en fond plein), « Détail » gardant la couleur de l'app
+    même sur une carte rouge, et `/attention` sans couleur d'app.
   - **La recommandation quitte la carte.** Seul bloc que Marc a choisi de retirer sur les
     quatre proposés : c'était le plus verbeux, et le seul dont l'absence ne coûte aucune
     donnée puisqu'il est déjà en tête de `/app/<id>`. La phrase de variation, le pied de
