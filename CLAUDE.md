@@ -115,8 +115,19 @@ widgets 100 % génériques.
   la carte cesse d'être cliquable **sans que rien ne change à l'écran** ; (2) tout ce qui est
   cliquable dans une carte est remonté par une règle de FORME
   (`.widget :is(a, button):not(.widget__detail)`) et non par une liste de classes, qui se
-  périmerait au prochain lien ajouté (leçon n° 6) ; (3) `--cible: 44px` est le seul jeton de
+  périmerait au prochain lien ajouté (leçon n° 6) ; (3) `--cible` est le seul jeton de
   hauteur tactile — les quatre pages le partagent, trois valeurs séparées divergeraient.
+- ⚠️ **Tout `className` posé sur un `<button>`, un `<a>` ou un `<Link>` doit déclarer
+  `min-height: var(--cible)`** — `tests/ciblesTactiles.test.ts` l'exige, en partant du JSX et
+  non d'une liste. Né d'un échec : le 15/09 j'ai agrandi les TROIS classes que j'avais sous
+  les yeux, et Marc est revenu le 16 avec « toujours difficilement utilisable sur tel ». Il y
+  en avait NEUF, dont quatre encore à ~26 px. Un bouton trop petit s'affiche parfaitement :
+  rien ne pouvait me contredire.
+  ⚠️ **Et la hauteur ne suffit pas.** Une cible de 48 × 100 px se rate LATÉRALEMENT, un pouce
+  étant large et arrivant de biais. Sous 560 px — le seuil où `.bento` passe déjà à une
+  colonne, et surtout pas un second seuil qui créerait une fenêtre où les cartes sont
+  empilées mais les boutons encore étroits — les boutons prennent toute la largeur et
+  `--cible` monte à 48 px.
 - **Seul le ROUGE écrase la couleur de l'app sur une carte** (`--teinte`, redéfinie par
   `[data-gravite="danger"]`) : injoignable, en erreur, non autorisée, réponse invalide.
   ⚠️ **L'orange ne prend que le liseré, et cette règle a été inversée une fois.** Marc avait

@@ -234,9 +234,24 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
     liste que des problèmes, déjà codés par gravité : y ajouter six teintes mettrait deux
     codes couleur en concurrence, alors que Marc venait de trancher l'inverse. Elle reçoit
     les cibles de 44 px, rien d'autre.
-  - ⚠️ **Aucun test ne couvre l'apparence.** Les 34 fichiers de tests de ce dépôt portent
-    tous sur des fonctions pures, et ce lot n'en a pas monté d'infrastructure de rendu. Le
-    contraste est prouvé, le reste se juge à l'écran. Dit avant le merge, pas après.
+  - 🔴 **J'ai corrigé TROIS classes cliquables sur NEUF au premier passage, en croyant avoir
+    fini.** Marc, le 16/09 : « les boutons sont toujours difficilement utilisable sur tel ».
+    Le recensement a trouvé `.refresh`, `.signout`, `.page__retour`, `.alert__link` encore à
+    ~26 px, et `.bandeau-attention` à ~42 px — cette dernière étant l'une des cibles les plus
+    utiles du téléphone. Rien ne pouvait me contredire : un bouton trop petit s'affiche
+    parfaitement. C'est la leçon n° 6 appliquée au CSS, ma « forme » ayant été « les classes
+    dont je me souviens ». `tests/ciblesTactiles.test.ts` part désormais de la SOURCE — les
+    `className` posés sur un `<button>`, un `<a>` ou un `<Link>` — et exige `var(--cible)`
+    pour chacune. Il a lui-même trouvé deux classes de plus que mon recensement manuel.
+  - **La hauteur ne suffisait pas : il fallait la LARGEUR.** Une cible de 48 × 100 px se rate
+    LATÉRALEMENT — un pouce est large et arrive de biais. Sous 560 px (le seuil où la grille
+    passe déjà à une colonne), les boutons prennent toute la largeur de leur carte, les
+    actions s'empilent, et `--cible` monte à 48 px (le minimum de Material contre 44 chez
+    Apple). Un seul jeton : les neuf classes suivent.
+  - ⚠️ **Aucun test ne couvre l'apparence.** Les tests de ce dépôt portent tous sur des
+    fonctions pures, et ce lot n'en a pas monté d'infrastructure de rendu. Deux choses sont
+    prouvées — le contraste du texte, et la hauteur des cibles tactiles ; le reste se juge à
+    l'écran. Dit avant le merge, pas après.
 
 - [ ] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
   principe est écrit en §1 du `CLAUDE.md` et respecté partout à ce jour (vérifié à la main le

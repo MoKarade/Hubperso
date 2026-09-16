@@ -429,7 +429,10 @@ a:focus-visible,
 .alert,
 .alert__link {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  /* Une alerte cliquable est une cible comme une autre : sur téléphone, c'est même l'une
+     des plus utiles, puisqu'elle mène droit au problème. */
+  min-height: var(--cible);
   gap: 0.5rem;
 }
 .alert {
@@ -583,15 +586,17 @@ a:focus-visible,
 .refresh {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
+  min-height: var(--cible);
+  padding: 0 1.1rem;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-soft);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.7rem;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
@@ -617,14 +622,20 @@ a:focus-visible,
 }
 
 .signout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--cible);
+  padding: 0 1.1rem;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-faint);
-  background: none;
-  border: 1px solid var(--border);
+  /* `--text-soft`, pas `--text-faint` : le plus pâle de la palette est réservé aux
+     mentions NON cliquables. */
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.7rem;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
@@ -672,6 +683,9 @@ a:focus-visible,
 .login__button {
   margin-top: 0.4rem;
   width: 100%;
+  /* Il atteignait déjà ~46 px par son rembourrage. Écrit explicitement pour qu'un
+     changement de `padding` ne le fasse pas passer sous le seuil sans qu'on le voie. */
+  min-height: var(--cible);
   font: inherit;
   font-weight: 600;
   color: var(--surface);
@@ -1374,6 +1388,10 @@ a:focus-visible,
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  /* Il atteignait ~42 px par son rembourrage — sous le seuil, et c'est l'une des cibles
+     les PLUS utiles sur téléphone puisqu'elle mène droit à ce qui demande attention.
+     Trouvée par `tests/ciblesTactiles.test.ts`, pas par relecture. */
+  min-height: var(--cible);
   padding: 0.7rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -1478,7 +1496,10 @@ a:focus-visible,
   color: var(--text-soft);
 }
 .page__retour {
-  font-size: 0.86rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible);
+  font-size: 0.92rem;
   color: var(--text-soft);
 }
 
@@ -1486,6 +1507,53 @@ a:focus-visible,
   .attention__ligne {
     grid-template-columns: 1fr;
     gap: 0.25rem;
+  }
+}
+
+/* ══ TÉLÉPHONE : LA HAUTEUR NE SUFFIT PAS, IL FAUT LA LARGEUR ═══════════════════════
+   Marc, 16/09 : « les boutons sont toujours difficilement utilisable sur tel » — alors
+   que les 44 px de haut étaient déjà posés. Il avait raison, et pour deux raisons que
+   la hauteur seule ne règle pas :
+
+   1. UN BOUTON DE 44 × 100 PX DEMANDE UNE VISÉE HORIZONTALE. C'est exactement ce qu'un
+      pouce ne sait pas faire : il est large, imprécis, et il arrive de biais. Une cible
+      haute mais étroite se rate latéralement. Sur téléphone, les boutons prennent donc
+      TOUTE la largeur de leur carte — la visée devient verticale, et le pouce n'a plus
+      qu'une dimension à trouver.
+   2. 44 PX EST LE MINIMUM D'APPLE ; GOOGLE EN DEMANDE 48. Sur une grille d'une seule
+      colonne il n'y a aucune place à économiser, donc autant prendre le plus exigeant
+      des deux. `--cible` est un jeton : un seul endroit à changer, les neuf classes
+      cliquables suivent.
+
+   ⚠️ 560 px et non 640 : c'est le seuil où `.bento` passe déjà à une colonne unique
+   (voir plus haut). Deux seuils différents pour la même bascule auraient produit une
+   fenêtre de 80 px où les cartes sont empilées mais les boutons encore étroits. */
+@media (max-width: 560px) {
+  :root {
+    --cible: 48px;
+  }
+  /* Le bouton principal de la carte s'étire d'un bord à l'autre. `align-self` et non
+     `width` : c'est la propriété qui commande la largeur dans une colonne flex, et un
+     `width: 100%` y aurait été ignoré selon le contexte. */
+  .widget__detail {
+    align-self: stretch;
+  }
+  /* Les actions s'empilent au lieu de se partager une ligne : deux boutons côte à côte
+     sur 360 px font 160 px chacun, et le doigt en attrape un au hasard. */
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* L'en-tête de page : les boutons se partagent toute la largeur disponible plutôt que
+     de rester collés à leur texte. `8rem` de base pour qu'ils passent à la ligne plutôt
+     que de devenir illisibles à trois. */
+  .page__aside {
+    width: 100%;
+  }
+  .page__aside .btn,
+  .page__aside .signout,
+  .page__aside .refresh {
+    flex: 1 1 8rem;
   }
 }
 
