@@ -16,6 +16,18 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    // [PWA-ANDROID] `id` FIXE l'identité de l'installation. Sans lui, l'identité EST le
+    // `start_url` : le jour où il change (« ouvrir sur /attention plutôt que sur / »),
+    // Android ne met pas à jour l'app installée — il en installe une DEUXIÈME, et la
+    // première reste sur l'écran d'accueil sans jamais se mettre à jour. La valeur est
+    // celle du `start_url` ACTUEL, donc le changement est un no-op aujourd'hui : c'est
+    // exactement le but, épingler ce qui était implicite.
+    id: "/",
+    // [PWA-ANDROID] Un lien venu d'ailleurs (le hub, une notification) RÉUTILISE la fenêtre
+    // déjà ouverte au lieu d'en empiler une seconde. `navigate-existing` navigue dans la
+    // fenêtre existante ; `focus-existing` la ramènerait au premier plan SANS naviguer, donc
+    // en ignorant l'URL demandée — ce n'est pas ce qu'on veut pour un lien profond.
+    launch_handler: { client_mode: "navigate-existing" },
     name: "Hub perso",
     short_name: "Hub",
     description: "Vue d’ensemble générique de mes apps (hubperso.com).",
