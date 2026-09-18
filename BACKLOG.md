@@ -403,6 +403,11 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
 
 ### Ouvrir une app depuis le hub atteint l'app INSTALLÉE (Marc, 18/09/2026) — Android
 
+- [x] **`PWA-ANDROID`** — ouvrir une app depuis le hub peut désormais atteindre l'app installée
+  sur Android, et le manifeste du hub fixe son identité. Détail des deux volets ci-dessous.
+  ⚠️ L'identifiant est écrit ICI sous cette forme parce que `scripts/doc-a-jour.mjs` le cherche :
+  un ID présent dans les commits et absent du backlog est le cas « tâche jamais inscrite », et
+  ce contrôle a rougi sur cette PR avant que l'entrée n'existe. Il a eu raison.
 - [x] **`id` et `launch_handler: navigate-existing` au manifeste.** Sans `id`, l'identité de
   l'installation EST le `start_url` : le jour où il change, Android installe une SECONDE app au
   lieu de mettre à jour la première. `navigate-existing` fait qu'un lien réutilise la fenêtre
