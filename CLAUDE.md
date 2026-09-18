@@ -320,6 +320,22 @@ finie qu'avec la mesure de son effet, pas avec le correctif.** Et une mesure lan
 minute qui suit un déploiement peut mesurer l'ANCIEN : le 15/09, un relevé lancé 46 secondes
 avant la fin d'un redéploiement a rendu un `503` qui n'était plus vrai.
 
+**9. `target="_blank"` est le réflexe de tout le monde, et c'est lui qui éteint la bascule vers
+l'app installée.** Une PWA installée sur Android s'enregistre comme gestionnaire des URL de son
+`scope` (WebAPK) ; Chrome ne peut lui passer la main que sur une navigation de PREMIER NIVEAU.
+Un `_blank` ouvre un onglet de navigateur et court-circuite tout. Le piège n'est pas de l'écrire
+aujourd'hui — c'est qu'il se **ré-ajoute sans y penser** au prochain lot qui touche la carte, et
+que la bascule s'éteint alors **sans que rien ne change à l'écran** : sur PC le lien marche
+toujours, sur téléphone il ouvre Chrome au lieu de l'app, et personne ne relie ça à un attribut
+ajouté trois semaines plus tôt. D'où `tests/pwaLiens.test.ts`, qui épingle les DEUX liens
+ouvrant une app (le titre de la carte, le bouton « Ouvrir l'app ») avec une anti-vacuité : si le
+lien change de forme, le test le dit au lieu de passer en ne regardant plus rien.
+⚠️ Et il garde aussi le manifeste, sur un point qui ne se voit pas : `sizes` est une
+DÉCLARATION, pas une mesure. Un manifeste qui annonce `512x512` en servant un PNG de 192 est
+faux, et **Chrome croit le fichier**. Les dimensions se relisent donc dans l'en-tête IHDR du
+PNG. C'est le défaut qui rendait FinanceAI non installable (une seule icône, en SVG) — mesuré
+le 18/09 sur les sept dépôts du parc, il était le seul dans cet état.
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :

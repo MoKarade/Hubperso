@@ -401,6 +401,28 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
 
 ## Fait
 
+### Ouvrir une app depuis le hub atteint l'app INSTALLÉE (Marc, 18/09/2026) — Android
+
+- [x] **`id` et `launch_handler: navigate-existing` au manifeste.** Sans `id`, l'identité de
+  l'installation EST le `start_url` : le jour où il change, Android installe une SECONDE app au
+  lieu de mettre à jour la première. `navigate-existing` fait qu'un lien réutilise la fenêtre
+  ouverte plutôt que d'en empiler une.
+- [x] **`target="_blank"` retiré des DEUX liens qui ouvrent une app** — le titre de la carte
+  (`components/AppWidget.tsx`) et le bouton « Ouvrir l'app » (`app/app/[id]/page.tsx`). Une PWA
+  installée sur Android s'enregistre comme gestionnaire des URL de son `scope` (WebAPK), et
+  Chrome ne peut lui passer la main que sur une navigation de PREMIER NIVEAU : `_blank` crée un
+  onglet et court-circuite la bascule. ⚠️ Contrepartie assumée : sur PC, le hub est quitté plutôt
+  que doublé. Garde : `tests/pwaLiens.test.ts`, 6 perturbations prouvées.
+- [x] **Portée délibérément étroite** : les `href` venus du CONTRAT (alertes, actions,
+  recommandations) gardent leur `target="_blank"`. Le contrat ne les contraint pas à l'origine de
+  l'app — ils peuvent pointer n'importe où — et les ouvrir en place ferait quitter le hub à chaque
+  clic sur une alerte.
+- [ ] **⏸️ La bascule elle-même n'est PAS vérifiable d'ici.** Qu'un lien ouvre vraiment l'app
+  installée dépend de la version de Chrome, de l'installation réelle et du réglage « ouvrir les
+  liens dans l'app ». Ce dépôt n'a aucune infrastructure qui puisse l'observer : **c'est le
+  téléphone de Marc qui tranche**, et c'est pour ça que cette case reste ouverte.
+
+
 - ~~**[H-27]** MemoryAI entre dans la constellation — sixième source du hub~~ — 15/09/2026.
   Entrée `memoryai` dans `lib/sources.ts` (`MEMORYAI_SUMMARY_URL`, `HUB_TOKEN_MEMORYAI`),
   `.env.example`, README, `CLAUDE.md` et `docs/ACCES-PAR-APP.md` passés de cinq à six apps.

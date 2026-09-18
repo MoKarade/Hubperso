@@ -206,7 +206,16 @@ export function AppWidget({
       <header className="widget__head">
         <h2 className="widget__title">
           {appUrl ? (
-            <a href={appUrl} target="_blank" rel="noreferrer noopener">
+            // [PWA-ANDROID] PAS de `target="_blank"`, et c'est le verrou de « ouvrir depuis le
+            // hub ouvre l'app INSTALLÉE » (Marc, 18/09). Une PWA installée sur Android
+            // s'enregistre comme gestionnaire des URL de son `scope` (WebAPK) : Chrome peut
+            // alors passer la main à l'app plutôt que d'ouvrir un onglet — mais seulement sur
+            // une navigation de premier niveau. `_blank` crée un onglet de navigateur, donc
+            // court-circuite la bascule. Contrepartie ASSUMÉE : sur PC, le hub est quitté
+            // plutôt que doublé (retour arrière pour revenir). `tests/pwaLiens.test.ts`
+            // épingle l'absence du drapeau — sinon il revient au prochain lot qui touche
+            // cette carte, et la bascule s'éteint sans que rien ne change à l'écran.
+            <a href={appUrl} rel="noreferrer">
               {name}
             </a>
           ) : (
