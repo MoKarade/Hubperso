@@ -41,6 +41,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
+          # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
+          # action tierce, peut le lire. Aucun workflow de ce dépôt ne fait de `git push` —
+          # vérifié un par un — et `auto-merge.yml` passe par l'API avec `GH_TOKEN` en variable
+          # d'environnement, que `gh` lit SANS toucher à la config git.
+          persist-credentials: false
 
       # La convention de compte-rendu est une COPIE synchronisée de
       # claude-config/conventions/COMPTE-RENDU.md — un CLAUDE.md ne charge rien hors de son
@@ -56,8 +63,13 @@ jobs:
           cache: npm
 
       # `npm ci` et non `npm install` : le lockfile est committé et fait autorité.
+      # [CI-IGNORE-SCRIPTS] Et `--ignore-scripts` : un script d'installation de paquet
+      # s'exécute avec les droits du runner, qui porte les secrets du workflow. MESURÉ sur ce
+      # dépôt avant d'être posé (le piège est réel ailleurs — Playwright, esbuild) :
+      # `npm ci --ignore-scripts` puis typecheck, build et 413 tests, tous verts. PGlite
+      # embarque son WASM dans le paquet, il n'a aucun script d'installation.
       - name: Dépendances
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Typecheck
         run: npm run typecheck
@@ -87,6 +99,13 @@ jobs:
     # se lit d'un coup d'œil et désigne la vraie cause.
     steps:
       - uses: actions/checkout@v4
+        with:
+          # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
+          # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
+          # action tierce, peut le lire. Aucun workflow de ce dépôt ne fait de `git push` —
+          # vérifié un par un — et `auto-merge.yml` passe par l'API avec `GH_TOKEN` en variable
+          # d'environnement, que `gh` lit SANS toucher à la config git.
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -94,7 +113,7 @@ jobs:
           cache: npm
 
       - name: Dépendances
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # `--omit=dev` : seules les dépendances qui partent en production comptent. Les
       # avis sur l'outillage de développement ne menacent pas le site et noieraient le

@@ -5,6 +5,25 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-28] La chaîne de build : le `GITHUB_TOKEN` restait lisible tout le run.** Livré le
+  18/09/2026 (lot L2 de l'audit du 18/09, périmètre arbitré par Marc).
+  - Les **5** étapes `actions/checkout` portent `persist-credentials: false`. La v2+ écrit le
+    `GITHUB_TOKEN` dans la config git du runner POUR TOUT LE RESTE DU RUN : n'importe quelle
+    étape suivante peut le lire. Vérifié un par un qu'**aucun** workflow de ce dépôt ne fait de
+    `git push` — `auto-merge.yml` passe par l'API avec `GH_TOKEN` en variable d'environnement,
+    que `gh` lit sans toucher à la config git.
+  - Les **3** `npm ci` portent `--ignore-scripts`. ⚠️ **MESURÉ avant d'être posé**, parce que le
+    piège est réel ailleurs (Playwright, esbuild) : `npm ci --ignore-scripts` puis typecheck,
+    build et 413 tests, tous verts. PGlite embarque son WASM dans le paquet.
+  - `S7637` (action tierce non épinglée au SHA) est **sans objet ici** : ce dépôt n'utilise que
+    `actions/checkout` et `actions/setup-node`.
+  - ⚠️ **Deux recensements m'ont menti dans ce lot, dans deux sens opposés.** (1) Ce dépôt écrit
+    la forme COMPACTE `- uses: actions/checkout@v4` : un motif ancré sur `^\s*uses:` rend **0**
+    alors qu'il y en a 5 — il faut `^\s*-?\s*uses:`. (2) Mon propre `sed` sur `npm ci` a réécrit
+    le COMMENTAIRE de `ci.yml` qui nommait la commande, transformant une phrase en autre chose.
+    Classe consignée dans FinanceAI :
+    `UN-CORRECTIF-DONT-LE-COMMENTAIRE-CONTIENT-LE-MOTIF-FAUSSE-SON-PROPRE-RECENSEMENT`.
+
 - **[H-20] Next 15.5.22 → 15.5.25 : RCE critique NON AUTHENTIFIÉE, et le chemin visé est
   public par conception.** Deux avis parus entre le 07/09 (dernier audit hebdomadaire vert
   sur `main`) et le 14/09, **sans qu'une ligne du dépôt n'ait changé** — exactement le
