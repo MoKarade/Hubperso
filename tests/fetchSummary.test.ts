@@ -13,6 +13,7 @@ function source(over: Partial<HubSource> = {}): HubSource {
     id: "financeai",
     name: "FinanceAI",
     summaryUrl: "https://x.test/hub/summary",
+    accueilUrl: "https://x.test",
     token: "jeton",
     hero: false,
     ...over,
@@ -36,7 +37,51 @@ describe("fetchSummary", () => {
     }) as unknown as typeof fetch;
     const res = await fetchSummary(source({ token: null }), spy);
     expect(res.state).toBe("unconfigured");
+    if (res.state === "unconfigured") expect(res.manque).toEqual(["jeton"]);
     expect(called).toBe(false);
+  });
+
+  // ── Une source SANS URL n'est pas interrogée, et le dit ─────────────────────────────
+  //
+  // POURQUOI (21/09/2026) : FinanceAI n'a plus d'URL de résumé par défaut — son résumé vient
+  // d'un serveur auto-hébergé, pas de son site. Tant que `FINANCEAI_SUMMARY_URL` n'est pas
+  // posée, `summaryUrl` vaut `null` : le hub ne doit alors NI partir sur le réseau, NI
+  // afficher « aucun jeton configuré », qui enverrait poser la mauvaise variable.
+  it("unconfigured si aucune URL (aucune requête émise), et la CAUSE est nommée", async () => {
+    let called = false;
+    const spy = (async () => {
+      called = true;
+      return new Response("{}");
+    }) as unknown as typeof fetch;
+    const res = await fetchSummary(source({ summaryUrl: null }), spy);
+    expect(res.state).toBe("unconfigured");
+    // ⚠️ L'assertion qui compte est CELLE-CI : sans elle, une cause fusionnée avec
+    // « jeton » passerait, et c'est exactement le défaut qu'on corrige.
+    if (res.state === "unconfigured") expect(res.manque).toEqual(["url"]);
+    expect(called).toBe(false);
+  });
+
+  it("dit les DEUX manques d'un coup plutôt qu'en cascade", async () => {
+    // Sinon la seconde cause n'apparaît qu'une fois la première réparée : on corrige le
+    // jeton, on relance, et on découvre l'URL (leçon n° 8 du CLAUDE.md).
+    const res = await fetchSummary(source({ summaryUrl: null, token: null }), okFetch());
+    expect(res.state).toBe("unconfigured");
+    if (res.state === "unconfigured") expect(res.manque).toEqual(["url", "jeton"]);
+  });
+
+  it("CONTRÔLE NÉGATIF : avec URL et jeton, la requête PART", async () => {
+    // Sans ce cas, « aucune requête émise » serait aussi vrai d'un fetch débranché.
+    let urlVue: string | undefined;
+    const spy = (async (url: string) => {
+      urlVue = url;
+      return new Response(JSON.stringify(validSummary()), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as unknown as typeof fetch;
+    const res = await fetchSummary(source(), spy);
+    expect(res.state).toBe("ok");
+    expect(urlVue).toBe("https://x.test/hub/summary");
   });
 
   it("ok + envoie x-hub-token et cache no-store", async () => {

@@ -320,6 +320,20 @@ finie qu'avec la mesure de son effet, pas avec le correctif.** Et une mesure lan
 minute qui suit un déploiement peut mesurer l'ANCIEN : le 15/09, un relevé lancé 46 secondes
 avant la fin d'un redéploiement a rendu un `503` qui n'était plus vrai.
 
+**9. Un champ qui sert à DEUX choses dit la bonne à la majorité et la mauvaise à l'exception.**
+`SOURCE_DEFS.defaultUrl` était à la fois l'endpoint du contrat et — par son origine — l'adresse
+de l'app pour la palette. Vrai pour cinq apps sur six : une app Next.js sert sa page ET son
+`/hub/summary` sur le même domaine. FAUX pour FinanceAI, dont le résumé vient d'un serveur MCP
+auto-hébergé. Le champ unique a donc pointé le SITE : mesuré le 21/09/2026,
+`https://finance.hubperso.com/hub/summary` répond **200 avec `<!DOCTYPE html>`** — le hub recevait
+une page web et affichait « réponse non conforme au contrat », c'est-à-dire un diagnostic qui
+ACCUSE l'app et envoie corriger le mauvais dépôt (même famille que `contract-too-new`, §7).
+**La majorité valide une déduction qui n'est pas un fait** : on sépare les deux champs même là où
+ils coïncident. Et le remède n'est pas une meilleure URL par défaut mais `null` — un défaut
+plausible-mais-faux est pire qu'une absence, parce qu'on le croit (`no fake data` appliqué à une
+configuration). Corollaire : `unconfigured` porte désormais sa CAUSE (`manque: ["url" | "jeton"]`),
+les deux d'un coup — sinon la seconde n'apparaît qu'une fois la première réparée (leçon n° 8).
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :
@@ -343,7 +357,12 @@ place redevient huit conventions différentes en trois mois.
 ## 11. Ajouter une app
 
 1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
-   `defaultUrl`, `urlEnv`, `tokenEnv`).
+   `accueilUrl`, `defaultSummaryUrl`, `urlEnv`, `tokenEnv`).
+   ⚠️ **`accueilUrl` (la page de l'app) et `defaultSummaryUrl` (l'endpoint du contrat) sont
+   DEUX champs**, même quand ils coïncident — c'est le cas de cinq apps sur six, et c'est
+   précisément ce qui a laissé passer le défaut de FinanceAI (cf. leçon n° 9).
+   ⚠️ `defaultSummaryUrl` vaut **`null`** quand aucune URL honnête n'existe : l'app est alors
+   `unconfigured` tant que sa variable n'est pas posée, et le hub ne part pas sur le réseau.
 2. La variable de jeton correspondante dans l'environnement (jamais en dur).
 
 C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît

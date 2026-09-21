@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { HubSummary } from "@mokarade/hub-contract";
-import type { SummaryResult } from "@/lib/fetchSummary";
+import type { ManqueConfig, SummaryResult } from "@/lib/fetchSummary";
 import type { Releve } from "@/lib/historique";
 import { etatCarte, variationLisible } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
@@ -100,11 +100,22 @@ function CorpsOk({
   );
 }
 
+/** « aucune URL de résumé (FINANCEAI_SUMMARY_URL) » etc., au pluriel s'il le faut. */
+function phraseManques(manque: readonly ManqueConfig[]): string {
+  const mots = manque.map((m) =>
+    m === "url" ? "aucune URL de résumé configurée" : "aucun jeton x-hub-token configuré",
+  );
+  return mots.join(" et ");
+}
+
 function CorpsProbleme({ result }: { result: SummaryResult }) {
   const message = (() => {
     switch (result.state) {
       case "unconfigured":
-        return "Aucun jeton x-hub-token configuré pour cette app.";
+        // ⚠️ La phrase NOMME la variable qui manque : « non configurée » tout court envoie
+        // chercher le jeton même quand c'est l'URL qui manque (FinanceAI, dont le résumé
+        // ne vient pas de son site web).
+        return `Non branchée — ${phraseManques(result.manque)}.`;
       case "unauthorized":
         return "Jeton refusé (401). Vérifie la valeur de x-hub-token.";
       case "unreachable":

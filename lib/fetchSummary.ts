@@ -22,6 +22,17 @@ import {
 } from "@mokarade/hub-contract";
 import type { HubSource } from "./sources";
 
+/** Ce qui manque à une source pour être interrogeable. */
+export type ManqueConfig = "url" | "jeton";
+
+/** Rend la liste (jamais vide quand la source n'est pas interrogeable), ou `null`. */
+export function manquesDeConfig(source: HubSource): readonly ManqueConfig[] | null {
+  const manque: ManqueConfig[] = [];
+  if (!source.summaryUrl) manque.push("url");
+  if (!source.token) manque.push("jeton");
+  return manque.length > 0 ? manque : null;
+}
+
 export type SummaryResult =
   | {
       state: "ok";
@@ -32,7 +43,13 @@ export type SummaryResult =
       /** Âge du résumé en cache (ms), quand `stale`. */
       cachedAgeMs?: number;
     }
-  | { state: "unconfigured"; source: HubSource }
+  /**
+   * L'app n'est pas branchée. ⚠️ `manque` porte la CAUSE : une même phrase pour « pas de
+   * jeton » et « pas d'URL » envoie corriger la mauvaise variable, et la seconde cause
+   * n'apparaîtrait qu'une fois la première réparée (leçon n° 8 du `CLAUDE.md`). Liste, et
+   * pas valeur unique : les deux peuvent manquer ensemble, et on le dit d'un coup.
+   */
+  | { state: "unconfigured"; source: HubSource; manque: readonly ManqueConfig[] }
   | { state: "unauthorized"; source: HubSource }
   | { state: "unreachable"; source: HubSource; detail: string }
   | { state: "invalid"; source: HubSource; detail: string }
@@ -102,7 +119,8 @@ export async function fetchSummary(
   now: () => number = Date.now,
   timeoutMs: number = TIMEOUT_MS,
 ): Promise<SummaryResult> {
-  if (!source.token) return { state: "unconfigured", source };
+  const manque = manquesDeConfig(source);
+  if (manque) return { state: "unconfigured", source, manque };
 
   const live = await fetchLive(source, fetchImpl, timeoutMs);
 
@@ -142,7 +160,8 @@ export function fetchSummaryLive(
   source: HubSource,
   fetchImpl: typeof fetch = fetch,
 ): Promise<SummaryResult> {
-  if (!source.token) return Promise.resolve({ state: "unconfigured", source });
+  const manque = manquesDeConfig(source);
+  if (manque) return Promise.resolve({ state: "unconfigured", source, manque });
   return fetchLive(source, fetchImpl, TIMEOUT_MS);
 }
 
@@ -152,9 +171,12 @@ async function fetchLive(
   fetchImpl: typeof fetch,
   timeoutMs: number,
 ): Promise<SummaryResult> {
+  // `manquesDeConfig` a déjà écarté les sources sans URL ni jeton : ici les deux existent.
+  // Le `??` n'est pas un repli — c'est le compilateur qu'on rassure ; une chaîne vide
+  // n'arrive jamais jusqu'ici, et si elle arrivait le fetch échouerait bruyamment.
   let response: Response;
   try {
-    response = await fetchImpl(source.summaryUrl, {
+    response = await fetchImpl(source.summaryUrl ?? "", {
       headers: { [HUB_TOKEN_HEADER]: source.token!, accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(timeoutMs),

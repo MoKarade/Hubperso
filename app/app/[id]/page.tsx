@@ -105,7 +105,13 @@ export default async function DetailAppPage({
         <section className="detail__bloc">
           <p className="widget__problem">
             {result.state === "unconfigured" &&
-              "Aucun jeton configuré pour cette app dans l’environnement du hub."}
+              `Non branchée dans l’environnement du hub — ${result.manque
+                .map((m) =>
+                  m === "url"
+                    ? "aucune URL de résumé configurée"
+                    : "aucun jeton x-hub-token configuré",
+                )
+                .join(" et ")}.`}
             {result.state === "unauthorized" &&
               "Jeton refusé (401). La valeur ne correspond pas à celle de l’app."}
             {result.state === "unreachable" && `App injoignable — ${result.detail}.`}
@@ -116,7 +122,10 @@ export default async function DetailAppPage({
                 "C’est le hub qui est à re-pinner — l’app va bien."}
           </p>
           <p className="detail__endpoint">
-            Endpoint interrogé : <code>{source.summaryUrl}</code>
+            {/* Une source sans URL n'a pas d'endpoint à montrer : le dire, plutôt que de
+                rendre un <code> vide qui se lit comme une adresse illisible. */}
+            Endpoint interrogé :{" "}
+            {source.summaryUrl ? <code>{source.summaryUrl}</code> : <em>aucun (non configuré)</em>}
           </p>
         </section>
       )}

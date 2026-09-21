@@ -8,13 +8,14 @@ const source: HubSource = {
   id: "financeai",
   name: "FinanceAI",
   summaryUrl: "https://x/hub/summary",
+  accueilUrl: "https://x",
   token: "t",
   hero: false,
 };
 
 describe("statusBadge", () => {
   it("mappe les états de fetch en échec", () => {
-    expect(statusBadge({ state: "unconfigured", source }).tone).toBe("neutral");
+    expect(statusBadge({ state: "unconfigured", source, manque: ["jeton"] }).tone).toBe("neutral");
     expect(statusBadge({ state: "unauthorized", source }).tone).toBe("danger");
     expect(statusBadge({ state: "unreachable", source, detail: "x" }).tone).toBe("danger");
     expect(statusBadge({ state: "invalid", source, detail: "x" }).tone).toBe("danger");

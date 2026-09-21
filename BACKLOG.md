@@ -5,6 +5,12 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-31] ✅ FAIT le 21/09/2026 — `defaultUrl` de FinanceAI pointait le SITE de l'app.**
+  Gardé ici le temps d'un merge, puis à retirer. Détail dans `HANDOVER.md` et leçon n° 9 du
+  `CLAUDE.md`. ⚠️ **Conséquence d'exploitation, à ne pas perdre** : `FINANCEAI_SUMMARY_URL`
+  n'est plus une surcharge optionnelle mais une variable **obligatoire** sur Vercel. Si elle
+  disparaît, la carte FinanceAI dira « aucune URL de résumé configurée » — honnête, mais vide.
+
 - **[H-20] Next 15.5.22 → 15.5.25 : RCE critique NON AUTHENTIFIÉE, et le chemin visé est
   public par conception.** Deux avis parus entre le 07/09 (dernier audit hebdomadaire vert
   sur `main`) et le 14/09, **sans qu'une ligne du dépôt n'ait changé** — exactement le

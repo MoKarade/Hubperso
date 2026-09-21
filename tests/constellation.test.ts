@@ -9,6 +9,7 @@ function source(id: string): HubSource {
     id,
     name: id.toUpperCase(),
     summaryUrl: `https://${id}.hubperso.com/hub/summary`,
+    accueilUrl: `https://${id}.hubperso.com`,
     token: "jeton",
     hero: false,
   };
@@ -75,7 +76,7 @@ describe("verifierConstellation — états d'échec", () => {
 
   it("distingue jeton absent (avertissement) et jeton refusé (bloquant)", () => {
     const r = verifierConstellation([
-      { state: "unconfigured", source: source("carai") },
+      { state: "unconfigured", manque: ["jeton"] as const, source: source("carai") },
       { state: "unauthorized", source: source("jobai") },
     ]);
     const parSource = Object.fromEntries(r.map((i) => [i.source, i]));
@@ -136,7 +137,7 @@ describe("verifierConstellation — la cohérence d'agrégat", () => {
 describe("rapportConstellation", () => {
   it("met les bloquants en tête et compte", () => {
     const r = verifierConstellation([
-      { state: "unconfigured", source: source("zzz") },
+      { state: "unconfigured", manque: ["jeton"] as const, source: source("zzz") },
       { state: "unauthorized", source: source("aaa") },
     ]);
     expect(r[0]?.gravite).toBe("bloquant");

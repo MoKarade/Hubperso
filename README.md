@@ -185,7 +185,7 @@ secrets (variables d'environnement uniquement, jamais committés).
 | `HUB_TOKEN_CARAI` | Jeton `x-hub-token` de CarAI |
 | `HUB_TOKEN_JOBAI` | Jeton `x-hub-token` de JobAI |
 | `HUB_TOKEN_MEMORYAI` | Jeton `x-hub-token` de MemoryAI (app sans invités : ne consulte jamais `/api/acces`) |
-| `FINANCEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://finance.hubperso.com/hub/summary` |
+| `FINANCEAI_SUMMARY_URL` | **OBLIGATOIRE** — seule app sans URL par défaut. Son résumé vient d'un serveur MCP auto-hébergé, pas de `finance.hubperso.com` (qui sert l'app web). Absente → carte « aucune URL de résumé configurée », aucun appel réseau. |
 | `DRIVEAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://drive.hubperso.com/hub/summary` |
 | `BATCHCHEF_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://batchchef.hubperso.com/api/hub/summary` |
 | `CARAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://carai.hubperso.com/hub/summary` |

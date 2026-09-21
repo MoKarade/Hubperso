@@ -14,6 +14,7 @@ function source(id: string, name = id): HubSource {
     id,
     name,
     summaryUrl: `https://${id}.hubperso.com/hub/summary`,
+    accueilUrl: `https://${id}.hubperso.com`,
     token: "jeton",
     hero: false,
   };
@@ -86,7 +87,7 @@ describe("attentions — les apps MUETTES, qui sont tout l'intérêt", () => {
   it("IGNORE une app non configurée — c'est un choix, pas une panne", () => {
     // Mutation : la faire entrer remplirait la liste d'un bruit permanent, et une liste
     // toujours pleine ne se lit plus.
-    expect(attentions([{ state: "unconfigured", source: source("jobai") }], T0)).toEqual([]);
+    expect(attentions([{ state: "unconfigured", manque: ["jeton"] as const, source: source("jobai") }], T0)).toEqual([]);
   });
 
   it("un jeton refusé et une réponse hors contrat sont graves tous les deux", () => {
