@@ -44,10 +44,9 @@ export interface HubSource {
  * (`AVANT-D-UNIFIER-N-COPIES-SEPARER-CE-QUI-EST-PARTAGE-DE-CE-QUI-NE-L-EST-PAS`).
  */
 interface SourceDef {
-  id: string;
+  /** ⚠️ `AppId`, pas `string` : l'app doit figurer dans `ACCUEIL_PAR_ID` (voir plus bas). */
+  id: AppId;
   name: string;
-  /** La page de l'app, pour un humain. Jamais interrogée par le hub. */
-  accueilUrl: string;
   /** L'endpoint du contrat par défaut, ou `null` si aucun n'est connu. */
   defaultSummaryUrl: string | null;
   urlEnv: string;
@@ -89,7 +88,6 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
     // le hub ne part PAS sur le réseau.
     id: "financeai",
     name: "FinanceAI",
-    accueilUrl: "https://finance.hubperso.com",
     defaultSummaryUrl: null,
     urlEnv: "FINANCEAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_FINANCEAI",
@@ -98,7 +96,6 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "driveai",
     name: "DriveAI",
-    accueilUrl: "https://drive.hubperso.com",
     defaultSummaryUrl: "https://drive.hubperso.com/hub/summary",
     urlEnv: "DRIVEAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_DRIVEAI",
@@ -106,7 +103,6 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "batchchef",
     name: "BatchChef",
-    accueilUrl: "https://batchchef.hubperso.com",
     defaultSummaryUrl: "https://batchchef.hubperso.com/api/hub/summary",
     urlEnv: "BATCHCHEF_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_BATCHCHEF",
@@ -114,7 +110,6 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "carai",
     name: "CarAI",
-    accueilUrl: "https://carai.hubperso.com",
     defaultSummaryUrl: "https://carai.hubperso.com/hub/summary",
     urlEnv: "CARAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_CARAI",
@@ -122,7 +117,6 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
   {
     id: "jobai",
     name: "JobAI",
-    accueilUrl: "https://emploi.hubperso.com",
     defaultSummaryUrl: "https://emploi.hubperso.com/api/hub/summary",
     urlEnv: "JOBAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_JOBAI",
@@ -133,12 +127,51 @@ export const SOURCE_DEFS: readonly SourceDef[] = [
     // donc l'accorder à quelqu'un dans /administration n'ouvre rien chez elle.
     id: "memoryai",
     name: "MemoryAI",
-    accueilUrl: "https://memoryai.hubperso.com",
     defaultSummaryUrl: "https://memoryai.hubperso.com/hub/summary",
     urlEnv: "MEMORYAI_SUMMARY_URL",
     tokenEnv: "HUB_TOKEN_MEMORYAI",
   },
 ];
+
+/**
+ * L'adresse HUMAINE de chaque app — la page qu'on ouvre dans un navigateur.
+ *
+ * ⚠️ POURQUOI UNE TABLE À PART, et pas un champ de `SourceDef` : le détecteur de copier-coller
+ * de la CI comptait les six entrées de `SOURCE_DEFS` comme de la duplication dès qu'elles
+ * passaient à sept champs (mesuré le 21/09/2026 : 10 des 12 lignes neuves incriminées étaient
+ * ces paires). La forme ci-dessous dit la même chose en une ligne par app. **C'est une
+ * contrainte d'outil qui a choisi la forme, pas une amélioration** — et ça se dit.
+ *
+ * ⚠️ Ce qu'une liste PARALLÈLE risque, c'est de DIVERGER (§11 : une app absente de la page
+ * d'administration serait une app dont personne ne peut recevoir l'accès). D'où la garde de
+ * `tests/sources.test.ts` : les deux jeux de clés doivent coïncider EXACTEMENT, dans les deux
+ * sens. Une app ajoutée à l'une sans l'autre fait rougir la CI, elle ne se découvre pas à
+ * l'écran.
+ *
+ * ⚠️ Et elle reste ÉCRITE, jamais dérivée de `defaultSummaryUrl` : c'est précisément le
+ * couplage que la leçon n° 10 a supprimé. FinanceAI le prouve — son résumé ne vient pas de son
+ * site, donc aucune déduction n'est possible.
+ */
+export const ACCUEIL_PAR_ID = {
+  financeai: "https://finance.hubperso.com",
+  driveai: "https://drive.hubperso.com",
+  batchchef: "https://batchchef.hubperso.com",
+  carai: "https://carai.hubperso.com",
+  jobai: "https://emploi.hubperso.com",
+  memoryai: "https://memoryai.hubperso.com",
+} as const;
+
+/**
+ * L'identifiant d'une app EST une clé de la table ci-dessus.
+ *
+ * ⚠️ C'est ce qui rend le trou IMPOSSIBLE plutôt que testé : une app déclarée dans
+ * `SOURCE_DEFS` sans adresse d'accueil ne compile pas. Sans ça il faudrait un repli à la
+ * lecture — et le seul repli disponible (chaîne vide) serait un lien MORT, c'est-à-dire la
+ * valeur crédible-mais-fausse que ce dépôt refuse partout ailleurs.
+ * Le sens inverse (une clé de la table sans entrée dans `SOURCE_DEFS`) ne se voit pas au
+ * compilateur : c'est `tests/sources.test.ts` qui le garde.
+ */
+export type AppId = keyof typeof ACCUEIL_PAR_ID;
 
 type Env = Record<string, string | undefined>;
 
@@ -148,7 +181,7 @@ export function getSources(env: Env = process.env): HubSource[] {
     id: def.id,
     name: def.name,
     summaryUrl: env[def.urlEnv]?.trim() || def.defaultSummaryUrl,
-    accueilUrl: def.accueilUrl,
+    accueilUrl: ACCUEIL_PAR_ID[def.id],
     token: env[def.tokenEnv]?.trim() || null,
     hero: def.hero === true,
   }));

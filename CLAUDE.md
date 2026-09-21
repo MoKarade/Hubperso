@@ -361,6 +361,29 @@ deux phrases séparées divergent au premier ajustement. Le remède est la sourc
 (`phraseManques`, à côté du type qu'elle explique), jamais un seuil relevé.
 
 
+⚠️⚠️ **Et la suite de cette leçon est une leçon de MESURE.** La source unique `phraseManques` n'a
+fait passer le chiffre que de 4,3 % à 4,1 % : mon relevé ne portait que sur les fichiers du DIFF,
+alors que le détecteur compare le code neuf au **projet ENTIER**. Rejoué au bon périmètre : **12
+lignes neuves** dans un bloc répété, dont **10 dans `lib/sources.ts`** — les six entrées de la table
+des apps, qui ont par construction les mêmes champs et que l'ajout d'un septième a fait passer de 8
+à 10 lignes, donc au-dessus de la fenêtre du détecteur. **Un périmètre de mesure trop étroit donne
+un diagnostic qui a l'air juste et un remède qui ne bouge pas l'aiguille.**
+
+⚠️ Deux remèdes ont été ESSAYÉS puis ANNULÉS, chacun après mesure : un constructeur partagé pour les
+cinq apps du même domaine (re-mesuré — blocs répétés IDENTIQUES : un constructeur déguise la
+répétition d'une table, il ne la supprime pas), puis un `sonar-project.properties` portant
+`sonar.cpd.exclusions` (re-mesuré — **4,1 % inchangé, et le même identifiant d'analyse** : l'analyse
+AUTOMATIQUE ne lit pas ce fichier). ⚠️ Le second méritait d'être retiré plutôt que gardé « au cas
+où » : un fichier de configuration sans effet se lit comme un réglage POSÉ, et la session suivante
+chercherait pourquoi il ne s'applique pas (`DOC-STALE-IMPOSSIBILITY`).
+
+⚠️ Ce qui a fini par marcher : sortir les adresses d'accueil de la table (une ligne par app dans
+`ACCUEIL_PAR_ID`), ce qui ramène les entrées sous la fenêtre — **2,6 % mesuré**. C'est une
+contrainte d'OUTIL qui a choisi la forme, pas une amélioration, et c'est écrit tel quel dans le
+fichier. Le trou qu'une seconde liste ouvre est fermé des deux côtés : le TYPE interdit une app sans
+adresse (`SourceDef.id` est une clé de la table — perturbation : 1 erreur de compilation), un TEST
+interdit une adresse sans app (perturbation : 1 rouge).
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :

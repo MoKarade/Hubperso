@@ -44,6 +44,15 @@ détail) et l'espion de `fetch` recopié dans deux cas de test. Corrigé par une
 décrivent le même état doivent dire la même chose, et deux copies divergent au premier ajustement.
 Perturbation rejouée APRÈS la refonte : toujours 2 rouges.
 
+⚠️⚠️ **Et ça n'a pas suffi : 4,3 % → 4,1 %.** Mon relevé ne portait que sur les fichiers du diff,
+alors que le détecteur compare au projet ENTIER. Rejoué au bon périmètre : 12 lignes neuves
+incriminées, dont **10 dans la table `SOURCE_DEFS`** — six entrées aux mêmes champs, que le septième
+champ a fait passer de 8 à 10 lignes. Deux remèdes essayés PUIS ANNULÉS après mesure (constructeur
+partagé : blocs identiques ; `sonar-project.properties` : 4,1 % inchangé, même identifiant
+d'analyse → l'analyse automatique ne lit pas ce fichier). Forme retenue : les adresses d'accueil
+sortent dans `ACCUEIL_PAR_ID`, une ligne par app → **2,6 %**. Le type interdit une app sans adresse,
+un test interdit une adresse sans app (les deux perturbations tirent).
+
 ⚠️ **Rien ici ne change ce qui est SERVI par hubperso pour un visiteur** : c'est de la
 configuration côté serveur. Mais la variable `FINANCEAI_SUMMARY_URL` doit RESTER posée sur Vercel —
 elle n'est plus un « override », elle est désormais **obligatoire**.
