@@ -3,6 +3,12 @@
 
 ## 🟦 Session 2026-09-21 — **FinanceAI n'a plus d'URL de résumé par défaut, et c'était le bug**
 
+✅ **MERGÉ** (PR #63, `e8b1c848`). Porte de qualité SonarCloud enfin verte — **0,0 % de duplication
+sur le code neuf**. Déploiement de production Vercel **créé et `READY`** sur ce SHA exact
+(`dpl_57CYRjvTuUYdPrMih2Kdjwk5v1Uj`). ⚠️ La moitié « contrôler la réponse SERVIE » n'a PAS pu être
+faite : `hubperso.com` répond 403 au CONNECT depuis le conteneur — c'est à Marc, depuis son
+navigateur, de constater que la carte FinanceAI affiche bien ses tuiles.
+
 Marc : la carte FinanceAI du hub n'affichait pas les métriques neuves. Serveur à jour,
 déploiement `READY`, rien de rouge nulle part.
 
