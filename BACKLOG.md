@@ -5,12 +5,6 @@ l'état réel avant de coder.
 
 ## À faire
 
-- **[H-31] ✅ FAIT le 21/09/2026 — `defaultUrl` de FinanceAI pointait le SITE de l'app.**
-  Gardé ici le temps d'un merge, puis à retirer. Détail dans `HANDOVER.md` et leçon n° 10 du
-  `CLAUDE.md`. ⚠️ **Conséquence d'exploitation, à ne pas perdre** : `FINANCEAI_SUMMARY_URL`
-  n'est plus une surcharge optionnelle mais une variable **obligatoire** sur Vercel. Si elle
-  disparaît, la carte FinanceAI dira « aucune URL de résumé configurée » — honnête, mais vide.
-
 - **[H-28] La chaîne de build : le `GITHUB_TOKEN` restait lisible tout le run.** Livré le
   18/09/2026 (lot L2 de l'audit du 18/09, périmètre arbitré par Marc).
   - Les **5** étapes `actions/checkout` portent `persist-credentials: false`. La v2+ écrit le
