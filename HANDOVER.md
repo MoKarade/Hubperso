@@ -37,6 +37,13 @@ dans `sources` ; retirer le contrôle d'URL de `manquesDeConfig` → 2 rouges da
 **Vérifs** : `typecheck` vert, `test` **420/420**, `lint` 0 erreur (2 avertissements préexistants),
 `build` vert.
 
+⚠️ **La CI a rougi une fois, et elle avait raison** : SonarCloud, **4,3 % de duplication sur le code
+neuf** (seuil 3 %). La phrase qui nomme ce qui manque était écrite DEUX fois (carte + page de
+détail) et l'espion de `fetch` recopié dans deux cas de test. Corrigé par une source unique
+(`phraseManques`, exportée à côté de `ManqueConfig`) — pas par un seuil relevé : deux surfaces qui
+décrivent le même état doivent dire la même chose, et deux copies divergent au premier ajustement.
+Perturbation rejouée APRÈS la refonte : toujours 2 rouges.
+
 ⚠️ **Rien ici ne change ce qui est SERVI par hubperso pour un visiteur** : c'est de la
 configuration côté serveur. Mais la variable `FINANCEAI_SUMMARY_URL` doit RESTER posée sur Vercel —
 elle n'est plus un « override », elle est désormais **obligatoire**.

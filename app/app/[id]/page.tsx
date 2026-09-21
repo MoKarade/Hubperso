@@ -18,7 +18,7 @@ import { notFound, redirect } from "next/navigation";
 import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
-import { fetchAllSummaries, fetchSummary } from "@/lib/fetchSummary";
+import { fetchAllSummaries, fetchSummary, phraseManques } from "@/lib/fetchSummary";
 import { lireHistorique } from "@/lib/historiqueDb";
 import { serieMetrique, variation, inchangeDepuisMs } from "@/lib/historique";
 import { FENETRE_VARIATION_MS, SEUIL_INCHANGE_MS, recommandation } from "@/lib/carte";
@@ -105,13 +105,7 @@ export default async function DetailAppPage({
         <section className="detail__bloc">
           <p className="widget__problem">
             {result.state === "unconfigured" &&
-              `Non branchée dans l’environnement du hub — ${result.manque
-                .map((m) =>
-                  m === "url"
-                    ? "aucune URL de résumé configurée"
-                    : "aucun jeton x-hub-token configuré",
-                )
-                .join(" et ")}.`}
+              `Non branchée dans l’environnement du hub — ${phraseManques(result.manque)}.`}
             {result.state === "unauthorized" &&
               "Jeton refusé (401). La valeur ne correspond pas à celle de l’app."}
             {result.state === "unreachable" && `App injoignable — ${result.detail}.`}

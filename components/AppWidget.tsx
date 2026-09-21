@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { HubSummary } from "@mokarade/hub-contract";
-import type { ManqueConfig, SummaryResult } from "@/lib/fetchSummary";
+import { phraseManques } from "@/lib/fetchSummary";
+import type { SummaryResult } from "@/lib/fetchSummary";
 import type { Releve } from "@/lib/historique";
 import { etatCarte, variationLisible } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
@@ -98,14 +99,6 @@ function CorpsOk({
       {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
   );
-}
-
-/** « aucune URL de résumé (FINANCEAI_SUMMARY_URL) » etc., au pluriel s'il le faut. */
-function phraseManques(manque: readonly ManqueConfig[]): string {
-  const mots = manque.map((m) =>
-    m === "url" ? "aucune URL de résumé configurée" : "aucun jeton x-hub-token configuré",
-  );
-  return mots.join(" et ");
 }
 
 function CorpsProbleme({ result }: { result: SummaryResult }) {

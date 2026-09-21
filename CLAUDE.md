@@ -320,6 +320,16 @@ finie qu'avec la mesure de son effet, pas avec le correctif.** Et une mesure lan
 minute qui suit un déploiement peut mesurer l'ANCIEN : le 15/09, un relevé lancé 46 secondes
 avant la fin d'un redéploiement a rendu un `503` qui n'était plus vrai.
 
+**10. Le contrôle de DUPLICATION de la CI a trouvé ce qu'aucune relecture n'avait vu.**
+Le correctif de la leçon n° 9 écrivait la phrase « aucune URL de résumé configurée / aucun jeton
+x-hub-token configuré » DEUX fois — dans la carte et dans la page de détail —, plus un espion de
+`fetch` recopié dans deux cas de test. SonarCloud : **4,3 % de duplication sur le code neuf**
+(seuil 3 %). Les deux copies se lisent parfaitement bien isolément : **une duplication n'existe
+qu'à l'échelle du DIFF**, donc aucune relecture fichier par fichier ne pouvait la voir. Et ici elle
+n'était pas cosmétique — deux surfaces qui décrivent le MÊME état doivent dire la même chose, et
+deux phrases séparées divergent au premier ajustement. Le remède est la source unique
+(`phraseManques`, à côté du type qu'elle explique), jamais un seuil relevé.
+
 **9. Un champ qui sert à DEUX choses dit la bonne à la majorité et la mauvaise à l'exception.**
 `SOURCE_DEFS.defaultUrl` était à la fois l'endpoint du contrat et — par son origine — l'adresse
 de l'app pour la palette. Vrai pour cinq apps sur six : une app Next.js sert sa page ET son

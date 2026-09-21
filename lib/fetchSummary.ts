@@ -25,6 +25,21 @@ import type { HubSource } from "./sources";
 /** Ce qui manque à une source pour être interrogeable. */
 export type ManqueConfig = "url" | "jeton";
 
+/**
+ * La phrase qui NOMME ce qui manque, au pluriel s'il le faut.
+ *
+ * ⚠️ Vit ici et pas dans un composant : les deux surfaces qui l'affichent (la carte et la page
+ * de détail) doivent dire la MÊME chose. Écrite deux fois, elle divergerait au premier
+ * ajustement — et c'est le contrôle de duplication de la CI qui l'a signalé, pas une relecture.
+ */
+export function phraseManques(manque: readonly ManqueConfig[]): string {
+  return manque
+    .map((m) =>
+      m === "url" ? "aucune URL de résumé configurée" : "aucun jeton x-hub-token configuré",
+    )
+    .join(" et ");
+}
+
 /** Rend la liste (jamais vide quand la source n'est pas interrogeable), ou `null`. */
 export function manquesDeConfig(source: HubSource): readonly ManqueConfig[] | null {
   const manque: ManqueConfig[] = [];

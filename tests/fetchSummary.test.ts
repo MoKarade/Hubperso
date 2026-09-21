@@ -28,17 +28,23 @@ const timeoutFetch = (async () => {
   throw new DOMException("aborted", "TimeoutError");
 }) as unknown as typeof fetch;
 
+/** Un fetch qui NOTE qu'on l'a appelé — « aucune requête émise » ne se prouve pas autrement. */
+function fetchEspion(): { fetch: typeof fetch; appele: () => boolean } {
+  let appele = false;
+  const impl = (async () => {
+    appele = true;
+    return new Response("{}");
+  }) as unknown as typeof fetch;
+  return { fetch: impl, appele: () => appele };
+}
+
 describe("fetchSummary", () => {
   it("unconfigured si aucun jeton (aucune requête émise)", async () => {
-    let called = false;
-    const spy = (async () => {
-      called = true;
-      return new Response("{}");
-    }) as unknown as typeof fetch;
-    const res = await fetchSummary(source({ token: null }), spy);
+    const espion = fetchEspion();
+    const res = await fetchSummary(source({ token: null }), espion.fetch);
     expect(res.state).toBe("unconfigured");
     if (res.state === "unconfigured") expect(res.manque).toEqual(["jeton"]);
-    expect(called).toBe(false);
+    expect(espion.appele()).toBe(false);
   });
 
   // ── Une source SANS URL n'est pas interrogée, et le dit ─────────────────────────────
@@ -48,17 +54,13 @@ describe("fetchSummary", () => {
   // posée, `summaryUrl` vaut `null` : le hub ne doit alors NI partir sur le réseau, NI
   // afficher « aucun jeton configuré », qui enverrait poser la mauvaise variable.
   it("unconfigured si aucune URL (aucune requête émise), et la CAUSE est nommée", async () => {
-    let called = false;
-    const spy = (async () => {
-      called = true;
-      return new Response("{}");
-    }) as unknown as typeof fetch;
-    const res = await fetchSummary(source({ summaryUrl: null }), spy);
+    const espion = fetchEspion();
+    const res = await fetchSummary(source({ summaryUrl: null }), espion.fetch);
     expect(res.state).toBe("unconfigured");
     // ⚠️ L'assertion qui compte est CELLE-CI : sans elle, une cause fusionnée avec
     // « jeton » passerait, et c'est exactement le défaut qu'on corrige.
     if (res.state === "unconfigured") expect(res.manque).toEqual(["url"]);
-    expect(called).toBe(false);
+    expect(espion.appele()).toBe(false);
   });
 
   it("dit les DEUX manques d'un coup plutôt qu'en cascade", async () => {
