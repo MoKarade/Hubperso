@@ -26,13 +26,20 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
+          # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
+          # action tierce, peut le lire. Aucun workflow de ce dépôt ne fait de `git push` —
+          # vérifié un par un — et `auto-merge.yml` passe par l'API avec `GH_TOKEN` en variable
+          # d'environnement, que `gh` lit SANS toucher à la config git.
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Interroger les cinq apps et juger la cohérence
         env:

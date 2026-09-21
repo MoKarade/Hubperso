@@ -6,10 +6,29 @@ l'état réel avant de coder.
 ## À faire
 
 - **[H-31] ✅ FAIT le 21/09/2026 — `defaultUrl` de FinanceAI pointait le SITE de l'app.**
-  Gardé ici le temps d'un merge, puis à retirer. Détail dans `HANDOVER.md` et leçon n° 9 du
+  Gardé ici le temps d'un merge, puis à retirer. Détail dans `HANDOVER.md` et leçon n° 10 du
   `CLAUDE.md`. ⚠️ **Conséquence d'exploitation, à ne pas perdre** : `FINANCEAI_SUMMARY_URL`
   n'est plus une surcharge optionnelle mais une variable **obligatoire** sur Vercel. Si elle
   disparaît, la carte FinanceAI dira « aucune URL de résumé configurée » — honnête, mais vide.
+
+- **[H-28] La chaîne de build : le `GITHUB_TOKEN` restait lisible tout le run.** Livré le
+  18/09/2026 (lot L2 de l'audit du 18/09, périmètre arbitré par Marc).
+  - Les **5** étapes `actions/checkout` portent `persist-credentials: false`. La v2+ écrit le
+    `GITHUB_TOKEN` dans la config git du runner POUR TOUT LE RESTE DU RUN : n'importe quelle
+    étape suivante peut le lire. Vérifié un par un qu'**aucun** workflow de ce dépôt ne fait de
+    `git push` — `auto-merge.yml` passe par l'API avec `GH_TOKEN` en variable d'environnement,
+    que `gh` lit sans toucher à la config git.
+  - Les **3** `npm ci` portent `--ignore-scripts`. ⚠️ **MESURÉ avant d'être posé**, parce que le
+    piège est réel ailleurs (Playwright, esbuild) : `npm ci --ignore-scripts` puis typecheck,
+    build et 413 tests, tous verts. PGlite embarque son WASM dans le paquet.
+  - `S7637` (action tierce non épinglée au SHA) est **sans objet ici** : ce dépôt n'utilise que
+    `actions/checkout` et `actions/setup-node`.
+  - ⚠️ **Deux recensements m'ont menti dans ce lot, dans deux sens opposés.** (1) Ce dépôt écrit
+    la forme COMPACTE `- uses: actions/checkout@v4` : un motif ancré sur `^\s*uses:` rend **0**
+    alors qu'il y en a 5 — il faut `^\s*-?\s*uses:`. (2) Mon propre `sed` sur `npm ci` a réécrit
+    le COMMENTAIRE de `ci.yml` qui nommait la commande, transformant une phrase en autre chose.
+    Classe consignée dans FinanceAI :
+    `UN-CORRECTIF-DONT-LE-COMMENTAIRE-CONTIENT-LE-MOTIF-FAUSSE-SON-PROPRE-RECENSEMENT`.
 
 - **[H-20] Next 15.5.22 → 15.5.25 : RCE critique NON AUTHENTIFIÉE, et le chemin visé est
   public par conception.** Deux avis parus entre le 07/09 (dernier audit hebdomadaire vert
@@ -406,6 +425,33 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   la première : c'est le moment où le hub cesse d'être en lecture seule pour de bon.
 
 ## Fait
+
+### Ouvrir une app depuis le hub atteint l'app INSTALLÉE (Marc, 18/09/2026) — Android
+
+- [x] **`PWA-ANDROID`** — ouvrir une app depuis le hub peut désormais atteindre l'app installée
+  sur Android, et le manifeste du hub fixe son identité. Détail des deux volets ci-dessous.
+  ⚠️ L'identifiant est écrit ICI sous cette forme parce que `scripts/doc-a-jour.mjs` le cherche :
+  un ID présent dans les commits et absent du backlog est le cas « tâche jamais inscrite », et
+  ce contrôle a rougi sur cette PR avant que l'entrée n'existe. Il a eu raison.
+- [x] **`id` et `launch_handler: navigate-existing` au manifeste.** Sans `id`, l'identité de
+  l'installation EST le `start_url` : le jour où il change, Android installe une SECONDE app au
+  lieu de mettre à jour la première. `navigate-existing` fait qu'un lien réutilise la fenêtre
+  ouverte plutôt que d'en empiler une.
+- [x] **`target="_blank"` retiré des DEUX liens qui ouvrent une app** — le titre de la carte
+  (`components/AppWidget.tsx`) et le bouton « Ouvrir l'app » (`app/app/[id]/page.tsx`). Une PWA
+  installée sur Android s'enregistre comme gestionnaire des URL de son `scope` (WebAPK), et
+  Chrome ne peut lui passer la main que sur une navigation de PREMIER NIVEAU : `_blank` crée un
+  onglet et court-circuite la bascule. ⚠️ Contrepartie assumée : sur PC, le hub est quitté plutôt
+  que doublé. Garde : `tests/pwaLiens.test.ts`, 6 perturbations prouvées.
+- [x] **Portée délibérément étroite** : les `href` venus du CONTRAT (alertes, actions,
+  recommandations) gardent leur `target="_blank"`. Le contrat ne les contraint pas à l'origine de
+  l'app — ils peuvent pointer n'importe où — et les ouvrir en place ferait quitter le hub à chaque
+  clic sur une alerte.
+- [ ] **⏸️ La bascule elle-même n'est PAS vérifiable d'ici.** Qu'un lien ouvre vraiment l'app
+  installée dépend de la version de Chrome, de l'installation réelle et du réglage « ouvrir les
+  liens dans l'app ». Ce dépôt n'a aucune infrastructure qui puisse l'observer : **c'est le
+  téléphone de Marc qui tranche**, et c'est pour ça que cette case reste ouverte.
+
 
 - ~~**[H-27]** MemoryAI entre dans la constellation — sixième source du hub~~ — 15/09/2026.
   Entrée `memoryai` dans `lib/sources.ts` (`MEMORYAI_SUMMARY_URL`, `HUB_TOKEN_MEMORYAI`),

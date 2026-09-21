@@ -92,7 +92,10 @@ export default async function DetailAppPage({
         <div className="page__aside">
           <StatusBadge {...badge} />
           {lienApp && (
-            <a className="btn" href={lienApp} target="_blank" rel="noreferrer noopener">
+            // [PWA-ANDROID] Même raison qu'au titre de la carte (`components/AppWidget.tsx`) :
+            // sans `target="_blank"`, Chrome sur Android peut router la navigation vers la PWA
+            // installée. Les DEUX sites sont épinglés par `tests/pwaLiens.test.ts`.
+            <a className="btn" href={lienApp} rel="noreferrer">
               Ouvrir l’app ↗
             </a>
           )}
