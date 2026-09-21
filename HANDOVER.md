@@ -1,5 +1,63 @@
 # HANDOVER — Authentification et accès du hub
 
+
+## 🟦 Session 2026-09-21 — **FinanceAI n'a plus d'URL de résumé par défaut, et c'était le bug**
+
+Marc : la carte FinanceAI du hub n'affichait pas les métriques neuves. Serveur à jour,
+déploiement `READY`, rien de rouge nulle part.
+
+**Cause, mesurée** : `lib/sources.ts` déclarait pour `financeai`
+`defaultUrl: "https://finance.hubperso.com/hub/summary"` — c'est le **site** de l'app, pas son
+endpoint de contrat. FinanceAI ne publie pas son résumé depuis son site (les données financières
+ne quittent pas la machine de Marc : le résumé est calculé par un serveur MCP auto-hébergé).
+Cette URL répond donc **200 avec `<!DOCTYPE html>`** : le hub recevait une page web et rendait
+« réponse non conforme au contrat », un diagnostic qui accuse l'app et envoie corriger le mauvais
+dépôt. Marc a posé `FINANCEAI_SUMMARY_URL` et la carte est repartie ; ce lot enlève le défaut.
+
+**Livré**
+- `defaultUrl` est scindé en **deux** champs — `accueilUrl` (la page de l'app, pour la palette de
+  commandes) et `defaultSummaryUrl` (l'endpoint du contrat). Ils coïncident pour cinq apps sur six,
+  et c'est cette majorité qui a fait passer une déduction pour un fait.
+- `financeai.defaultSummaryUrl = null` : sans sa variable, la source est `unconfigured` et le hub
+  **ne part pas sur le réseau**. Pas d'adresse Cloud Run écrite en dur — un défaut
+  plausible-mais-faux est pire qu'une absence.
+- `unconfigured` porte sa **cause** : `manque: readonly ("url" | "jeton")[]`, les deux d'un coup.
+  « Aucun jeton configuré » aurait envoyé poser la mauvaise variable, et la seconde cause ne serait
+  apparue qu'une fois la première réparée (leçon n° 8).
+- `posterAction` refuse aussi une source sans URL : le verrou 3 (même origine) n'a **aucune origine
+  de référence** sans `summaryUrl` — donc plus de verrou du tout.
+
+**Gardes** — `tests/sources.test.ts` (FinanceAI sans URL + contrôle négatif avec la variable posée
++ `accueilUrl` conservée + anti-vacuité « les cinq autres gardent leur défaut ») et
+`tests/fetchSummary.test.ts` (aucune requête émise, cause nommée, les deux manques d'un coup,
+contrôle négatif « avec URL et jeton, la requête PART »).
+⚠️ **Les deux perturbations discriminent, mesuré** : remettre l'ancien `defaultUrl` → 2 rouges
+dans `sources` ; retirer le contrôle d'URL de `manquesDeConfig` → 2 rouges dans `fetchSummary`.
+
+**Vérifs** : `typecheck` vert, `test` **420/420**, `lint` 0 erreur (2 avertissements préexistants),
+`build` vert.
+
+⚠️ **La CI a rougi une fois, et elle avait raison** : SonarCloud, **4,3 % de duplication sur le code
+neuf** (seuil 3 %). La phrase qui nomme ce qui manque était écrite DEUX fois (carte + page de
+détail) et l'espion de `fetch` recopié dans deux cas de test. Corrigé par une source unique
+(`phraseManques`, exportée à côté de `ManqueConfig`) — pas par un seuil relevé : deux surfaces qui
+décrivent le même état doivent dire la même chose, et deux copies divergent au premier ajustement.
+Perturbation rejouée APRÈS la refonte : toujours 2 rouges.
+
+⚠️⚠️ **Et ça n'a pas suffi : 4,3 % → 4,1 %.** Mon relevé ne portait que sur les fichiers du diff,
+alors que le détecteur compare au projet ENTIER. Rejoué au bon périmètre : 12 lignes neuves
+incriminées, dont **10 dans la table `SOURCE_DEFS`** — six entrées aux mêmes champs, que le septième
+champ a fait passer de 8 à 10 lignes. Deux remèdes essayés PUIS ANNULÉS après mesure (constructeur
+partagé : blocs identiques ; `sonar-project.properties` : 4,1 % inchangé, même identifiant
+d'analyse → l'analyse automatique ne lit pas ce fichier). Forme retenue : les adresses d'accueil
+sortent dans `ACCUEIL_PAR_ID`, une ligne par app → **2,6 %**. Le type interdit une app sans adresse,
+un test interdit une adresse sans app (les deux perturbations tirent).
+
+⚠️ **Rien ici ne change ce qui est SERVI par hubperso pour un visiteur** : c'est de la
+configuration côté serveur. Mais la variable `FINANCEAI_SUMMARY_URL` doit RESTER posée sur Vercel —
+elle n'est plus un « override », elle est désormais **obligatoire**.
+
+
 ## État
 
 Le hub est **privé**, derrière un login Google (Auth.js v5). Il ne pose plus la question

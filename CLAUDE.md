@@ -336,6 +336,54 @@ faux, et **Chrome croit le fichier**. Les dimensions se relisent donc dans l'en-
 PNG. C'est le défaut qui rendait FinanceAI non installable (une seule icône, en SVG) — mesuré
 le 18/09 sur les sept dépôts du parc, il était le seul dans cet état.
 
+**10. Un champ qui sert à DEUX choses dit la bonne à la majorité et la mauvaise à l'exception.**
+`SOURCE_DEFS.defaultUrl` était à la fois l'endpoint du contrat et — par son origine — l'adresse
+de l'app pour la palette. Vrai pour cinq apps sur six : une app Next.js sert sa page ET son
+`/hub/summary` sur le même domaine. FAUX pour FinanceAI, dont le résumé vient d'un serveur MCP
+auto-hébergé. Le champ unique a donc pointé le SITE : mesuré le 21/09/2026,
+`https://finance.hubperso.com/hub/summary` répond **200 avec `<!DOCTYPE html>`** — le hub recevait
+une page web et affichait « réponse non conforme au contrat », c'est-à-dire un diagnostic qui
+ACCUSE l'app et envoie corriger le mauvais dépôt (même famille que `contract-too-new`, §7).
+**La majorité valide une déduction qui n'est pas un fait** : on sépare les deux champs même là où
+ils coïncident. Et le remède n'est pas une meilleure URL par défaut mais `null` — un défaut
+plausible-mais-faux est pire qu'une absence, parce qu'on le croit (`no fake data` appliqué à une
+configuration). Corollaire : `unconfigured` porte désormais sa CAUSE (`manque: ["url" | "jeton"]`),
+les deux d'un coup — sinon la seconde n'apparaît qu'une fois la première réparée (leçon n° 8).
+
+**11. Le contrôle de DUPLICATION de la CI a trouvé ce qu'aucune relecture n'avait vu.**
+Le correctif de la leçon n° 10 écrivait la phrase « aucune URL de résumé configurée / aucun jeton
+x-hub-token configuré » DEUX fois — dans la carte et dans la page de détail —, plus un espion de
+`fetch` recopié dans deux cas de test. SonarCloud : **4,3 % de duplication sur le code neuf**
+(seuil 3 %). Les deux copies se lisent parfaitement bien isolément : **une duplication n'existe
+qu'à l'échelle du DIFF**, donc aucune relecture fichier par fichier ne pouvait la voir. Et ici elle
+n'était pas cosmétique — deux surfaces qui décrivent le MÊME état doivent dire la même chose, et
+deux phrases séparées divergent au premier ajustement. Le remède est la source unique
+(`phraseManques`, à côté du type qu'elle explique), jamais un seuil relevé.
+
+
+⚠️⚠️ **Et la suite de cette leçon est une leçon de MESURE.** La source unique `phraseManques` n'a
+fait passer le chiffre que de 4,3 % à 4,1 % : mon relevé ne portait que sur les fichiers du DIFF,
+alors que le détecteur compare le code neuf au **projet ENTIER**. Rejoué au bon périmètre : **12
+lignes neuves** dans un bloc répété, dont **10 dans `lib/sources.ts`** — les six entrées de la table
+des apps, qui ont par construction les mêmes champs et que l'ajout d'un septième a fait passer de 8
+à 10 lignes, donc au-dessus de la fenêtre du détecteur. **Un périmètre de mesure trop étroit donne
+un diagnostic qui a l'air juste et un remède qui ne bouge pas l'aiguille.**
+
+⚠️ Deux remèdes ont été ESSAYÉS puis ANNULÉS, chacun après mesure : un constructeur partagé pour les
+cinq apps du même domaine (re-mesuré — blocs répétés IDENTIQUES : un constructeur déguise la
+répétition d'une table, il ne la supprime pas), puis un `sonar-project.properties` portant
+`sonar.cpd.exclusions` (re-mesuré — **4,1 % inchangé, et le même identifiant d'analyse** : l'analyse
+AUTOMATIQUE ne lit pas ce fichier). ⚠️ Le second méritait d'être retiré plutôt que gardé « au cas
+où » : un fichier de configuration sans effet se lit comme un réglage POSÉ, et la session suivante
+chercherait pourquoi il ne s'applique pas (`DOC-STALE-IMPOSSIBILITY`).
+
+⚠️ Ce qui a fini par marcher : sortir les adresses d'accueil de la table (une ligne par app dans
+`ACCUEIL_PAR_ID`), ce qui ramène les entrées sous la fenêtre — **2,6 % mesuré**. C'est une
+contrainte d'OUTIL qui a choisi la forme, pas une amélioration, et c'est écrit tel quel dans le
+fichier. Le trou qu'une seconde liste ouvre est fermé des deux côtés : le TYPE interdit une app sans
+adresse (`SourceDef.id` est une clé de la table — perturbation : 1 erreur de compilation), un TEST
+interdit une adresse sans app (perturbation : 1 rouge).
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :
@@ -359,7 +407,12 @@ place redevient huit conventions différentes en trois mois.
 ## 11. Ajouter une app
 
 1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
-   `defaultUrl`, `urlEnv`, `tokenEnv`).
+   `accueilUrl`, `defaultSummaryUrl`, `urlEnv`, `tokenEnv`).
+   ⚠️ **`accueilUrl` (la page de l'app) et `defaultSummaryUrl` (l'endpoint du contrat) sont
+   DEUX champs**, même quand ils coïncident — c'est le cas de cinq apps sur six, et c'est
+   précisément ce qui a laissé passer le défaut de FinanceAI (cf. leçon n° 10).
+   ⚠️ `defaultSummaryUrl` vaut **`null`** quand aucune URL honnête n'existe : l'app est alors
+   `unconfigured` tant que sa variable n'est pas posée, et le hub ne part pas sur le réseau.
 2. La variable de jeton correspondante dans l'environnement (jamais en dur).
 
 C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît

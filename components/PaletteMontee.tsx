@@ -23,10 +23,15 @@ export async function PaletteMontee() {
   // Les URLs viennent de `sources.ts` (déclarées, pas publiées par les apps) : ce sont les
   // sous-domaines hubperso.com, connus avant tout fetch. Pas de summary à attendre, donc
   // pas de raccourci qui devient utilisable seulement une fois les apps réveillées.
+  //
+  // ⚠️ `accueilUrl` et NON l'origine de `summaryUrl` : la palette ouvre la PAGE de l'app,
+  // pas son endpoint de contrat. Les deux coïncidaient pour cinq apps sur six, ce qui a
+  // laissé la déduction passer pour un fait jusqu'au 21/09/2026 — et FinanceAI, dont le
+  // résumé vient d'ailleurs, n'a plus d'URL de résumé du tout : `new URL(null)` aurait levé.
   const apps = getSources().map((source) => ({
     id: source.id,
     nom: source.name,
-    url: new URL(source.summaryUrl).origin,
+    url: source.accueilUrl,
   }));
 
   return <PaletteCommandes commandes={commandes(apps)} />;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getSources } from "../lib/sources";
+import { ACCUEIL_PAR_ID, SOURCE_DEFS, getSources } from "../lib/sources";
 
 describe("getSources", () => {
   it("expose les six apps avec les URLs par défaut et aucun jeton", () => {
@@ -12,7 +12,8 @@ describe("getSources", () => {
       "jobai",
       "memoryai",
     ]);
-    expect(sources[0]?.summaryUrl).toBe("https://finance.hubperso.com/hub/summary");
+    // ⚠️ FinanceAI : `null`, PAS une URL. Voir le bloc dédié plus bas.
+    expect(sources[0]?.summaryUrl).toBeNull();
     expect(sources[1]?.summaryUrl).toBe("https://drive.hubperso.com/hub/summary");
     expect(sources[2]?.summaryUrl).toBe("https://batchchef.hubperso.com/api/hub/summary");
     expect(sources[3]?.summaryUrl).toBe("https://carai.hubperso.com/hub/summary");
@@ -46,9 +47,9 @@ describe("getSources", () => {
   });
 
   it("ignore les valeurs vides ou en espaces (retombe sur le défaut / null)", () => {
-    const sources = getSources({ HUB_TOKEN_FINANCEAI: "  ", FINANCEAI_SUMMARY_URL: "" });
-    expect(sources[0]?.token).toBeNull();
-    expect(sources[0]?.summaryUrl).toBe("https://finance.hubperso.com/hub/summary");
+    const sources = getSources({ HUB_TOKEN_DRIVEAI: "  ", DRIVEAI_SUMMARY_URL: "" });
+    expect(sources[1]?.token).toBeNull();
+    expect(sources[1]?.summaryUrl).toBe("https://drive.hubperso.com/hub/summary");
   });
 
   // VERROU DU RENDU EN FLUX. La grille réserve une tuile 2×2 pour le héros AVANT le moindre
@@ -60,6 +61,77 @@ describe("getSources", () => {
     const heroes = getSources({}).filter((s) => s.hero);
     expect(heroes).toHaveLength(1);
     expect(heroes[0]?.id).toBe("financeai");
+  });
+
+  // ── FinanceAI n'a PAS d'URL de résumé par défaut ────────────────────────────────────
+  //
+  // POURQUOI (21/09/2026, mesuré) : ce champ valait `https://finance.hubperso.com/hub/summary`
+  // — le SITE de l'app, pas son endpoint de contrat. FinanceAI ne publie pas son résumé
+  // depuis son site : les données ne quittent pas la machine de Marc, donc le résumé vient
+  // d'un serveur MCP auto-hébergé. L'URL par défaut répondait donc **200 avec `<!DOCTYPE
+  // html>`**, et le hub affichait « réponse non conforme au contrat » : un diagnostic qui
+  // accuse l'app et envoie corriger le mauvais dépôt.
+  //
+  // ⚠️ Ces assertions portent le FAIT (« sans la variable, on n'interroge RIEN »), pas la
+  // forme : une future URL stable se poserait ici en connaissance de cause, en réécrivant
+  // ce bloc — pas en le contournant.
+  describe("FinanceAI : aucune URL par défaut, par décision", () => {
+    it("n'a pas d'URL tant que FINANCEAI_SUMMARY_URL n'est pas posée", () => {
+      const sans = getSources({ HUB_TOKEN_FINANCEAI: "jeton" })[0];
+      expect(sans?.summaryUrl).toBeNull();
+      // Et surtout : l'ancien défaut ne doit REVENIR par aucun chemin.
+      expect(JSON.stringify(getSources({}))).not.toContain(
+        "finance.hubperso.com/hub/summary",
+      );
+    });
+
+    it("CONTRÔLE NÉGATIF : la variable posée rend bien la source interrogeable", () => {
+      // Sans ce cas, « summaryUrl est null » serait aussi vrai d'un champ qu'on aurait
+      // simplement cassé.
+      const avec = getSources({
+        HUB_TOKEN_FINANCEAI: "jeton",
+        FINANCEAI_SUMMARY_URL: "https://mcp.example/hub/summary",
+      })[0];
+      expect(avec?.summaryUrl).toBe("https://mcp.example/hub/summary");
+    });
+
+    it("garde quand même l'adresse HUMAINE de l'app (la palette en a besoin)", () => {
+      // C'est la moitié qu'un simple `defaultUrl: null` aurait PERDUE : la palette de
+      // commandes ouvre la page de l'app avant tout fetch, et elle la dérivait de l'URL
+      // de résumé. Deux besoins, deux champs.
+      expect(getSources({})[0]?.accueilUrl).toBe("https://finance.hubperso.com");
+    });
+  });
+
+  it("toute app AUTRE que FinanceAI garde une URL de résumé par défaut", () => {
+    // Anti-vacuité de la règle ci-dessus : si un lot futur mettait tous les défauts à
+    // `null`, les assertions de FinanceAI resteraient vertes et le hub n'interrogerait
+    // plus personne.
+    const autres = getSources({}).filter((s) => s.id !== "financeai");
+    expect(autres.length).toBeGreaterThan(0);
+    expect(autres.every((s) => typeof s.summaryUrl === "string")).toBe(true);
+  });
+
+  // ── L'adresse d'accueil vit dans une table À PART : elle ne doit pas DIVERGER ──────
+  //
+  // Le compilateur garde déjà un sens (`SourceDef.id` est une clé d'`ACCUEIL_PAR_ID`, donc
+  // une app sans adresse d'accueil ne compile pas). Il ne voit PAS l'autre : une clé restée
+  // dans la table après le retrait d'une app passerait inaperçue, et §11 dit exactement ce
+  // que coûte une seconde liste qui dérive.
+  it("les deux tables portent EXACTEMENT les mêmes apps", () => {
+    const declarees = SOURCE_DEFS.map((d) => d.id).sort();
+    const avecAccueil = Object.keys(ACCUEIL_PAR_ID).sort();
+    expect(avecAccueil).toEqual(declarees);
+    // Anti-vacuité : deux listes VIDES seraient aussi « égales ».
+    expect(declarees.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("chaque adresse d'accueil est une origine http(s) SANS chemin", () => {
+    // Une entrée qui porterait `/hub/summary` re-fabriquerait la confusion que la leçon
+    // n° 10 vient de supprimer — l'endpoint du contrat déguisé en page de l'app.
+    for (const [id, url] of Object.entries(ACCUEIL_PAR_ID)) {
+      expect(url, id).toMatch(/^https:\/\/[^/]+$/);
+    }
   });
 
   it("le héros ne dépend ni de l'environnement ni des données", () => {

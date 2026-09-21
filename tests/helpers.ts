@@ -7,6 +7,7 @@ export function hubSource(over: Partial<HubSource> = {}): HubSource {
     id: "financeai",
     name: "FinanceAI",
     summaryUrl: "https://finance.hubperso.com/hub/summary",
+    accueilUrl: "https://finance.hubperso.com",
     token: "jeton-de-test",
     hero: false,
     ...over,

@@ -126,7 +126,11 @@ export async function posterAction(params: {
   const { source, summary, hrefDemande, fetchImpl = fetch } = params;
 
   // Une app sans jeton configuré n'est pas interrogée — et encore moins mutée.
-  if (!source.token) return { etat: "non-configuree" };
+  // ⚠️ Et sans URL de résumé non plus : le verrou 3 compare l'origine de la cible à celle
+  // du `summaryUrl`. Sans lui il n'y a AUCUNE origine de référence, donc plus de verrou —
+  // exactement le cas que ce module existe pour empêcher. On refuse AVANT, plutôt que de
+  // laisser `origine(null)` rendre `null` et compter sur le message d'erreur.
+  if (!source.token || !source.summaryUrl) return { etat: "non-configuree" };
 
   const verdict = verifierAction({
     summary,
