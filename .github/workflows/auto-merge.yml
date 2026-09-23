@@ -30,6 +30,15 @@ on:
     workflows: ["*"]
   pull_request_target:
     types: [ready_for_review]
+  # ── LE RETOUR DE VERCEL ─────────────────────────────────────────────────────────────
+  #
+  # Vercel publie un STATUT de commit, pas un workflow : sa fin ne déclenche aucun
+  # `workflow_run`. Une PR dont la CI finit AVANT le déploiement de prévisualisation
+  # (« pas de merge : Vercel en cours ») n'avait plus que la passe planifiée — et GitHub
+  # espace en réalité ce cron « toutes les 30 min » de 4 à 5 h (mesuré le 23/09/2026 sur
+  # CarAI : 00:46, 05:22, 10:10, 15:07, 19:07 Z ; #138 à #140 vertes, restées ouvertes).
+  # `status` réveille l'examen dès qu'un statut passe au vert (filtré dans le `if:`).
+  status:
   # ── LA PASSE DE RATTRAPAGE, ET C'EST ELLE QUI REND L'ENSEMBLE FIABLE ───────────────
   #
   # `workflow_run` NE SE REJOUE JAMAIS. Un appel d'API bloqué par la limite de débit GitHub,
@@ -104,6 +113,7 @@ jobs:
     if: >
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'status' && github.event.state == 'success') ||
       github.event_name == 'pull_request_target' ||
       (github.event.workflow_run.event == 'pull_request' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
