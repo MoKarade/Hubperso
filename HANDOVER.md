@@ -270,3 +270,24 @@ que Cloudflare protège pendant que l'app serait ouverte.
   étaient fausses, et le coffre à jetons a été écrit puis retiré avant d'être livré.
 - `docs/ACCES-PAR-APP.md` — le modèle d'accès par app.
 - `docs/CONNEXION-UNIQUE.md` — le cookie partagé entre les apps.
+
+## Portes qualité de l'Atelier (S6, 23/09/2026)
+
+Contrôles automatiques en CI, jobs **Qualité** et **Sécurité** : la fusion automatique les attend.
+Principe du **cliquet** : `qualite/seuils.json` fige l'état du jour de la mise en place ; rien ne peut
+reculer. `npm run portes` mesure en local, `npm run portes:maj` resserre après une amélioration.
+
+| Porte | Seuil de départ |
+|---|---|
+| Typage (erreurs) | ≤ 0 |
+| Lint (erreurs) | ≤ 0 |
+| Lint (avertissements) | ≤ 2 |
+| Tests en échec | ≤ 0 |
+| Couverture `lib/` (% lignes) | ≥ 88.1 |
+| Couverture globale (% lignes) | ≥ 40.4 |
+| Couverture globale (% branches) | ≥ 92.5 |
+| Code mort (knip) | ≤ 23 |
+| Règles d'architecture (dependency-cruiser) | ≤ 0 |
+
+Sécurité : gitleaks sur tout l'historique + Semgrep (TypeScript, React, Next.js, secrets, OWASP), bloquants.
+Dependabot : mises à jour hebdomadaires (npm + actions), fusion automatique si tout est vert.
