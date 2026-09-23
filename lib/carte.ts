@@ -62,14 +62,76 @@ export interface Recommandation {
   href: string | null;
 }
 
+/**
+ * La PLACE dont dispose la carte dans la grille bento — pas un goût, une géométrie.
+ *
+ * ⚠️ POURQUOI LE CONTENU DÉPEND DE LA TAILLE, ET POURQUOI CE N'EST PAS « CONNAÎTRE L'APP ».
+ * La carte du héros est réservée sur 2×2 cases (`widget--lg`, `grid-row: span 2`) AVANT que
+ * les données n'arrivent, pour que la page ne saute pas pendant que les apps répondent. Son
+ * contenu n'en remplissait qu'une : mesuré sur la capture de Marc du 23/09, ~420 px de vide
+ * entre le dernier chiffre et le bouton, parce que `.actions` porte `margin-top: auto` et
+ * ramasse tout le surplus en un seul trou.
+ *
+ * `place` vient de `sources.ts` (`hero: true`), donc d'une décision de MISE EN PAGE du hub,
+ * jamais de l'identité de l'app. Une carte large montre plus de ce que l'app publie DÉJÀ —
+ * elle ne montre rien que l'app n'ait pas publié, et le hub ne consulte toujours aucun
+ * `app.id` pour décider quoi peindre.
+ */
+export type PlaceCarte = "normale" | "large";
+
+/** Une métrique secondaire et sa courbe. La série est vide quand la mémoire est trop jeune. */
+export interface SecondaireCarte {
+  metrique: HubMetric;
+  serie: Point[];
+}
+
+/**
+ * Combien d'alertes SUPPLÉMENTAIRES la carte liste sous le bandeau, et combien de lignes de
+ * `details` elle montre. Zéro sur une carte normale : ces blocs existent pour occuper la
+ * place RÉSERVÉE du héros, pas pour faire déborder les cartes d'une colonne.
+ *
+ * ⚠️ Les bornes sont DÉRIVÉES du vide mesuré (~420 px), pas choisies : 3 alertes (~80 px) +
+ * 2 sections de 4 lignes (~216 px) + la recommandation compacte (~40 px) ≈ 336 px. On
+ * remplit sans déborder, et le reste de l'écart est absorbé par les courbes des secondaires.
+ * Si Marc trouve la carte encore trop vide ou déjà trop chargée, ce sont CES trois nombres
+ * qu'on bouge — ils sont ici, ensemble, et nulle part ailleurs.
+ */
+export const ALERTES_SECONDAIRES_LARGE = 3;
+export const DETAILS_SECTIONS_LARGE = 2;
+export const DETAIL_LIGNES_MAX = 4;
+
+/** Une section `details` déjà bornée pour la carte. Le type vient du contrat. */
+export type SectionDetail = NonNullable<HubSummary["details"]>[number];
+
 export interface EtatCarte {
   /** `null` quand l'app ne publie aucune métrique — la carte le dira honnêtement. */
   heros: Heros | null;
-  secondaires: HubMetric[];
+  /** Les métriques secondaires AVEC leur courbe : la série se décide ici, pas au rendu. */
+  secondaires: SecondaireCarte[];
   /** L'alerte la plus grave, sortie de la liste pour être vue. */
   alertePrincipale: HubAlert | null;
-  /** Combien d'autres alertes existent, pour ne pas les cacher en silence. */
+  /**
+   * Les alertes suivantes, LISTÉES quand la carte a la place (héros). Vide ailleurs.
+   *
+   * ⚠️ Elles étaient seulement COMPTÉES (« + 1 autre alerte ») — sur la capture du 23/09, une
+   * alerte était donc résumée à un chiffre pendant qu'il restait 420 px de vide juste en
+   * dessous. Compter au lieu de montrer se défend quand la place manque ; ici elle ne
+   * manquait pas.
+   */
+  alertesSecondaires: HubAlert[];
+  /** Combien d'alertes restent hors de tout affichage, pour ne pas les cacher en silence. */
   autresAlertes: number;
+  /**
+   * Les sections `details` retenues pour la carte, déjà bornées en sections ET en lignes.
+   *
+   * ⚠️ CECI REVIENT SUR UN ARBITRAGE DU 15/09, et c'est délibéré. `app/app/[id]/page.tsx`
+   * portait « rendu ICI et nulle part ailleurs […] 48 lignes sur une carte bento casseraient
+   * la grille ». La raison était juste et reste vraie POUR 48 LIGNES : on en montre au plus
+   * huit, et seulement sur la carte qui a 2×2 cases réservées. Marc, 23/09 : « remplis plus
+   * la carte FinanceAI […] trop de vide ». Le commentaire de la page de détail est corrigé
+   * dans la même PR — une règle qu'on sait fausse cesse d'être lue comme une règle.
+   */
+  details: SectionDetail[];
   actions: HubSummary["actions"];
   /**
    * `null` quand l'app n'en publie pas — c'est le cas le plus courant, et il ne doit rien
@@ -103,6 +165,7 @@ export function etatCarte(
   summary: HubSummary,
   historique: Releve[],
   maintenantMs: number,
+  place: PlaceCarte = "normale",
 ): EtatCarte {
   const designee = summary.metrics.find((m) => m.primary === true);
   const elue = designee ?? summary.metrics[0];
@@ -121,14 +184,47 @@ export function etatCarte(
     (a, b) => RANG_SEVERITE[a.severity] - RANG_SEVERITE[b.severity],
   );
 
+  const large = place === "large";
+  // Le bandeau prend la première ; la liste prend les suivantes, bornée.
+  const alertesSecondaires = large ? triees.slice(1, 1 + ALERTES_SECONDAIRES_LARGE) : [];
+  // ⚠️ Ce qui RESTE, c'est ce qu'aucun des deux ne montre — jamais « total − 1 ». Compter à
+  // partir du bandeau seul aurait réaffiché « + 3 autres » sous une liste qui en montre
+  // trois : le compteur aurait contredit ce qu'on voit juste au-dessus.
+  const montrees = (triees.length > 0 ? 1 : 0) + alertesSecondaires.length;
+
   return {
     heros,
-    secondaires: reste,
+    // ⚠️ La série est cherchée par le LIBELLÉ de la métrique, qui est sa clé d'historique
+    // (`[HUB-METRIQUE-LIBELLE-EST-UNE-CLE]`). Un libellé qui change de jour en jour rend une
+    // série vide sous une valeur pourtant publiée — le défaut que FinanceAI a payé le 17/09.
+    secondaires: reste.map((metrique) => ({
+      metrique,
+      serie: large ? serieMetrique(historique, metrique.label) : [],
+    })),
     alertePrincipale: triees[0] ?? null,
-    autresAlertes: Math.max(0, triees.length - 1),
+    alertesSecondaires,
+    autresAlertes: Math.max(0, triees.length - montrees),
+    details: large ? bornerDetails(summary.details) : [],
     actions: summary.actions,
     recommandation: recommandation(summary),
   };
+}
+
+/**
+ * Borne les sections `details` pour qu'elles tiennent sur une carte : au plus
+ * `DETAILS_SECTIONS_LARGE` sections, au plus `DETAIL_LIGNES_MAX` lignes chacune.
+ *
+ * ⚠️ On COUPE, et on ne dit pas qu'on coupe — contrairement aux alertes, où le reste est
+ * compté. La différence n'est pas un oubli : une alerte masquée est une information perdue,
+ * une ligne de détail masquée est à un clic dans la vue de détail, qui les rend TOUTES. La
+ * carte est un aperçu ; la page de détail est la source.
+ */
+function bornerDetails(details: HubSummary["details"]): SectionDetail[] {
+  if (!details) return [];
+  return details
+    .slice(0, DETAILS_SECTIONS_LARGE)
+    .map((section) => ({ ...section, items: section.items.slice(0, DETAIL_LIGNES_MAX) }))
+    .filter((section) => section.items.length > 0);
 }
 
 /** « Inchangé depuis 20 min » n'apprend rien : sous le seuil, on ne dit rien du tout. */

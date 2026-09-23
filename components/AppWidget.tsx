@@ -4,7 +4,7 @@ import type { HubSummary } from "@mokarade/hub-contract";
 import { phraseManques } from "@/lib/fetchSummary";
 import type { SummaryResult } from "@/lib/fetchSummary";
 import type { Releve } from "@/lib/historique";
-import { etatCarte, variationLisible } from "@/lib/carte";
+import { etatCarte, variationLisible, type PlaceCarte } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
@@ -14,7 +14,11 @@ import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertBanner } from "./AlertBanner";
 import { ActionList } from "./ActionList";
+import { AlertList } from "./AlertList";
 import { Sparkline } from "./Sparkline";
+import { Icone } from "./Icone";
+import { LignesDetail } from "./LignesDetail";
+import { Recommandation } from "./Recommandation";
 
 /**
  * Le bloc dominant de la carte : la métrique que l'app a choisi de publier en premier, sa
@@ -64,24 +68,31 @@ function CorpsOk({
   summary,
   historique,
   maintenantMs,
+  place,
 }: {
   summary: HubSummary;
   historique: Releve[];
   maintenantMs: number;
+  place: PlaceCarte;
 }) {
-  const etat = etatCarte(summary, historique, maintenantMs);
-  // ⚠️ `etat.recommandation` ne compte PLUS ici : depuis qu'elle a quitté la carte, une app
-  // qui ne publierait QU'une recommandation n'a effectivement rien à montrer SUR LA CARTE —
-  // et « aucune donnée » est alors la vérité, le conseil étant dans la vue détaillée.
+  const etat = etatCarte(summary, historique, maintenantMs, place);
+  // ⚠️ La recommandation compte de nouveau dans « vide » depuis qu'elle est revenue sur la
+  // carte (23/09) : une app qui ne publierait QU'un conseil a désormais quelque chose à
+  // montrer ici, donc écrire « aucune donnée » serait faux.
   const vide =
     etat.heros === null &&
     etat.alertePrincipale === null &&
+    etat.recommandation === null &&
     etat.actions.length === 0;
 
   return (
     <>
       {etat.heros && <Heros heros={etat.heros} />}
       {etat.alertePrincipale && <AlertBanner alert={etat.alertePrincipale} />}
+      {/* Les suivantes sont LISTÉES quand la carte a la place, au lieu d'être réduites à un
+          compteur. Voir `EtatCarte.alertesSecondaires` : sur la capture du 23/09, une alerte
+          était résumée à « + 1 autre alerte » avec 420 px de vide juste en dessous. */}
+      <AlertList alerts={etat.alertesSecondaires} />
       {etat.autresAlertes > 0 && (
         // Compté, jamais escamoté : une alerte cachée sans trace est une alerte perdue.
         <p className="widget__reste">
@@ -90,11 +101,23 @@ function CorpsOk({
         </p>
       )}
       <MetricList metrics={etat.secondaires} />
-      {/* ⚠️ LA RECOMMANDATION N'EST PLUS ICI — arbitrage de Marc, 15/09 : « faut aussi moins
-          de texte ». C'était le bloc le plus verbeux de la carte, et le seul dont l'absence
-          ne coûte aucune donnée : il reste entier dans `/app/[id]`, en tête, là où on vient
-          justement pour lire. Le garder sur la carte ET le mettre en détail revenait à
-          écrire deux fois la même phrase sur deux écrans successifs. */}
+      {/* ⚠️ LA RECOMMANDATION EST REVENUE — et l'arbitrage de Marc du 15/09 (« faut aussi
+          moins de texte ») n'est pas contredit : elle est rendue en `compact`, donc le
+          `pourquoi` reste dans `/app/[id]`. Ce qui revient est UNE ligne avec son icône, pas
+          le bloc de deux paragraphes qui avait été retiré. Marc, 23/09 : « le conseil est
+          parti » + « chiffres et icônes, peu de texte ». */}
+      {etat.recommandation && <Recommandation reco={etat.recommandation} compact />}
+      {/* Les sections `details` de l'app, bornées par `etatCarte`. Vides sur une carte d'une
+          colonne : elles existent pour occuper la place RÉSERVÉE du héros. */}
+      {etat.details.map((section, s) => (
+        <section className="widget__details" aria-label={section.title} key={`${section.title}-${s}`}>
+          <h3 className="widget__details-titre">
+            <Icone nom="section" />
+            {section.title}
+          </h3>
+          <LignesDetail items={section.items} />
+        </section>
+      ))}
       <ActionList actions={etat.actions} appId={summary.app.id} />
       {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
@@ -155,7 +178,10 @@ function Pied({
       )}
       {ageDonnee !== null ? (
         <span title={`Données du ${formatDateTime(summary.dataAsOf!)}`}>
-          Données d’il y a {formatDuree(ageDonnee)}
+          {/* L'horloge remplace le mot « Données » comme point d'entrée du regard : c'est la
+              ligne qu'on balaie en dernier, et une icône s'y repère sans être lue. Le texte
+              reste entier — l'icône double, elle ne remplace pas (cf. `Icone.tsx`). */}
+          <Icone nom="horloge" /> Données d’il y a {formatDuree(ageDonnee)}
         </span>
       ) : (
         // L'app ne publie pas `dataAsOf` : le hub ne SAIT pas si la donnée est fraîche, et il
@@ -249,6 +275,10 @@ export function AppWidget({
             summary={result.summary}
             historique={historique}
             maintenantMs={maintenantMs}
+            // La GÉOMÉTRIE décide du contenu, pas l'identité de l'app : `widget--lg` est
+            // réservé sur 2×2 cases, donc c'est la seule carte qui a la place d'en montrer
+            // plus. Dérivé de `size` et non de `featured` pour qu'un seul endroit décide.
+            place={size === "widget--lg" ? "large" : "normale"}
           />
         ) : (
           <CorpsProbleme result={result} />
