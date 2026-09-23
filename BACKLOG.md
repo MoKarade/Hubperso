@@ -5,6 +5,37 @@ l'état réel avant de coder.
 
 ## À faire
 
+- **[H-29] La carte du héros laissait 420 px de blanc, et ce n'était pas un manque de
+  données.** Livré le 23/09/2026. Marc, capture à l'appui : « remplis plus la carte FinanceAI
+  […] trop de vide ».
+  - ⚠️ **LA CAUSE N'ÉTAIT NI L'APP NI LE CONTRAT.** FinanceAI publie déjà les **6** métriques
+    du plafond, plus des alertes, une recommandation et des blocs `details`. La carte du héros
+    est RÉSERVÉE sur 2×2 cases (`widget--lg`, `grid-row: span 2`) avant que les données
+    n'arrivent, pour que la page ne saute pas pendant que les apps répondent — et son contenu
+    n'en remplissait qu'une. `.actions` portant `margin-top: auto`, tout le surplus se
+    ramassait en **un seul trou** juste avant le bouton.
+  - [x] Les alertes suivantes sont LISTÉES au lieu d'être réduites à « + 1 autre alerte » —
+    une alerte était résumée à un chiffre avec 420 px de vide dessous.
+  - [x] Un APERÇU des blocs `details` sur la carte du héros, borné à 2 sections × 4 lignes.
+  - [x] La recommandation revient, en `compact` (une ligne + icône).
+  - [x] Une courbe sous chaque métrique secondaire, pas seulement sous le gros chiffre.
+  - [x] Un jeu d'icônes SVG (`lib/icones.ts` choisit, `components/Icone.tsx` dessine).
+  - ⚠️ **DEUX ARBITRAGES DU 15/09 SONT REVUS, tous deux sur demande de Marc du 23/09** :
+    la recommandation avait quitté la carte (« faut aussi moins de texte » — elle revient
+    COMPACTE, le « pourquoi » reste en page de détail), et les `details` étaient « rendus ICI
+    et nulle part ailleurs ». Leur raison — 48 lignes casseraient la grille — reste vraie pour
+    48 lignes : d'où la borne à 8, et la restriction à la carte qui a deux rangées réservées.
+    Le commentaire de `app/app/[id]/page.tsx` est corrigé dans la même PR.
+  - ⚠️ **ICÔNES ≠ EMOJIS.** Marc a demandé « chiffres et icônes » ; sa règle « pas d'emoji dans
+    l'UI produit » tient. Un emoji est un CARACTÈRE dessiné par la police du système ; ces
+    icônes sont des SVG inline qui héritent de `currentColor`. La CSP (`default-src 'self'`)
+    interdisait de toute façon une librairie d'icônes servie par un CDN.
+  - ⚠️ **CE QUI RESTE À MESURER, ET QUE SEUL MARC PEUT TRANCHER** : si le trou persiste, le
+    levier suivant est le `grid-row: span 2` de `.widget--lg` — c'est-à-dire renoncer à la
+    réservation, donc accepter que la grille bouge pendant le chargement. Les trois bornes
+    (`ALERTES_SECONDAIRES_LARGE`, `DETAILS_SECTIONS_LARGE`, `DETAIL_LIGNES_MAX`) sont réunies
+    en tête de `lib/carte.ts` pour être ajustées d'un seul endroit.
+
 - **[H-28] La chaîne de build : le `GITHUB_TOKEN` restait lisible tout le run.** Livré le
   18/09/2026 (lot L2 de l'audit du 18/09, périmètre arbitré par Marc).
   - Les **5** étapes `actions/checkout` portent `persist-credentials: false`. La v2+ écrit le

@@ -25,13 +25,17 @@
 // « n'affiche rien » : le conseil reste lisible quand son lien est refusé.
 
 import type { Recommandation as Reco } from "@/lib/carte";
+import { Icone } from "./Icone";
 
 export function Recommandation({ reco, compact = false }: { reco: Reco; compact?: boolean }) {
   return (
     <div className="reco" data-compact={compact ? "" : undefined}>
-      <span className="reco__fleche" aria-hidden="true">
-        →
-      </span>
+      {/* ⚠️ UNE AMPOULE, PAS UN TRIANGLE D'ALERTE — et c'est la raison d'être de ce
+          composant : un conseil n'est pas un problème. Le vocabulaire visuel des alertes lui
+          est INTERDIT, sinon il se range dans la liste des incidents et se fait ignorer avec
+          eux. C'était la flèche « → », un caractère ; le dessin tient le même rôle en
+          disant mieux « suggestion » que « étape suivante ». */}
+      <Icone nom="conseil" className="reco__icone" />
       <div className="reco__texte">
         <p className="reco__label">
           {reco.href ? (

@@ -32,6 +32,8 @@ import { texteSur } from "@/lib/couleur";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionList } from "@/components/ActionList";
 import { Recommandation } from "@/components/Recommandation";
+import { Icone } from "@/components/Icone";
+import { LignesDetail } from "@/components/LignesDetail";
 
 export const dynamic = "force-dynamic";
 
@@ -277,8 +279,13 @@ export default async function DetailAppPage({
               DriveAI, les placements par compte de FinanceAI, la dernière passe de veille de
               JobAI. Le contrat v1.3 leur donne `details` : jusqu'à 6 sections de 8 lignes,
               chacune titrée par l'app.
-              Rendu ICI et nulle part ailleurs (choix de Marc, 15/09) : 48 lignes sur une
-              carte bento casseraient la grille, et le lien « détail » y mène en un clic.
+              ⚠️ CE COMMENTAIRE A DIT « rendu ICI et nulle part ailleurs » JUSQU'AU 23/09/2026.
+              C'est devenu faux ce jour-là : la carte du héros en montre un APERÇU borné (2
+              sections × 4 lignes, cf. `bornerDetails` dans `lib/carte.ts`). La raison
+              d'alors — « 48 lignes sur une carte bento casseraient la grille » — reste vraie
+              POUR 48 LIGNES, et c'est pourquoi l'aperçu est borné et réservé à la carte qui
+              a 2×2 cases. ICI, et seulement ici, elles sont rendues TOUTES : la carte est un
+              aperçu, cette page est la source.
               GÉNÉRIQUE, comme tout le reste : le hub ne connaît aucun de ces titres, il rend
               ce qu'on lui publie. Aucune section n'est réordonnée ni fusionnée — l'ordre est
               celui de l'app, qui seule sait ce qui compte le plus chez elle. */}
@@ -288,34 +295,15 @@ export default async function DetailAppPage({
               aria-label={section.title}
               key={`${section.title}-${s}`}
             >
-              <h2 className="detail__titre">{section.title}</h2>
-              <ul className="detail__lignes">
-                {section.items.map((item, i) => {
-                  const tone = item.severity ? severityTone(item.severity) : null;
-                  return (
-                    <li className="detail__ligne" key={`${item.label}-${i}`}>
-                      <span className="detail__ligne-label">
-                        {item.label}
-                        {/* Le `hint` est la précision courte que l'app attache à la ligne.
-                            Rendu en texte, jamais en infobulle : une infobulle ne se lit pas
-                            au clavier et ne s'imprime pas. */}
-                        {item.hint && <span className="detail__ligne-hint">{item.hint}</span>}
-                      </span>
-                      <span className="detail__ligne-valeur" data-tone={tone ?? undefined}>
-                        {formatMetricValue(item)}
-                        {item.trend !== undefined && (
-                          <span
-                            className="metric__trend"
-                            data-dir={item.trend >= 0 ? "up" : "down"}
-                          >
-                            {formatTrend(item.trend)}
-                          </span>
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <h2 className="detail__titre">
+                <Icone nom="section" />
+                {section.title}
+              </h2>
+              {/* ⚠️ MÊME COMPOSANT QUE LA CARTE (`LignesDetail`), et c'est délibéré : depuis
+                  le 23/09 ces lignes sont rendues à DEUX endroits. Deux copies se lisent très
+                  bien chacune de son côté — une duplication n'existe qu'à l'échelle du diff
+                  (leçon n° 11) — et divergeraient au premier ajustement de `hint`. */}
+              <LignesDetail items={section.items} />
             </section>
           ))}
 

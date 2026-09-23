@@ -53,7 +53,7 @@ describe("etatCarte — le héros", () => {
     // carte au gré des chiffres.
     const etat = etatCarte(summary([m("Recettes", 12), m("Batchs", 9999)]), [], T0);
     expect(etat.heros!.metrique.label).toBe("Recettes");
-    expect(etat.secondaires.map((x) => x.label)).toEqual(["Batchs"]);
+    expect(etat.secondaires.map((x) => x.metrique.label)).toEqual(["Batchs"]);
   });
 
   it("rend null quand l'app ne publie aucune métrique", () => {
@@ -74,7 +74,7 @@ describe("etatCarte — le héros", () => {
     expect(etat.heros!.metrique.label).toBe("Charge");
     // Et la désignée ne doit pas aussi figurer dans les secondaires : elle s'afficherait
     // deux fois sur la même carte, une fois en grand et une fois en petit.
-    expect(etat.secondaires.map((x) => x.label)).toEqual(["Recettes", "Batchs"]);
+    expect(etat.secondaires.map((x) => x.metrique.label)).toEqual(["Recettes", "Batchs"]);
   });
 
   it("ignore un `primary: false` explicite et retombe sur la première", () => {
@@ -317,5 +317,128 @@ describe("variationLisible — la ligne que Marc ne comprenait pas", () => {
     // La carte doit alors dire « pas encore d'historique », jamais « 0 % » : on ne SAIT
     // pas, et l'ignorance ne s'affiche pas comme une stabilité.
     expect(variationLisible({ label: "X", value: 1, format: "number" }, null)).toBeNull();
+  });
+});
+
+// ══ LA PLACE DISPONIBLE DÉCIDE DE CE QUE LA CARTE MONTRE ══════════════════════════════
+//
+// Marc, 23/09/2026, capture à l'appui : « remplis plus la carte FinanceAI […] trop de vide ».
+// Mesuré sur sa capture — ~420 px entre le dernier chiffre et le bouton. La cause n'était pas
+// un manque de données (FinanceAI publie les 6 métriques du contrat, plus des alertes et des
+// blocs `details`) mais une carte RÉSERVÉE sur 2×2 cases dont le contenu n'en remplissait
+// qu'une, `.actions` ramassant tout le surplus en un seul trou par son `margin-top: auto`.
+//
+// ⚠️ CE QUE CES CAS GARDENT VRAIMENT : que la carte d'UNE colonne ne grossisse pas au
+// passage. C'est le risque réel du lot — une carte `--md` qui se mettrait à lister quatre
+// alertes et huit lignes de détail casserait la grille, ce que l'arbitrage du 15/09 voulait
+// justement éviter. Chaque cas « large » a donc son jumeau « normale ».
+
+const alerte = (label: string, severity: HubAlert["severity"] = "warn"): HubAlert => ({
+  label,
+  severity,
+});
+
+const section = (title: string, n: number) => ({
+  title,
+  items: Array.from({ length: n }, (_, i) => ({
+    label: `${title} ${i + 1}`,
+    value: i,
+    format: "number" as const,
+  })),
+});
+
+describe("etatCarte — ce que la place autorise", () => {
+  it("une carte NORMALE ne liste aucune alerte secondaire et aucun détail", () => {
+    const etat = etatCarte(
+      summary([m("A", 1)], [alerte("un"), alerte("deux"), alerte("trois")], {
+        details: [section("Frais", 8)],
+      }),
+      [],
+      T0,
+    );
+    expect(etat.alertesSecondaires).toEqual([]);
+    expect(etat.details).toEqual([]);
+    // Et le compteur dit bien ce qui reste : deux alertes non montrées sous le bandeau.
+    expect(etat.autresAlertes).toBe(2);
+  });
+
+  it("une carte LARGE liste les alertes suivantes, bornées", () => {
+    // Cinq alertes : une au bandeau, trois listées, une comptée. Le plafond doit MORDRE —
+    // avec quatre alertes, un `slice` absent rendrait le même résultat.
+    const etat = etatCarte(
+      summary(
+        [m("A", 1)],
+        [alerte("un"), alerte("deux"), alerte("trois"), alerte("quatre"), alerte("cinq")],
+      ),
+      [],
+      T0,
+      "large",
+    );
+    expect(etat.alertesSecondaires.map((a) => a.label)).toEqual(["deux", "trois", "quatre"]);
+    expect(etat.autresAlertes).toBe(1);
+  });
+
+  it("`autresAlertes` compte ce qu'AUCUNE des deux surfaces ne montre", () => {
+    // ⚠️ Le défaut plausible est `total − 1`, qui aurait affiché « + 3 autres » SOUS une
+    // liste qui en montre trois : le compteur aurait contredit ce qu'on lit juste au-dessus.
+    const etat = etatCarte(
+      summary([m("A", 1)], [alerte("un"), alerte("deux"), alerte("trois")]),
+      [],
+      T0,
+      "large",
+    );
+    expect(etat.alertesSecondaires).toHaveLength(2);
+    expect(etat.autresAlertes).toBe(0);
+  });
+
+  it("une carte LARGE borne les `details` en sections ET en lignes", () => {
+    const etat = etatCarte(
+      summary([m("A", 1)], [], {
+        details: [section("Un", 8), section("Deux", 2), section("Trois", 5)],
+      }),
+      [],
+      T0,
+      "large",
+    );
+    expect(etat.details.map((s) => s.title)).toEqual(["Un", "Deux"]);
+    // La première est COUPÉE à 4 : sans la borne par ligne, elle en rendrait 8.
+    expect(etat.details[0]!.items).toHaveLength(4);
+    // La seconde en a moins que la borne : on ne la complète pas, on la laisse telle quelle.
+    expect(etat.details[1]!.items).toHaveLength(2);
+  });
+
+  it("ne rend pas une section de `details` VIDE", () => {
+    // Le contrat ne l'interdit pas côté hub : une app peut publier une section sans ligne,
+    // et un titre seul sur la carte occuperait de la place en ne disant rien.
+    const etat = etatCarte(summary([m("A", 1)], [], { details: [section("Vide", 0)] }), [], T0, "large");
+    expect(etat.details).toEqual([]);
+  });
+
+  it("une carte LARGE donne sa courbe à chaque métrique SECONDAIRE", () => {
+    const historique = [
+      releve(-3 * JOUR, [m("A", 10), m("B", 100)]),
+      releve(-1 * JOUR, [m("A", 12), m("B", 140)]),
+    ];
+    const large = etatCarte(summary([m("A", 12), m("B", 140)]), historique, T0, "large");
+    expect(large.secondaires[0]!.metrique.label).toBe("B");
+    expect(large.secondaires[0]!.serie.length).toBeGreaterThan(1);
+
+    // ⚠️ Anti-vacuité : la MÊME mémoire ne doit RIEN donner à une carte d'une colonne. Sans
+    // ce jumeau, le cas ci-dessus passerait aussi si la série était calculée partout — et la
+    // carte `--md` porterait des courbes qu'elle n'a pas la hauteur d'afficher.
+    const normale = etatCarte(summary([m("A", 12), m("B", 140)]), historique, T0);
+    expect(normale.secondaires[0]!.serie).toEqual([]);
+  });
+
+  it("la série d'une secondaire est cherchée par son LIBELLÉ, pas par sa position", () => {
+    // `[HUB-METRIQUE-LIBELLE-EST-UNE-CLE]` : l'historique est keyé par le libellé. Une
+    // recherche par index rendrait la série de « A » sous la valeur de « B » — un graphe
+    // faux sous un bon chiffre, et rien ne le signalerait à l'écran.
+    const historique = [
+      releve(-3 * JOUR, [m("A", 10), m("B", 100)]),
+      releve(-1 * JOUR, [m("A", 12), m("B", 140)]),
+    ];
+    const etat = etatCarte(summary([m("A", 12), m("B", 140)]), historique, T0, "large");
+    expect(etat.secondaires[0]!.serie.map((p) => p.v)).toEqual([100, 140]);
   });
 });

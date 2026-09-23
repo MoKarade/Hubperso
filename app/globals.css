@@ -400,6 +400,9 @@ a:focus-visible,
   color: var(--danger);
 }
 .metric__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
   font-size: 0.76rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -875,17 +878,15 @@ a:focus-visible,
   font-size: 0.86rem;
   line-height: 1.35;
 }
+/* ⚠️ C'ÉTAIT UNE PASTILLE PLEINE portant le caractère « ! » en blanc — donc un `color: white`
+   codé en dur sur un fond `--danger`, le seul endroit de la carte qui s'autorisait ça. Le
+   dessin rend le disque inutile : le trait prend `currentColor`, donc la teinte de gravité,
+   et reste lisible sur les deux thèmes sans qu'aucune couleur ne soit écrite deux fois. */
 .bandeau__icone {
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
   width: 18px;
   height: 18px;
-  border-radius: 999px;
-  background: var(--danger);
-  color: white;
-  font-size: 0.72rem;
-  font-weight: 800;
+  color: var(--danger);
 }
 .bandeau__label {
   flex: 1 1 auto;
@@ -1789,9 +1790,11 @@ a:focus-visible,
   border-left: 3px solid var(--info);
   background: var(--surface);
 }
-.reco__fleche {
+.reco__icone {
   flex: none;
-  line-height: 1.35;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
   color: var(--info);
 }
 .reco__texte {
@@ -1869,4 +1872,107 @@ a:focus-visible,
   font-size: 0.82rem;
   line-height: 1.4;
   color: var(--text-soft);
+}
+
+/* ══ ICÔNES ═══════════════════════════════════════════════════════════════════════════
+   Marc, 23/09/2026 : « chiffres et icônes, peu de texte ». Les tracés vivent dans
+   `components/Icone.tsx` ; ici, seulement la taille et la couleur.
+
+   ⚠️ `1em` ET PAS UNE TAILLE EN PIXELS : l'icône suit la taille du texte qu'elle accompagne,
+   donc elle reste proportionnée dans un titre comme dans une ligne de détail — et elle suit
+   le zoom du navigateur, qu'une valeur en `px` ignorerait.
+   ⚠️ `currentColor` (posé dans le SVG) : la couleur vient du contexte. Les modificateurs
+   ci-dessous ne servent QUE quand l'icône doit porter une gravité différente de son texte,
+   c'est-à-dire dans une liste où le libellé reste neutre. */
+.icone {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  vertical-align: -0.125em;
+}
+.icone--ok {
+  color: var(--ok);
+}
+.icone--warn {
+  color: var(--warn);
+}
+.icone--danger {
+  color: var(--danger);
+}
+.icone--info {
+  color: var(--info);
+}
+.icone--neutral {
+  color: var(--text-faint);
+}
+
+/* ══ LA COURBE D'UNE MÉTRIQUE SECONDAIRE ══════════════════════════════════════════════
+   Le héros avait déjà la sienne ; les secondaires n'en avaient aucune. Sur la carte
+   RÉSERVÉE sur 2×2 cases, c'est de la place occupée par de l'information plutôt que par du
+   blanc — et une valeur seule ne dit pas si elle monte.
+
+   ⚠️ HAUTEUR FIXE, et faible : une sparkline qui grandirait avec la carte finirait par
+   ressembler à un graphe et inviterait à y lire des valeurs. On lit une FORME ici ; les
+   valeurs sont écrites juste au-dessus. */
+.metric__courbe {
+  display: block;
+  height: 22px;
+  margin-top: 0.15rem;
+  opacity: 0.75;
+}
+
+/* ══ APERÇU DES BLOCS `details` SUR LA CARTE ══════════════════════════════════════════
+   ⚠️ Rendus ici DEPUIS LE 23/09 seulement, et bornés par `bornerDetails` (2 sections × 4
+   lignes). L'arbitrage du 15/09 disait « nulle part ailleurs que la page de détail », et sa
+   raison — 48 lignes casseraient la grille — reste vraie pour 48 lignes : d'où la borne, et
+   d'où la restriction à la carte qui a deux rangées réservées.
+
+   ⚠️ `margin-top: auto` N'EST PAS POSÉ ICI. C'est `.actions` qui le porte et qui ramasse le
+   surplus de hauteur ; en mettre un second, les deux se disputeraient l'espace et le bouton
+   remonterait au milieu de la carte. Le vide se comble par du CONTENU, pas par une seconde
+   règle d'espacement. */
+.widget__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.widget__details-titre {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+/* Les lignes elles-mêmes réutilisent `.detail__lignes` / `.detail__ligne`, partagées avec la
+   page de détail (`components/LignesDetail.tsx`) — une seule source, deux surfaces. Seule la
+   taille change ici : sur une carte, on survole ; sur la page, on lit. */
+.widget__details .detail__ligne {
+  font-size: 0.82rem;
+  padding-block: 0.28rem;
+}
+
+/* Le libellé d'une ligne de détail peut porter une icône de gravité : il devient donc une
+   boîte flex, sans quoi l'icône se poserait sur la ligne de base et décalerait le texte. */
+.detail__ligne-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.detail__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Le pied porte désormais une horloge devant la fraîcheur. `inline-flex` sur le `span` pour
+   que l'icône et le texte restent solidaires quand la ligne se replie sur deux lignes. */
+.widget__foot > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }

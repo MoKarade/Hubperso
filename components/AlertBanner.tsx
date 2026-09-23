@@ -10,17 +10,24 @@
 
 import type { HubAlert } from "@mokarade/hub-contract";
 import { safeHttpUrl } from "@/lib/url";
+import { Icone } from "./Icone";
+import { iconeSeverite } from "@/lib/icones";
 
 export function AlertBanner({ alert }: { alert: HubAlert }) {
   // Même filtre que partout ailleurs : un href du contrat ne devient cliquable que s'il est
   // http/https. Jamais rendu brut.
   const href = safeHttpUrl(alert.href);
+  const icone = iconeSeverite(alert.severity);
 
   return (
     <div className="bandeau" role="alert">
-      <span className="bandeau__icone" aria-hidden="true">
-        !
-      </span>
+      {/* ⚠️ C'ÉTAIT LE CARACTÈRE « ! », pas un dessin — donc à la merci de la police et sans
+          rapport de forme avec la gravité. L'icône vient maintenant de `severity`, un champ
+          du CONTRAT : triangle pour `alert`, cercle pour `warn`. Deux FORMES distinctes et
+          pas seulement deux couleurs, parce que deux ronds de teintes voisines sont
+          indiscernables pour un daltonien. `info` n'en a pas : ce bandeau ne sert que les
+          deux gravités hautes, et un pictogramme sur tout n'en signale plus aucun. */}
+      {icone && <Icone nom={icone} className="bandeau__icone" />}
       <span className="bandeau__label">{alert.label}</span>
       {href && (
         <a

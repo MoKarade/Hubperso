@@ -1,13 +1,24 @@
 import type { HubAlert } from "@mokarade/hub-contract";
 import { severityTone } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
+import { Icone } from "./Icone";
+import { iconeSeverite } from "@/lib/icones";
 
 function AlertRow({ alert }: { alert: HubAlert }) {
   const tone = severityTone(alert.severity);
   const href = safeHttpUrl(alert.href);
+  const icone = iconeSeverite(alert.severity);
+  // ⚠️ L'icône REMPLACE la pastille quand la gravité en a une, elle ne s'y ajoute pas : deux
+  // marqueurs côte à côte pour la même information font une colonne de bruit. `info` n'a pas
+  // d'icône (cf. `iconeSeverite`), et garde donc sa pastille — c'est le seul cas où la
+  // couleur porte le signal toute seule, et c'est acceptable pour la gravité la plus basse.
   const content = (
     <>
-      <span className={`alert__dot alert__dot--${tone}`} aria-hidden="true" />
+      {icone ? (
+        <Icone nom={icone} className={`icone--${tone}`} />
+      ) : (
+        <span className={`alert__dot alert__dot--${tone}`} aria-hidden="true" />
+      )}
       <span className="alert__label">{alert.label}</span>
     </>
   );
