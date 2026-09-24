@@ -1,6 +1,6 @@
 {
   "_doc": "Seuils du cliquet (portes qualité de l'Atelier, S6). Valeurs mesurées le jour de la mise en place (Linux, Node 24.21) : l'existant est toléré, rien ne peut reculer. `npm run portes:maj` resserre un seuil quand le chiffre s'améliore ; le desserrer demande `--forcer` et une décision de Marc.",
-  "mis_a_jour": "2026-09-23",
+  "mis_a_jour": "2026-09-24",
   "config": {
     "app": "Hubperso",
     "lint": "eslint .",
@@ -29,13 +29,13 @@
       "max": 0
     },
     "couverture.lignes_coeur": {
-      "min": 88.1
+      "min": 88.3
     },
     "couverture.lignes_global": {
-      "min": 40.4
+      "min": 56.8
     },
     "couverture.branches_global": {
-      "min": 92.5
+      "min": 47.5
     },
     "code_mort.problemes": {
       "max": 23
@@ -43,5 +43,21 @@
     "architecture.violations": {
       "max": 0
     }
-  }
+  },
+  "historique": [
+    {
+      "date": "2026-09-24",
+      "motif": "vitest 3 -> 5 : couverture V8 remappée « AST-aware » (Vitest 4+) et .tsx enfin comptés (oxc + jsx automatique) — même code, autre instrument ; décision de Marc du 24/09/2026",
+      "couverture_avant": {
+        "couverture.lignes_coeur": 88.1,
+        "couverture.lignes_global": 40.4,
+        "couverture.branches_global": 92.5
+      },
+      "couverture_apres": {
+        "couverture.lignes_coeur": 88.3,
+        "couverture.lignes_global": 56.8,
+        "couverture.branches_global": 47.5
+      }
+    }
+  ]
 }
