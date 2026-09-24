@@ -48,10 +48,13 @@ on:
   # Elle rattrape aussi le RETOUR DU QUOTA VERCEL : une PR bloquée hier parce que le plafond
   # du compte était atteint repart d'elle-même le lendemain, sans que personne n'y touche.
   #
-  # Toutes les 30 minutes : assez pour ne rien laisser traîner une demi-journée, assez rare
-  # pour ne pas peser sur le quota d'Actions.
+  # UNE FOIS PAR JOUR (décision de Marc, 23/09/2026). Le « */30 » d'avant n'a jamais existé :
+  # GitHub l'espaçait de 4 à 5 h (mesuré sur CarAI), et chaque passage coûte au moins une minute
+  # d'Actions sur un dépôt privé — 2 000 min/mois en tout, épuisées le 23/09, auto-merge = 26 %
+  # de la consommation. Le réveil principal est événementiel : `workflow_run` (fin de CI) et
+  # `status` (fin du déploiement Vercel). Ceci n'est plus qu'un filet quotidien (05:23 à Québec).
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "23 9 * * *"
   # Pour pouvoir la déclencher à la main quand on veut débloquer tout de suite.
   workflow_dispatch:
 
