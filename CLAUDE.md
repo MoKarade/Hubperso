@@ -248,6 +248,7 @@ ne vérifie rien ne doit pas ressembler à un run vert.
 | `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement** ; l'ADR 0002, le déclenchement d'actions et ses verrous SSRF ; l'ADR 0003, l'horloge du hub, la deuxième route à jeton et la détection de gel. |
 | `docs/ACCES-PAR-APP.md` | Le modèle d'accès par app, en détail. |
 | `docs/CONNEXION-UNIQUE.md` | Le cookie de session partagé entre les apps. |
+| `docs/RAPPORT_2026-09-25.md` | Récit DATÉ de la session du 18 au 25/09 : lot L2, apps installables, carte du héros, ce qui attend Marc. Ne se met pas à jour. |
 
 ⚠️ **Doc périmée = pire que pas de doc.** Un audit du 19/08/2026 a trouvé la même règle
 d'accès écrite dans quatre fichiers de ce dépôt, avec **trois états de vérité différents** :
