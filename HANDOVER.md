@@ -1,4 +1,6 @@
-# HANDOVER — Authentification et accès du hub
+# HANDOVER — Journal des sessions du hub (auth, accès, sources ; plus récent en tête)
+
+> État courant synthétique : voir `docs/ETAT.md`.
 
 
 ## 🟦 Session 2026-09-21 — **FinanceAI n'a plus d'URL de résumé par défaut, et c'était le bug**
