@@ -84,8 +84,6 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 .btn--ghost:hover { background: var(--hl); }
 .btn--danger { background: var(--danger-fond); color: var(--sur-danger); }
 .btn--danger:hover { filter: brightness(.9); }
-.btn--app { background: var(--app); color: var(--sur); }   /* couleur du contrat + texteSur, jamais l'un sans l'autre */
-.btn--app:hover { filter: brightness(.94); }
 .btn:active { transform: translateY(1px); }
 @media (min-width: 560px) { .btn--fit { width: auto; } }
 @media (max-width: 559px) { :root { --cible: 48px; } .btn { width: 100%; } .outils { width: 100%; } }
@@ -131,7 +129,6 @@ svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none;
 
 .w { --app: #888; --sur: #0b0d12; display: flex; flex-direction: column; gap: 16px; background: var(--verre); backdrop-filter: blur(24px); border: 1px solid var(--bordure); border-top: 3px solid var(--app); border-radius: var(--r-carte); padding: 18px 20px 20px; }
 .w:hover { border-color: var(--bordure-forte); border-top-color: var(--app); }
-.w--warn, .w--warn:hover { border-top-color: var(--warn); }                       /* l'orange ne prend que le liseré */
 .w--danger, .w--danger:hover { border-color: color-mix(in srgb, var(--danger) 60%, transparent); border-top-color: var(--danger); } /* seul le rouge écrase */
 .w__head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 12px; }
 .avatar { width: 36px; height: 36px; border-radius: 10px; background: var(--app); color: var(--sur); display: grid; place-items: center; font: 800 13px/16px var(--font); flex: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }

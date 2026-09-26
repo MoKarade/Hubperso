@@ -46,7 +46,7 @@ const APPS = [
   { id: "batchchef", nom: "BatchChef", ini: "BC", c: "#fb923c" },
   { id: "carai", nom: "CarAI", ini: "CA", c: "#a3e635" },
   { id: "jobai", nom: "JobAI", ini: "JO", c: "#f472b6" },
-  { id: "memoryai", nom: "MemoryAI", ini: "ME", c: "#a78bfa" },
+  { id: "memoryai", nom: "MemoryAI", ini: "ME", c: "#d6c7a1" },
 ];
 const app = (id) => APPS.find((a) => a.id === id);
 const style = (a) => `--app:${a.c};--sur:${SUR}`;
@@ -125,7 +125,7 @@ const metrics = (rows) => `<dl class="metrics">${rows.map(([k, v, u]) => `<div><
 const head = (a, sous, b) => `<header class="w__head"><span class="avatar" aria-hidden="true">${a.ini}</span><div><h2>${a.nom}</h2><p class="meta">${sous}</p></div>${b}</header>`;
 const note = (ton, ico, html) => `<p class="note note--${ton}" role="${ton === "danger" ? "alert" : "note"}">${ic(ico)}<span>${html}</span></p>`;
 
-function widget(id, etat, size = "") {
+function widget(id, etat, size = "", sansAction = false) {
   const a = app(id);
   const cls = `w ${size ? "w--" + size : ""}`;
   const s = style(a);
@@ -134,9 +134,9 @@ function widget(id, etat, size = "") {
     case "ok":
       return `<article class="${cls}" style="${s}" aria-label="${a.nom}">${head(a, "Relevé il y a 4 min", B.ok)}
 ${metrics([["Éléments traités", "128"], ["En attente", "7"], ["Erreurs", "0"]])}${spark([4, 6, 5, 8, 7, 10, 9, 12], "Tendance sur 8 relevés : en hausse")}
-<div class="w__foot">${ouvrir}<button class="btn btn--app btn--fit" type="button">${ic("play")}Lancer la synchro</button></div></article>`;
+<div class="w__foot">${ouvrir}${sansAction ? "" : `<button class="btn btn--primary btn--fit" type="button">${ic("play")}Lancer la synchro</button>`}</div></article>`;
     case "degraded":
-      return `<article class="${cls} w--warn" style="${s}" aria-label="${a.nom}">${head(a, "Dernier relevé il y a 2 h", B.degraded)}
+      return `<article class="${cls}" style="${s}" aria-label="${a.nom}">${head(a, "Dernier relevé il y a 2 h", B.degraded)}
 ${metrics([["Éléments traités", "54"], ["En attente", "31"]])}${note("warn", "clock", "<strong>Les chiffres datent de 2 h.</strong> L'app répond mais ne les a pas rafraîchis.")}
 <div class="w__foot">${ouvrir}</div></article>`;
     case "building":
@@ -157,11 +157,11 @@ ${note("danger", "lock", "<strong>L'app refuse le jeton du hub.</strong> Le jeto
 ${note("danger", "filex", "<strong>La réponse ne respecte pas le contrat.</strong> Le hub ne montre rien plutôt qu'un chiffre douteux.")}
 <div class="w__foot"><button class="btn btn--ghost btn--fit" type="button">${ic("refresh")}Réessayer</button></div></article>`;
     case "toonew":
-      return `<article class="${cls} w--warn" style="${s}" aria-label="${a.nom}">${head(a, "L'app fonctionne", B.toonew)}
+      return `<article class="${cls}" style="${s}" aria-label="${a.nom}">${head(a, "L'app fonctionne", B.toonew)}
 ${note("warn", "up", "<strong>C'est le hub qui est en retard, pas l'app.</strong> Le contrat de l'app est plus récent que celui du hub : à re-pinner. Jamais masqué par le cache.")}
 <div class="w__foot">${ouvrir}</div></article>`;
     case "stale":
-      return `<article class="${cls} w--warn" style="${s}" aria-label="${a.nom}">${head(a, "Réponse en cache", B.stale)}
+      return `<article class="${cls}" style="${s}" aria-label="${a.nom}">${head(a, "Réponse en cache", B.stale)}
 <div class="dim">${metrics([["Éléments traités", "97"], ["En attente", "3"]])}</div>${note("warn", "clock", "<strong>Valeurs du dernier relevé réussi (il y a 26 min).</strong> L'app n'a pas répondu à cette visite.")}
 <div class="w__foot"><button class="btn btn--ghost btn--fit" type="button">${ic("refresh")}Réessayer</button></div></article>`;
     case "unconfigured":
@@ -179,9 +179,9 @@ ${entete("hubperso.com", "Accueil", "4/6 en ligne · rafraîchi à l'instant (ex
 <section aria-label="Applications"><div class="bento">
 ${widget("financeai", "ok", "lg")}${widget("driveai", "degraded")}${widget("batchchef", "building")}
 ${widget("carai", "unreachable")}${widget("jobai", "toonew")}
-<article class="w" style="--app:#8b8fa3;--sur:${SUR}" aria-label="Coûts et quotas">${head({ ini: "€", nom: "Coûts &amp; quotas" }, "Par période, jamais un total global", `<span class="badge badge--neutral">Par unité</span>`)}
-${metrics([["Ce mois · USD", "12,40"], ["Ce mois · requêtes", "3 210"]])}<div class="w__foot"><a class="btn btn--ghost btn--fit" href="couts.html">Détail des coûts</a></div></article>
-${widget("memoryai", "ok")}
+<article class="w w--lg" style="--app:#8b8fa3;--sur:${SUR}" aria-label="Coûts et quotas">${head({ ini: "€", nom: "Coûts &amp; quotas" }, "Par période, jamais un total global", `<span class="badge badge--neutral">Par unité</span>`)}
+${metrics([["Ce mois · USD", "12,40"], ["Ce mois · requêtes", "3 210"], ["Aujourd'hui · USD", "0,42"]])}<div class="w__foot"><a class="btn btn--ghost btn--fit" href="couts.html">Détail des coûts</a></div></article>
+${widget("memoryai", "ok", "", true)}
 </div></section>
 <section class="section" aria-labelledby="etats"><h2 id="etats">États honnêtes d'une carte</h2><p class="sous">Une carte n'invente jamais un chiffre. <a href="etats.html">Voir tous les états</a>.</p></section>
 `);
@@ -192,7 +192,7 @@ ${widget("memoryai", "ok")}
   page("app.html", "Page d'une app", "app-financeai", `
 <div style="${style(a)}">
 ${entete(`<a href="accueil.html" style="text-decoration:none">← Accueil</a>`, `${a.nom}`, "Contrat v1 · relevé il y a 4 min · valeurs d'exemple",
-    `<a class="btn btn--app btn--fit" href="#">${ic("ext")}Ouvrir ${a.nom}</a><button class="btn btn--ghost btn--fit" type="button">${ic("refresh")}Rafraîchir</button>`)}
+    `<a class="btn btn--primary btn--fit" href="#">${ic("ext")}Ouvrir ${a.nom}</a><button class="btn btn--ghost btn--fit" type="button">${ic("refresh")}Rafraîchir</button>`)}
 <p style="margin:-8px 0 24px">${B.ok}</p>
 <section class="kpis" aria-label="Indicateurs">
 <div class="kpi"><span class="tiny">Éléments traités</span><span class="kpi__v">128</span><span class="tend tend--ok">${ic("tup")}en hausse (+12 sur 7 relevés)</span></div>
@@ -213,7 +213,7 @@ ${entete(`<a href="accueil.html" style="text-decoration:none">← Accueil</a>`, 
 <tr><th scope="row">Rapprochement</th><td class="num">7</td><td>${badge("warn", "clock", "En attente")}</td></tr>
 <tr><th scope="row">Export</th><td class="num">0</td><td>${badge("neutral", "minus", "Inactif")}</td></tr></tbody></table></div></section>
 <section class="card section" aria-labelledby="act"><h2 class="h2" id="act">Actions</h2><p class="meta" style="margin:4px 0 12px">Action lancée par le serveur du hub, jamais par le navigateur. Confirmation avant exécution.</p>
-<div class="outils"><button class="btn btn--app btn--fit" type="button">${ic("play")}Lancer la synchro</button><button class="btn btn--ghost btn--fit" type="button">Recalculer</button></div></section>
+<div class="outils"><button class="btn btn--primary btn--fit" type="button">${ic("play")}Lancer la synchro</button><button class="btn btn--ghost btn--fit" type="button">Recalculer</button></div></section>
 </div>`);
 }
 

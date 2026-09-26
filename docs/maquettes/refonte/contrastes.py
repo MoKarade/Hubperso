@@ -40,7 +40,7 @@ CLAIR = dict(bg="#F6F6F4", surface="#FFFFFF", hl="#EDEDE9", titre="#1D1D1B", cor
 
 # Couleurs d'app d'EXEMPLE (dans le vrai hub elles viennent du contrat) + texteSur choisi.
 APPS = {"app-1": "#2DD4BF", "app-2": "#60A5FA", "app-3": "#FB923C",
-        "app-4": "#A3E635", "app-5": "#F472B6", "app-6": "#A78BFA"}
+        "app-4": "#A3E635", "app-5": "#F472B6", "app-6": "#D6C7A1"}
 TEXTE_SUR_SOMBRE, TEXTE_SUR_CLAIR = "#0B0D12", "#FFFFFF"
 
 
