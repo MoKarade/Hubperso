@@ -7,7 +7,7 @@
 // = ancien ET nouveau chemin, chemin douteux = refus).
 
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { CHEMINS_INTERDITS, examinerChemins } from "../scripts/gardeChemins.mjs";
 
 describe("examinerChemins — les chemins interdits", () => {
@@ -27,6 +27,22 @@ describe("examinerChemins — les chemins interdits", () => {
     ".gitattributes",
     "scripts/autoMerge.mjs",
     "scripts/gardeChemins.mjs",
+    // Sensibles propres à Hubperso : auth, jetons, API, configuration servie, base, build/CI.
+    "auth.ts",
+    "middleware.ts",
+    "lib/authGuard.ts",
+    "lib/gardeHub.ts",
+    "lib/sessionPartagee.ts",
+    "lib/jetonApp.ts",
+    "lib/jetonsGoogle.ts",
+    "app/api/acces/route.ts",
+    "app/api/cron/releve/route.ts",
+    "vercel.json",
+    "next.config.mjs",
+    "drizzle/0002_x.sql",
+    "drizzle.config.ts",
+    "scripts/build-necessaire.sh",
+    "qualite/portes.mjs",
   ])("REFUSE %s", (chemin) => {
     const r = examinerChemins([chemin]);
     expect(r.ok).toBe(false);
@@ -91,6 +107,44 @@ describe("examinerChemins — échec fermé", () => {
   });
 });
 
+describe("examinerChemins — le commentaire fixe posé sur la PR refusée", () => {
+  it("un chemin sensible donne un corps constant qui nomme le chemin et « attend Marc »", () => {
+    const r = examinerChemins([".github/workflows/x.yml"]);
+    expect(r.ok).toBe(false);
+    expect(r.corps).toContain("`.github/workflows/x.yml`");
+    expect(r.corps).toContain("attend Marc");
+    expect(r.corps).toContain(r.marqueur);
+    expect(r.marqueur).toMatch(/^<!-- auto-merge-garde:[0-9a-f]{16} -->$/);
+  });
+
+  it("le marqueur est stable : même chemin = même marqueur (pas de doublon aux relances)", () => {
+    expect(examinerChemins([".claude/a.json"]).marqueur).toBe(examinerChemins([".claude/a.json"]).marqueur);
+    expect(examinerChemins([".claude/a.json"]).marqueur).not.toBe(examinerChemins([".claude/b.json"]).marqueur);
+  });
+
+  it("le texte ne contient rien d'autre que le chemin nettoyé : pas d'injection par un nom de fichier", () => {
+    const r = examinerChemins([".github/@gerant [x](evil) `oups`.yml"]);
+    expect(r.corps).not.toContain("`oups`");
+    // Le chemin est dans UN seul segment de code inline : ni lien ni mention active hors de ce segment.
+    const horsCode = (r.corps ?? "").replace(/`[^`]*`/g, "");
+    expect(horsCode).not.toMatch(/@|\]\(|http/);
+  });
+
+  it("un chemin très long est borné", () => {
+    const r = examinerChemins([".github/" + "a".repeat(500)]);
+    expect((r.corps ?? "").length).toBeLessThan(400);
+  });
+
+  it("un refus qui n'est pas un chemin sensible (liste illisible) ne commente pas", () => {
+    expect(examinerChemins(undefined).corps).toBeUndefined();
+    expect(examinerChemins([]).corps).toBeUndefined();
+  });
+
+  it("un chemin accepté n'a ni corps ni marqueur", () => {
+    expect(examinerChemins(["lib/a.ts"]).corps).toBeUndefined();
+  });
+});
+
 // Le workflow doit APPELER la garde, et se réveiller à la fin des contrôles externes.
 describe("le workflow auto-merge", () => {
   const workflow = readFileSync(".github/workflows/auto-merge.yml", "utf8").replaceAll("\r\n", "\n");
@@ -113,6 +167,46 @@ describe("le workflow auto-merge", () => {
 
   it("la concurrence et la branche gèrent aussi l'événement check_run", () => {
     expect(workflow.match(/github\.event\.check_run\.check_suite\.head_branch/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("sur refus : crée le label validation-marc, le pose, et ne commente qu'une fois", () => {
+    expect(workflow).toContain('gh label create "validation-marc"');
+    expect(workflow).toContain("--add-label validation-marc");
+    expect(workflow).toContain("gh pr comment");
+    // Le corps vient de la garde (texte fixe), jamais du titre / corps / branche de la PR.
+    expect(workflow).toContain('--body "$corps"');
+    expect(workflow).not.toContain("headRefName");
+    expect(workflow).not.toContain("--json title");
+    // Un seul commentaire : on regarde d'abord les commentaires existants pour le marqueur.
+    expect(workflow).toContain("--json comments");
+  });
+
+  it("les chemins sensibles propres à Hubperso existent encore (liste non périmée)", () => {
+    for (const f of ["auth.ts", "middleware.ts", "lib/authGuard.ts", "lib/gardeHub.ts", "lib/sessionPartagee.ts", "lib/jetonApp.ts", "lib/jetonsGoogle.ts", "vercel.json", "next.config.mjs", "drizzle.config.ts", "scripts/build-necessaire.sh"]) {
+      expect(existsSync(f), f).toBe(true);
+    }
+  });
+
+  it("TOCTOU : relit le SHA juste avant la fusion et le verrouille avec --match-head-commit", () => {
+    expect(workflow).toContain("headRefOid");
+    expect(workflow).toContain("SHA changé : pas de merge");
+    expect(workflow).toContain('--match-head-commit "$sha"');
+    // Ordre : garde de chemins, puis relecture du SHA, puis le merge lui-même.
+    const garde = workflow.indexOf("examinerChemins");
+    const relecture = workflow.indexOf("SHA changé : pas de merge");
+    const merge = workflow.indexOf("gh pr merge");
+    expect(garde).toBeGreaterThan(-1);
+    expect(garde).toBeLessThan(relecture);
+    expect(relecture).toBeLessThan(merge);
+  });
+
+  it("épingle les actions par SHA de commit (le tag en commentaire)", () => {
+    const usages = [...workflow.matchAll(/^\s*- uses: (\S+)(.*)$/gm)];
+    expect(usages.length).toBeGreaterThanOrEqual(2);
+    for (const u of usages) {
+      expect(u[1], u[0]).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);
+      expect(u[2], u[0]).toMatch(/#\s*v\d/);
+    }
   });
 
   it("n'appelle jamais gh pr ready", () => {

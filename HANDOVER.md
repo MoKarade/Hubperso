@@ -23,6 +23,8 @@ pole-securite puis Marc).
 copie de `atelier/modeles/auto-merge/chemins-interdits.json` (sans les chemins `cockpit/*`). Toute
 modification de la source se reporte ici dans la même PR.
 
+**Après relecture pole-securite** : sur refus pour chemin sensible, label `validation-marc` (créé si absent) + UN commentaire à texte fixe (marqueur caché anti-doublon, chemin nettoyé en code inline) ; SHA relu juste avant la fusion et `--match-head-commit` (TOCTOU) ; `checkout` et `setup-node` épinglés par SHA ; chemins propres à Hubperso ajoutés à la liste (auth, middleware, jetons, `app/api/**`, `vercel.json`, `next.config.mjs`, `drizzle/**`, `qualite/**`, build). ⚠️ Limite connue : `decision` identifie le contrôle requis par son NOM seulement (pas par l'application qui le publie), contrairement au modèle Atelier (appId 15368).
+
 **À vérifier au premier run réel** : `gh api ... --paginate --slurp` sur le runner, et le réveil sur
 Vercel Agent Review.
 

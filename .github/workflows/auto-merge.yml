@@ -136,7 +136,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v7
+      # Actions épinglées par SHA de commit (le tag en commentaire) : un tag se déplace, un SHA non.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
           # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
@@ -145,7 +146,7 @@ jobs:
           # d'environnement, que `gh` lit SANS toucher à la config git.
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
 
@@ -196,7 +197,7 @@ jobs:
           # les statuts « legacy » (Vercel). C'est ce qui remplace le « succès du workflow CI »
           # du premier auto-merge, qui ignorait les autres workflows du dépôt.
           etat="$(avec_retry gh pr view "$numero" --repo "$REPO" \
-            --json isDraft,isCrossRepository,labels,mergeStateStatus,state,statusCheckRollup)" || {
+            --json isDraft,isCrossRepository,labels,mergeStateStatus,state,statusCheckRollup,headRefOid)" || {
               echo "::error::Impossible de lire la PR #$numero après 5 essais — on ne merge pas."
               echo "::error::Si le message parle de « Resource not accessible by integration », il MANQUE une permission au workflow — ce n'est pas une panne d'API. Le CHEMIN GraphQL cité dans l'erreur nomme le champ fautif : ...checkSuite.workflowRun ⇒ actions: read ; ...checkSuite/checkRuns ⇒ checks: read ; ...status/contexts ⇒ statuses: read."
               exit 1
@@ -236,6 +237,34 @@ jobs:
           ')" || { echo "PR #$numero — pas de merge : garde de chemins illisible."; continue; }
           if [ "$(echo "$garde" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).ok')" != "true" ]; then
             echo "PR #$numero — pas de merge : $(echo "$garde" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).raison')"
+            # Refus pour CHEMIN SENSIBLE (et lui seul : brouillon, check en cours, etc. sont
+            # refusés plus haut, sans bruit) : le label, puis UN commentaire à texte FIXE.
+            # `corps` et `marqueur` viennent de la garde (jamais du titre, du corps ni de la
+            # branche de la PR : pas d'injection) ; le marqueur caché évite tout doublon.
+            corps="$(echo "$garde" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).corps ?? ""')"
+            marqueur="$(echo "$garde" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).marqueur ?? ""')"
+            if [ -n "$corps" ] && [ -n "$marqueur" ]; then
+              gh label create "validation-marc" --repo "$REPO" --color FBCA04 \
+                --description "La fusion attend la validation de Marc" --force || true
+              gh pr edit "$numero" --repo "$REPO" --add-label validation-marc \
+                || echo "::warning::Label validation-marc non posé sur la PR #$numero."
+              commentaires="$(gh pr view "$numero" --repo "$REPO" --json comments --jq '.comments[].body' 2>/dev/null)" || commentaires="lecture impossible"
+              if [ "$commentaires" = "lecture impossible" ]; then
+                echo "::warning::Commentaires illisibles sur la PR #$numero : pas de commentaire (anti-doublon)."
+              elif ! printf '%s' "$commentaires" | grep -qF -- "$marqueur"; then
+                gh pr comment "$numero" --repo "$REPO" --body "$corps" \
+                  || echo "::warning::Commentaire non posé sur la PR #$numero."
+              fi
+            fi
+            continue
+          fi
+
+          # ── TOCTOU : le SHA décidé est celui qu'on fusionne, ou rien ────────────────────
+          # Une poussée entre la décision et le merge changerait ce qui part en production.
+          sha="$(echo "$etat" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).headRefOid ?? ""')"
+          sha_actuel="$(avec_retry gh pr view "$numero" --repo "$REPO" --json headRefOid --jq .headRefOid)" || sha_actuel=""
+          if [ -z "$sha" ] || [ "$sha" != "$sha_actuel" ]; then
+            echo "PR #$numero — pas de merge : SHA changé : pas de merge (décidé ${sha:-inconnu}, actuel ${sha_actuel:-illisible})."
             continue
           fi
 
@@ -245,7 +274,7 @@ jobs:
           # réel de la PR, jamais par le seul code de sortie.
           fusionnee=false
           for essai in 1 2 3 4 5; do
-            if gh pr merge "$numero" --repo "$REPO" --squash --delete-branch; then fusionnee=true; break; fi
+            if gh pr merge "$numero" --repo "$REPO" --squash --delete-branch --match-head-commit "$sha"; then fusionnee=true; break; fi
             if [ "$(gh pr view "$numero" --repo "$REPO" --json state --jq .state 2>/dev/null)" = "MERGED" ]; then
               echo "PR #$numero déjà mergée (l'essai précédent avait abouti côté serveur)."
               fusionnee=true; break
