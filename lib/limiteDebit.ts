@@ -12,7 +12,7 @@
 /** Plancher de durée de `/api/acces` : la réponse ne dépend plus du chemin pris (voir la route). */
 export const DUREE_MIN_ACCES_MS = 250;
 
-export interface VerdictDebit {
+interface VerdictDebit {
   readonly ok: boolean;
   /** Secondes à attendre avant de réessayer (0 quand `ok`). */
   readonly retryApresS: number;
