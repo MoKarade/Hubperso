@@ -118,7 +118,6 @@ const B = {
 const spark = (pts, label) => {
   const max = Math.max(...pts), min = Math.min(...pts);
   const xy = pts.map((v, i) => `${(i / (pts.length - 1)) * 200},${40 - ((v - min) / (max - min || 1)) * 34}`);
-  const last = xy[xy.length - 1].split(",");
   return `<svg class="spark" viewBox="0 0 200 44" preserveAspectRatio="none" role="img" aria-label="${label}"><polyline vector-effect="non-scaling-stroke" points="${xy.join(" ")}"/></svg>`;
 };
 const metrics = (rows) => `<dl class="metrics">${rows.map(([k, v, u]) => `<div><dt>${k}</dt><dd class="tab">${v}${u ? `<small>${u}</small>` : ""}</dd></div>`).join("")}</dl>`;
