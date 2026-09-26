@@ -39,6 +39,16 @@ on:
   # CarAI : 00:46, 05:22, 10:10, 15:07, 19:07 Z ; #138 à #140 vertes, restées ouvertes).
   # `status` réveille l'examen dès qu'un statut passe au vert (filtré dans le `if:`).
   status:
+  # ── LE RETOUR DES CONTRÔLES EXTERNES (Vercel Agent Review) ─────────────────────────
+  #
+  # Course constatée sur la PR #83 : le run `workflow_run` a vu « Vercel Agent Review »
+  # IN_PROGRESS, a répondu « pas de merge : en cours », puis plus rien — la fin d'un check
+  # externe (GitHub App) ne déclenche NI `workflow_run` NI `status`. La PR a dû être relancée
+  # à la main. `check_run: completed` réveille l'examen à la fin de CE check-là.
+  # Sans CI inutile : les check_run de GitHub Actions sont exclus dans le `if:` (déjà couverts
+  # par `workflow_run`), et un job écarté par `if:` ne consomme aucune minute.
+  check_run:
+    types: [completed]
   # ── LA PASSE DE RATTRAPAGE, ET C'EST ELLE QUI REND L'ENSEMBLE FIABLE ───────────────
   #
   # `workflow_run` NE SE REJOUE JAMAIS. Un appel d'API bloqué par la limite de débit GitHub,
@@ -104,7 +114,7 @@ permissions:
 # Une PR à la fois : deux workflows qui finissent en même temps déclencheraient deux runs
 # concurrents sur la même PR, et le second échouerait sur une PR déjà fermée.
 concurrency:
-  group: auto-merge-${{ github.event.workflow_run.head_branch || github.event.pull_request.head.ref }}
+  group: auto-merge-${{ github.event.workflow_run.head_branch || github.event.check_run.check_suite.head_branch || github.event.pull_request.head.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -118,6 +128,9 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'status' && github.event.state == 'success') ||
       github.event_name == 'pull_request_target' ||
+      (github.event_name == 'check_run' &&
+       github.event.check_run.app.slug != 'github-actions' &&
+       github.event.check_run.check_suite.head_branch != '') ||
       (github.event.workflow_run.event == 'pull_request' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
@@ -140,7 +153,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          BRANCHE: ${{ github.event.workflow_run.head_branch || github.event.pull_request.head.ref }}
+          BRANCHE: ${{ github.event.workflow_run.head_branch || github.event.check_run.check_suite.head_branch || github.event.pull_request.head.ref }}
         run: |
           set -uo pipefail
 
@@ -202,6 +215,27 @@ jobs:
 
           if [ "$merger" != "true" ]; then
             echo "PR #$numero — pas de merge : $raison"
+            continue
+          fi
+
+          # ── GARDE TECHNIQUE : les chemins sensibles ne s'auto-fusionnent JAMAIS ─────────
+          # (workflows, hooks, réglages, garde de commit, .claude, CODEOWNERS, modèles).
+          # Liste et logique : scripts/gardeChemins.mjs, lu depuis `main` (workflow_run /
+          # check_run / pull_request_target). Échec FERMÉ : liste illisible = pas de merge.
+          fichiers="$(avec_retry gh api "repos/$REPO/pulls/$numero/files" --paginate --slurp)" || {
+            echo "PR #$numero — pas de merge : liste des fichiers illisible."
+            continue
+          }
+          garde="$(echo "$fichiers" | node -e '
+            const lu = require("fs").readFileSync(0, "utf8");
+            import("./scripts/gardeChemins.mjs").then(({ examinerChemins }) => {
+              // `--slurp` : un tableau de pages, qu'on aplatit.
+              const pages = JSON.parse(lu).flat();
+              console.log(JSON.stringify(examinerChemins(pages)));
+            });
+          ')" || { echo "PR #$numero — pas de merge : garde de chemins illisible."; continue; }
+          if [ "$(echo "$garde" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).ok')" != "true" ]; then
+            echo "PR #$numero — pas de merge : $(echo "$garde" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).raison')"
             continue
           fi
 
