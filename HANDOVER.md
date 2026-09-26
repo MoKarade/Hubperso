@@ -9,21 +9,15 @@ PR #84 (brouillon, NON armée : elle touche `.github/**`, donc jamais auto-fusio
 pole-securite puis Marc).
 
 **Ce qui change**
-- `scripts/gardeChemins.mjs` : `auto-merge.yml` refuse de fusionner une PR qui touche `scripts/hooks/**`,
-  `.github/**`, `settings*`, `commit-gate*`, `passerelle/tunnel.yml`, `.claude/**`, `CODEOWNERS`,
-  `modeles/**`, `.gitattributes` ni les scripts de décision (`autoMerge.*`, `gardeChemins.*`).
-  Échec fermé (liste illisible ou tronquée, chemin douteux) ; un renommage compte l'ancien ET le
-  nouveau chemin. Hubperso fusionne dans le workflow (il n'arme pas) : la garde joue avant `gh pr merge`.
+- **Kit auto-merge de l'Atelier** (`modeles/auto-merge/`, copies EXACTES attestées par `COPIES.md`, écarts listés un par un dans ce fichier) : `.github/workflows/auto-merge.yml` lance `modeles/auto-merge/fusionner.mjs` ; la configuration est `.github/auto-merge.json` (lue sur `main`) ; `scripts/autoMerge.*` et `scripts/gardeChemins.mjs` n'existent plus. Les chemins sensibles de Hubperso (auth, jetons, `app/api/**`, `vercel.json`, drizzle…) y sont déclarés ; sans `securite_login` (à poser par la PR de pole-securite) ils restent bloqués.
 - Course de la PR #83 : la fin d'un check externe (Vercel Agent Review) ne déclenche ni `workflow_run`
   ni `status`. Nouveau déclencheur `check_run: completed`, filtré (`app.slug != 'github-actions'`)
   pour ne coûter aucune minute de CI en plus. Effectif seulement une fois mergé (workflow lu sur `main`).
 - `.gitattributes` `* text=auto eol=lf` (commit isolé) : l'index était déjà en LF.
 
-**À resynchroniser à la main** : la liste `CHEMINS_INTERDITS` de `scripts/gardeChemins.mjs` est une
-copie de `atelier/modeles/auto-merge/chemins-interdits.json` (sans les chemins `cockpit/*`). Toute
-modification de la source se reporte ici dans la même PR.
+**Resynchroniser le kit** : `node C:/dev/atelier/modeles/auto-merge/verifier-copies.mjs . --manifeste C:/dev/atelier/modeles/manifeste.json` doit répondre « Toutes les copies sont fidèles » ; en cas de nouvelle version du modèle, recopier puis `--ecrire-copies .`.
 
-**Après relecture pole-securite** : sur refus pour chemin sensible, label `validation-marc` (créé si absent) + UN commentaire à texte fixe (marqueur caché anti-doublon, chemin nettoyé en code inline) ; SHA relu juste avant la fusion et `--match-head-commit` (TOCTOU) ; `checkout` et `setup-node` épinglés par SHA ; chemins propres à Hubperso ajoutés à la liste (auth, middleware, jetons, `app/api/**`, `vercel.json`, `next.config.mjs`, `drizzle/**`, `qualite/**`, build). ⚠️ Limite connue : `decision` identifie le contrôle requis par son NOM seulement (pas par l'application qui le publie), contrairement au modèle Atelier (appId 15368).
+**Historique (avant le kit)** : — sur refus pour chemin sensible, label `validation-marc` (créé si absent) + UN commentaire à texte fixe (marqueur caché anti-doublon, chemin nettoyé en code inline) ; SHA relu juste avant la fusion et `--match-head-commit` (TOCTOU) ; `checkout` et `setup-node` épinglés par SHA ; chemins propres à Hubperso ajoutés à la liste (auth, middleware, jetons, `app/api/**`, `vercel.json`, `next.config.mjs`, `drizzle/**`, `qualite/**`, build). Depuis le kit, le contrôle requis est identifié par NOM ET par application (appId 15368).
 
 **À vérifier au premier run réel** : `gh api ... --paginate --slurp` sur le runner, et le réveil sur
 Vercel Agent Review.
