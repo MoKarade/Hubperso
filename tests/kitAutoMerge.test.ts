@@ -72,6 +72,8 @@ describe(".github/auto-merge.json", () => {
       "drizzle.config.ts",
       "scripts/build-necessaire.sh",
       "qualite/**",
+      "tests/kitAutoMerge.test.ts",
+      "**/settings*.json",
     ]) {
       expect(portes, c).toContain(c);
     }
@@ -108,7 +110,7 @@ describe("la décision du kit, avec la configuration de Hubperso", () => {
     expect(d.merger).toBe(true);
   });
 
-  it.each(["auth.ts", "middleware.ts", "vercel.json", "app/api/acces/route.ts", "drizzle/0001.sql", "qualite/seuils.json", ".github/workflows/ci.yml"])(
+  it.each(["tests/kitAutoMerge.test.ts", "config/settings.local.json", "auth.ts", "middleware.ts", "vercel.json", "app/api/acces/route.ts", "drizzle/0001.sql", "qualite/seuils.json", ".github/workflows/ci.yml"])(
     "un chemin sensible (%s) ne part pas seul",
     (chemin) => {
       expect(decision(pr(chemin), cfg, ctx).merger).toBe(false);
