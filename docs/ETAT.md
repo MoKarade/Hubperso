@@ -26,7 +26,7 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
 - Duplication Sonar proche du seuil (table `SOURCE_DEFS`, six entrées quasi identiques).
 - `BACKLOG.md` (~475 lignes) : plusieurs items H-xx ouverts ; H-25 : rien n'empêche par test de
   rendre un `href` du contrat sans `safeHttpUrl`.
-- `CLAUDE.md` (>340 lignes) recoupe `HANDOVER.md` : risque de dérive entre les deux.
+- `CLAUDE.md` (44 lignes, détail dans `docs/reference-claude.md`) recoupe `HANDOVER.md` : risque de dérive entre les deux.
 
 ## Risques
 - `FINANCEAI_SUMMARY_URL` est obligatoire sur Vercel ; une variable posée exige un redéploiement.
