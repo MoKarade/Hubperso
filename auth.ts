@@ -49,6 +49,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // en self-hosted / local (sinon Auth.js lève UntrustedHost/Invalid URL) ; sans risque
   // ici car les redirect URIs OAuth sont verrouillés côté Google (un host forgé ne
   // matcherait aucun callback autorisé). Sur Vercel c'est de toute façon le comportement.
+  //
+  // ⚠️ SUR VERCEL SEULEMENT : c'est la plateforme qui fixe l'en-tête Host (audit sécurité du
+  // 26/09/2026, F4). Héberger le hub AILLEURS, derrière un proxy qui laisse passer un Host forgé,
+  // en ferait un risque d'hôte forgé : il faudrait alors une liste d'hôtes attendus. Voir
+  // docs/SECURITE.md.
   trustHost: true,
   pages: {
     signIn: "/login",

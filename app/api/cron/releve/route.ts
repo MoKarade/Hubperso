@@ -46,6 +46,13 @@ import { elaguerHistorique, enregistrerReleve, type IssueReleve } from "@/lib/hi
 import { assurerMigrations, etatMigrations } from "@/lib/migrations";
 import { memeJeton } from "@/lib/jetonApp";
 import { getSources } from "@/lib/sources";
+import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
+
+/**
+ * Le workflow appelle toutes les 30 min : 10 par minute et par client, c'est très large et
+ * arrête un martelage de la base (en mémoire de l'instance, voir lib/limiteDebit.ts).
+ */
+const limiteur = creerLimiteur({ max: 10, fenetreMs: 60_000 });
 
 /** Jamais de cache : chaque appel doit vraiment aller interroger les apps. */
 export const dynamic = "force-dynamic";
@@ -58,6 +65,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(request: Request): Promise<Response> {
+  const debit = limiteur.verifier(cleClient(request.headers));
+  if (!debit.ok) return reponse429(debit.retryApresS);
+
   const decision = decideCron(
     request.headers.get("authorization"),
     process.env.CRON_SECRET,
