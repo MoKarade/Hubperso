@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { LABEL_FREIN, decision, type EtatPR } from "../scripts/autoMerge.mjs";
+import { CODES_RAISON, LABEL_FREIN, decision, type EtatPR } from "../scripts/autoMerge.mjs";
 
 /** Une PR parfaitement mergeable. Chaque test n'en dégrade qu'UN aspect. */
 function prVerte(patch: Partial<EtatPR> = {}): EtatPR {
@@ -28,6 +28,7 @@ describe("decision — le cas nominal", () => {
   it("merge une PR verte, à jour, hors brouillon", () => {
     expect(decision(prVerte())).toEqual({
       merger: true,
+      code: "merge_ok",
       raison: "tous les checks sont verts et la branche est à jour",
     });
   });
@@ -267,5 +268,52 @@ describe("les permissions du workflow — sans elles, aucune décision n'est pri
     const script = workflow.slice(workflow.indexOf("\njobs:"));
     expect(script).toContain("checkSuite.workflowRun");
     expect(script).toContain("actions: read");
+  });
+});
+
+describe("les codes de raison — liste fermée, lue par le workflow", () => {
+  it("chaque décision porte un code de la liste", () => {
+    const cas = [
+      prVerte(),
+      prVerte({ isDraft: true }),
+      prVerte({ isCrossRepository: true }),
+      prVerte({ labels: [{ name: LABEL_FREIN }] }),
+      prVerte({ checks: [] }),
+      prVerte({ checks: [{ name: "Vercel", state: "PENDING" }] }),
+      prVerte({ checks: [{ name: "Vercel", state: "FAILURE" }] }),
+      prVerte({ mergeStateStatus: "BEHIND" }),
+    ];
+    for (const pr of cas) expect(CODES_RAISON).toContain(decision(pr).code);
+    expect(decision(prVerte()).code).toBe("merge_ok");
+    expect(decision(prVerte({ isDraft: true })).code).toBe("brouillon");
+    expect(decision(prVerte({ labels: [{ name: LABEL_FREIN }] })).code).toBe("do_not_merge");
+  });
+});
+
+describe("les déclencheurs du workflow — ne pas les perdre en silence", () => {
+  const workflow = readFileSync(".github/workflows/auto-merge.yml", "utf8");
+  const on = workflow.slice(workflow.indexOf("\non:"), workflow.indexOf("\npermissions:"));
+
+  it("garde workflow_run, status (filtré sur success), pull_request_target et le cron", () => {
+    expect(on).toMatch(/^ {2}workflow_run:$/m);
+    expect(on).toMatch(/^ {2}status:$/m);
+    expect(on).toMatch(/^ {2}pull_request_target:$/m);
+    expect(on).toMatch(/^ {2}schedule:$/m);
+    expect(workflow).toContain("github.event.state == 'success'");
+  });
+
+  it("n'écoute jamais pull_request_review", () => {
+    expect(workflow).not.toContain("pull_request_review");
+  });
+
+  it("sort sans checkout quand aucune PR n'est ouverte", () => {
+    expect(workflow).toContain("steps.ouvertes.outputs.nombre != '0'");
+  });
+
+  it("aucun `uses:` de tous les workflows n'est autre chose qu'un SHA de 40 caractères", () => {
+    for (const f of ["auto-merge", "ci", "constellation", "doc-a-jour", "releve"]) {
+      const txt = readFileSync(`.github/workflows/${f}.yml`, "utf8");
+      for (const m of txt.matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)) expect(m[1]).toMatch(/@[0-9a-f]{40}$/);
+    }
   });
 });

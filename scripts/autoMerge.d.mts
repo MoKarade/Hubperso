@@ -22,4 +22,5 @@ export interface EtatPR {
   state?: string;
 }
 
-export function decision(pr: unknown): { merger: boolean; raison: string };
+export const CODES_RAISON: readonly string[];
+export function decision(pr: unknown): { merger: boolean; raison: string; code: string };

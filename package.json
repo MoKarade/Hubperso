@@ -14,7 +14,7 @@
     "portes": "node qualite/portes.mjs",
     "portes:maj": "node qualite/portes.mjs --maj",
     "db:generate": "drizzle-kit generate",
-    "constellation": "tsx scripts/verifier-constellation.ts"
+    "outil:constellation": "tsx scripts/verifier-constellation.ts"
   },
   "dependencies": {
     "@mokarade/hub-contract": "github:MoKarade/hub-contract#v1.3.1",

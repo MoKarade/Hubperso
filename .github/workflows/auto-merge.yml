@@ -123,7 +123,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v7
+      # SORTIE IMMÉDIATE (étape 2, coût) : sans PR ouverte il n'y a rien à examiner — on ne paie
+      # ni checkout ni Node. Un échec de cette lecture NE sort PAS : on continue, par prudence.
+      - name: Y a-t-il une PR ouverte ?
+        id: ouvertes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          n="$(gh pr list --repo "$REPO" --state open --limit 1 --json number --jq 'length' 2>/dev/null || echo inconnu)"
+          echo "nombre=$n" >> "$GITHUB_OUTPUT"
+          [ "$n" = "0" ] && echo "Aucune PR ouverte : sortie immédiate."
+          exit 0
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.ouvertes.outputs.nombre != '0'
         with:
           # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
           # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
@@ -132,11 +146,13 @@ jobs:
           # d'environnement, que `gh` lit SANS toucher à la config git.
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        if: steps.ouvertes.outputs.nombre != '0'
         with:
           node-version: "24"
 
       - name: Décider, puis fusionner
+        if: steps.ouvertes.outputs.nombre != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -200,8 +216,12 @@ jobs:
           merger="$(echo "$verdict" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).merger')"
           raison="$(echo "$verdict" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).raison')"
 
+          # Code de raison (liste fermée, `CODES_RAISON` de scripts/autoMerge.mjs), en sortie du job.
+          code="$(echo "$verdict" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).code')"
+          echo "code_pr_$numero=$code" >> "$GITHUB_OUTPUT"
+
           if [ "$merger" != "true" ]; then
-            echo "PR #$numero — pas de merge : $raison"
+            echo "PR #$numero — pas de merge [$code] : $raison"
             continue
           fi
 

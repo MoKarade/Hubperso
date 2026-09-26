@@ -81,40 +81,55 @@ const ETATS_OK = new Set(["CLEAN", "HAS_HOOKS"]);
  * @param {{name?:string, status?:string, conclusion?:string, __typename?:string, state?:string}[]} [pr.checks]
  * @param {string} [pr.mergeStateStatus]
  * @param {string} [pr.state]
- * @returns {{merger: boolean, raison: string}}
+ * @returns {{merger: boolean, raison: string, code: string}}
  */
+/**
+ * Codes de raison : liste FERMÉE, lue par le workflow (sortie du job) et par les tests.
+ * `attestation_requise`, `frein_horaire` et `sha_change` de la spec ne s'appliquent pas à ce
+ * dépôt (aucune attestation ni frein horaire dans la décision) : ils ne sont pas inventés ici.
+ */
+export const CODES_RAISON = [
+  "merge_ok",
+  "brouillon",
+  "do_not_merge",
+  "controle_en_cours",
+  "controle_rouge",
+  "etat_fusion",
+  "hors_perimetre",
+];
+
 export function decision(pr) {
-  if (!pr || typeof pr !== "object") return { merger: false, raison: "aucune donnée de PR" };
+  if (!pr || typeof pr !== "object") return { merger: false, code: "hors_perimetre", raison: "aucune donnée de PR" };
 
   if (pr.state && pr.state !== "OPEN") {
-    return { merger: false, raison: `PR à l'état ${pr.state}` };
+    return { merger: false, code: "hors_perimetre", raison: `PR à l'état ${pr.state}` };
   }
 
   // ⚠️ `!== false` et non `=== true` : un champ ABSENT (lecture partielle, API qui change)
   // doit refuser, pas passer. C'est toute la différence entre « je sais que non » et « je
   // ne sais pas », et c'est la seconde qui a coûté l'ADR-0045.
   if (pr.isDraft !== false) {
-    return { merger: false, raison: "brouillon — le frein posé à la création de la PR" };
+    return { merger: false, code: "brouillon", raison: "brouillon — le frein posé à la création de la PR" };
   }
 
   if (pr.isCrossRepository !== false) {
-    return { merger: false, raison: "PR venant d'un fork" };
+    return { merger: false, code: "hors_perimetre", raison: "PR venant d'un fork" };
   }
 
   const labels = Array.isArray(pr.labels) ? pr.labels : [];
   if (labels.some((l) => l && l.name === LABEL_FREIN)) {
-    return { merger: false, raison: `label ${LABEL_FREIN}` };
+    return { merger: false, code: "do_not_merge", raison: `label ${LABEL_FREIN}` };
   }
 
   const checks = Array.isArray(pr.checks) ? pr.checks : null;
-  if (checks === null) return { merger: false, raison: "checks illisibles" };
+  if (checks === null) return { merger: false, code: "controle_en_cours", raison: "checks illisibles" };
 
   // AUCUN check n'est pas un feu vert. Une PR qui n'a rien prouvé ne se merge pas toute
   // seule — et zéro check signale plus souvent une CI qui n'a pas démarré qu'un dépôt sans
   // CI. Le cas « dépôt réellement sans CI » se règle en ajoutant une CI, pas en fusionnant
   // à l'aveugle.
   if (checks.length === 0) {
-    return { merger: false, raison: "aucun check — rien n'a été vérifié" };
+    return { merger: false, code: "controle_en_cours", raison: "aucun check — rien n'a été vérifié" };
   }
 
   // TOUS les checks, pas seulement ceux d'un workflow nommé. C'est le défaut du premier
@@ -137,15 +152,15 @@ export function decision(pr) {
         auMoinsUnePreuve = true;
         continue;
       }
-      if (c.state === "PENDING") return { merger: false, raison: `${nom} en cours` };
-      return { merger: false, raison: `${nom} : ${c.state}` };
+      if (c.state === "PENDING") return { merger: false, code: "controle_en_cours", raison: `${nom} en cours` };
+      return { merger: false, code: "controle_rouge", raison: `${nom} : ${c.state}` };
     }
 
     if (!c || c.status !== "COMPLETED") {
-      return { merger: false, raison: `${nom} pas terminé (${(c && c.status) || "statut absent"})` };
+      return { merger: false, code: "controle_en_cours", raison: `${nom} pas terminé (${(c && c.status) || "statut absent"})` };
     }
     if (!CONCLUSIONS_OK.has(c.conclusion)) {
-      return { merger: false, raison: `${nom} : ${c.conclusion || "conclusion absente"}` };
+      return { merger: false, code: "controle_rouge", raison: `${nom} : ${c.conclusion || "conclusion absente"}` };
     }
     if (c.conclusion === "SUCCESS") auMoinsUnePreuve = true;
   }
@@ -154,15 +169,16 @@ export function decision(pr) {
   // quota tombe avant que la CI ne démarre : la PR aurait l'air « sans échec » alors qu'elle
   // n'a rien passé du tout.
   if (!auMoinsUnePreuve) {
-    return { merger: false, raison: "aucun check réellement vert — rien n'a été prouvé" };
+    return { merger: false, code: "controle_en_cours", raison: "aucun check réellement vert — rien n'a été prouvé" };
   }
 
   if (!ETATS_OK.has(pr.mergeStateStatus)) {
     return {
       merger: false,
+      code: "etat_fusion",
       raison: `état de fusion ${pr.mergeStateStatus || "inconnu"} (attendu CLEAN)`,
     };
   }
 
-  return { merger: true, raison: "tous les checks sont verts et la branche est à jour" };
+  return { merger: true, code: "merge_ok", raison: "tous les checks sont verts et la branche est à jour" };
 }
