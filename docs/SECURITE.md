@@ -6,7 +6,7 @@ que le code fait ou ne fait pas encore.
 ## Limite de débit (F2) — `lib/limiteDebit.ts`
 - `POST /api/acces` : 60 requêtes par minute et par client ; `POST /api/cron/releve` : 10.
   Au-delà : `429` + `retry-after`, avant même la lecture du jeton.
-- Clé du client = premier saut de `x-forwarded-for` (posé par Vercel).
+- Clé du client = `x-vercel-forwarded-for`, puis `x-real-ip`, puis premier saut de `x-forwarded-for`. Mémoire bornée à 1000 clés (éviction de la plus ancienne).
 - **Limite honnête** : le compteur est en mémoire de chaque instance serverless, le plafond est
   donc par instance, pas global. Aucune dépendance, aucun service payant. Le plafond global est
   le rate-limit du Vercel Firewall (gratuit) : à poser dans la console (à faire, hors code).

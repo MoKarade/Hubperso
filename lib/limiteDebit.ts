@@ -45,6 +45,14 @@ export function creerLimiteur({ max, fenetreMs, cleMax = 1000 }: Options): Limit
       if (fenetres.size >= cleMax) elaguer(maintenantMs);
       const f = fenetres.get(cle);
       if (!f || maintenantMs - f.debut >= fenetreMs) {
+        fenetres.delete(cle); // réinsérée en fin d'ordre : la plus ancienne reste en tête
+        // Plafond DUR : si tout est encore dans la fenêtre (rafale de clés distinctes), on évince
+        // la plus ancienne. La mémoire ne dépasse jamais `cleMax`.
+        while (fenetres.size >= cleMax) {
+          const plusAncienne = fenetres.keys().next().value;
+          if (plusAncienne === undefined) break;
+          fenetres.delete(plusAncienne);
+        }
         fenetres.set(cle, { debut: maintenantMs, compte: 1 });
         return { ok: true, retryApresS: 0 };
       }
@@ -59,12 +67,13 @@ export function creerLimiteur({ max, fenetreMs, cleMax = 1000 }: Options): Limit
 }
 
 /**
- * Clé du client : le premier saut de `x-forwarded-for`, posé par Vercel. Sans l'en-tête
- * (local, test) : une clé commune « inconnu ».
+ * Clé du client, dans l'ordre : `x-vercel-forwarded-for`, `x-real-ip`, puis le premier saut de
+ * `x-forwarded-for` (même ordre que FinanceAI). Sans aucun en-tête (local, test) : « inconnu ».
  */
 export function cleClient(entetes: Headers): string {
-  const xff = entetes.get("x-forwarded-for");
-  const premier = xff?.split(",")[0]?.trim();
+  const direct = entetes.get("x-vercel-forwarded-for")?.trim() || entetes.get("x-real-ip")?.trim();
+  if (direct) return direct;
+  const premier = entetes.get("x-forwarded-for")?.split(",")[0]?.trim();
   return premier || "inconnu";
 }
 
