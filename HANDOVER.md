@@ -3,6 +3,29 @@
 > État courant synthétique : voir `docs/ETAT.md`.
 
 
+## 🟦 Session 2026-09-25 — **Auto-merge : garde des chemins sensibles et course Vercel Agent Review**
+
+PR #84 (brouillon, NON armée : elle touche `.github/**`, donc jamais auto-fusionnée — relecture
+pole-securite puis Marc).
+
+**Ce qui change**
+- `scripts/gardeChemins.mjs` : `auto-merge.yml` refuse de fusionner une PR qui touche `scripts/hooks/**`,
+  `.github/**`, `settings*`, `commit-gate*`, `passerelle/tunnel.yml`, `.claude/**`, `CODEOWNERS`,
+  `modeles/**`, `.gitattributes` ni les scripts de décision (`autoMerge.*`, `gardeChemins.*`).
+  Échec fermé (liste illisible ou tronquée, chemin douteux) ; un renommage compte l'ancien ET le
+  nouveau chemin. Hubperso fusionne dans le workflow (il n'arme pas) : la garde joue avant `gh pr merge`.
+- Course de la PR #83 : la fin d'un check externe (Vercel Agent Review) ne déclenche ni `workflow_run`
+  ni `status`. Nouveau déclencheur `check_run: completed`, filtré (`app.slug != 'github-actions'`)
+  pour ne coûter aucune minute de CI en plus. Effectif seulement une fois mergé (workflow lu sur `main`).
+- `.gitattributes` `* text=auto eol=lf` (commit isolé) : l'index était déjà en LF.
+
+**À resynchroniser à la main** : la liste `CHEMINS_INTERDITS` de `scripts/gardeChemins.mjs` est une
+copie de `atelier/modeles/auto-merge/chemins-interdits.json` (sans les chemins `cockpit/*`). Toute
+modification de la source se reporte ici dans la même PR.
+
+**À vérifier au premier run réel** : `gh api ... --paginate --slurp` sur le runner, et le réveil sur
+Vercel Agent Review.
+
 ## 🟦 Session 2026-09-21 — **FinanceAI n'a plus d'URL de résumé par défaut, et c'était le bug**
 
 ✅ **MERGÉ** (PR #63, `e8b1c848`). Porte de qualité SonarCloud enfin verte — **0,0 % de duplication
