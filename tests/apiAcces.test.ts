@@ -10,6 +10,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../app/api/acces/route";
+import { DUREE_MIN_ACCES_MS } from "../lib/limiteDebit";
 
 const JETON_JOBAI = "jeton-de-test-jobai-0000000000";
 const PROPRIO = "marc.richard4@gmail.com";
@@ -89,5 +90,36 @@ describe("POST /api/acces", () => {
     // ne révoque rien. L'appelant, lui, cache une minute — c'est un choix, pas un hasard.
     const res = await POST(requete({ email: PROPRIO }, JETON_JOBAI));
     expect(res.headers.get("cache-control")).toBe("no-store");
+  });
+});
+
+describe("POST /api/acces — durée constante et débit", () => {
+  it("un invité inconnu et un invité sans accès reçoivent exactement la même réponse", async () => {
+    const a = await POST(requete({ email: "inconnu-1@exemple.com" }, JETON_JOBAI));
+    const b = await POST(requete({ email: INVITEE }, JETON_JOBAI));
+    expect(a.status).toBe(b.status);
+    expect(await a.json()).toEqual(await b.json());
+  });
+
+  it("chaque réponse authentifiée dure au moins la durée plancher", async () => {
+    const t0 = Date.now();
+    await POST(requete({ email: INVITEE }, JETON_JOBAI));
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(DUREE_MIN_ACCES_MS - 5);
+  });
+
+  it("répond 429 avec retry-after au-delà du plafond, avant de lire le jeton", async () => {
+    const depuis = (): Request =>
+      new Request("https://hubperso.com/api/acces", {
+        method: "POST",
+        headers: { "x-forwarded-for": "203.0.113.77" },
+        body: "{}",
+      });
+    let dernier = 0;
+    for (let i = 0; i < 200 && dernier !== 429; i++) dernier = (await POST(depuis())).status;
+    expect(dernier).toBe(429);
+    const res = await POST(depuis());
+    expect(res.status).toBe(429);
+    expect(Number(res.headers.get("retry-after"))).toBeGreaterThanOrEqual(1);
+    expect(await res.json()).toMatchObject({ error: "rate_limited" });
   });
 });

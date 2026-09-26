@@ -28,11 +28,29 @@ import { HUB_TOKEN_HEADER } from "@mokarade/hub-contract";
 import { appDuJeton } from "@/lib/jetonApp";
 import { aAcces } from "@/lib/personnes";
 import { assurerMigrations } from "@/lib/migrations";
+import {
+  DUREE_MIN_ACCES_MS,
+  cleClient,
+  creerLimiteur,
+  pauseJusquA,
+  reponse429,
+} from "@/lib/limiteDebit";
+
+/**
+ * Plafond par client et par minute (en mémoire de l'instance, voir lib/limiteDebit.ts). Large :
+ * les apps mettent la réponse en cache une minute, un usage normal reste très en dessous.
+ */
+const limiteur = creerLimiteur({ max: 60, fenetreMs: 60_000 });
 
 /** Jamais de mise en cache : une révocation ne doit pas survivre dans un intermédiaire. */
 const ENTETES = { "cache-control": "no-store" } as const;
 
 export async function POST(req: Request): Promise<Response> {
+  // Avant tout : un client qui martèle ne coûte ni lecture de jeton ni requête en base.
+  const debit = limiteur.verifier(cleClient(req.headers));
+  if (!debit.ok) return reponse429(debit.retryApresS);
+
+  const debut = Date.now();
   const appId = appDuJeton(req.headers.get(HUB_TOKEN_HEADER));
   if (!appId) {
     // Volontairement avare : ni « jeton inconnu », ni « app inconnue ». Un appelant
@@ -70,5 +88,12 @@ export async function POST(req: Request): Promise<Response> {
   await assurerMigrations();
 
   const acces = await aAcces(email, appId);
+
+  // Oracle sur la liste des invités (audit F1) : une adresse inconnue, une adresse sans accès
+  // ici et le propriétaire (qui ne touche pas la base) répondent le MÊME corps `{ appId, acces }`
+  // — et la réponse dure au moins DUREE_MIN_ACCES_MS quel que soit le chemin pris, pour qu'un
+  // porteur de jeton ne distingue pas « existe » de « n'existe pas » à la durée. Un plancher
+  // réduit l'écart, il ne le prouve pas nul : durcissement, pas garantie.
+  await pauseJusquA(debut, Date.now(), DUREE_MIN_ACCES_MS);
   return Response.json({ appId, acces }, { headers: ENTETES });
 }
