@@ -43,9 +43,8 @@ export const CHEMINS_INTERDITS = Object.freeze([
 const FICHIERS_MAX = 3000;
 
 /** Chemin normalisé pour la comparaison, ou null s'il est douteux (absolu, « .. », vide, octet de contrôle). */
-export function normaliser(chemin) {
+function normaliser(chemin) {
   if (typeof chemin !== "string") return null;
-  // eslint-disable-next-line no-control-regex
   if (chemin === "" || /[\u0000-\u001f\u007f]/.test(chemin)) return null;
   let c = chemin.replace(/\\/g, "/");
   while (c.startsWith("./")) c = c.slice(2);
