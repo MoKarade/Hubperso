@@ -22,6 +22,9 @@
 /** Le label qui retient une PR déjà sortie du brouillon. Second verrou, pas le premier. */
 export const LABEL_FREIN = "do-not-merge";
 
+// Liste fermée des codes de raison : module dédié, repris tel quel par les autres dépôts.
+export { CODES_RAISON } from "./codesRaison.mjs";
+
 /** Conclusions de check qui n'empêchent pas de merger. Tout le reste bloque. */
 const CONCLUSIONS_OK = new Set(["SUCCESS", "NEUTRAL", "SKIPPED"]);
 
@@ -83,21 +86,6 @@ const ETATS_OK = new Set(["CLEAN", "HAS_HOOKS"]);
  * @param {string} [pr.state]
  * @returns {{merger: boolean, raison: string, code: string}}
  */
-/**
- * Codes de raison : liste FERMÉE, lue par le workflow (sortie du job) et par les tests.
- * `attestation_requise`, `frein_horaire` et `sha_change` de la spec ne s'appliquent pas à ce
- * dépôt (aucune attestation ni frein horaire dans la décision) : ils ne sont pas inventés ici.
- */
-export const CODES_RAISON = [
-  "merge_ok",
-  "brouillon",
-  "do_not_merge",
-  "controle_en_cours",
-  "controle_rouge",
-  "etat_fusion",
-  "hors_perimetre",
-];
-
 export function decision(pr) {
   if (!pr || typeof pr !== "object") return { merger: false, code: "hors_perimetre", raison: "aucune donnée de PR" };
 

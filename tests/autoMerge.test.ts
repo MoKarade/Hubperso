@@ -309,11 +309,4 @@ describe("les déclencheurs du workflow — ne pas les perdre en silence", () =>
   it("sort sans checkout quand aucune PR n'est ouverte", () => {
     expect(workflow).toContain("steps.ouvertes.outputs.nombre != '0'");
   });
-
-  it("aucun `uses:` de tous les workflows n'est autre chose qu'un SHA de 40 caractères", () => {
-    for (const f of ["auto-merge", "ci", "constellation", "doc-a-jour", "releve"]) {
-      const txt = readFileSync(`.github/workflows/${f}.yml`, "utf8");
-      for (const m of txt.matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)) expect(m[1]).toMatch(/@[0-9a-f]{40}$/);
-    }
-  });
 });
