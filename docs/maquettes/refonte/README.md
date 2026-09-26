@@ -26,7 +26,7 @@ Fond `#07090D` uni, cartes en verre léger à bordure fine (à plat), argent `#E
 - **CHANGEMENT DE RÈGLE PROPOSÉ (à valider par Marc)** : le liseré haut d'une carte est TOUJOURS la couleur de l'app ; l'état passe par le badge, l'icône et l'encadré. Cela REMPLACE la règle actuelle « l'orange (`warn`) prend le liseré » de `CLAUDE.local.md` / `reference-claude`. Le rouge (`danger`) garde son écrasement (bordure + liseré). À répercuter dans ces documents seulement si Marc valide, au moment du code.
 - **Boutons d'action** (« Lancer la synchro ») : tous en argent (bouton principal de la référence), plus de bouton dans la couleur de l'app.
 - **Polices** : Google Fonts seulement en maquette. En code : auto-héberger (`@fontsource`), pas de CDN.
-- **Règles du `CLAUDE.local.md` respectées** : cibles `var(--cible)` (44 px, 48 px sous 560 px) ; boutons pleine largeur sous 560 px ; seul le rouge écrase la couleur (bordure + liseré), l'orange ne prend que le liseré ; aucun `target="_blank"` ; totaux de coûts par période et par unité, jamais de total global.
+- **Règles du `CLAUDE.local.md` respectées** : cibles `var(--cible)` (44 px, 48 px sous 560 px) ; boutons pleine largeur sous 560 px ; seul le rouge écrase la couleur (bordure + liseré), l'orange n'a plus le liseré (voir le changement de règle proposé) ; aucun `target="_blank"` ; totaux de coûts par période et par unité, jamais de total global.
 - **États honnêtes** : chaque état = couleur + icône + libellé + phrase ; jamais un chiffre inventé (injoignable, non autorisée, invalide et en construction n'affichent aucune valeur ; « en cache » les grise et date le relevé).
 
 ## Contrastes (script `contrastes.py`)
