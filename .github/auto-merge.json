@@ -1,0 +1,43 @@
+{
+  "branche_base": "main",
+  "controles_requis": [
+    "Gate (typecheck · tests · lint · build)",
+    "Qualité (lint · couverture · code mort · architecture)",
+    "Sécurité (secrets · analyse statique)",
+    "Audit des dépendances de production",
+    "La doc suit le code"
+  ],
+  "controles_non_bloquants": [
+    "Vercel Agent Review"
+  ],
+  "chemins_interdits": [
+    "**/.env*",
+    "**/*.pem",
+    "**/secrets/**",
+    "qualite/**"
+  ],
+  "chemins_label_validation": [
+    "auth.ts",
+    "middleware.ts",
+    "lib/authGuard.ts",
+    "lib/gardeHub.ts",
+    "lib/sessionPartagee.ts",
+    "lib/jetonApp.ts",
+    "lib/jetonsGoogle.ts",
+    "app/api/**",
+    "vercel.json",
+    "next.config.mjs",
+    "drizzle/**",
+    "drizzle.config.ts",
+    "scripts/build-necessaire.sh",
+    "**/auth/**",
+    "**/middleware*",
+    "**/migrations/**",
+    "**/*.sql",
+    ".env.example",
+    "tests/kitAutoMerge.test.ts",
+    "**/settings*.json"
+  ],
+  "carence_dependabot_jours": 3,
+  "frein_fusions_par_heure": 6
+}
