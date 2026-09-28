@@ -3,6 +3,33 @@
 > État courant synthétique : voir `docs/ETAT.md`.
 
 
+## 🟦 Session 2026-09-28 — **Kit auto-merge : deux notes qui n'ont plus d'autre foyer**
+
+PR #92 (pole-securite, pose `securite_login`). Le retrait de `.github/workflows/armement-auto-merge.yml`
+(profil `prive` — dépôt privé Free, pas d'auto-fusion native, voir `COPIES.md`) régénère ce fichier
+par l'outil (`modeles/auto-merge/verifier-copies.mjs --ecrire-copies`), qui l'écrase entièrement :
+la section manuelle « Écarts propres à Hubperso » posée à l'installation du kit (PR #89) a disparu
+avec. Ce qui suit était son point 3 et une partie du point 4, relogés ici pour ne pas les perdre.
+
+**Chemins sensibles propres à Hubperso.** `.github/auto-merge.json` (`chemins_label_validation`)
+déclare `auth.ts`, `middleware.ts`, `lib/authGuard.ts`, `lib/gardeHub.ts`, `lib/sessionPartagee.ts`,
+`lib/jetonApp.ts`, `lib/jetonsGoogle.ts`, `app/api/**`, `vercel.json`, `next.config.mjs`,
+`drizzle/**`, `drizzle.config.ts`, `scripts/build-necessaire.sh` — une PR qui y touche exige le
+label `validation-marc` pour se fusionner seule (`qualite/**`, lui, est dans `chemins_interdits` :
+bloqué net, jamais fusionnable seul, cliquet oblige). Ces chemins remplacent l'ancienne garde
+maison `scripts/gardeChemins.mjs`, supprimée avec l'installation du kit auto-merge de l'Atelier
+(PR #89) : c'est désormais le kit qui les protège, pas un script propre à ce dépôt.
+`tests/kitAutoMerge.test.ts` vérifie qu'aucun n'a été perdu en route.
+
+**Perte assumée : neutralisation des échecs « quota » Vercel.** Avant le kit, une garde maison
+(`estUnQuota`, dans l'ancien `scripts/autoMerge.mjs`, supprimé par la PR #89) neutralisait
+spécifiquement un échec Vercel dû au quota, pour ne pas bloquer une fusion légitime sur un hoquet
+de facturation plutôt qu'un défaut de code. Le kit de l'Atelier n'a pas cette neutralisation :
+depuis son installation, un échec de check Vercel — quota compris — compte comme un vrai refus de
+fusion, sans distinction (seul `Vercel Agent Review` est non bloquant, et ce n'est pas la même
+chose). **Un futur agent qui voit une PR bloquée par un hoquet de quota Vercel doit comprendre que
+c'est un choix connu et assumé, pas un bug à corriger en douce** en réintroduisant une garde locale.
+
 ## 🟦 Session 2026-09-25 — **Auto-merge : garde des chemins sensibles et course Vercel Agent Review**
 
 PR #84 (brouillon, NON armée : elle touche `.github/**`, donc jamais auto-fusionnée — relecture
