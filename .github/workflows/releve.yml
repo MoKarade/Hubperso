@@ -24,8 +24,12 @@
 # Le choix de Marc (14/09) est de garder ce mécanisme et de rendre le retard VISIBLE côté
 # hub plutôt que de prétendre l'avoir réglé : `continuite` (`lib/gel.ts`) compte les trous
 # et affiche le pire écart, au lieu d'une courbe lisse qui affirmerait faussement ce qui
-# s'est passé entre deux points. Écrire ici « un relevé toutes les 30 minutes » serait donc
-# un commentaire faux — ce qui est promis est « au mieux toutes les 30 minutes ».
+# s'est passé entre deux points. Écrire ici « un relevé toutes les heures » serait donc un
+# commentaire faux — ce qui est promis est « au mieux toutes les heures ».
+#
+# CADENCE PASSÉE DE */30 À HORAIRE le 28/09/2026 (Marc, en session, PR #90 — coût CI, voir
+# docs/couts.md). `CADENCE_HORLOGE_MS` (`lib/gel.ts`) porte la MÊME valeur en dur, côté
+# détection de trou : changée dans le même lot, comme le rappelle son commentaire.
 #
 # ── PRÉREQUIS (deux secrets de dépôt : Settings → Secrets and variables → Actions) ───
 #   HUB_URL      = l'ORIGINE CANONIQUE du hub, sans barre oblique finale et sans chemin.
@@ -50,9 +54,9 @@ on:
 
   schedule:
     # L'espacement minimal côté serveur est de 15 min (`INTERVALLE_RELEVE_MS`). Demander
-    # plus souvent que 30 min ne produirait pas plus de relevés, seulement plus d'appels :
+    # plus souvent que l'heure ne produirait pas plus de relevés, seulement plus d'appels :
     # la route répondrait « aucun relevé écrit » et on brûlerait du quota pour rien.
-    - cron: "*/30 * * * *"
+    - cron: "0 * * * *"
 
 permissions:
   contents: read

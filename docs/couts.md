@@ -10,18 +10,20 @@ jour au lieu de 48).
 
 | Workflow | Cron | Plafond théorique | Coût mesuré | Rôle |
 |---|---|---|---|---|
-| `releve.yml` | `*/30 * * * *` | 48 runs/jour, ~1 440/mois | à mesurer | Relevé du hub (historique, détection de gel). Fonctionnel : NON réduit sans décision de Marc (« au mieux toutes les 30 min »). |
+| `releve.yml` | `0 * * * *` | 24 runs/jour, ~720/mois | à mesurer | Relevé du hub (historique, détection de gel). |
 | `auto-merge.yml` | `23 9 * * *` | 30 runs/mois | à mesurer (auto-merge ≈ 26 % de la consommation en 09/2026, mesuré avant le passage au quotidien) | Filet quotidien. Sortie immédiate, sans checkout ni Node, s'il n'y a aucune PR ouverte. Le réveil principal est événementiel (`workflow_run`, `status`, `check_run`, `pull_request_target`). |
-| `constellation.yml` | `17 11 * * *` | 30 runs/mois | à mesurer | Cohérence des 6 apps (`npm run outil:constellation`). |
+| `constellation.yml` | `0 * * * *` | 24 runs/jour, ~720/mois | à mesurer | Cohérence des 6 apps (`npm run outil:constellation`). |
 | `ci.yml` (job `audit`) | `0 12 * * 1` | ~4 runs/mois | à mesurer | `npm audit --omit=dev` hebdomadaire — mais ce job tourne aussi à CHAQUE push et PR (pas de garde `if: github.event_name != 'schedule'` comme `gate`/`qualité`/`sécurité`), donc son vrai coût mensuel dépend du volume de PR, pas seulement du cron. |
 
-⚠️ **Une demande de passage à l'horaire (`0 * * * *`) pour `releve.yml` ET `constellation.yml`
-a été reçue le 28/09/2026** (message relayant une décision de Marc via pole-architecture), en
-même temps que cette PR. **Non appliquée** : `releve.yml` reste protégé (voir l'en-tête du
-fichier — « décision de Marc en attente ailleurs », et une modification en a été refusée par le
-système de permission de la session) et changer `constellation.yml` seul aurait multiplié son
-coût par 24 (30 → ~720 runs/mois) pour un contrôle qui n'a besoin de rien de plus qu'un run
-quotidien (voir le tableau). À confirmer directement par Marc avant d'y toucher.
+**`releve.yml` ET `constellation.yml` passés de `*/30`/`17 11 * * *` à l'horaire (`0 * * * *`)
+le 28/09/2026, sur autorisation explicite de Marc donnée EN SESSION à hubperso-code** (pas un
+message relayé — la demande relayée plus tôt le même jour avait été laissée de côté par
+prudence, le temps de cette confirmation directe). Plafond théorique multiplié par 2 pour
+`releve.yml` (~1 440 → ~720/mois, donc une RÉDUCTION) et par 24 pour `constellation.yml` (~30 →
+~720/mois, une augmentation, assumée pour unifier les deux horloges). `CADENCE_HORLOGE_MS`
+(`lib/gel.ts`) porte la même valeur d'une heure, changée dans le même lot — sinon la détection
+de « trou » (`continuite`, `lib/gel.ts`) jugerait avec la mauvaise référence et signalerait des
+trous qui n'en sont pas.
 
 ## Autres déclencheurs
 

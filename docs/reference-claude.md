@@ -179,7 +179,7 @@ npm run typecheck && npm run test && npm run lint && npm run build
 `node_modules`/`.next` implicitement, contrairement à `next lint`.)*
 
 La **CI** (`.github/workflows/ci.yml`) rejoue exactement ce gate, plus deux workflows
-séparés — `constellation.yml` (quotidien, cf. §7) et un job `audit` (`npm audit --omit=dev`,
+séparés — `constellation.yml` (horaire, cf. §7) et un job `audit` (`npm audit --omit=dev`,
 aussi en hebdomadaire). Séparés volontairement : un avis
 de sécurité paraît sans qu'une ligne n'ait changé — mêlé au gate, il peindrait le dépôt
 en rouge sans rapport avec le code, et on prendrait l'habitude du rouge.
@@ -235,7 +235,7 @@ de résilience : le masquer 30 min cacherait exactement ce qu'on vient de rendre
 `app.id` de son côté, et la correspondance est tenue à la main. Une divergence ne se voit pas à
 l'écran : le widget s'affiche, avec le bon contenu, sous le bon nom. `lib/constellation.ts`
 (PUR, testé sans réseau) juge identités, versions et comparabilité des coûts ; le script et le
-workflow quotidien ne sont que le transport. C'est ce contrôle qui aurait attrapé le décalage
+workflow horaire ne sont que le transport. C'est ce contrôle qui aurait attrapé le décalage
 « mois vs total » de DriveAI avant qu'un montant faux ne s'affiche.
 
 ⚠️ Le vérificateur **échoue si aucun jeton n'est présent** plutôt que de rendre 0 : un run qui

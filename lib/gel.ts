@@ -52,7 +52,7 @@ export const TOLERANCE_AVANCE_MS = 60_000;
 export const FACTEUR_TROU = 2;
 
 /**
- * Cadence NOMINALE de l'horloge du hub — le cron « toutes les 30 minutes » de
+ * Cadence NOMINALE de l'horloge du hub — le cron « toutes les heures » de
  * `.github/workflows/releve.yml`.
  *
  * ⚠️ Nominale, pas réelle, et l'écart est tout le sujet : GitHub étale ses `schedule` sous
@@ -63,8 +63,10 @@ export const FACTEUR_TROU = 2;
  * Elle est écrite ici et lue par la page, mais le workflow porte sa propre valeur en YAML :
  * les deux ne peuvent pas être dérivées l'une de l'autre. Changer la cadence demande de
  * toucher les deux, et l'en-tête du workflow le rappelle.
+ *
+ * Passée de 30 min à 1 h le 28/09/2026 (Marc, en session, PR #90 — coût CI).
  */
-export const CADENCE_HORLOGE_MS = 30 * 60_000;
+export const CADENCE_HORLOGE_MS = 60 * 60_000;
 
 export type Fraicheur =
   /** Âge connu ET sous la limite déclarée par l'app. */

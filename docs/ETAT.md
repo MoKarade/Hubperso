@@ -10,14 +10,15 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
   routes `api/acces`, `api/auth`, `api/cron/releve`.
 - `lib/` : ~48 modules (accès, sources, dérivés, historique, base) ; `components/` : 17 ;
   `drizzle/` : 2 migrations ; `tests/` : ~44 fichiers.
-- CI (`.github/workflows`) : ci, auto-merge, constellation, doc-a-jour, releve (cron `*/30` ; coûts : `docs/couts.md`).
+- CI (`.github/workflows`) : ci, auto-merge, constellation (cron horaire), doc-a-jour, releve
+  (cron horaire ; coûts : `docs/couts.md`).
 - ADR : `docs/adr/0001` à `0003`.
 
 ## État
 - Fusion auto active (`auto-merge.yml`). Aucun `TODO`/`FIXME`/`eslint-disable`/`@ts-ignore`
   dans `app/`, `lib/`, `components/`.
 - Le relevé d'historique écrit au plus un point par app toutes les 15 min
-  (`INTERVALLE_RELEVE_MS`, `lib/historiqueDb.ts`) ; le cron GitHub passe toutes les 30 min.
+  (`INTERVALLE_RELEVE_MS`, `lib/historiqueDb.ts`) ; le cron GitHub passe toutes les heures.
 - Le nombre de tests n'est pas figé ici : il se périme à chaque PR (voir la CI).
 
 ## Dette visible

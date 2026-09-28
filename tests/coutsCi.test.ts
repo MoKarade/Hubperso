@@ -37,9 +37,8 @@ describe("docs/couts.md — les crons et leur coût", () => {
   const doc = lire("docs/couts.md");
 
   it("liste les quatre crons avec leur valeur réelle (celle des fichiers, pas une valeur inventée)", () => {
-    expect(doc).toContain("*/30 * * * *");
+    expect(doc).toContain("0 * * * *");
     expect(doc).toContain("23 9 * * *");
-    expect(doc).toContain("17 11 * * *");
     expect(doc).toContain("0 12 * * 1");
   });
 
@@ -101,12 +100,25 @@ describe("ci.yml — voie rapide doc seule (coût CI)", () => {
   });
 });
 
-describe("releve.yml et constellation.yml gardent leur cadence (décision de Marc non confirmée)", () => {
-  it("releve.yml reste sur */30 — protégé, une décision de Marc est en attente ailleurs", () => {
-    expect(lire(".github/workflows/releve.yml")).toContain('cron: "*/30 * * * *"');
+describe("releve.yml et constellation.yml — cadence horaire (Marc, en session, 28/09/2026)", () => {
+  it("releve.yml passe à l'horaire", () => {
+    expect(lire(".github/workflows/releve.yml")).toContain('cron: "0 * * * *"');
   });
 
-  it("constellation.yml reste quotidien — le passage à l'horaire n'a pas été confirmé par Marc", () => {
-    expect(lire(".github/workflows/constellation.yml")).toContain('cron: "17 11 * * *"');
+  it("constellation.yml passe à l'horaire", () => {
+    expect(lire(".github/workflows/constellation.yml")).toContain('cron: "0 * * * *"');
+  });
+});
+
+describe("CADENCE_HORLOGE_MS (lib/gel.ts) reste synchronisée avec le cron de releve.yml", () => {
+  it("vaut une heure, comme le cron", () => {
+    const gel = lire("lib/gel.ts");
+    expect(gel).toMatch(/CADENCE_HORLOGE_MS\s*=\s*60\s*\*\s*60_000/);
+  });
+
+  it("le texte affiché à l'écran ne code plus en dur un nombre de relevés attendus", () => {
+    const page = lire("app/attention/page.tsx");
+    expect(page).not.toMatch(/donnerait 336/);
+    expect(page).toContain("Math.round(FENETRE_MS / CADENCE_HORLOGE_MS)");
   });
 });

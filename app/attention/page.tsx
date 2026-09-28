@@ -221,9 +221,10 @@ export default async function PageAttention() {
               ))}
             </ul>
             <p className="observation__note">
-              Sur 7 jours, une cadence de {formatDuree(CADENCE_HORLOGE_MS)} donnerait 336
-              relevés. Un « trou » est un écart de plus du double de cette cadence, donc au
-              moins un passage perdu — les courbes d’évolution en portent la trace.
+              Sur 7 jours, une cadence de {formatDuree(CADENCE_HORLOGE_MS)} donnerait{" "}
+              {Math.round(FENETRE_MS / CADENCE_HORLOGE_MS)} relevés. Un « trou » est un écart
+              de plus du double de cette cadence, donc au moins un passage perdu — les
+              courbes d’évolution en portent la trace.
             </p>
           </>
         )}

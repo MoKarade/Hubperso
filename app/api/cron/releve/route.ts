@@ -49,7 +49,7 @@ import { getSources } from "@/lib/sources";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 
 /**
- * Le workflow appelle toutes les 30 min : 10 par minute et par client, c'est très large et
+ * Le workflow appelle toutes les heures : 10 par minute et par client, c'est très large et
  * arrête un martelage de la base (en mémoire de l'instance, voir lib/limiteDebit.ts).
  */
 const limiteur = creerLimiteur({ max: 10, fenetreMs: 60_000 });
