@@ -31,13 +31,59 @@ permissions:
   contents: read
 
 jobs:
+  # Voie rapide (coût CI) : une PR qui ne touche QUE de la doc (**/*.md, docs/**) n'a pas
+  # besoin de gate/qualité/audit — voir docs/couts.md. AUCUN `paths:` sur le déclencheur
+  # ci-dessus : ça empêcherait ce job (et donc tout contrôle qui en dépend) de tourner sur
+  # une PR de code, et bloquerait la PR sans recours (règle de l'Atelier). La décision se
+  # fait donc ICI, par job, sur les fichiers RÉELLEMENT changés. Jamais Sécurité ni « La doc
+  # suit le code » (workflow séparé, doc-a-jour.yml) ne dépendent de ce job.
+  fichiers:
+    name: Fichiers changés (PR doc seule ?)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      pull-requests: read
+    outputs:
+      doc_seule: ${{ steps.calc.outputs.doc_seule }}
+    steps:
+      # Pas de checkout : `gh pr diff --name-only` lit la liste via l'API, moins cher qu'un
+      # clone pour ce job qui ne sert qu'à trier gate/qualité/audit.
+      - name: Lister les fichiers changés et juger si c'est de la doc seule
+        id: calc
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMERO: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          fichiers="$(gh pr diff "$NUMERO" --repo "$REPO" --name-only)"
+          echo "Fichiers changés :"
+          echo "$fichiers"
+          doc_seule=true
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              *.md|docs/*) ;;
+              *) doc_seule=false ;;
+            esac
+          done <<< "$fichiers"
+          echo "doc_seule=$doc_seule" >> "$GITHUB_OUTPUT"
+
   gate:
     # Plafond : sans lui, un job fige tourne SIX HEURES avant d'echouer (vecu sur
     # DriveAI le 19/08/2026). Calibre sur la duree reelle — 1 min 36 s observe.
     timeout-minutes: 15
     name: Gate (typecheck · tests · lint · build)
+    needs: fichiers
     # Le cron ne concerne que l'audit : inutile de rejouer le gate sur un code inchangé.
-    if: github.event_name != 'schedule'
+    # Voie rapide doc seule (cf. le job `fichiers` ci-dessus) : sautée SEULEMENT quand ce
+    # calcul a RÉUSSI et conclu doc_seule=true. Un échec ou une absence (push, cron,
+    # workflow_dispatch — `fichiers` ne tourne alors pas) fait tourner le gate normalement :
+    # `result != 'success'` est le défaut prudent.
+    if: |
+      github.event_name != 'schedule' &&
+      (needs.fichiers.result != 'success' || needs.fichiers.outputs.doc_seule != 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -91,12 +137,17 @@ jobs:
     timeout-minutes: 10
     name: Audit des dépendances de production
     runs-on: ubuntu-latest
+    needs: fichiers
     # Job SÉPARÉ du gate, volontairement. Un avis de sécurité est publié sans qu'aucun
     # commit n'ait eu lieu : si l'audit vivait dans le gate, un dépôt sain deviendrait
     # « rouge » du jour au lendemain et on prendrait l'habitude du rouge — c'est
     # exactement comme ça qu'une CI cesse d'être lue (vécu chez JobAI : quatre commits
     # rouges de suite sans que personne ne le voie). Séparés, « gate vert / audit rouge »
     # se lit d'un coup d'œil et désigne la vraie cause.
+    # Voie rapide doc seule (coût CI, cf. le job `fichiers`) : ce job tournait auparavant à
+    # CHAQUE push/PR en plus du cron hebdo ; il reste inchangé hors PR doc seule (même
+    # défaut prudent que gate : `result != 'success'` fait tourner l'audit).
+    if: needs.fichiers.result != 'success' || needs.fichiers.outputs.doc_seule != 'true'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -129,8 +180,12 @@ jobs:
   qualite:
     timeout-minutes: 20
     name: Qualité (lint · couverture · code mort · architecture)
+    needs: fichiers
     # Le cron ne concerne que l'audit : inutile de rejouer ce job sur un code inchangé.
-    if: github.event_name != 'schedule'
+    # Voie rapide doc seule : même logique que `gate` (cf. le job `fichiers` ci-dessus).
+    if: |
+      github.event_name != 'schedule' &&
+      (needs.fichiers.result != 'success' || needs.fichiers.outputs.doc_seule != 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
