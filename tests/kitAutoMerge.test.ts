@@ -38,8 +38,13 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
 });
 
 describe(".github/auto-merge.json", () => {
-  it("n'a PAS de securite_login (la PR de configuration de pole-securite l'ajoutera)", () => {
-    expect(config).not.toHaveProperty("securite_login");
+  it("securite_login est le compte d'attestation dédié, au format GitHub App [bot]", () => {
+    expect(config.securite_login).toMatch(/^[A-Za-z0-9-]+\[bot\]$/);
+  });
+
+  it("securite_user_id est un entier positif (id numérique du compte d'attestation)", () => {
+    const cfg = config as unknown as { securite_user_id?: number };
+    expect(Number.isInteger(cfg.securite_user_id) && (cfg.securite_user_id as number) > 0).toBe(true);
   });
 
   it("les contrôles requis sont de vrais noms de jobs des workflows CI (sinon la PR ne partirait jamais)", () => {

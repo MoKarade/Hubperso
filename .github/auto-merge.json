@@ -38,6 +38,8 @@
     "tests/kitAutoMerge.test.ts",
     "**/settings*.json"
   ],
+  "securite_login": "atelier-securite-marc[bot]",
+  "securite_user_id": 334232309,
   "carence_dependabot_jours": 3,
   "frein_fusions_par_heure": 6
 }
