@@ -2,7 +2,7 @@
 # croit d'elle et ce qu'elle publie d'elle-même concordent.
 #
 # SÉPARÉ du gate, volontairement, et pour la même raison que le job `audit` : ce contrôle
-# dépend de la disponibilité de CINQ apps. Mêlé au gate, un déploiement en cours ailleurs
+# dépend de la disponibilité de SIX apps. Mêlé au gate, un déploiement en cours ailleurs
 # peindrait en rouge une PR qui n'y est pour rien — et on prendrait l'habitude du rouge.
 name: Constellation
 
@@ -21,7 +21,7 @@ jobs:
   verifier:
     name: Cohérence hub ↔ apps
     runs-on: ubuntu-latest
-    # Cinq apps derrière des réveils à froid, 9 s de budget chacune : large, mais borné.
+    # Six apps derrière des réveils à froid, 9 s de budget chacune : large, mais borné.
     # Sans plafond le défaut GitHub est de SIX HEURES.
     timeout-minutes: 8
     steps:
@@ -41,11 +41,12 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: Interroger les cinq apps et juger la cohérence
+      - name: Interroger les six apps et juger la cohérence
         env:
           HUB_TOKEN_FINANCEAI: ${{ secrets.HUB_TOKEN_FINANCEAI }}
           HUB_TOKEN_DRIVEAI: ${{ secrets.HUB_TOKEN_DRIVEAI }}
           HUB_TOKEN_BATCHCHEF: ${{ secrets.HUB_TOKEN_BATCHCHEF }}
           HUB_TOKEN_CARAI: ${{ secrets.HUB_TOKEN_CARAI }}
           HUB_TOKEN_JOBAI: ${{ secrets.HUB_TOKEN_JOBAI }}
+          HUB_TOKEN_MEMORYAI: ${{ secrets.HUB_TOKEN_MEMORYAI }}
         run: npm run constellation

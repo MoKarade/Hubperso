@@ -1,8 +1,8 @@
 /**
- * Interroge les CINQ apps pour de vrai et juge la cohérence de la constellation.
+ * Interroge les SIX apps pour de vrai et juge la cohérence de la constellation.
  *
  * Pourquoi un script et pas un test : il a besoin des VRAIS jetons et du VRAI réseau. Le
- * mettre dans le gate rendrait la CI dépendante de la disponibilité de cinq apps — un
+ * mettre dans le gate rendrait la CI dépendante de la disponibilité de six apps — un
  * déploiement en cours ailleurs peindrait cette PR-ci en rouge, et on prendrait l'habitude
  * du rouge. C'est la même raison qui tient le job `audit` à part.
  *
