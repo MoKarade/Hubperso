@@ -25,7 +25,9 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
   const lignes = lireCopies(lire("COPIES.md"));
 
   it("COPIES.md liste des fichiers (anti-vacuité)", () => {
-    expect(lignes.length).toBeGreaterThanOrEqual(16);
+    // 15 depuis le retrait de armement-auto-merge.yml (profil `prive` : pas d'auto-fusion
+    // native en dépôt privé Free, voir COPIES.md et modeles/auto-merge/LISEZMOI.md).
+    expect(lignes.length).toBeGreaterThanOrEqual(15);
   });
 
   it.each(lignes.map((l) => [l.chemin, l.sha256]))("%s a l'empreinte attestée", (chemin, sha) => {
@@ -168,7 +170,8 @@ describe("le workflow auto-merge.yml", () => {
 });
 
 describe("les workflows du kit épinglent leurs actions par SHA (les autres : PR #87)", () => {
-  for (const f of ["auto-merge.yml", "armement-auto-merge.yml", "ci-reutilisable.yml"]) {
+  // armement-auto-merge.yml retiré (profil `prive`) : plus de fichier à vérifier ici.
+  for (const f of ["auto-merge.yml", "ci-reutilisable.yml"]) {
     it(f, () => {
       for (const m of lire(`.github/workflows/${f}`).matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)) {
         const ref = m[1] as string;
