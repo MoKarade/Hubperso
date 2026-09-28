@@ -246,6 +246,7 @@ ne vérifie rien ne doit pas ressembler à un run vert.
 | Fichier | Contenu |
 |---|---|
 | `README.md` | À quoi sert le hub, pour un lecteur extérieur. |
+| `docs/ARCHITECTURE.md` | Carte structurelle : `app/`/`lib/`/`components/`, flux d'auth, ce que la base stocke. |
 | `CLAUDE.md` | Ce fichier. Se charge à **chaque session** → il reste **court**. |
 | `HANDOVER.md` | L'état RÉEL de l'auth et des accès, et comment le vérifier. À lire en premier. |
 | `BACKLOG.md` | Ce qui est décidé mais pas fait. |

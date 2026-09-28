@@ -38,6 +38,13 @@ navigateur l'envoie à tous les sous-domaines. Et comme le contenu est un JWT ch
 faut **le même `AUTH_SECRET`** partout : sans lui, l'app reçoit le cookie mais ne peut pas
 le lire.
 
+Depuis l'ADR-0001 de JobAI et de CarAI (14/08/2026), seuls Hubperso et BatchChef gardent
+`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` en variable d'env : JobAI et CarAI ne font plus
+la poignée de main OAuth eux-mêmes, ils lisent le cookie de session déjà posé par le hub
+(signé `AUTH_SECRET`, partagé). Le client Google Cloud reste unique pour les quatre apps ;
+sa gestion active (échange de code, refresh) n'est plus portée que par Hubperso et
+BatchChef.
+
 ⚠️ Seul le cookie de **session** porte un `domain`. Le cookie **CSRF** d'Auth.js s'appelle
 `__Host-authjs.csrf-token`, et le préfixe `__Host-` **interdit** l'attribut `Domain` : lui
 en poser un ferait rejeter le cookie par le navigateur et casserait la connexion partout.
