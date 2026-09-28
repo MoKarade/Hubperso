@@ -25,6 +25,10 @@ const EXCEPTIONS: Record<string, string> = {
     "la page de connexion : exiger une session pour se connecter serait une boucle",
   "sans-acces/page.tsx":
     "elle s'adresse précisément à qui est connecté SANS accès au hub — l'y renvoyer serait une boucle",
+  "confidentialite/page.tsx":
+    "page légale publique exigée par la vérification Google OAuth (Test → Production) : le robot de revue de Google n'a pas de session — voir lib/authGuard.ts (isPublicPath)",
+  "conditions/page.tsx":
+    "même raison que confidentialite/page.tsx : page légale publique, sans session",
 };
 
 function fichiersDeApp(dossier: string, nom: string): string[] {
