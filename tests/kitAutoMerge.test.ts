@@ -162,8 +162,14 @@ describe("le workflow auto-merge.yml", () => {
   });
 });
 
-describe("les workflows du kit épinglent leurs actions par SHA (les autres : PR #87)", () => {
-  for (const f of ["auto-merge.yml", "armement-auto-merge.yml", "ci-reutilisable.yml"]) {
+describe("les workflows du kit épinglent leurs actions par SHA (ci.yml reste : PR distincte)", () => {
+  for (const f of [
+    "auto-merge.yml",
+    "armement-auto-merge.yml",
+    "ci-reutilisable.yml",
+    "constellation.yml",
+    "doc-a-jour.yml",
+  ]) {
     it(f, () => {
       for (const m of lire(`.github/workflows/${f}`).matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)) {
         const ref = m[1] as string;
