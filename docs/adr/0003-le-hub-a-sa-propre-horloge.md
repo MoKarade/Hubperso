@@ -136,7 +136,7 @@ c'est une affirmation fausse sur ce qui s'est passé entre les deux.
   omission.
 - **Deux secrets à poser à la main** (`HUB_URL`, `CRON_SECRET`, côté dépôt GitHub et côté
   Vercel). Sans eux le workflow échoue en ROUGE : un run qui n'enregistre rien ne doit pas
-  ressembler à un run vert. C'est la même règle que pour `npm run constellation`.
+  ressembler à un run vert. C'est la même règle que pour `npm run outil:constellation`.
 
   ⚠️ **Trois choses, pas deux — et la troisième n'est pas un secret.** L'horloge a aussi
   besoin de `DATABASE_URL` côté Vercel, puisqu'elle ÉCRIT. Mesuré le 14/09/2026 à 20:34 Z,

@@ -22,7 +22,7 @@ Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — l
 - Style et compte-rendu → `## 10.` · Ajouter une app → `## 11. Ajouter une app`
 
 ## Commandes
-`npm run dev` · `test` (vitest) · `typecheck` · `lint` (ESLint CLI) · `build` · `constellation`
+`npm run dev` · `test` (vitest) · `typecheck` · `lint` (ESLint CLI) · `build` · `outil:constellation`
 (6 apps, jetons requis). **Gate avant commit** : `npm run typecheck && npm run test && npm run lint && npm run build`.
 
 ## Règles propres (résumé, détail en §1 et §2 de la référence)

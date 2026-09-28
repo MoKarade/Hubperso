@@ -11,6 +11,13 @@ on:
     # Une fois par jour. Les incohérences visées (identité divergente, contrat trop récent,
     # périodes de coût mélangées) ne se réparent pas toutes seules et ne clignotent pas :
     # elles durent des semaines. Un run quotidien suffit, un run par heure ne dirait rien de plus.
+    #
+    # ⚠️ Un passage à l'horaire a été demandé le 28/09/2026 (message relayant une décision de
+    # Marc via pole-architecture), en même temps que `releve.yml`. Non appliqué ICI : ce
+    # serait 24× plus de runs/mois pour un contrôle qui n'en a pas besoin (voir ci-dessus),
+    # et `releve.yml` — la même demande, le même message — est explicitement protégé contre
+    # ce changement par ailleurs (permission refusée). Décision à confirmer directement par
+    # Marc avant d'y toucher.
     - cron: "17 11 * * *"
   workflow_dispatch:
 
@@ -25,7 +32,7 @@ jobs:
     # Sans plafond le défaut GitHub est de SIX HEURES.
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
           # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
@@ -34,7 +41,7 @@ jobs:
           # d'environnement, que `gh` lit SANS toucher à la config git.
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"
           cache: npm
@@ -48,4 +55,4 @@ jobs:
           HUB_TOKEN_BATCHCHEF: ${{ secrets.HUB_TOKEN_BATCHCHEF }}
           HUB_TOKEN_CARAI: ${{ secrets.HUB_TOKEN_CARAI }}
           HUB_TOKEN_JOBAI: ${{ secrets.HUB_TOKEN_JOBAI }}
-        run: npm run constellation
+        run: npm run outil:constellation

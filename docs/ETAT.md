@@ -10,7 +10,7 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
   routes `api/acces`, `api/auth`, `api/cron/releve`.
 - `lib/` : ~48 modules (accès, sources, dérivés, historique, base) ; `components/` : 17 ;
   `drizzle/` : 2 migrations ; `tests/` : ~44 fichiers.
-- CI (`.github/workflows`) : ci, auto-merge, constellation, doc-a-jour, releve (cron `*/30`).
+- CI (`.github/workflows`) : ci, auto-merge, constellation, doc-a-jour, releve (cron `*/30` ; coûts : `docs/couts.md`).
 - ADR : `docs/adr/0001` à `0003`.
 
 ## État

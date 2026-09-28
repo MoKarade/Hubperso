@@ -165,7 +165,7 @@ npm run test       # vitest
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint .
 npm run build      # build de production
-npm run constellation  # interroge les 6 apps et juge la cohérence (jetons requis)
+npm run outil:constellation  # interroge les 6 apps et juge la cohérence (jetons requis)
 ```
 
 ## 5. Vérifications avant commit
@@ -231,7 +231,7 @@ accuse l'app et envoie corriger le mauvais dépôt. Cet état n'est **jamais** m
 de résilience : le masquer 30 min cacherait exactement ce qu'on vient de rendre visible.
 
 **Ce que le hub croit d'une app et ce qu'elle publie d'elle-même ne sont vérifiés nulle part
-— sauf par `npm run constellation`.** `lib/sources.ts` déclare `id: "driveai"`, l'app publie son
+— sauf par `npm run outil:constellation`.** `lib/sources.ts` déclare `id: "driveai"`, l'app publie son
 `app.id` de son côté, et la correspondance est tenue à la main. Une divergence ne se voit pas à
 l'écran : le widget s'affiche, avec le bon contenu, sous le bon nom. `lib/constellation.ts`
 (PUR, testé sans réseau) juge identités, versions et comparabilité des coûts ; le script et le
