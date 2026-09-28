@@ -22,6 +22,13 @@ export type GuardDecision =
 /** Routes toujours publiques : Auth.js, page de login, assets statiques de Next. */
 export function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname.startsWith("/login/")) return true;
+  // Pages légales publiques (confidentialité, conditions), exigées par la vérification
+  // Google OAuth (Test → Production) : elles doivent rester lisibles sans session, y
+  // compris par le robot de revue de Google qui n'en a pas. Même mécanisme que /login —
+  // JAMAIS une exclusion du matcher de middleware.ts (CLAUDE.local.md). Elles n'affichent
+  // aucune donnée personnelle : composant générique, texte statique.
+  if (pathname === "/confidentialite" || pathname.startsWith("/confidentialite/")) return true;
+  if (pathname === "/conditions" || pathname.startsWith("/conditions/")) return true;
   if (pathname.startsWith("/api/auth/")) return true;
   // POST /api/acces : appel de SERVEUR À SERVEUR (une app demande si une adresse a accès
   // chez elle). Aucun navigateur, donc aucun cookie de session à présenter — la garder

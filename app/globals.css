@@ -713,6 +713,70 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
+/* --- Page publique de texte (confidentialité, conditions…) ---
+   GÉNÉRIQUE : n'importe quelle page publique de prose statique passe par ces classes via
+   components/PagePublique.tsx. Plus large que `.login__card` (26rem) : du texte long sur
+   une carte de largeur « login » serait une colonne étroite et interminable à faire défiler. */
+.legal {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: clamp(1.5rem, 1rem + 3vw, 4rem);
+}
+.legal__card {
+  width: min(100%, 42rem);
+  height: fit-content;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(1.6rem, 1rem + 3vw, 2.8rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  animation: rise-in 560ms var(--ease-out) backwards;
+}
+.legal__title {
+  font-size: clamp(1.8rem, 1.4rem + 2vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 0.3rem;
+}
+.legal__meta {
+  color: var(--text-faint);
+  font-size: 0.82rem;
+  margin-top: 0.3rem;
+}
+.legal h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 0.4rem;
+}
+.legal p {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+.legal ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+/* Liens de PROSE (dans une phrase), volontairement SANS classe : ce ne sont pas des cibles
+   tactiles isolées comme un bouton, `tests/ciblesTactiles.test.ts` ne les attend donc pas. */
+.legal a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal a:hover {
+  color: var(--info);
+}
+
 /* --- Bouton générique (retour, liens d'action) --- */
 /* ── LE BOUTON GÉNÉRIQUE ──────────────────────────────────────────────────────────────
    Employé par les en-têtes de page, `/administration`, `/couts`, `/attention` — donc par

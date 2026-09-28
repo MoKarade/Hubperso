@@ -8,6 +8,16 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/login")).toBe(true);
   });
 
+  // Exigées par la vérification Google OAuth (Test → Production) : le robot de revue de
+  // Google n'a pas de session. Même mécanisme que /login, jamais une exclusion du matcher
+  // de middleware.ts (CLAUDE.local.md).
+  it("laisse publiques /confidentialite et /conditions", () => {
+    expect(isPublicPath("/confidentialite")).toBe(true);
+    expect(isPublicPath("/conditions")).toBe(true);
+    expect(isPublicPath("/confidentialite-admin")).toBe(false);
+    expect(isPublicPath("/conditionsx")).toBe(false);
+  });
+
   it("laisse publics les assets statiques", () => {
     expect(isPublicPath("/_next/static/chunk.js")).toBe(true);
     expect(isPublicPath("/favicon.ico")).toBe(true);
