@@ -34,3 +34,53 @@ Preview. Le code ne peut pas le garantir.
 Choix documenté dans `next.config.mjs` : aucune ressource externe, `connect-src 'self'`,
 `frame-ancestors 'none'`. Un nonce est envisageable quand le lot CSP de l'Atelier le
 généralisera. Rien de changé ici.
+
+## Clé de signature de la session (chantier auth-asym)
+Plan : `plan-auth-asym-hubperso.md` (Option A). Le cookie de session partagé sera un JWS
+**ES256** : Hubperso SEUL détient la clé privée et signe ; JobAI, CarAI, MemoryAI et BatchChef
+ne reçoivent que la clé publique et vérifient, sans pouvoir fabriquer de session. Ce document
+décrit uniquement la clé et sa procédure ; le code qui signe et vérifie vient dans des PR
+séparées (une par app). **Rien n'est encore branché** : générer la clé ne change aucun
+comportement de production.
+
+### Où va chaque clé
+| Clé | Où | Variable (nom proposé, à confirmer par la PR de signature) | Type Vercel |
+|---|---|---|---|
+| PRIVÉE (JWK, champ `d`) | projet `hubperso` UNIQUEMENT | `HUB_SESSION_PRIVATE_JWK` | Sensible, Production seulement |
+| PUBLIQUE (JWKS d'une ou deux clés) | hub ET les 4 satellites | `HUB_SESSION_JWKS` | Normale, Production seulement |
+
+Jamais dans le dépôt, jamais dans Preview/Development (comme `AUTH_COOKIE_DOMAIN`), jamais dans
+un message, un journal ou une capture. Le `kid` (empreinte RFC 7638 de la clé publique)
+identifie la clé dans l'en-tête du jeton : c'est lui qui permet de faire coexister deux clés
+pendant une rotation.
+
+### Générer (Marc, en local, une fois)
+1. `npm run cle-session` dans une copie du dépôt Hubperso (Node seul, aucun réseau).
+2. Le script affiche le `kid` et le JWKS PUBLIC sur une ligne. Il écrit la clé privée dans un
+   fichier du dossier temporaire du système, hors dépôt, en création exclusive (il n'écrase
+   jamais un fichier existant). Le script REFUSE un fichier de sortie situé dans le dépôt.
+3. Vercel, projet `hubperso` : créer `HUB_SESSION_PRIVATE_JWK` (Sensible) avec le CONTENU du
+   fichier. Puis **supprimer le fichier** aussitôt (sous Windows le mode 0600 ne protège pas :
+   le fichier hérite des droits du dossier).
+4. Créer `HUB_SESSION_JWKS` avec la ligne affichée, dans le hub et dans les 4 satellites.
+5. Redéployer. ⚠️ Un changement de variable sans commit ne déclenche PAS de build
+   (`build-necessaire.sh`, BACKLOG H-18) : forcer un déploiement.
+Le script n'affiche jamais la clé privée ; s'il l'affichait un jour, c'est un bug à signaler
+(un test le vérifie : `tests/cleSession.test.ts`).
+
+### Faire tourner la clé (rotation)
+1. `npm run cle-session -- --garder '<JWKS actuel>'` : génère une NOUVELLE paire et affiche un
+   JWKS à deux clés (l'ancienne + la nouvelle). Le script refuse un `kid` déjà présent et un
+   JWKS qui contiendrait une clé privée.
+2. Poser ce JWKS à deux clés partout et redéployer : les satellites acceptent maintenant les
+   deux `kid`.
+3. Remplacer `HUB_SESSION_PRIVATE_JWK` du hub par la nouvelle clé privée, redéployer : le hub
+   signe avec la nouvelle.
+4. Attendre la durée de vie maximale du cookie, puis retirer l'ancienne clé publique du JWKS
+   (partout) et redéployer. Supprimer le fichier de la clé privée.
+Rotation d'urgence (privée fuitée) : sauter l'attente de l'étape 4 — toutes les sessions
+signées par l'ancienne clé tombent, chacun se reconnecte une fois.
+
+### Ce que cette clé ne protège pas
+Elle empêche de FORGER une session. Elle n'empêche pas une app compromise de VOLER puis
+rejouer le cookie d'un utilisateur qui la visite (limite du plan, §3).

@@ -15,7 +15,8 @@
     "portes": "node qualite/portes.mjs",
     "portes:maj": "node qualite/portes.mjs --maj",
     "db:generate": "drizzle-kit generate",
-    "constellation": "tsx scripts/verifier-constellation.ts"
+    "constellation": "tsx scripts/verifier-constellation.ts",
+    "cle-session": "node scripts/generer-cle-session.mjs"
   },
   "dependencies": {
     "@fontsource-variable/outfit": "^5.3.0",
