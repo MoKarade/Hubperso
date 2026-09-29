@@ -120,3 +120,10 @@ describe("police commune Outfit, auto-hébergée", () => {
     expect(LAYOUT + CSS).not.toMatch(/fonts\.googleapis|fonts\.gstatic|geist/i);
   });
 });
+
+describe("carte en panne : garde la couleur de son projet", () => {
+  it("AppWidget retombe sur source.couleur quand le contrat ne répond pas", () => {
+    const w = readFileSync("components/AppWidget.tsx", "utf8");
+    expect(w).toMatch(/result\.source\.couleur/);
+  });
+});

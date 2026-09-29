@@ -139,3 +139,18 @@ describe("getSources", () => {
     expect(avecJetons.filter((s) => s.hero).map((s) => s.id)).toEqual(["financeai"]);
   });
 });
+
+import { COULEUR_PAR_ID } from "../lib/sources";
+describe("couleur de repli par projet (§6bis, source unique)", () => {
+  it("chaque source porte la couleur officielle de son projet", () => {
+    expect(COULEUR_PAR_ID).toEqual({
+      financeai: "#2DD4BF",
+      driveai: "#60A5FA",
+      batchchef: "#FB923C",
+      carai: "#A3E635",
+      jobai: "#F472B6",
+      memoryai: "#A78BFA",
+    });
+    for (const s of getSources({})) expect(s.couleur).toBe(COULEUR_PAR_ID[s.id as keyof typeof COULEUR_PAR_ID]);
+  });
+});

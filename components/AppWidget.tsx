@@ -213,7 +213,7 @@ export function AppWidget({
   const size = widgetSize(result.state === "ok", okMetrics, featured);
   const badge = statusBadge(result);
   const name = result.state === "ok" ? result.summary.app.name : result.source.name;
-  const accent = result.state === "ok" ? result.summary.app.color : undefined;
+  const accent = result.state === "ok" ? result.summary.app.color : result.source.couleur;
   const appUrl = result.state === "ok" ? safeHttpUrl(result.summary.app.url) : null;
   // ⚠️ CALCULÉ, JAMAIS CODÉ EN DUR. `app.color` arrive du contrat à l'exécution, et deux des
   // six couleurs de l'écosystème rendent le texte blanc illisible (JobAI 2,09 ; DriveAI

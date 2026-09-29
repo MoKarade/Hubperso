@@ -18,6 +18,8 @@ export interface HubSource {
    * jamais interrogée — `fetchSummary` rend `unconfigured` sans toucher au réseau.
    */
   summaryUrl: string | null;
+  /** Couleur officielle du projet (`COULEUR_PAR_ID`), repli quand le contrat ne répond pas. */
+  couleur?: string;
   /**
    * L'adresse HUMAINE de l'app (la page qu'on ouvre dans un navigateur). TOUJOURS connue,
    * même quand `summaryUrl` ne l'est pas : la palette de commandes s'en sert AVANT tout
@@ -162,6 +164,21 @@ export const ACCUEIL_PAR_ID = {
 } as const;
 
 /**
+ * Couleur officielle de chaque projet (§6bis de la référence de style, source unique,
+ * validée par Marc le 28/09). Sert de REPLI quand le contrat ne répond pas (app en panne,
+ * non autorisée, non configurée) : la carte garde la couleur de son projet, jamais une
+ * couleur d'état. Quand l'app répond, la couleur du contrat (`app.color`) reste prioritaire.
+ */
+export const COULEUR_PAR_ID = {
+  financeai: "#2DD4BF",
+  driveai: "#60A5FA",
+  batchchef: "#FB923C",
+  carai: "#A3E635",
+  jobai: "#F472B6",
+  memoryai: "#A78BFA",
+} as const;
+
+/**
  * L'identifiant d'une app EST une clé de la table ci-dessus.
  *
  * ⚠️ C'est ce qui rend le trou IMPOSSIBLE plutôt que testé : une app déclarée dans
@@ -181,6 +198,7 @@ export function getSources(env: Env = process.env): HubSource[] {
     id: def.id,
     name: def.name,
     summaryUrl: env[def.urlEnv]?.trim() || def.defaultSummaryUrl,
+    couleur: COULEUR_PAR_ID[def.id],
     accueilUrl: ACCUEIL_PAR_ID[def.id],
     token: env[def.tokenEnv]?.trim() || null,
     hero: def.hero === true,
