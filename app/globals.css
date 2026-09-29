@@ -508,7 +508,7 @@ a:focus-visible,
   color: var(--text-dim, var(--text));
 }
 .action-trigger__retour--erreur {
-  color: var(--danger, #b91c1c);
+  color: var(--danger);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1136,6 +1136,7 @@ a:focus-visible,
 }
 .admin__input {
   flex: 1 1 220px;
+  min-height: var(--cible);
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1207,7 +1208,11 @@ a:focus-visible,
   gap: 0.5rem;
 }
 .admin__app-toggle {
-  padding: 0.32rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  min-height: var(--cible);
+  padding: 0.32rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-2);
@@ -1571,6 +1576,23 @@ a:focus-visible,
   .page__aside .signout,
   .page__aside .refresh {
     flex: 1 1 8rem;
+  }
+  /* ADMINISTRATION : champs et boutons d'ajout sur toute la largeur, actions d'une
+     personne partagées d'un bord à l'autre (même méthode que login/accueil). */
+  .admin__input {
+    flex: 1 1 100%;
+  }
+  .admin__ajout .btn {
+    flex: 1 1 100%;
+  }
+  .admin__personne-actions {
+    width: 100%;
+  }
+  .admin__personne-actions form {
+    flex: 1 1 8rem;
+  }
+  .admin__personne-actions form .btn {
+    width: 100%;
   }
 }
 
