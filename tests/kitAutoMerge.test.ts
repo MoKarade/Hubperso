@@ -25,7 +25,9 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
   const lignes = lireCopies(lire("COPIES.md"));
 
   it("COPIES.md liste des fichiers (anti-vacuité)", () => {
-    expect(lignes.length).toBeGreaterThanOrEqual(16);
+    // 15 depuis le retrait de armement-auto-merge.yml (profil `prive` : pas d'auto-fusion
+    // native en dépôt privé Free, voir COPIES.md et modeles/auto-merge/LISEZMOI.md).
+    expect(lignes.length).toBeGreaterThanOrEqual(15);
   });
 
   it.each(lignes.map((l) => [l.chemin, l.sha256]))("%s a l'empreinte attestée", (chemin, sha) => {
@@ -38,8 +40,13 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
 });
 
 describe(".github/auto-merge.json", () => {
-  it("n'a PAS de securite_login (la PR de configuration de pole-securite l'ajoutera)", () => {
-    expect(config).not.toHaveProperty("securite_login");
+  it("securite_login est le compte d'attestation dédié, au format GitHub App [bot]", () => {
+    expect(config.securite_login).toMatch(/^[A-Za-z0-9-]+\[bot\]$/);
+  });
+
+  it("securite_user_id est un entier positif (id numérique du compte d'attestation)", () => {
+    const cfg = config as unknown as { securite_user_id?: number };
+    expect(Number.isInteger(cfg.securite_user_id) && (cfg.securite_user_id as number) > 0).toBe(true);
   });
 
   it("les contrôles requis sont de vrais noms de jobs des workflows CI (sinon la PR ne partirait jamais)", () => {
@@ -163,13 +170,8 @@ describe("le workflow auto-merge.yml", () => {
 });
 
 describe("les workflows du kit épinglent leurs actions par SHA (ci.yml reste : PR distincte)", () => {
-  for (const f of [
-    "auto-merge.yml",
-    "armement-auto-merge.yml",
-    "ci-reutilisable.yml",
-    "constellation.yml",
-    "doc-a-jour.yml",
-  ]) {
+  // armement-auto-merge.yml retiré (profil `prive`) : plus de fichier à vérifier ici.
+  for (const f of ["auto-merge.yml", "ci-reutilisable.yml", "constellation.yml", "doc-a-jour.yml"]) {
     it(f, () => {
       for (const m of lire(`.github/workflows/${f}`).matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)) {
         const ref = m[1] as string;
