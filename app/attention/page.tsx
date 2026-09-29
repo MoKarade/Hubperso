@@ -12,7 +12,7 @@ import Link from "next/link";
 import { exigerAccesHub } from "@/lib/gardeHub";
 import { getSources } from "@/lib/sources";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
-import { attentions, compteParGravite, type Gravite } from "@/lib/attention";
+import { attentions, compteParGravite, phrasesRienASignaler, type Gravite } from "@/lib/attention";
 import { CADENCE_HORLOGE_MS, continuite, etatObservation } from "@/lib/gel";
 import { lireHistoriqueTous } from "@/lib/historiqueDb";
 import { baseConfiguree } from "@/lib/db";
@@ -66,7 +66,7 @@ export default async function PageAttention() {
           <h1 className="page__title">Ce qui demande mon attention</h1>
           <p className="page__sub">
             {liste.length === 0
-              ? "Rien à signaler sur les cinq apps."
+              ? phrasesRienASignaler(sources.length).titre
               : `${compte.alert} à régler · ${compte.warn} à surveiller · ${compte.info} pour information`}
           </p>
         </div>
@@ -80,7 +80,7 @@ export default async function PageAttention() {
         // répondu et n'ont rien remonté. Une app injoignable serait dans la liste, pas
         // dans ce silence — c'est ce qui rend le vide crédible.
         <p className="attention__vide">
-          Les cinq apps ont répondu et ne remontent ni alerte ni panne.
+          {phrasesRienASignaler(sources.length).detail}
         </p>
       ) : (
         <ul className="attention">

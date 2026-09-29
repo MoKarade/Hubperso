@@ -196,3 +196,12 @@ describe("attentions — la donnée figée d'une app qui va bien", () => {
     expect(liste[0]!.libelle).toBe("pneus bas");
   });
 });
+
+describe("phrases de l'état vide : le nombre d'apps est calculé, jamais codé en dur", () => {
+  it("dit le nombre réel d'apps (6 aujourd'hui, 7 demain sans toucher au texte)", async () => {
+    const { phrasesRienASignaler } = await import("@/lib/attention");
+    expect(phrasesRienASignaler(6).titre).toBe("Rien à signaler sur les 6 apps.");
+    expect(phrasesRienASignaler(6).detail).toBe("Les 6 apps ont répondu et ne remontent ni alerte ni panne.");
+    expect(phrasesRienASignaler(7).titre).toContain("7 apps");
+  });
+});

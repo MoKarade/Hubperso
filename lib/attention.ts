@@ -197,3 +197,14 @@ export function compteParGravite(liste: Attention[]): Record<Gravite, number> {
     { alert: 0, warn: 0, info: 0 } as Record<Gravite, number>,
   );
 }
+
+/**
+ * Textes de l'état vide de /attention. Le nombre d'apps vient de la table des sources :
+ * il était écrit « cinq » en dur et est resté faux à l'arrivée de la sixième app.
+ */
+export function phrasesRienASignaler(nbApps: number): { titre: string; detail: string } {
+  return {
+    titre: `Rien à signaler sur les ${nbApps} apps.`,
+    detail: `Les ${nbApps} apps ont répondu et ne remontent ni alerte ni panne.`,
+  };
+}
