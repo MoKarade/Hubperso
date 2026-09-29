@@ -102,7 +102,7 @@ widgets 100 % génériques.
   `isPublicPath` se testent sans base, sans réseau et sans horloge — la date se passe en
   paramètre (cf. `peutSeConnecter(email, env, maintenantMs, lecture)`).
 - **Design : direction bento assumée** (voir `app/globals.css`), pas de template générique.
-  Ne pas imposer le dark mode : les deux thèmes suivent `prefers-color-scheme`.
+  Thème SOMBRE SEUL (Marc, 26/09), accent de marque `--marque` #93A0FF ; contrastes testés dans `tests/themeSombre.test.ts`.
 - ⚠️ **Une couleur reçue du contrat ne porte JAMAIS du texte sans passer par `texteSur`**
   (`lib/couleur.ts`, PURE). `app.color` arrive à l'exécution et le hub ne connaît aucune
   app : mesuré le 15/09, deux des six couleurs rendent le texte blanc illisible (JobAI

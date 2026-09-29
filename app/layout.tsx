@@ -28,14 +28,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Contrairement au manifeste (une seule couleur possible), la balise meta accepte des
-  // media queries : la teinte de la barre système SUIT donc le thème, conformément au
-  // principe « ne pas imposer le dark mode ». Les deux valeurs sont les `--bg` de
-  // globals.css converties depuis l'OKLCH.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f5ef" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0f16" },
-  ],
+  // Thème sombre seul (Marc, 26/09) : une seule teinte de barre système, = `--bg` de
+  // globals.css (testé dans tests/themeSombre.test.ts).
+  themeColor: "#07090D",
   // Installée, l'app doit occuper l'écran jusque sous l'encoche.
   viewportFit: "cover",
 };
