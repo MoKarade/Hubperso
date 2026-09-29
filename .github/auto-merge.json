@@ -38,6 +38,14 @@
     "tests/kitAutoMerge.test.ts",
     "**/settings*.json"
   ],
+  "chemins_validation_visuelle": [
+    "components/**",
+    "app/**/page.tsx",
+    "app/layout.tsx",
+    "app/**/*.css",
+    "app/icon.svg",
+    "public/*icon*.png"
+  ],
   "securite_login": "atelier-securite-marc[bot]",
   "securite_user_id": 334232309,
   "carence_dependabot_jours": 3,
