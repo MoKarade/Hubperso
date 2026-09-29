@@ -1123,6 +1123,11 @@ a:focus-visible,
   color: var(--text-soft);
   font-size: 0.9rem;
 }
+/* Erreur (base injoignable) : rouge comme les erreurs du détail et d'Attention. */
+.admin__vide[role="alert"] {
+  color: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 45%, var(--border));
+}
 .admin__ajout {
   display: flex;
   flex-wrap: wrap;

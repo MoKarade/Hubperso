@@ -112,3 +112,12 @@ describe("le tracé de la courbe reste visible sur --surface (≥ 3:1, élément
     });
   }
 });
+
+describe("administration : l'erreur « base injoignable » est rouge comme ailleurs", () => {
+  it(".admin__vide[role=\"alert\"] prend --danger (texte et bordure)", () => {
+    const m = /\.admin__vide\[role="alert"\]\s*\{([^}]*)\}/.exec(CSS);
+    expect(m, "règle .admin__vide[role=\"alert\"] absente").not.toBeNull();
+    expect(m![1]).toMatch(/color:\s*var\(--danger\)/);
+    expect(m![1]).toMatch(/border-color:[^;]*var\(--danger\)/);
+  });
+});
