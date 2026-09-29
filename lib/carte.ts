@@ -20,9 +20,11 @@
 // depuis 14 j ». Le chiffre est là, le jugement reste humain — et c'est déjà tout ce qui
 // manquait le jour où une campagne est restée à 322 documents sur 1207 pendant deux semaines.
 
-import type { HubAlert, HubMetric, HubSummary } from "@mokarade/hub-contract";
+import type { HubAlert, HubMetric, HubQuota, HubSummary } from "@mokarade/hub-contract";
 import { formatDuree, formatMetricValue, formatTrend } from "./format";
 import { safeHttpUrl } from "./url";
+import { texteSur } from "./couleur";
+import { phraseManques, type SummaryResult } from "./fetchSummary";
 import { inchangeDepuisMs, serieMetrique, variation, type Point, type Releve, type Variation } from "./historique";
 
 /** Fenêtre de comparaison affichée sous la métrique héros. */
@@ -227,8 +229,11 @@ function bornerDetails(details: HubSummary["details"]): SectionDetail[] {
     .filter((section) => section.items.length > 0);
 }
 
-/** « Inchangé depuis 20 min » n'apprend rien : sous le seuil, on ne dit rien du tout. */
-function inchangeSignificatif(
+/**
+ * « Inchangé depuis 20 min » n'apprend rien : sous le seuil, on ne dit rien du tout.
+ * Exportée : la page de détail applique la MÊME règle ligne par ligne (`DetailMetriques`).
+ */
+export function inchangeSignificatif(
   historique: Releve[],
   label: string,
   maintenantMs: number,
@@ -356,6 +361,86 @@ export function variationLisible(
     sur: formatDuree(v.apres.t - v.avant.t),
     sens,
   };
+}
+
+// ── PAGE DE DÉTAIL (`app/app/[id]/page.tsx`) ────────────────────────────────────────
+//
+// Ce qui suit était calculé EN LIGNE dans le JSX de la page (une seule fonction de 400
+// lignes). Sorti ici pour être testé sans rendu, comme le reste de ce fichier. Aucun texte
+// n'a changé : ce sont les phrases exactes que la page affichait.
+
+/**
+ * La phrase de la page de détail quand le résumé manque.
+ *
+ * ⚠️ PAS la même que celle de la carte (`CorpsProbleme` dans `AppWidget.tsx`) : la page a la
+ * place de dire « dans l'environnement du hub » et « l'app va bien ». Deux phrases voulues,
+ * pas une duplication à fusionner.
+ */
+export function messageProblemeDetail(result: SummaryResult): string {
+  switch (result.state) {
+    case "unconfigured":
+      return `Non branchée dans l’environnement du hub — ${phraseManques(result.manque)}.`;
+    case "unauthorized":
+      return "Jeton refusé (401). La valeur ne correspond pas à celle de l’app.";
+    case "unreachable":
+      return `App injoignable — ${result.detail}.`;
+    case "invalid":
+      return `Réponse non conforme au contrat — ${result.detail}.`;
+    case "contract-too-new":
+      return (
+        `L’app publie la version ${result.published} du contrat ; ce hub lit jusqu’à la ${result.supported}. ` +
+        "C’est le hub qui est à re-pinner — l’app va bien."
+      );
+    default:
+      return "";
+  }
+}
+
+/**
+ * La note d'évolution d'une métrique sur la page de détail : « +12,5 % sur 7 j ».
+ * Départ à zéro (`deltaRelatif` nul) : l'écart brut, seul chiffre vrai.
+ */
+export function noteEvolutionDetail(v: Variation): { texte: string; dir: "up" | "down" } {
+  const ecart =
+    v.deltaRelatif === null
+      ? `${v.deltaAbsolu >= 0 ? "+" : ""}${v.deltaAbsolu}`
+      : formatTrend(v.deltaRelatif * 100);
+  return {
+    texte: `${ecart} sur ${formatDuree(FENETRE_VARIATION_MS)}`,
+    dir: v.deltaAbsolu >= 0 ? "up" : "down",
+  };
+}
+
+/**
+ * Vrai quand l'app a publié un lien de recommandation que `safeHttpUrl` a refusé. Le refus
+ * doit se VOIR : un conseil qui semble juste ne pas être cliquable, personne ne le corrige.
+ */
+export function lienRecoRefuse(reco: Recommandation, summary: HubSummary): boolean {
+  return reco.href === null && summary.recommendation?.href !== undefined;
+}
+
+/** « Appels — 120 / 1000 appels » ; sans plafond connu, pas de « / ». */
+export function libelleQuota(q: HubQuota): string {
+  return `${q.label} — ${q.used}${q.limit !== null ? ` / ${q.limit}` : ""} ${q.unit ?? ""}`;
+}
+
+/** Seuil à partir duquel la barre d'un quota passe en orange. */
+export const SEUIL_QUOTA_ALERTE = 0.8;
+
+/** La barre d'un quota : largeur plafonnée à 100 %, orange dès 80 %. */
+export function barreQuota(ratio: number): { largeur: string; alerte: boolean } {
+  return { largeur: `${Math.min(100, ratio * 100)}%`, alerte: ratio >= SEUIL_QUOTA_ALERTE };
+}
+
+/**
+ * Les variables CSS de la couleur de l'app. Le texte lisible sur cette couleur est CALCULÉ
+ * (`texteSur`) : deux des six couleurs de l'écosystème rendent le blanc illisible.
+ * `undefined` sans couleur : la page garde l'accent par défaut.
+ */
+export function variablesAccent(accent: string | undefined): Record<string, string> | undefined {
+  if (!accent) return undefined;
+  const accentTexte = texteSur(accent);
+  return { "--accent": accent, ...(accentTexte ? { "--accent-texte": accentTexte } : {}) };
 }
 
 /** Un point et demi s'écrit « 1,5 », trois points s'écrivent « 3 » — pas « 3,0 ». */
