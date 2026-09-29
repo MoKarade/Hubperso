@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
-// Geist est embarquée dans le paquet npm (aucune requête externe au build ni au runtime).
-import { GeistSans } from "geist/font/sans";
+// Outfit (police commune de la refonte, référence §2) auto-hébergée via @fontsource : aucune requête externe.
+import "@fontsource-variable/outfit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { PaletteMontee } from "@/components/PaletteMontee";
 import { Analytics } from "@vercel/analytics/next";
@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr-CA" className={GeistSans.variable}>
+    <html lang="fr-CA">
       <body>
         {children}
         {/* Gardée côté serveur : elle liste les apps, donc elle exige l'accès au hub — pas

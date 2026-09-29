@@ -106,3 +106,17 @@ describe("repli neutre d'une carte sans couleur d'app", () => {
     expect(contraste(fond, texte)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe("le liseré d'une carte ne prend jamais la couleur d'état", () => {
+  it("aucune règle .widget[data-gravite] ne redéfinit --teinte ni la bordure", () => {
+    expect(CSS).not.toMatch(/\.widget\[data-gravite/);
+  });
+});
+
+describe("police commune Outfit, auto-hébergée", () => {
+  it("passe par @fontsource (jamais un CDN) et est en tête de --font", () => {
+    expect(LAYOUT).toMatch(/import "@fontsource-variable\/outfit"/);
+    expect(CSS).toMatch(/--font:\s*"Outfit Variable"/);
+    expect(LAYOUT + CSS).not.toMatch(/fonts\.googleapis|fonts\.gstatic|geist/i);
+  });
+});

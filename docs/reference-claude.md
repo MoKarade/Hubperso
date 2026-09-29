@@ -132,16 +132,10 @@ widgets 100 % génériques.
   colonne, et surtout pas un second seuil qui créerait une fenêtre où les cartes sont
   empilées mais les boutons encore étroits — les boutons prennent toute la largeur et
   `--cible` monte à 48 px.
-- **Seul le ROUGE écrase la couleur de l'app sur une carte** (`--teinte`, redéfinie par
-  `[data-gravite="danger"]`) : injoignable, en erreur, non autorisée, réponse invalide.
-  ⚠️ **L'orange ne prend que le liseré, et cette règle a été inversée une fois.** Marc avait
-  tranché le 15/09 que l'orange effaçait aussi, contre ma recommandation, puis il est revenu
-  dessus le 16/09 en voyant la conséquence chiffrée : « En cache » et « Données en retard »
-  sont fréquents, et sur une journée ordinaire la moitié des cartes y passent — les six
-  couleurs auraient donc disparu la plupart du temps, annulant la demande qui a lancé le lot.
-  ⚠️ Le survol doit RÉ-AFFIRMER le liseré orange (`[data-gravite="warn"]:hover`) : sinon il
-  reprend `--teinte`, donc la couleur de l'app, et le seul signal d'une app en retard
-  s'efface au moment où l'on pointe la carte.
+- **Le liseré, le lavis et la barre d'une carte gardent TOUJOURS la couleur de l'app**
+  (`--teinte`), quel que soit l'état (Marc, 28/09 : une couleur unique par projet, jamais la
+  couleur d'état). L'état passe uniquement par le badge (couleur + libellé), l'icône et le
+  texte. Remplace la règle du 15-16/09 (« le rouge écrase, l'orange prend le liseré »).
   ⚠️ `/attention` ne reçoit aucune couleur d'app : elle ne liste que des problèmes, déjà
   codés par gravité, et deux codes couleur sur le même écran s'annulent.
 
