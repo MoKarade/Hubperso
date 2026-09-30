@@ -89,14 +89,23 @@ describe("assurerMigrations", () => {
     expect(etatMigrations().erreur).toBe("délai dépassé");
   });
 
-  it("un échec n'est PAS mémorisé : l'appel suivant retente, et un succès efface l'erreur", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    moq.migrate.mockRejectedValueOnce(new Error("blip réseau")).mockResolvedValue(undefined);
-    await assurerMigrations();
-    expect(etatMigrations().erreur).toBe("blip réseau");
-    await assurerMigrations();
-    expect(moq.migrate).toHaveBeenCalledTimes(2);
-    expect(etatMigrations()).toEqual({ tentee: true, erreur: null });
+  // 10 minutes plus tard : au-delà de tout délai de repli après échec (la branche
+  // sante-variables en ajoute un de 60 s, testé dans tests/migrationsRepli.test.ts). Ce test
+  // vérifie seulement qu'un échec n'est JAMAIS un verrou définitif.
+  it("un échec n'est pas un verrou définitif : plus tard, retente, et un succès efface l'erreur", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      moq.migrate.mockRejectedValueOnce(new Error("blip réseau")).mockResolvedValue(undefined);
+      await assurerMigrations();
+      expect(etatMigrations().erreur).toBe("blip réseau");
+      vi.advanceTimersByTime(10 * 60_000);
+      await assurerMigrations();
+      expect(moq.migrate).toHaveBeenCalledTimes(2);
+      expect(etatMigrations()).toEqual({ tentee: true, erreur: null });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("reinitialiserMigrations oublie la mémorisation et l'erreur", async () => {
