@@ -34,7 +34,7 @@ export const FENETRE_VARIATION_MS = 7 * 24 * 60 * 60_000;
  */
 export const SEUIL_INCHANGE_MS = 24 * 60 * 60_000;
 
-export interface Heros {
+interface Heros {
   metrique: HubMetric;
   /** Vide quand la métrique n'est pas numérique ou que la mémoire est encore jeune. */
   serie: Point[];
@@ -96,9 +96,9 @@ export interface SecondaireCarte {
  * Si Marc trouve la carte encore trop vide ou déjà trop chargée, ce sont CES trois nombres
  * qu'on bouge — ils sont ici, ensemble, et nulle part ailleurs.
  */
-export const ALERTES_SECONDAIRES_LARGE = 3;
-export const DETAILS_SECTIONS_LARGE = 2;
-export const DETAIL_LIGNES_MAX = 4;
+const ALERTES_SECONDAIRES_LARGE = 3;
+const DETAILS_SECTIONS_LARGE = 2;
+const DETAIL_LIGNES_MAX = 4;
 
 /** Une section `details` déjà bornée pour la carte. Le type vient du contrat. */
 export type SectionDetail = NonNullable<HubSummary["details"]>[number];

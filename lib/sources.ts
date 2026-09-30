@@ -171,7 +171,7 @@ export const ACCUEIL_PAR_ID = {
  * Le sens inverse (une clé de la table sans entrée dans `SOURCE_DEFS`) ne se voit pas au
  * compilateur : c'est `tests/sources.test.ts` qui le garde.
  */
-export type AppId = keyof typeof ACCUEIL_PAR_ID;
+type AppId = keyof typeof ACCUEIL_PAR_ID;
 
 type Env = Record<string, string | undefined>;
 

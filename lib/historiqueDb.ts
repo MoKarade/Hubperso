@@ -27,10 +27,10 @@ import type { Releve } from "./historique";
 import type { SummaryResult } from "./fetchSummary";
 
 /** Un relevé par app au plus toutes les 15 minutes. Voir l'en-tête. */
-export const INTERVALLE_RELEVE_MS = 15 * 60_000;
+const INTERVALLE_RELEVE_MS = 15 * 60_000;
 
 /** Au-delà, un relevé n'apprend plus rien et coûte du stockage. */
-export const RETENTION_JOURS = 90;
+const RETENTION_JOURS = 90;
 
 /**
  * Ce qu'une tentative d'enregistrement a réellement produit.

@@ -45,7 +45,7 @@ import { safeHttpUrl } from "./url";
 /** Budget d'attente du POST. Aligné sur celui de `fetchSummary` (mêmes réveils à froid). */
 const TIMEOUT_MS = 9000;
 
-export type RaisonRefus = "href-invalide" | "action-inconnue" | "origine-etrangere";
+type RaisonRefus = "href-invalide" | "action-inconnue" | "origine-etrangere";
 
 export type VerdictAction =
   | { ok: true; href: string }

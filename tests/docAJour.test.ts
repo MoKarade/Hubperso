@@ -8,7 +8,9 @@ import {
   estCode,
   idDeSujet,
   idsDesCommits,
+  idsDeSujet,
   idsDuBacklog,
+  porteHorsBacklog,
   suggestion,
   verifier,
 } from "../scripts/docAJour.mjs";
@@ -320,5 +322,33 @@ describe("entreesTouchees — un marqueur de statut ne cache pas l'identifiant",
     const contenu = "- 🟦 Une note sans identifiant\n  son corps\n";
     const d = "@@ -1,0 +1,2 @@\n+- 🟦 Une note sans identifiant\n+  son corps\n";
     expect([...entreesTouchees(d, contenu)]).toEqual([]);
+  });
+});
+
+// Les deux briques publiques que le reste du module compose. Testées DIRECTEMENT : un défaut
+// ici se lirait sinon seulement à travers `verifier`, loin de sa cause.
+describe("idsDeSujet", () => {
+  it("rend TOUS les identifiants à crochets, dans l'ordre", () => {
+    expect(idsDeSujet("[H-06][H-07] corrige deux items")).toEqual(["H-06", "H-07"]);
+  });
+
+  it("forme nue, avec ou sans deux-points", () => {
+    expect(idsDeSujet("C28-49: feat: x")).toEqual(["C28-49"]);
+    expect(idsDeSujet("C28-49 feat x")).toEqual(["C28-49"]);
+  });
+
+  it("n'attrape pas un identifiant cité plus loin dans le sujet", () => {
+    expect(idsDeSujet("docs: cite ADR-0045 et UTF-8")).toEqual([]);
+  });
+});
+
+describe("porteHorsBacklog", () => {
+  it("vrai dès qu'un commit invoque l'échappatoire", () => {
+    expect(porteHorsBacklog(["feat: x", `${HORS_BACKLOG}: test: y`])).toBe(true);
+  });
+
+  it("faux sans elle, et sur une liste vide", () => {
+    expect(porteHorsBacklog(["[H-06] feat: x"])).toBe(false);
+    expect(porteHorsBacklog([])).toBe(false);
   });
 });
