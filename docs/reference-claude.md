@@ -383,6 +383,14 @@ fichier. Le trou qu'une seconde liste ouvre est fermé des deux côtés : le TYP
 adresse (`SourceDef.id` est une clé de la table — perturbation : 1 erreur de compilation), un TEST
 interdit une adresse sans app (perturbation : 1 rouge).
 
+⚠️ **Suite, 30/09/2026 : les deux tables sont refondues en UNE** (`APPS` dans `lib/sources.ts`),
+en gardant la forme qui avait passé le détecteur — **une ligne par app** (nom, résumé, accueil,
+héros), les noms de variables d'environnement étant déduits de l'id (`<ID>_SUMMARY_URL`,
+`HUB_TOKEN_<ID>`). Plus de seconde liste, donc plus rien à synchroniser. `tests/sources.test.ts`
+fige le comportement (les six sources et les douze noms de variables, à l'identique) et refuse
+qu'un export `…_PAR_ID` réapparaisse. [À vérifier] le taux de duplication SonarCloud à la
+première PR qui porte ce changement.
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :
@@ -405,13 +413,17 @@ place redevient huit conventions différentes en trois mois.
 
 ## 11. Ajouter une app
 
-1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
-   `accueilUrl`, `defaultSummaryUrl`, `urlEnv`, `tokenEnv`).
-   ⚠️ **`accueilUrl` (la page de l'app) et `defaultSummaryUrl` (l'endpoint du contrat) sont
-   DEUX champs**, même quand ils coïncident — c'est le cas de cinq apps sur six, et c'est
-   précisément ce qui a laissé passer le défaut de FinanceAI (cf. leçon n° 10).
-   ⚠️ `defaultSummaryUrl` vaut **`null`** quand aucune URL honnête n'existe : l'app est alors
+1. UNE ligne dans la table `APPS` de `lib/sources.ts` : clé = `id` kebab-case (= `app.id`
+   publié), `name`, `resume`, `accueil` (et `hero` pour la seule tuile 2×2). Les variables
+   `<ID>_SUMMARY_URL` et `HUB_TOKEN_<ID>` s'en déduisent — les ajouter aussi à la liste figée
+   de `tests/sources.test.ts` et à `.env.example`.
+   ⚠️ **`accueil` (la page de l'app) et `resume` (l'endpoint du contrat) sont DEUX champs**,
+   même quand ils coïncident — c'est le cas de cinq apps sur six, et c'est précisément ce qui a
+   laissé passer le défaut de FinanceAI (cf. leçon n° 10).
+   ⚠️ `resume` vaut **`null`** quand aucune URL honnête n'existe : l'app est alors
    `unconfigured` tant que sa variable n'est pas posée, et le hub ne part pas sur le réseau.
+   ⚠️ Une nouvelle propriété par app va DANS cette table, jamais dans une seconde table
+   `…_PAR_ID` (refusé par test : deux listes pour une même app finissent par diverger).
 2. La variable de jeton correspondante dans l'environnement (jamais en dur).
 
 C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît

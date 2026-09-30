@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { ACCUEIL_PAR_ID, SOURCE_DEFS, getSources } from "../lib/sources";
+import * as moduleSources from "../lib/sources";
+import { SOURCE_DEFS, getSources } from "../lib/sources";
 
 describe("getSources", () => {
   it("expose les six apps avec les URLs par défaut et aucun jeton", () => {
@@ -112,25 +113,57 @@ describe("getSources", () => {
     expect(autres.every((s) => typeof s.summaryUrl === "string")).toBe(true);
   });
 
-  // ── L'adresse d'accueil vit dans une table À PART : elle ne doit pas DIVERGER ──────
+  // ── UNE SEULE TABLE PAR APP (30/09/2026) ──────────────────────────────────────────
   //
-  // Le compilateur garde déjà un sens (`SourceDef.id` est une clé d'`ACCUEIL_PAR_ID`, donc
-  // une app sans adresse d'accueil ne compile pas). Il ne voit PAS l'autre : une clé restée
-  // dans la table après le retrait d'une app passerait inaperçue, et §11 dit exactement ce
-  // que coûte une seconde liste qui dérive.
-  it("les deux tables portent EXACTEMENT les mêmes apps", () => {
-    const declarees = SOURCE_DEFS.map((d) => d.id).sort();
-    const avecAccueil = Object.keys(ACCUEIL_PAR_ID).sort();
-    expect(avecAccueil).toEqual(declarees);
-    // Anti-vacuité : deux listes VIDES seraient aussi « égales ».
-    expect(declarees.length).toBeGreaterThanOrEqual(6);
+  // Jusqu'ici l'adresse d'accueil vivait dans une table PARALLÈLE (`ACCUEIL_PAR_ID`) : deux
+  // listes pour la même app, qu'il fallait garder synchronisées à la main (§11). Elles sont
+  // fusionnées ; ces tests gardent (1) que le comportement observable n'a PAS bougé, et
+  // (2) qu'aucune seconde table par app ne réapparaît.
+  it("comportement figé : exactement les mêmes sources qu'avant la fusion des tables (couleur comprise)", () => {
+    expect(getSources({})).toEqual([
+      { id: "financeai", name: "FinanceAI", summaryUrl: null, accueilUrl: "https://finance.hubperso.com", couleur: "#2DD4BF", token: null, hero: true },
+      { id: "driveai", name: "DriveAI", summaryUrl: "https://drive.hubperso.com/hub/summary", accueilUrl: "https://drive.hubperso.com", couleur: "#60A5FA", token: null, hero: false },
+      { id: "batchchef", name: "BatchChef", summaryUrl: "https://batchchef.hubperso.com/api/hub/summary", accueilUrl: "https://batchchef.hubperso.com", couleur: "#FB923C", token: null, hero: false },
+      { id: "carai", name: "CarAI", summaryUrl: "https://carai.hubperso.com/hub/summary", accueilUrl: "https://carai.hubperso.com", couleur: "#A3E635", token: null, hero: false },
+      { id: "jobai", name: "JobAI", summaryUrl: "https://emploi.hubperso.com/api/hub/summary", accueilUrl: "https://emploi.hubperso.com", couleur: "#F472B6", token: null, hero: false },
+      { id: "memoryai", name: "MemoryAI", summaryUrl: "https://memoryai.hubperso.com/hub/summary", accueilUrl: "https://memoryai.hubperso.com", couleur: "#A78BFA", token: null, hero: false },
+    ]);
+  });
+
+  it("comportement figé : exactement les mêmes noms de variables d'environnement", () => {
+    expect(SOURCE_DEFS.map((d) => [d.id, d.urlEnv, d.tokenEnv])).toEqual([
+      ["financeai", "FINANCEAI_SUMMARY_URL", "HUB_TOKEN_FINANCEAI"],
+      ["driveai", "DRIVEAI_SUMMARY_URL", "HUB_TOKEN_DRIVEAI"],
+      ["batchchef", "BATCHCHEF_SUMMARY_URL", "HUB_TOKEN_BATCHCHEF"],
+      ["carai", "CARAI_SUMMARY_URL", "HUB_TOKEN_CARAI"],
+      ["jobai", "JOBAI_SUMMARY_URL", "HUB_TOKEN_JOBAI"],
+      ["memoryai", "MEMORYAI_SUMMARY_URL", "HUB_TOKEN_MEMORYAI"],
+    ]);
+  });
+
+  it("le module n'expose AUCUNE seconde table par app (plus de liste parallèle à synchroniser)", () => {
+    // Le risque que la table parallèle ouvrait : une app ajoutée à une liste et pas à
+    // l'autre. Une nouvelle propriété par app (couleur, icône…) va DANS la table unique ;
+    // si un export `…_PAR_ID` réapparaît, ce test le refuse.
+    expect(Object.keys(moduleSources).sort()).toEqual(["SOURCE_DEFS", "getSources"]);
+  });
+
+  it("chaque app déclarée a TOUT ce qu'il lui faut, et les identifiants sont uniques", () => {
+    const ids = SOURCE_DEFS.map((d) => d.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.length).toBeGreaterThanOrEqual(6);
+    for (const d of SOURCE_DEFS) {
+      expect(d.id, "kebab-case").toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      expect(d.name.trim().length, d.id).toBeGreaterThan(0);
+      expect(d.accueilUrl, d.id).toBeTruthy();
+    }
   });
 
   it("chaque adresse d'accueil est une origine http(s) SANS chemin", () => {
     // Une entrée qui porterait `/hub/summary` re-fabriquerait la confusion que la leçon
     // n° 10 vient de supprimer — l'endpoint du contrat déguisé en page de l'app.
-    for (const [id, url] of Object.entries(ACCUEIL_PAR_ID)) {
-      expect(url, id).toMatch(/^https:\/\/[^/]+$/);
+    for (const d of SOURCE_DEFS) {
+      expect(d.accueilUrl, d.id).toMatch(/^https:\/\/[^/]+$/);
     }
   });
 
@@ -140,10 +173,10 @@ describe("getSources", () => {
   });
 });
 
-import { COULEUR_PAR_ID } from "../lib/sources";
 describe("couleur de repli par projet (§6bis, source unique)", () => {
-  it("chaque source porte la couleur officielle de son projet", () => {
-    expect(COULEUR_PAR_ID).toEqual({
+  it("chaque source porte la couleur officielle de son projet (champ de la table unique)", () => {
+    const couleurs = Object.fromEntries(getSources({}).map((s) => [s.id, s.couleur]));
+    expect(couleurs).toEqual({
       financeai: "#2DD4BF",
       driveai: "#60A5FA",
       batchchef: "#FB923C",
@@ -151,6 +184,5 @@ describe("couleur de repli par projet (§6bis, source unique)", () => {
       jobai: "#F472B6",
       memoryai: "#A78BFA",
     });
-    for (const s of getSources({})) expect(s.couleur).toBe(COULEUR_PAR_ID[s.id as keyof typeof COULEUR_PAR_ID]);
   });
 });

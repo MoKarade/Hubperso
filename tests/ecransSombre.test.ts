@@ -5,10 +5,15 @@
 
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { COULEUR_PAR_ID } from "../lib/sources";
+import { getSources } from "../lib/sources";
 import { luminanceRelative, rapportContraste } from "../lib/couleur";
 
 const CSS = readFileSync("app/globals.css", "utf8");
+
+/** La couleur officielle de chaque projet, lue dans la table unique des apps (lib/sources.ts). */
+const COULEURS: Record<string, string> = Object.fromEntries(
+  getSources({}).map((s) => [s.id, s.couleur ?? ""]),
+);
 
 /** Corps de la première règle dont le sélecteur contient exactement `.classe`. */
 function regle(selecteur: string): string {
@@ -95,7 +100,7 @@ describe("contrastes MESURÉS sur le lavis réel d'une carte (détail, coûts)",
   // Lavis = 12 % de la couleur de l’app sur --surface ; on teste à 14 % (marge sur
   // l'écart entre le mélange sRGB ci-dessous et le color-mix oklch du CSS).
   const textes = ["text", "text-soft", "text-faint", "ok", "warn", "danger", "info"];
-  for (const [id, couleur] of Object.entries(COULEUR_PAR_ID)) {
+  for (const [id, couleur] of Object.entries(COULEURS)) {
     const fond = melange(couleur, 0.14, jeton("surface"));
     for (const t of textes) {
       it(`--${t} sur le lavis ${id}`, () => {
@@ -106,7 +111,7 @@ describe("contrastes MESURÉS sur le lavis réel d'une carte (détail, coûts)",
 });
 
 describe("le tracé de la courbe reste visible sur --surface (≥ 3:1, élément graphique)", () => {
-  for (const [id, couleur] of Object.entries(COULEUR_PAR_ID)) {
+  for (const [id, couleur] of Object.entries(COULEURS)) {
     it(`${id}`, () => {
       expect(rapportContraste(lum(couleur), lum(jeton("surface")))).toBeGreaterThanOrEqual(3);
     });
