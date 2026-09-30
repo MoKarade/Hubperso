@@ -18,7 +18,7 @@
 
 import type { SummaryResult } from "./fetchSummary";
 
-export type GraviteIncoherence = "bloquant" | "avertissement";
+type GraviteIncoherence = "bloquant" | "avertissement";
 
 export interface Incoherence {
   /** `source.id` tel que déclaré dans `lib/sources.ts`. */

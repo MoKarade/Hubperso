@@ -19,7 +19,7 @@
 // circonflexe dans un champ de recherche. Une comparaison naïve ferait qu'« couts » ne
 // trouverait jamais « Coûts » — et la palette passerait pour cassée alors qu'elle marche.
 
-export type GenreCommande = "app" | "page" | "externe";
+type GenreCommande = "app" | "page" | "externe";
 
 export interface Commande {
   id: string;
