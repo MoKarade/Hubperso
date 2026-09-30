@@ -425,7 +425,7 @@ export function libelleQuota(q: HubQuota): string {
 }
 
 /** Seuil à partir duquel la barre d'un quota passe en orange. */
-export const SEUIL_QUOTA_ALERTE = 0.8;
+const SEUIL_QUOTA_ALERTE = 0.8;
 
 /** La barre d'un quota : largeur plafonnée à 100 %, orange dès 80 %. */
 export function barreQuota(ratio: number): { largeur: string; alerte: boolean } {
