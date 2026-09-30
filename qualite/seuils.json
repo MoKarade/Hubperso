@@ -1,6 +1,6 @@
 {
   "_doc": "Seuils du cliquet (portes qualité de l'Atelier, S6). Valeurs mesurées le jour de la mise en place (Linux, Node 24.21) : l'existant est toléré, rien ne peut reculer. `npm run portes:maj` resserre un seuil quand le chiffre s'améliore ; le desserrer demande `--forcer` et une décision de Marc.",
-  "mis_a_jour": "2026-09-24",
+  "mis_a_jour": "2026-09-30",
   "config": {
     "app": "Hubperso",
     "lint": "eslint .",
@@ -29,16 +29,16 @@
       "max": 0
     },
     "couverture.lignes_coeur": {
-      "min": 88.3
+      "min": 92.8
     },
     "couverture.lignes_global": {
-      "min": 56.8
+      "min": 65.8
     },
     "couverture.branches_global": {
-      "min": 47.5
+      "min": 53
     },
     "code_mort.problemes": {
-      "max": 23
+      "max": 21
     },
     "architecture.violations": {
       "max": 0
