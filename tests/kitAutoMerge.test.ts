@@ -25,9 +25,17 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
   const lignes = lireCopies(lire("COPIES.md"));
 
   it("COPIES.md liste des fichiers (anti-vacuité)", () => {
-    // 15 depuis le retrait de armement-auto-merge.yml (profil `prive` : pas d'auto-fusion
-    // native en dépôt privé Free, voir COPIES.md et modeles/auto-merge/LISEZMOI.md).
-    expect(lignes.length).toBeGreaterThanOrEqual(15);
+    // 16 en kit 1.13.0 (labels.mjs ajouté), profil `prive` : sans armement-auto-merge.yml
+    // (pas d'auto-fusion native en dépôt privé Free, voir COPIES.md et
+    // modeles/auto-merge/LISEZMOI.md).
+    expect(lignes.length).toBeGreaterThanOrEqual(16);
+    expect(lignes.map((l) => l.chemin)).toContain("modeles/auto-merge/labels.mjs");
+    expect(lignes.map((l) => l.chemin)).not.toContain(".github/workflows/armement-auto-merge.yml");
+  });
+
+  it("le kit est au moins en 1.13.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell)", () => {
+    const [majeure, mineure] = (lignes[0]?.version ?? "0.0").split(".").map(Number);
+    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1013);
   });
 
   it.each(lignes.map((l) => [l.chemin, l.sha256]))("%s a l'empreinte attestée", (chemin, sha) => {
