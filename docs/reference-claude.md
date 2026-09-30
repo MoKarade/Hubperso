@@ -28,7 +28,7 @@ widgets 100 % génériques.
   Components). Pas de `x-hub-token` exposé au client, pas de CORS demandé aux apps.
 - **Hub privé, protégé par auth.** Le hub affiche des données personnelles réelles : il est
   derrière un **login Google (Auth.js v5)**. `middleware.ts` garde tout sauf `/api/auth/*`,
-  `/login`, `/api/acces` et les assets. **Toute nouvelle route affichant des données doit
+  `/login`, `/api/acces`, `/api/cron/releve`, `/api/sante` et les assets. **Toute nouvelle route affichant des données doit
   rester derrière la middleware** (ne jamais l'ajouter aux exclusions du matcher) et, si
   elle porte des jetons, revérifier la session côté serveur (défense en profondeur, cf.
   `app/page.tsx`). Voir la section « Authentification » du README.
@@ -59,9 +59,19 @@ widgets 100 % génériques.
     la mémoire du hub, un pouvoir qu'aucune app n'a de raison d'avoir — et qui se
     propagerait à chaque app ajoutée. 503 si le secret manque côté serveur, 401 s'il est
     faux : la distinction EST le diagnostic (l'un envoie sur Vercel, l'autre sur GitHub).
+- **Une troisième route traverse le garde SANS aucune authentification : `GET /api/sante`**
+  (30/09/2026, patron JobAI#49 / BatchChef#154). C'est la sonde de la vigie de l'Atelier.
+  Sa seule défense est de n'avoir rien à donner : elle ne rend que `{ ok: true }` ou
+  `{ ok: false, cause: "base" | "configuration" }` (503, `no-store`), jamais une donnée, un
+  message brut ni un **nom** de variable — les noms des variables requises absentes partent
+  au journal serveur seulement. `tests/gardePages.test.ts` la range à part
+  (`ROUTES_PUBLIQUES_MUETTES`) et lui interdit d'importer un module de données.
+  La liste des variables attendues (noms, requise/optionnelle, effet si absente) vit dans
+  `lib/variablesAttendues.ts` (F7) ; `tests/variablesAttendues.test.ts` vérifie qu'elle
+  couvre chaque `process.env` lu par l'app.
 
-  ⚠️ Cette section a écrit « c'est la SEULE exception » jusqu'au 14/09/2026. En ajouter une
-  deuxième **oblige à corriger la phrase dans la même PR** : une règle qu'on sait fausse
+  ⚠️ Cette section a écrit « c'est la SEULE exception » jusqu'au 14/09/2026, puis « deux
+  routes » jusqu'au 30/09/2026. En ajouter une **oblige à corriger la phrase dans la même PR** : une règle qu'on sait fausse
   cesse d'être lue comme une règle, et la session suivante la prendrait pour un interdit —
   donc passerait par le matcher, ce qu'il ne faut jamais faire.
 - **Sécurité des liens.** Les `href` du contrat ne deviennent cliquables que via

@@ -201,7 +201,9 @@ Vérifs vertes en local : `npm run typecheck`, `npm run test`, `npm run lint`, `
 | `lib/administration.ts` + `app/administration/` | Ajouter/retirer une personne, app par app. Réservée au propriétaire. `APPS_DISPONIBLES` dérive de `SOURCE_DEFS` — pas de seconde liste à tenir. |
 | `app/api/acces/route.ts` | `POST`. Répond aux **autres apps** « telle adresse a-t-elle accès à toi ? ». L'`appId` vient du **jeton**, jamais du corps : une app ne peut pas interroger les accès d'une autre. `POST` et non `GET` pour que l'adresse ne finisse pas dans les journaux d'URL. |
 | `lib/db/schema.ts` + `drizzle/` | Tables `personnes` et `acces` (Neon). **Rien d'autre** : ni donnée d'app, ni session. |
-| `lib/authGuard.ts` | Décision du middleware. Laisse passer `/api/acces` — le matcher, lui, est inchangé. |
+| `lib/authGuard.ts` | Décision du middleware. Laisse passer `/api/acces`, `/api/cron/releve` et `/api/sante` — le matcher, lui, est inchangé. |
+| `app/api/sante/route.ts` | `GET` public, sonde de la vigie : `{ ok: true }` ou 503 `{ ok: false, cause: "base" \| "configuration" }`, `no-store`. Noms des variables requises absentes au journal serveur seulement. |
+| `lib/variablesAttendues.ts` | Liste des NOMS de variables attendues (requise/optionnelle, effet si absente) + contrôle de présence booléen. Jamais une valeur. |
 | `middleware.ts` | Garde global : page → `/login`, `/api/*` → 401 JSON. |
 | `app/sans-acces/page.tsx` | Connectée, mais pas ici. |
 | `tests/` | Dont `tests/personnes.test.ts` (PGlite + les **vraies** migrations) et `tests/gardePages.test.ts`, qui fait échouer toute page ajoutée sans garde. |

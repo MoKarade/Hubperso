@@ -166,6 +166,17 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "le handler d'Auth.js : c'est le flux de connexion lui-même, il ne peut pas exiger d'être déjà connecté",
   };
 
+  /**
+   * Routes PUBLIQUES SANS AUCUNE authentification — quatrième catégorie, la plus étroite.
+   * Elles n'ont ni session ni secret, donc leur seule protection est de n'avoir RIEN à
+   * donner : la preuve exigée plus bas est qu'elles n'importent aucun module qui porte une
+   * donnée personnelle, un jeton d'app ou la liste des personnes.
+   */
+  const ROUTES_PUBLIQUES_MUETTES: Record<string, string> = {
+    "api/sante/route.ts":
+      "sonde de santé de la vigie de l'Atelier : ne rend que { ok, cause }, jamais une donnée ni un nom de variable",
+  };
+
   const routes = fichiersDeApp(RACINE_APP, "route.ts").map((p) => ({
     relatif: relative(RACINE_APP, p).replace(/\\/g, "/"),
     source: readFileSync(p, "utf8"),
@@ -178,7 +189,13 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
 
   it("chacun exige l'accès au hub, ou figure dans la liste à jeton", () => {
     for (const route of routes) {
-      if (ROUTES_A_JETON[route.relatif] || ROUTES_D_AUTH[route.relatif]) continue;
+      if (
+        ROUTES_A_JETON[route.relatif] ||
+        ROUTES_D_AUTH[route.relatif] ||
+        ROUTES_PUBLIQUES_MUETTES[route.relatif]
+      ) {
+        continue;
+      }
       const gardee =
         route.source.includes("exigerAccesHub()") ||
         route.source.includes("exigerProprietaire()") ||
@@ -221,9 +238,33 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
     const declaresDansLeGarde = [...source.matchAll(/pathname === "(\/api\/[^"]+)"/g)].map(
       (m) => m[1]!,
     );
-    const attendus = Object.keys(ROUTES_A_JETON).map(
-      (relatif) => `/${relatif.replace(/\/route\.ts$/, "")}`,
-    );
+    const attendus = [
+      ...Object.keys(ROUTES_A_JETON),
+      ...Object.keys(ROUTES_PUBLIQUES_MUETTES),
+    ].map((relatif) => `/${relatif.replace(/\/route\.ts$/, "")}`);
     expect([...declaresDansLeGarde].sort()).toEqual([...attendus].sort());
+  });
+
+  it("une route publique muette PROUVE qu'elle n'a rien à donner", () => {
+    // Sans session ni secret, la seule défense est l'absence de donnée. Importer l'un de
+    // ces modules suffirait à rendre possible la fuite d'une personne, d'un historique,
+    // d'un résumé d'app ou d'un jeton — c'est donc l'import lui-même qui est interdit.
+    const INTERDITS = [
+      "@/lib/personnes",
+      "@/lib/historiqueDb",
+      "@/lib/administration",
+      "@/lib/sources",
+      "@/lib/fetchSummary",
+      "@/lib/jetonApp",
+      "@/auth",
+    ];
+    for (const [relatif, raison] of Object.entries(ROUTES_PUBLIQUES_MUETTES)) {
+      const route = routes.find((r) => r.relatif === relatif);
+      expect(route, `exception morte : ${relatif} (${raison})`).toBeDefined();
+      for (const interdit of INTERDITS) {
+        expect(route!.source, `${relatif} importe ${interdit}`).not.toContain(`"${interdit}"`);
+      }
+      expect(route!.source, `${relatif} doit interdire le cache`).toContain("no-store");
+    }
   });
 });
