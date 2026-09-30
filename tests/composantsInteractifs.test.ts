@@ -6,8 +6,8 @@
 //     DOM : garde de PaletteMontee, action de SignOutButton, champs du formulaire de
 //     BoutonTrigger ;
 //   - les interactions (Ctrl+K, flèches, clic, minuterie de rafraîchissement, enregistrement
-//     du service worker) exigent un vrai DOM (jsdom ou navigateur) : hors de portée ici, sans
-//     nouvelle dépendance. C'est dit test par test plutôt qu'écrit en tests creux.
+//     du service worker, confirmation avant déclenchement) exigent un DOM : elles sont
+//     testées dans tests/composantsDom.test.ts (jsdom).
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createElement as h, isValidElement, type ReactElement } from "react";
@@ -120,7 +120,7 @@ describe("RefreshControls", () => {
     expect(html).not.toContain("disabled");
     expect(texte(html)).toBe("↻ Rafraîchir");
     // La minuterie (15 s) et l'écoute de visibilité vivent dans un effet : jamais au rendu
-    // serveur. Leur comportement exige un DOM, hors de portée sans nouvelle dépendance.
+    // serveur. Leur comportement est testé dans tests/composantsDom.test.ts.
     expect(moq.refresh).not.toHaveBeenCalled();
   });
 });
