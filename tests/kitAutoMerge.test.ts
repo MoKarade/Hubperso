@@ -33,10 +33,38 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
     expect(lignes.map((l) => l.chemin)).not.toContain(".github/workflows/armement-auto-merge.yml");
   });
 
-  it("le kit est au moins en 1.13.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell)", () => {
+  it("le kit est au moins en 1.15.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell ; 1.15.0 installe son branchement)", () => {
     const [majeure, mineure] = (lignes[0]?.version ?? "0.0").split(".").map(Number);
-    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1013);
+    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1015);
   });
+});
+
+describe(".claude/settings.json branche la porte de commit (kit 1.15.0, posé par resynchroniser-kit)", () => {
+  // Pas dans COPIES.md : c'est une FUSION (le reste du réglage est conservé), contrôlée par verifier-copies côté Atelier.
+  // Ici on verrouille l'essentiel sans dépendre de l'Atelier : chaque outil shell passe par la porte, par chemin absolu.
+  type Entree = { matcher?: string; hooks?: { type?: string; command?: string; timeout?: number }[] };
+  const reglage = JSON.parse(lire(".claude/settings.json").replace(/^﻿/, "")) as { hooks?: { PreToolUse?: Entree[] } };
+  const portes = (reglage.hooks?.PreToolUse ?? []).filter((e) =>
+    (e.hooks ?? []).some((h) => h.type === "command" && (h.command ?? "").includes("scripts/hooks/commit-gate.mjs")),
+  );
+
+  it("exactement une entrée PreToolUse lance scripts/hooks/commit-gate.mjs", () => {
+    expect(portes).toHaveLength(1);
+  });
+
+  it("le matcher couvre Bash ET PowerShell (un git commit par PowerShell ne passe pas sans contrôle)", () => {
+    expect(portes[0]?.matcher).toBe("Bash|PowerShell");
+  });
+
+  it("la commande vise la porte par $CLAUDE_PROJECT_DIR (quel que soit le dossier courant)", () => {
+    const h = portes[0]?.hooks?.find((x) => (x.command ?? "").includes("commit-gate.mjs"));
+    expect(h?.command).toBe('node "$CLAUDE_PROJECT_DIR/scripts/hooks/commit-gate.mjs"');
+    expect(h?.timeout).toBeGreaterThanOrEqual(600);
+  });
+});
+
+describe("COPIES.md (suite)", () => {
+  const lignes = lireCopies(lire("COPIES.md"));
 
   it.each(lignes.map((l) => [l.chemin, l.sha256]))("%s a l'empreinte attestée", (chemin, sha) => {
     expect(empreinte(lire(chemin as string))).toBe(sha);
