@@ -24,22 +24,37 @@
 // Note : sans AUTH_SECRET/AUTHORIZED_EMAIL, `middleware.ts` répond 503 AVANT d'arriver ici.
 // La vigie voit donc un 503 dans ce cas aussi — c'est voulu (fail-closed).
 //
-// `assurerMigrations()` n'échoue jamais vers l'appelant : pas de try/catch autour.
+// `assurerMigrations()` n'échoue jamais vers l'appelant : pas de try/catch autour. Après un
+// échec, elle observe un délai de repli (lib/migrations.ts) : la sonde ne relance pas une
+// migration à chaque appel.
+//
+// ── LIMITE DE DÉBIT (décision pole-securite, 30/09/2026) ──────────────────────────────
+// Route publique SANS authentification qui fait un vrai `SELECT 1` sur Neon (plan gratuit) :
+// sans frein, n'importe qui peut la marteler et consommer le quota de la base. 10 appels par
+// minute et par client (même réglage que `/api/cron/releve`) : la vigie appelle une fois par
+// heure, c'est très large. Vérifiée EN PREMIER, avant tout accès à la base. Le plafond est
+// par instance (voir lib/limiteDebit.ts) : un frein, pas un pare-feu.
 
 import { sql } from "drizzle-orm";
 import { baseConfiguree, db } from "@/lib/db";
 import { assurerMigrations } from "@/lib/migrations";
 import { requisesManquantes } from "@/lib/variablesAttendues";
+import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 
 export const dynamic = "force-dynamic";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
+const limiteur = creerLimiteur({ max: 10, fenetreMs: 60_000 });
+
 function echec(cause: "base" | "configuration"): Response {
   return Response.json({ ok: false, cause }, { status: 503, headers: NO_STORE });
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  const debit = limiteur.verifier(cleClient(request.headers));
+  if (!debit.ok) return reponse429(debit.retryApresS);
+
   if (!baseConfiguree()) return echec("base");
 
   await assurerMigrations();

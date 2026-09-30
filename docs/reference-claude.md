@@ -62,7 +62,7 @@ widgets 100 % génériques.
 - **Une troisième route traverse le garde SANS aucune authentification : `GET /api/sante`**
   (30/09/2026, patron JobAI#49 / BatchChef#154). C'est la sonde de la vigie de l'Atelier.
   Sa seule défense est de n'avoir rien à donner : elle ne rend que `{ ok: true }` ou
-  `{ ok: false, cause: "base" | "configuration" }` (503, `no-store`), jamais une donnée, un
+  `{ ok: false, cause: "base" | "configuration" }` (503, `no-store`), limitée à 10 appels/min par client (429, avant tout accès à la base), jamais une donnée, un
   message brut ni un **nom** de variable — les noms des variables requises absentes partent
   au journal serveur seulement. `tests/gardePages.test.ts` la range à part
   (`ROUTES_PUBLIQUES_MUETTES`) et lui interdit d'importer un module de données.

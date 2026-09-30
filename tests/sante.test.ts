@@ -23,6 +23,12 @@ function verifierCorpsMuet(corps: string) {
   for (const nom of NOMS) expect(corps, `le corps nomme ${nom}`).not.toContain(nom);
 }
 
+let ip = 0;
+/** Une requête de la vigie ; chaque test a son propre client, la limite ne s'y mélange pas. */
+function requete(client = `10.0.0.${++ip}`): Request {
+  return new Request("https://hubperso.com/api/sante", { headers: { "x-real-ip": client } });
+}
+
 /** Pose toutes les variables REQUISES avec la valeur témoin. */
 function poserRequises(sauf: string[] = []) {
   for (const v of VARIABLES_ATTENDUES) {
@@ -57,7 +63,7 @@ describe("GET /api/sante — base non configurée (vrai lib/db)", () => {
   it('503 { ok: false, cause: "base" }, no-store, corps muet', async () => {
     poserRequises(["DATABASE_URL"]);
     const { GET } = await import("@/app/api/sante/route");
-    const res = await GET();
+    const res = await GET(requete());
     expect(res.status).toBe(503);
     expect(res.headers.get("cache-control")).toBe(NO_STORE);
     const corps = await res.text();
@@ -71,7 +77,7 @@ describe("GET /api/sante — base réelle en mémoire (PGlite)", () => {
     poserRequises();
     baseEnMemoire();
     const { GET } = await import("@/app/api/sante/route");
-    const res = await GET();
+    const res = await GET(requete());
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe(NO_STORE);
     const corps = await res.text();
@@ -86,7 +92,7 @@ describe("GET /api/sante — base réelle en mémoire (PGlite)", () => {
       throw new Error(`connexion refusée postgres://${TEMOIN}@neon`);
     });
     const { GET } = await import("@/app/api/sante/route");
-    const res = await GET();
+    const res = await GET(requete());
     expect(res.status).toBe(503);
     expect(res.headers.get("cache-control")).toBe(NO_STORE);
     const corps = await res.text();
@@ -100,7 +106,7 @@ describe("GET /api/sante — base réelle en mémoire (PGlite)", () => {
     const journal = vi.spyOn(console, "error").mockImplementation(() => {});
     baseEnMemoire();
     const { GET } = await import("@/app/api/sante/route");
-    const res = await GET();
+    const res = await GET(requete());
     expect(res.status).toBe(503);
     expect(res.headers.get("cache-control")).toBe(NO_STORE);
     const corps = await res.text();
@@ -113,13 +119,30 @@ describe("GET /api/sante — base réelle en mémoire (PGlite)", () => {
     expect(journalise).not.toContain(TEMOIN);
   });
 
+  it("limite de débit : au 11e appel d'un même client dans la minute, 429 SANS toucher la base", async () => {
+    poserRequises();
+    const execute = vi.fn(async () => undefined);
+    baseEnMemoire(execute);
+    const { GET } = await import("@/app/api/sante/route");
+    const client = "192.0.2.10";
+    for (let i = 0; i < 10; i++) expect((await GET(requete(client))).status).toBe(200);
+    expect(execute).toHaveBeenCalledTimes(10);
+    const res = await GET(requete(client));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("cache-control")).toBe(NO_STORE);
+    verifierCorpsMuet(await res.text());
+    expect(execute).toHaveBeenCalledTimes(10);
+    // Un autre client n'est pas pénalisé.
+    expect((await GET(requete("192.0.2.11"))).status).toBe(200);
+  });
+
   it("une variable OPTIONNELLE absente ne rend pas la sonde rouge", async () => {
     poserRequises();
     vi.stubEnv("CRON_SECRET", "");
     vi.stubEnv("HUB_TOKEN_CARAI", "");
     baseEnMemoire();
     const { GET } = await import("@/app/api/sante/route");
-    const res = await GET();
+    const res = await GET(requete());
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
   });
