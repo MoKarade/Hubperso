@@ -27,7 +27,7 @@ import { SOURCE_DEFS } from "./sources";
 
 type Env = Record<string, string | undefined>;
 
-export type Exigence = "requise" | "optionnelle";
+type Exigence = "requise" | "optionnelle";
 
 export interface VariableAttendue {
   readonly nom: string;
