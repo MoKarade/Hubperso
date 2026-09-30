@@ -33,9 +33,9 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
     expect(lignes.map((l) => l.chemin)).not.toContain(".github/workflows/armement-auto-merge.yml");
   });
 
-  it("le kit est au moins en 1.15.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell ; 1.15.0 installe son branchement)", () => {
+  it("le kit est au moins en 1.16.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell ; 1.15.0 installe son branchement ; 1.16.0 = resynchro du 30/09)", () => {
     const [majeure, mineure] = (lignes[0]?.version ?? "0.0").split(".").map(Number);
-    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1015);
+    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1016);
   });
 });
 
