@@ -1,28 +1,40 @@
 /* globals.css — design tokens + bento. Direction : bento, dashboard perso soigné.
-   Light par défaut, dark via prefers-color-scheme (aucun mode imposé). */
+   Thème SOMBRE SEUL (Marc, 26/09), accent de marque #93A0FF. */
 
 :root {
-  --bg: oklch(97% 0.008 90);
-  --surface: oklch(99.5% 0.003 90);
-  --surface-2: oklch(96% 0.006 265);
-  --text: oklch(23% 0.02 265);
-  --text-soft: oklch(48% 0.015 265);
-  --text-faint: oklch(62% 0.012 265);
-  --border: oklch(90% 0.008 265);
+  /* THÈME SOMBRE SEUL (décision de Marc, 26/09) : plus de mode clair, plus de bascule selon le système
+     automatique. Valeurs = jetons de la référence de style commune
+     (atelier/docs/design/reference-style-financeai.md). Contrastes MESURÉS, testés dans
+     tests/themeSombre.test.ts (texte ≥ 4,5:1 sur --bg ET --surface). */
+  color-scheme: dark;
+  --bg: #07090D;
+  --surface: #0E1014;
+  --surface-2: #15181E;
+  --text: #E2E8F0;
+  --text-soft: #94A3B8;
+  --text-faint: #8896A8;
+  --border: rgb(255 255 255 / 0.09);
 
-  --ok: oklch(58% 0.14 150);
-  --warn: oklch(66% 0.14 70);
-  --danger: oklch(57% 0.19 25);
-  --info: oklch(60% 0.14 250);
-  --neutral: oklch(60% 0.01 265);
+  /* ── ACCENT DE MARQUE DU HUB ─────────────────────────────────────────────────────────
+     Indigo brume, source unique = §6bis de la référence. Usage DISCRET : sur-titre de
+     page, puce/état actif de la marque du hub. ⚠️ JAMAIS pour l'accent d'une app (qui
+     reste `--accent` / `--teinte`, publié par le contrat) ni pour porter un état. */
+  --marque: #93A0FF;
 
-  --radius: 18px;
-  --radius-sm: 10px;
+  --ok: #34D399;
+  --warn: #FBBF24;
+  --danger: #F87171;
+  --info: #60A5FA;
+  --neutral: #8896A8;
+
+  --radius: 16px;
+  --radius-sm: 8px;
   --gap: clamp(0.9rem, 0.6rem + 1vw, 1.4rem);
-  --shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 8px 24px -12px oklch(0% 0 0 / 0.12);
-  --shadow-hover: 0 2px 4px oklch(0% 0 0 / 0.05), 0 18px 44px -16px oklch(0% 0 0 / 0.22);
+  /* Cartes À PLAT (référence §1) : bordure fine, ni ombre ni lévitation. */
+  --shadow: none;
+  --shadow-hover: none;
 
-  --font: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+  --font: "Outfit Variable", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, sans-serif;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -36,28 +48,9 @@
      divergé au premier ajustement, et c'est exactement ce qui a produit le « Détail » de
      0,78 rem en gris pâle à côté de boutons corrects ailleurs. */
   --cible: 44px;
-  /* Intensité du lavis coloré d'une carte. Un seul endroit pour l'accorder. */
-  --lavis: 7%;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: oklch(17% 0.015 265);
-    --surface: oklch(21% 0.018 265);
-    --surface-2: oklch(26% 0.02 265);
-    --text: oklch(94% 0.01 265);
-    --text-soft: oklch(72% 0.015 265);
-    --text-faint: oklch(58% 0.012 265);
-    --border: oklch(31% 0.02 265);
-    --shadow: 0 1px 2px oklch(0% 0 0 / 0.3), 0 10px 30px -12px oklch(0% 0 0 / 0.5);
-    --shadow-hover: 0 2px 6px oklch(0% 0 0 / 0.4), 0 22px 52px -16px oklch(0% 0 0 / 0.62);
-    /* ⚠️ LAVIS PLUS FORT EN THÈME SOMBRE, et ce n'est pas un réglage au feeling : la
-       surface claire porte une chroma de 0,003, la sombre en porte 0,018 — six fois plus.
-       La teinte de l'app doit donc s'imposer sur un fond qui est DÉJÀ légèrement bleuté
-       (teinte 265), là où sur clair elle se pose sur du quasi-blanc. À 7 % des deux côtés,
-       le sombre paraîtrait neutre — exactement le reproche de Marc sur la barre de 3 px. */
-    --lavis: 12%;
-  }
+  /* Intensité du lavis coloré d'une carte. Un seul endroit pour l'accorder. Valeur du
+     thème sombre : la teinte de l'app doit s'imposer sur un fond déjà bleuté. */
+  --lavis: 12%;
 }
 
 *,
@@ -70,15 +63,7 @@
 }
 
 body {
-  /* Halo de lumière neutre en haut de page : de la profondeur sans toucher aux
-     accents des apps. Quasi invisible, mais le fond ne semble plus « plat ». */
-  background:
-    radial-gradient(
-      120% 60% at 50% 0%,
-      color-mix(in oklch, var(--surface) 55%, transparent),
-      transparent 70%
-    ),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   line-height: 1.5;
@@ -119,7 +104,7 @@ a:focus-visible,
   letter-spacing: 0.16em;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--text-faint);
+  color: var(--marque);
 }
 .page__title {
   font-size: clamp(2.2rem, 1.5rem + 3vw, 3.6rem);
@@ -193,24 +178,13 @@ a:focus-visible,
   }
 }
 .widget {
-  --accent: oklch(60% 0.02 265);
-  /* ── LA TEINTE DE LA CARTE, ET QUI GAGNE ─────────────────────────────────────────
-     `--teinte` est la couleur qui habille la carte : son lavis de fond, sa barre du
-     haut, son liseré au survol. Par défaut c'est la couleur de l'app.
-
-     ⚠️ SEUL LE ROUGE L'ÉCRASE. Une panne (injoignable, en erreur, non autorisée,
-     réponse invalide) remplace la couleur de l'app par le rouge. Une seule variable
-     redéfinie par `[data-gravite]` suffit, plutôt que de répéter la règle sur chacune
-     des trois propriétés : sans ça, on en oublierait une, et une carte « injoignable »
-     garderait un souvenir de sa couleur d'app quelque part.
-
-     ⚠️ L'ORANGE NE L'ÉCRASE PAS, ET CETTE RÈGLE A ÉTÉ INVERSÉE UNE FOIS. Marc avait
-     d'abord tranché que l'orange effaçait aussi, contre ma recommandation ; il est
-     revenu dessus le 16/09 en voyant la conséquence chiffrée — « En cache » et
-     « Données en retard » sont des états FRÉQUENTS, et sur une journée ordinaire la
-     moitié des cartes y passent. Les six couleurs d'app auraient donc disparu la
-     plupart du temps, ce qui annulait exactement la demande qui a lancé ce lot.
-     L'orange ne prend que le liseré : il se voit, il ne recouvre rien. */
+  --accent: #A5B0C2;
+  /* ── LA TEINTE DE LA CARTE = TOUJOURS LA COULEUR DE L'APP ────────────────────────
+     `--teinte` habille la carte : lavis de fond, barre du haut, liseré au survol. Décision
+     de Marc (28/09) : une couleur unique par projet, JAMAIS une couleur d'état. L'état
+     (à jour, en retard, panne…) passe uniquement par le badge (couleur + libellé), l'icône
+     et le texte de la carte. Cela REMPLACE l'ancienne règle « le rouge écrase, l'orange
+     prend le liseré ». */
   --teinte: var(--accent);
   position: relative;
   display: flex;
@@ -229,18 +203,6 @@ a:focus-visible,
   animation: rise-in 520ms var(--ease-out) backwards;
   animation-delay: var(--enter-delay, 0ms);
 }
-/* L'orange se signale par son LISERÉ, et `--teinte` reste la couleur de l'app : le lavis
-   de fond et la barre du haut ne bougent pas. 2 px suffisent à le voir sur une grille de
-   six cartes, sans effacer l'identité de celle qui traîne. */
-.widget[data-gravite="warn"] {
-  border-color: var(--warn);
-  border-width: 2px;
-}
-.widget[data-gravite="danger"] {
-  --teinte: var(--danger);
-}
-/* `ok`, `info` et `neutral` gardent la couleur de l'app — « à jour », « en construction »
-   et « non configurée » ne sont pas des problèmes à signaler par la couleur. */
 .widget::before {
   content: "";
   position: absolute;
@@ -255,14 +217,7 @@ a:focus-visible,
 }
 .widget:hover {
   box-shadow: var(--shadow-hover);
-  transform: translateY(-3px);
   border-color: color-mix(in oklch, var(--teinte) 42%, var(--border));
-}
-/* ⚠️ Sans cette ligne, le survol reprendrait `--teinte` — donc la couleur de l'app — et
-   FERAIT DISPARAÎTRE le liseré orange au moment précis où l'on pointe la carte. Le seul
-   signal d'une app en retard s'effacerait sous le curseur. */
-.widget[data-gravite="warn"]:hover {
-  border-color: var(--warn);
 }
 .widget:hover::before {
   opacity: 1;
@@ -343,23 +298,23 @@ a:focus-visible,
 }
 .badge--ok {
   color: var(--ok);
-  background: oklch(58% 0.14 150 / 0.13);
+  background: rgb(52 211 153 / 0.12);
 }
 .badge--warn {
   color: var(--warn);
-  background: oklch(66% 0.14 70 / 0.16);
+  background: rgb(251 191 36 / 0.12);
 }
 .badge--danger {
   color: var(--danger);
-  background: oklch(57% 0.19 25 / 0.13);
+  background: rgb(248 113 113 / 0.12);
 }
 .badge--info {
   color: var(--info);
-  background: oklch(60% 0.14 250 / 0.13);
+  background: rgb(96 165 250 / 0.12);
 }
 .badge--neutral {
   color: var(--neutral);
-  background: oklch(60% 0.01 265 / 0.15);
+  background: rgb(136 150 168 / 0.12);
 }
 
 /* --- Metrics --- */
@@ -455,7 +410,6 @@ a:focus-visible,
   height: 6px;
   border-radius: 50%;
   flex: none;
-  transform: translateY(-1px);
 }
 .alert__dot--ok {
   background: var(--ok);
@@ -554,7 +508,7 @@ a:focus-visible,
   color: var(--text-dim, var(--text));
 }
 .action-trigger__retour--erreur {
-  color: var(--danger, #b91c1c);
+  color: var(--danger);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -702,7 +656,6 @@ a:focus-visible,
 }
 .login__button:hover {
   opacity: 0.92;
-  transform: translateY(-1px);
   box-shadow: var(--shadow);
 }
 .login__button:active {
@@ -830,7 +783,7 @@ a:focus-visible,
   color: inherit;
   transition: box-shadow 0.2s var(--ease-out), transform 0.2s var(--ease-out);
 }
-.costs:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.costs:hover { box-shadow: var(--shadow-hover); }
 .costs__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
 .costs__eyebrow {
   margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
@@ -1080,7 +1033,7 @@ a:focus-visible,
      qu'aux cartes SANS couleur d'app (non configurée, injoignable), dont l'accent est le
      gris neutre de `.widget` — le blanc y passe. Il n'est JAMAIS utilisé pour une vraie
      couleur d'app : voir `lib/couleur.ts` et son test. */
-  color: var(--accent-texte, #fff);
+  color: var(--accent-texte, #0B0D12);
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -1170,6 +1123,11 @@ a:focus-visible,
   color: var(--text-soft);
   font-size: 0.9rem;
 }
+/* Erreur (base injoignable) : rouge comme les erreurs du détail et d'Attention. */
+.admin__vide[role="alert"] {
+  color: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 45%, var(--border));
+}
 .admin__ajout {
   display: flex;
   flex-wrap: wrap;
@@ -1183,6 +1141,7 @@ a:focus-visible,
 }
 .admin__input {
   flex: 1 1 220px;
+  min-height: var(--cible);
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1254,7 +1213,11 @@ a:focus-visible,
   gap: 0.5rem;
 }
 .admin__app-toggle {
-  padding: 0.32rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  min-height: var(--cible);
+  padding: 0.32rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-2);
@@ -1470,7 +1433,6 @@ a:focus-visible,
 }
 .bandeau-attention:hover {
   box-shadow: var(--shadow-hover);
-  transform: translateY(-1px);
 }
 .bandeau-attention__pastille {
   width: 9px;
@@ -1620,6 +1582,23 @@ a:focus-visible,
   .page__aside .refresh {
     flex: 1 1 8rem;
   }
+  /* ADMINISTRATION : champs et boutons d'ajout sur toute la largeur, actions d'une
+     personne partagées d'un bord à l'autre (même méthode que login/accueil). */
+  .admin__input {
+    flex: 1 1 100%;
+  }
+  .admin__ajout .btn {
+    flex: 1 1 100%;
+  }
+  .admin__personne-actions {
+    width: 100%;
+  }
+  .admin__personne-actions form {
+    flex: 1 1 8rem;
+  }
+  .admin__personne-actions form .btn {
+    width: 100%;
+  }
 }
 
 /* ── PAGE DE DÉTAIL : l'historique par métrique, et la cohérence ─────────────────────
@@ -1716,7 +1695,7 @@ a:focus-visible,
   justify-content: center;
   align-items: flex-start;
   padding: clamp(3rem, 12vh, 9rem) 1rem 1rem;
-  background: oklch(0% 0 0 / 0.38);
+  background: rgb(0 0 0 / 0.6);
   backdrop-filter: blur(3px);
 }
 .palette {
@@ -1842,8 +1821,7 @@ a:focus-visible,
    vocabulaire des alertes : ni rouge, ni orange, ni pictogramme d'avertissement, aucune
    pastille de gravité. Un filet à gauche et une flèche — l'idiome du « va par là », pas
    celui du « attention ».
-   Les deux thèmes suivent `prefers-color-scheme` par les variables : aucune couleur écrite
-   en dur, sinon le mode sombre le paierait. */
+   Le thème est sombre seul : aucune couleur écrite en dur, tout passe par les variables. */
 .reco {
   display: flex;
   gap: 0.6rem;

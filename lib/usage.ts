@@ -25,7 +25,7 @@ export function quotaRatio(used: number, limit: number | null): number | null {
   return used / limit;
 }
 
-export interface AppUsage {
+interface AppUsage {
   id: string;
   name: string;
   color?: string;

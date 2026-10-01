@@ -41,7 +41,7 @@ export function phraseManques(manque: readonly ManqueConfig[]): string {
 }
 
 /** Rend la liste (jamais vide quand la source n'est pas interrogeable), ou `null`. */
-export function manquesDeConfig(source: HubSource): readonly ManqueConfig[] | null {
+function manquesDeConfig(source: HubSource): readonly ManqueConfig[] | null {
   const manque: ManqueConfig[] = [];
   if (!source.summaryUrl) manque.push("url");
   if (!source.token) manque.push("jeton");

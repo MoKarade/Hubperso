@@ -112,7 +112,7 @@ widgets 100 % génériques.
   `isPublicPath` se testent sans base, sans réseau et sans horloge — la date se passe en
   paramètre (cf. `peutSeConnecter(email, env, maintenantMs, lecture)`).
 - **Design : direction bento assumée** (voir `app/globals.css`), pas de template générique.
-  Ne pas imposer le dark mode : les deux thèmes suivent `prefers-color-scheme`.
+  Thème SOMBRE SEUL (Marc, 26/09), accent de marque `--marque` #93A0FF ; contrastes testés dans `tests/themeSombre.test.ts`.
 - ⚠️ **Une couleur reçue du contrat ne porte JAMAIS du texte sans passer par `texteSur`**
   (`lib/couleur.ts`, PURE). `app.color` arrive à l'exécution et le hub ne connaît aucune
   app : mesuré le 15/09, deux des six couleurs rendent le texte blanc illisible (JobAI
@@ -142,16 +142,10 @@ widgets 100 % génériques.
   colonne, et surtout pas un second seuil qui créerait une fenêtre où les cartes sont
   empilées mais les boutons encore étroits — les boutons prennent toute la largeur et
   `--cible` monte à 48 px.
-- **Seul le ROUGE écrase la couleur de l'app sur une carte** (`--teinte`, redéfinie par
-  `[data-gravite="danger"]`) : injoignable, en erreur, non autorisée, réponse invalide.
-  ⚠️ **L'orange ne prend que le liseré, et cette règle a été inversée une fois.** Marc avait
-  tranché le 15/09 que l'orange effaçait aussi, contre ma recommandation, puis il est revenu
-  dessus le 16/09 en voyant la conséquence chiffrée : « En cache » et « Données en retard »
-  sont fréquents, et sur une journée ordinaire la moitié des cartes y passent — les six
-  couleurs auraient donc disparu la plupart du temps, annulant la demande qui a lancé le lot.
-  ⚠️ Le survol doit RÉ-AFFIRMER le liseré orange (`[data-gravite="warn"]:hover`) : sinon il
-  reprend `--teinte`, donc la couleur de l'app, et le seul signal d'une app en retard
-  s'efface au moment où l'on pointe la carte.
+- **Le liseré, le lavis et la barre d'une carte gardent TOUJOURS la couleur de l'app**
+  (`--teinte`), quel que soit l'état (Marc, 28/09 : une couleur unique par projet, jamais la
+  couleur d'état). L'état passe uniquement par le badge (couleur + libellé), l'icône et le
+  texte. Remplace la règle du 15-16/09 (« le rouge écrase, l'orange prend le liseré »).
   ⚠️ `/attention` ne reçoit aucune couleur d'app : elle ne liste que des problèmes, déjà
   codés par gravité, et deux codes couleur sur le même écran s'annulent.
 
@@ -399,6 +393,14 @@ fichier. Le trou qu'une seconde liste ouvre est fermé des deux côtés : le TYP
 adresse (`SourceDef.id` est une clé de la table — perturbation : 1 erreur de compilation), un TEST
 interdit une adresse sans app (perturbation : 1 rouge).
 
+⚠️ **Suite, 30/09/2026 : les deux tables sont refondues en UNE** (`APPS` dans `lib/sources.ts`),
+en gardant la forme qui avait passé le détecteur — **une ligne par app** (nom, résumé, accueil,
+héros), les noms de variables d'environnement étant déduits de l'id (`<ID>_SUMMARY_URL`,
+`HUB_TOKEN_<ID>`). Plus de seconde liste, donc plus rien à synchroniser. `tests/sources.test.ts`
+fige le comportement (les six sources et les douze noms de variables, à l'identique) et refuse
+qu'un export `…_PAR_ID` réapparaisse. [À vérifier] le taux de duplication SonarCloud à la
+première PR qui porte ce changement.
+
 ## 10. Style et compte-rendu
 
 > 📣 Forme des comptes-rendus, des commits, des PR et des docs générées :
@@ -421,13 +423,17 @@ place redevient huit conventions différentes en trois mois.
 
 ## 11. Ajouter une app
 
-1. Une entrée dans `lib/sources.ts` (`id` kebab-case = `app.id` publié, `name`,
-   `accueilUrl`, `defaultSummaryUrl`, `urlEnv`, `tokenEnv`).
-   ⚠️ **`accueilUrl` (la page de l'app) et `defaultSummaryUrl` (l'endpoint du contrat) sont
-   DEUX champs**, même quand ils coïncident — c'est le cas de cinq apps sur six, et c'est
-   précisément ce qui a laissé passer le défaut de FinanceAI (cf. leçon n° 10).
-   ⚠️ `defaultSummaryUrl` vaut **`null`** quand aucune URL honnête n'existe : l'app est alors
+1. UNE ligne dans la table `APPS` de `lib/sources.ts` : clé = `id` kebab-case (= `app.id`
+   publié), `name`, `resume`, `accueil` (et `hero` pour la seule tuile 2×2). Les variables
+   `<ID>_SUMMARY_URL` et `HUB_TOKEN_<ID>` s'en déduisent — les ajouter aussi à la liste figée
+   de `tests/sources.test.ts` et à `.env.example`.
+   ⚠️ **`accueil` (la page de l'app) et `resume` (l'endpoint du contrat) sont DEUX champs**,
+   même quand ils coïncident — c'est le cas de cinq apps sur six, et c'est précisément ce qui a
+   laissé passer le défaut de FinanceAI (cf. leçon n° 10).
+   ⚠️ `resume` vaut **`null`** quand aucune URL honnête n'existe : l'app est alors
    `unconfigured` tant que sa variable n'est pas posée, et le hub ne part pas sur le réseau.
+   ⚠️ Une nouvelle propriété par app va DANS cette table, jamais dans une seconde table
+   `…_PAR_ID` (refusé par test : deux listes pour une même app finissent par diverger).
 2. La variable de jeton correspondante dans l'environnement (jamais en dur).
 
 C'est tout : le widget est rendu automatiquement à partir du summary, **et** l'app apparaît

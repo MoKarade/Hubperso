@@ -26,7 +26,7 @@
 // Chacun a son test.
 
 /** Le domaine parent de l'écosystème. Identique au `AUTH_COOKIE_DOMAIN` de production. */
-export const DOMAINE_HUB = "hubperso.com";
+const DOMAINE_HUB = "hubperso.com";
 
 /**
  * Cette destination est-elle une app du hub ?

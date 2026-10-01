@@ -38,7 +38,7 @@
       "min": 53
     },
     "code_mort.problemes": {
-      "max": 21
+      "max": 3
     },
     "architecture.violations": {
       "max": 0

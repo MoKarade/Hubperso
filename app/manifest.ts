@@ -35,15 +35,10 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "any",
-    // `background_color` (écran de démarrage) et `theme_color` du manifeste sont des
-    // valeurs UNIQUES : le format ne connaît pas `prefers-color-scheme`. Or le hub
-    // n'impose aucun mode (cf. CLAUDE.md) et son thème PAR DÉFAUT est le clair — on
-    // aligne donc sur `--bg` clair, converti depuis l'OKLCH de `globals.css`.
-    // La teinte de la barre système, elle, SUIT le thème : elle est déclarée en
-    // `<meta name="theme-color" media="...">` dans `app/layout.tsx`, qui a le dernier
-    // mot sur cette valeur-ci.
-    background_color: "#f7f5ef",
-    theme_color: "#f7f5ef",
+    // Thème sombre seul (Marc, 26/09) : écran de démarrage et barre système = `--bg`
+    // de `globals.css` (`#07090D`), identique à `themeColor` dans `app/layout.tsx`.
+    background_color: "#07090D",
+    theme_color: "#07090D",
     lang: "fr-CA",
     dir: "ltr",
     categories: ["productivity", "utilities"],

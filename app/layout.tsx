@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
-// Geist est embarquée dans le paquet npm (aucune requête externe au build ni au runtime).
-import { GeistSans } from "geist/font/sans";
+// Outfit (police commune de la refonte, référence §2) auto-hébergée via @fontsource : aucune requête externe.
+import "@fontsource-variable/outfit";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { PaletteMontee } from "@/components/PaletteMontee";
 import { Analytics } from "@vercel/analytics/next";
@@ -28,21 +28,16 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Contrairement au manifeste (une seule couleur possible), la balise meta accepte des
-  // media queries : la teinte de la barre système SUIT donc le thème, conformément au
-  // principe « ne pas imposer le dark mode ». Les deux valeurs sont les `--bg` de
-  // globals.css converties depuis l'OKLCH.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f5ef" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0f16" },
-  ],
+  // Thème sombre seul (Marc, 26/09) : une seule teinte de barre système, = `--bg` de
+  // globals.css (testé dans tests/themeSombre.test.ts).
+  themeColor: "#07090D",
   // Installée, l'app doit occuper l'écran jusque sous l'encoche.
   viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr-CA" className={GeistSans.variable}>
+    <html lang="fr-CA">
       <body>
         {children}
         {/* Gardée côté serveur : elle liste les apps, donc elle exige l'accès au hub — pas

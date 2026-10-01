@@ -105,7 +105,7 @@ champ a fait passer de 8 à 10 lignes. Deux remèdes essayés PUIS ANNULÉS apr�
 partagé : blocs identiques ; `sonar-project.properties` : 4,1 % inchangé, même identifiant
 d'analyse → l'analyse automatique ne lit pas ce fichier). Forme retenue : les adresses d'accueil
 sortent dans `ACCUEIL_PAR_ID`, une ligne par app → **2,6 %**. Le type interdit une app sans adresse,
-un test interdit une adresse sans app (les deux perturbations tirent).
+un test interdit une adresse sans app (les deux perturbations tirent). **30/09/2026** : les deux tables refondues en UNE (`APPS`, toujours une ligne par app, variables d'environnement déduites de l'id) — plus de seconde liste à synchroniser ; voir la leçon n° 11.
 
 ⚠️ **Rien ici ne change ce qui est SERVI par hubperso pour un visiteur** : c'est de la
 configuration côté serveur. Mais la variable `FINANCEAI_SUMMARY_URL` doit RESTER posée sur Vercel —
