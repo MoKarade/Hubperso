@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "fumee": "node scripts/fumee.mjs",
     "portes": "node qualite/portes.mjs",
     "portes:maj": "node qualite/portes.mjs --maj",
     "db:generate": "drizzle-kit generate",
