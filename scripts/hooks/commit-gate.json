@@ -1,0 +1,24 @@
+{
+  "_doc": "Configuration Hubperso du commit-gate (kit 1.15.0), adaptée de modeles/qualite/commit-gate.json de l'Atelier. Rejoue le gate avant commit de Hubperso (CLAUDE.local.md) : typecheck, tests (affectés), lint, build. Configuration illisible ou invalide = le hook BLOQUE (échec fermé). Fichier SENSIBLE (**/commit-gate*) : toute modification passe par l'attestation de pole-securite.",
+  "sans_effet": ["\\.md$", "^docs/"],
+  "config_globale": [
+    "^(package(-lock)?\\.json|tsconfig[^/]*\\.json|vite[^/]*\\.[cm]?[jt]s|vitest[^/]*\\.[cm]?[jt]s|next\\.config\\.[cm]?[jt]s|tailwind[^/]*|postcss[^/]*|eslint[^/]*|\\.npmrc|\\.nvmrc)$",
+    "\\.css$"
+  ],
+  "etapes": [
+    { "nom": "typecheck", "commande": ["npm", "run", "typecheck"] },
+    {
+      "nom": "tests (affectés)",
+      "commande": ["npm", "test"],
+      "cible": {
+        "outil": ["node", "node_modules/vitest/vitest.mjs"],
+        "extensions": ["ts", "tsx", "mjs", "js"],
+        "args_related": ["related", "--run", "--passWithNoTests"],
+        "args_run": ["run"],
+        "toujours": ["tests/gardePages.test.ts"]
+      }
+    },
+    { "nom": "lint", "commande": ["npm", "run", "lint"] },
+    { "nom": "build", "commande": ["npm", "run", "build"] }
+  ]
+}

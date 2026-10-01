@@ -1,0 +1,18 @@
+# Configuration gitleaks (lue automatiquement à la racine du dépôt : gitleaks cherche
+# `.gitleaks.toml` dans le dossier scanné quand ni --config ni GITLEAKS_CONFIG ne sont donnés).
+title = "Hubperso"
+
+[extend]
+# Toutes les règles par défaut restent actives.
+useDefault = true
+
+# Allowlist CIBLÉE : un résultat n'est ignoré que s'il remplit LES DEUX conditions
+# (condition = "AND") : il est dans un fichier de tests/ ET sa valeur est une fixture de test
+# explicite (« secret-de-test-… », « jeton-de-test-… »). Un vrai secret committé dans tests/ est
+# toujours signalé ; une fixture de ce nom hors tests/ aussi.
+[[allowlists]]
+description = "Fixtures de test explicites (secret-de-test-*, jeton-de-test-*) dans tests/"
+condition = "AND"
+paths = ['''^tests/.*\.(ts|tsx)$''']
+regexTarget = "match"
+regexes = ['''(?i)["'](secret|jeton|token)-de-test[a-z0-9-]*["']''']

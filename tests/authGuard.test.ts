@@ -56,7 +56,19 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api/cron/releve-tout")).toBe(false);
   });
 
-  it("n'ouvre pas d'autre route /api que les deux exceptions nommées", () => {
+  // La TROISIÈME route qui traverse le garde, et la seule SANS aucune authentification :
+  // la sonde de santé de la vigie (patron JobAI#49 / BatchChef#154). Elle ne rend que
+  // `{ ok, cause }`, jamais une donnée ni un nom de variable — `tests/sante.test.ts` le
+  // prouve, `tests/gardePages.test.ts` vérifie qu'elle n'importe aucun module de données.
+  it("laisse passer /api/sante — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/sante")).toBe(true);
+    expect(isPublicPath("/api/sante/")).toBe(false);
+    expect(isPublicPath("/api/sante/detail")).toBe(false);
+    expect(isPublicPath("/api/sante-admin")).toBe(false);
+    expect(isPublicPath("/api/santes")).toBe(false);
+  });
+
+  it("n'ouvre pas d'autre route /api que les trois exceptions nommées", () => {
     // Le filet global : si une troisième exception apparaît sans passer par une décision
     // consciente, ce test la voit. La liste vit ici et dans `tests/gardePages.test.ts`,
     // qui vérifie en plus que chacune prouve son authentification de remplacement.
