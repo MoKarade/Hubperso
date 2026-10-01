@@ -1,0 +1,102 @@
+# Fumée de production (P5.2) : après chaque déploiement Production réussi, sonde le site ;
+# si la fumée reste rouge après 2 essais, retour arrière Vercel + issue `prod-rouge`.
+# Pas de PR d'annulation automatique dans cette version. Désactiver : supprimer ce fichier.
+# Doc : docs/prod-automatique.md.
+name: Fumée de production
+
+on:
+  deployment_status:
+
+# Jamais deux fumées en même temps ; une fumée en cours n'est pas interrompue.
+concurrency:
+  group: fumee-prod
+  cancel-in-progress: false
+
+# Aucun droit par défaut : chaque job déclare le sien.
+permissions: {}
+
+jobs:
+  fumee:
+    name: Fumée et retour arrière
+    # Seulement un déploiement réussi de Production (déploiement de main). Les préversions et les
+    # états pending/failure sont ignorés.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment == 'Production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write # étape d'alerte seulement (lire/créer l'issue prod-rouge)
+    env:
+      # Entrées passées par variables d'environnement : jamais d'interpolation dans un `run:`.
+      DEPLOY_SHA: ${{ github.event.deployment.sha }}
+      DEPLOY_ETAT: ${{ github.event.deployment_status.state }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      # Épinglées par SHA de commit (relevé à la main sur github.com/actions/<action>/releases,
+      # tag v7 = même version majeure que ci.yml) : un tag mobile pourrait être réécrit.
+      - name: Récupérer le code (déploiement de main, pas de ref de PR)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.deployment.sha }}
+          persist-credentials: false
+
+      - name: Installer Node 20
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 20
+
+      - name: Fumée sur l'URL de production (2 essais par URL)
+        id: fumee
+        run: |
+          if node scripts/fumee.mjs; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Y a-t-il déjà une alerte prod-rouge ouverte ?
+        if: steps.fumee.outputs.ok == 'false'
+        id: ouvertes
+        run: |
+          n=$(gh issue list --label prod-rouge --state open --json number --jq 'length')
+          echo "n=$n" >> "$GITHUB_OUTPUT"
+
+      - name: Décider (un seul retour arrière par alerte)
+        id: decision
+        env:
+          FUMEE_OK: ${{ steps.fumee.outputs.ok }}
+          ISSUES_OUVERTES: ${{ steps.ouvertes.outputs.n }}
+        run: node scripts/fumee-decision.mjs
+
+      # Le jeton Vercel n'existe QUE dans cette étape.
+      - name: Retour arrière Vercel
+        if: steps.decision.outputs.action == 'retour-arriere-et-alerte'
+        id: retour
+        continue-on-error: true
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || 'hubperso' }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+        run: node scripts/retour-arriere-vercel.mjs --executer
+
+      - name: Issue d'alerte prod-rouge (texte fixe)
+        if: steps.decision.outputs.action == 'retour-arriere-et-alerte'
+        env:
+          RETOUR: ${{ steps.retour.outcome }}
+        run: |
+          court="${DEPLOY_SHA:0:7}"
+          gh label create prod-rouge --color B60205 --description "Fumée de production rouge" 2>/dev/null || true
+          gh issue create --label prod-rouge \
+            --title "Production rouge après le déploiement ${court}" \
+            --body "Déploiement : ${court}
+          État : ${DEPLOY_ETAT} ; retour arrière : ${RETOUR}
+          Run : ${RUN_URL}
+          Lire docs/prod-automatique.md ; fermer cette issue quand la production est rétablie."
+
+      - name: Fumée rouge : faire échouer le run
+        if: steps.fumee.outputs.ok == 'false'
+        run: exit 1
