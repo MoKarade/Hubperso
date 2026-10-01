@@ -33,9 +33,9 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
     expect(lignes.map((l) => l.chemin)).not.toContain(".github/workflows/armement-auto-merge.yml");
   });
 
-  it("le kit est au moins en 1.16.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell ; 1.15.0 installe son branchement ; 1.16.0 = resynchro du 30/09)", () => {
+  it("le kit est au moins en 1.18.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell ; 1.15.0 installe son branchement ; 1.17.1 = lanceur qui trouve la porte de la copie isolée ; 1.18.0 = resynchro du 30/09)", () => {
     const [majeure, mineure] = (lignes[0]?.version ?? "0.0").split(".").map(Number);
-    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1016);
+    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1018);
   });
 });
 
@@ -45,7 +45,7 @@ describe(".claude/settings.json branche la porte de commit (kit 1.15.0, posé pa
   type Entree = { matcher?: string; hooks?: { type?: string; command?: string; timeout?: number }[] };
   const reglage = JSON.parse(lire(".claude/settings.json").replace(/^﻿/, "")) as { hooks?: { PreToolUse?: Entree[] } };
   const portes = (reglage.hooks?.PreToolUse ?? []).filter((e) =>
-    (e.hooks ?? []).some((h) => h.type === "command" && (h.command ?? "").includes("scripts/hooks/commit-gate.mjs")),
+    (e.hooks ?? []).some((h) => h.type === "command" && (h.command ?? "").includes("commit-gate.mjs")),
   );
 
   it("exactement une entrée PreToolUse lance scripts/hooks/commit-gate.mjs", () => {
@@ -56,9 +56,14 @@ describe(".claude/settings.json branche la porte de commit (kit 1.15.0, posé pa
     expect(portes[0]?.matcher).toBe("Bash|PowerShell");
   });
 
-  it("la commande vise la porte par $CLAUDE_PROJECT_DIR (quel que soit le dossier courant)", () => {
+  it("la commande est le lanceur 1.17+ : dépôt de la session (git rev-parse) d'abord, $CLAUDE_PROJECT_DIR en repli, jamais la variable seule (bug copie isolée)", () => {
     const h = portes[0]?.hooks?.find((x) => (x.command ?? "").includes("commit-gate.mjs"));
-    expect(h?.command).toBe('node "$CLAUDE_PROJECT_DIR/scripts/hooks/commit-gate.mjs"');
+    const c = h?.command ?? "";
+    expect(c.startsWith("node -e ")).toBe(true);
+    expect(c).toContain("rev-parse");
+    expect(c).toContain("--show-toplevel");
+    expect(c).toContain("CLAUDE_PROJECT_DIR");
+    expect(c.indexOf("rev-parse")).toBeLessThan(c.indexOf("CLAUDE_PROJECT_DIR"));
     expect(h?.timeout).toBeGreaterThanOrEqual(600);
   });
 });
