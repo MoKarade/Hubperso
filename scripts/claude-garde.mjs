@@ -20,6 +20,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Sonar S4036 : pas de recherche de `git` dans PATH (un dossier inscriptible pourrait le doubler).
+// Chemin fixe sur Linux (runner CI) ; GIT_EXE pour un autre poste (Windows : chemin complet de git.exe).
+const GIT = process.env.GIT_EXE ?? "/usr/bin/git";
+
 const ICI = dirname(fileURLToPath(import.meta.url));
 const SENSIBLES = JSON.parse(readFileSync(join(ICI, "chemins-sensibles.json"), "utf8"));
 const IDENTITE_AGENT = "atelier-agents";
@@ -210,7 +214,7 @@ function principal(argv) {
     if (o.codeowners) codeowners = readFileSync(o.codeowners, "utf8");
     texte = o.diff
       ? readFileSync(o.diff, "utf8")
-      : execFileSync("git", ["diff", "--no-color", "--no-ext-diff", "-M", o.base], {
+      : execFileSync(GIT, ["diff", "--no-color", "--no-ext-diff", "-M", o.base], {
           encoding: "utf8",
           maxBuffer: 16 * 1024 * 1024,
         });
