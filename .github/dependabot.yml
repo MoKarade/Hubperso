@@ -6,6 +6,11 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly, day: monday }
+    # Carence de 3 jours : une version publiée depuis moins de 3 jours n'est pas proposée
+    # (défense contre les paquets détournés, retirés en quelques heures). Remplace le délai
+    # de 3 jours de l'ancien auto-merge.yml ; les correctifs de sécurité ne sont pas retardés.
+    cooldown:
+      default-days: 3
     # « La doc suit le code » exige un ID de tâche en tête du sujet, ou l'échappatoire NOMMÉE
     # HORS-BACKLOG : une montée de version n'a pas de tâche. (Dependabot ajoute le « : ».)
     commit-message:
@@ -41,6 +46,11 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly, day: monday }
+    # Carence de 3 jours : une version publiée depuis moins de 3 jours n'est pas proposée
+    # (défense contre les paquets détournés, retirés en quelques heures). Remplace le délai
+    # de 3 jours de l'ancien auto-merge.yml ; les correctifs de sécurité ne sont pas retardés.
+    cooldown:
+      default-days: 3
     # « La doc suit le code » exige un ID de tâche en tête du sujet, ou l'échappatoire NOMMÉE
     # HORS-BACKLOG : une montée de version n'a pas de tâche. (Dependabot ajoute le « : ».)
     commit-message:

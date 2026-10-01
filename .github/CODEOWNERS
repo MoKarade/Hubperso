@@ -1,0 +1,16 @@
+# CODEOWNERS : les 4 cas qui restent humains (plan P1 du 01/10/2026, validé par Marc).
+# Tout le reste fusionne seul (gh pr merge --auto --squash) quand les contrôles requis sont verts.
+# Le dernier motif qui correspond gagne ; aucun motif « * » : rien d'autre n'exige de revue.
+
+# 1. La chaîne elle-même : workflows, config GitHub, scripts de porte, CODEOWNERS.
+/.github/                  @MoKarade
+/scripts/hooks/            @MoKarade
+/qualite/                  @MoKarade
+/vercel.json               @MoKarade
+
+# 2. Migrations de base de données (DROP, suppression de colonne).
+/drizzle/                  @MoKarade
+
+# 3. Secrets et variables d'environnement.
+/.env*                     @MoKarade
+/.env.example              @MoKarade
