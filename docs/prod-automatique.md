@@ -25,6 +25,20 @@ Sources : <https://vercel.com/docs/instant-rollback> ; OpenAPI <https://openapi.
 (`POST /v1/projects/{projectId}/rollback/{deploymentId}`, `GET /v7/deployments`).
 Le script suppose que le déploiement de production le plus récent prêt est l'actuel.
 
+## Automatique : `.github/workflows/fumee-prod.yml` (P5.2)
+Après chaque déploiement Production réussi (événement `deployment_status`, état `success`, environnement
+`Production`), le workflow lance `node scripts/fumee.mjs` (2 essais par URL). Si c'est rouge : retour arrière
+Vercel EN VRAI (`retour-arriere-vercel.mjs --executer`, jeton dans cette étape seulement), puis une issue
+`prod-rouge` au texte fixe (SHA court, état, lien du run : jamais de contenu de réponse). Pas de PR
+d'annulation automatique (étape suivante : identité de l'App + avis de pole-securite).
+- Lire l'alerte : ouvrir l'issue `prod-rouge`, suivre le lien du run (la ligne `PANNE <url> — <cause>`, voir
+  plus haut). Après un rollback, rétablir le déploiement automatique (voir « Retour arrière à la main », 3).
+- Anti-boucle : un rollback relance un `deployment_status`. Règle (testée, `scripts/fumee-decision.mjs`) :
+  UN seul retour arrière par alerte ; tant qu'une issue `prod-rouge` est ouverte, aucun second rollback et
+  aucun doublon. Fumée verte = rien. FERMER l'issue quand la production est rétablie, sinon la garde reste armée.
+- Le projet Vercel se lit dans la variable de dépôt `VERCEL_PROJECT_ID` (défaut : `hubperso`, nom accepté par
+  l'API) ; `VERCEL_TEAM_ID` facultative.
+- Essai prévu sur CarAI, avec Marc présent, pas sur Hubperso.
+
 ## Désactiver
-Retirer le workflow qui appelle `npm run fumee` (ajouté séparément, hors de cette PR) ; les scripts
-eux-mêmes ne font rien tout seuls.
+Supprimer `.github/workflows/fumee-prod.yml` ; les scripts eux-mêmes ne font rien tout seuls.
