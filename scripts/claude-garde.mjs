@@ -158,7 +158,8 @@ export function juger(diff, options = {}) {
   if (Buffer.byteLength(diff) > sens.tailleMaxOctets) return { ok: false, raisons: ["diff énorme"], lignes: 0, fichiers: [] };
   if (diff.includes("\0")) return { ok: false, raisons: ["diff binaire (octet nul)"], lignes: 0, fichiers: [] };
 
-  const { fichiers, lignes, erreurs } = analyser(diff);
+  // Un diff écrit sous Windows peut finir ses lignes par CRLF : on ne normalise que la paire.
+  const { fichiers, lignes, erreurs } = analyser(diff.replace(/\r\n/g, "\n"));
   if (fichiers.length === 0) raisons.push("aucun fichier reconnu dans le diff");
   for (const e of new Set(erreurs)) raisons.push(e);
   if (lignes > sens.limiteLignes) raisons.push(`${lignes} lignes modifiées (maximum ${sens.limiteLignes})`);

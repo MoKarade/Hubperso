@@ -44,6 +44,9 @@ describe("diffs acceptés", () => {
     const v = juger(diff({ chemin: "lib/format.ts" }, { chemin: "tests/format.test.ts" }));
     expect(v).toMatchObject({ ok: true, lignes: 4 });
   });
+  it("un diff aux fins de ligne CRLF (écrit sous Windows)", () => {
+    expect(juger(diff({ chemin: "lib/format.ts" }).replace(/\n/g, "\r\n")).ok).toBe(true);
+  });
   it("exactement 120 lignes", () => {
     expect(juger(diff({ chemin: "lib/format.ts", plus: 60, moins: 60 })).ok).toBe(true);
   });
