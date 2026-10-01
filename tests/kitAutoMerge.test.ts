@@ -25,10 +25,51 @@ describe("les copies du kit sont exactes (COPIES.md)", () => {
   const lignes = lireCopies(lire("COPIES.md"));
 
   it("COPIES.md liste des fichiers (anti-vacuité)", () => {
-    // 15 depuis le retrait de armement-auto-merge.yml (profil `prive` : pas d'auto-fusion
-    // native en dépôt privé Free, voir COPIES.md et modeles/auto-merge/LISEZMOI.md).
-    expect(lignes.length).toBeGreaterThanOrEqual(15);
+    // 16 en kit 1.13.0 (labels.mjs ajouté), profil `prive` : sans armement-auto-merge.yml
+    // (pas d'auto-fusion native en dépôt privé Free, voir COPIES.md et
+    // modeles/auto-merge/LISEZMOI.md).
+    expect(lignes.length).toBeGreaterThanOrEqual(16);
+    expect(lignes.map((l) => l.chemin)).toContain("modeles/auto-merge/labels.mjs");
+    expect(lignes.map((l) => l.chemin)).not.toContain(".github/workflows/armement-auto-merge.yml");
   });
+
+  it("le kit est au moins en 1.18.0 (INC-22 : 1.9.1 laissait la porte de commit sans PowerShell ; 1.15.0 installe son branchement ; 1.17.1 = lanceur qui trouve la porte de la copie isolée ; 1.18.0 = resynchro du 30/09)", () => {
+    const [majeure, mineure] = (lignes[0]?.version ?? "0.0").split(".").map(Number);
+    expect((majeure ?? 0) * 1000 + (mineure ?? 0)).toBeGreaterThanOrEqual(1018);
+  });
+});
+
+describe(".claude/settings.json branche la porte de commit (kit 1.15.0, posé par resynchroniser-kit)", () => {
+  // Pas dans COPIES.md : c'est une FUSION (le reste du réglage est conservé), contrôlée par verifier-copies côté Atelier.
+  // Ici on verrouille l'essentiel sans dépendre de l'Atelier : chaque outil shell passe par la porte, par chemin absolu.
+  type Entree = { matcher?: string; hooks?: { type?: string; command?: string; timeout?: number }[] };
+  const reglage = JSON.parse(lire(".claude/settings.json").replace(/^﻿/, "")) as { hooks?: { PreToolUse?: Entree[] } };
+  const portes = (reglage.hooks?.PreToolUse ?? []).filter((e) =>
+    (e.hooks ?? []).some((h) => h.type === "command" && (h.command ?? "").includes("commit-gate.mjs")),
+  );
+
+  it("exactement une entrée PreToolUse lance scripts/hooks/commit-gate.mjs", () => {
+    expect(portes).toHaveLength(1);
+  });
+
+  it("le matcher couvre Bash ET PowerShell (un git commit par PowerShell ne passe pas sans contrôle)", () => {
+    expect(portes[0]?.matcher).toBe("Bash|PowerShell");
+  });
+
+  it("la commande est le lanceur 1.17+ : dépôt de la session (git rev-parse) d'abord, $CLAUDE_PROJECT_DIR en repli, jamais la variable seule (bug copie isolée)", () => {
+    const h = portes[0]?.hooks?.find((x) => (x.command ?? "").includes("commit-gate.mjs"));
+    const c = h?.command ?? "";
+    expect(c.startsWith("node -e ")).toBe(true);
+    expect(c).toContain("rev-parse");
+    expect(c).toContain("--show-toplevel");
+    expect(c).toContain("CLAUDE_PROJECT_DIR");
+    expect(c.indexOf("rev-parse")).toBeLessThan(c.indexOf("CLAUDE_PROJECT_DIR"));
+    expect(h?.timeout).toBeGreaterThanOrEqual(600);
+  });
+});
+
+describe("COPIES.md (suite)", () => {
+  const lignes = lireCopies(lire("COPIES.md"));
 
   it.each(lignes.map((l) => [l.chemin, l.sha256]))("%s a l'empreinte attestée", (chemin, sha) => {
     expect(empreinte(lire(chemin as string))).toBe(sha);

@@ -1,4 +1,4 @@
-// lib/limiteDebit.ts — limite de débit simple pour les deux routes à jeton, PUR (horloge injectée).
+// lib/limiteDebit.ts — limite de débit simple pour les routes à jeton et /api/sante, PUR (horloge injectée).
 //
 // ── CE QUE C'EST, ET CE QUE ÇA NE PROMET PAS ────────────────────────────────────────
 //
@@ -77,7 +77,7 @@ export function cleClient(entetes: Headers): string {
   return premier || "inconnu";
 }
 
-/** Réponse 429 commune aux deux routes. */
+/** Réponse 429 commune aux routes limitées. */
 export function reponse429(retryApresS: number): Response {
   return Response.json(
     { error: "rate_limited", message: "Trop de requêtes, réessayez plus tard." },

@@ -31,6 +31,16 @@ import { db, baseConfiguree } from "./db";
 
 let enCours: Promise<void> | null = null;
 let derniereErreur: string | null = null;
+/** Instant (ms) du dernier échec, `null` s'il n'y en a pas ou si un succès l'a effacé. */
+let echecA: number | null = null;
+
+/**
+ * Après un échec, aucune nouvelle tentative pendant ce délai (décision pole-securite,
+ * 30/09/2026). Sans lui, une route publique (`/api/sante`) déclenchait un `migrate` à
+ * CHAQUE requête sur une base déjà en panne — la charge aggravait la panne. Un délai, et non
+ * un échec mémorisé pour toujours : voir plus bas, le verrou définitif est pire.
+ */
+export const DELAI_REESSAI_MIGRATIONS_MS = 60_000;
 
 /** Ce que la dernière tentative a donné — pour le diagnostic, jamais pour décider. */
 export function etatMigrations(): { tentee: boolean; erreur: string | null } {
@@ -41,6 +51,7 @@ export function etatMigrations(): { tentee: boolean; erreur: string | null } {
 export function reinitialiserMigrations(): void {
   enCours = null;
   derniereErreur = null;
+  echecA = null;
 }
 
 /**
@@ -53,6 +64,8 @@ export function reinitialiserMigrations(): void {
 export async function assurerMigrations(): Promise<void> {
   if (!baseConfiguree()) return;
   if (enCours) return enCours;
+  // Repli après échec : l'erreur reste lisible (`etatMigrations`), mais on ne retente pas.
+  if (echecA !== null && Date.now() - echecA < DELAI_REESSAI_MIGRATIONS_MS) return;
 
   enCours = (async () => {
     try {
@@ -60,8 +73,10 @@ export async function assurerMigrations(): Promise<void> {
       // comme en local, contrairement à un chemin relatif au module compilé.
       await migrate(db, { migrationsFolder: resolve(process.cwd(), "drizzle") });
       derniereErreur = null;
+      echecA = null;
     } catch (err) {
       derniereErreur = err instanceof Error ? err.message : String(err);
+      echecA = Date.now();
       console.error("[migrations] application impossible", err);
       // On ne relance pas : la page doit s'afficher, et une table réellement manquante se
       // verra à l'écran plutôt que de passer inaperçue.
@@ -72,6 +87,10 @@ export async function assurerMigrations(): Promise<void> {
       // servirait « schéma absent » indéfiniment alors qu'un simple nouvel essai
       // suffirait. Mémoriser un SUCCÈS est une optimisation ; mémoriser un ÉCHEC est un
       // verrou définitif.
+      //
+      // ⚠️ Et on ne retente pas non plus à CHAQUE appel : `echecA` impose
+      // `DELAI_REESSAI_MIGRATIONS_MS` de repli (voir sa définition). Un nouvel échec relance
+      // le délai ; un succès l'efface.
       enCours = null;
     }
   })();

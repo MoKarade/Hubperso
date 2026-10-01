@@ -59,6 +59,16 @@ export function isPublicPath(pathname: string): boolean {
   // qu'on sait fausse cesse d'être lue comme une règle. Ce qui n'a PAS changé, et qui est
   // le vrai garde-fou : le matcher du middleware ne gagne aucune exclusion (leçon n°4).
   if (pathname === "/api/cron/releve") return true;
+
+  // GET /api/sante : la sonde de santé de la vigie de l'Atelier (patron JobAI#49 /
+  // BatchChef#154). TROISIÈME route qui traverse le garde, et la seule SANS aucune
+  // authentification — délibérément : elle ne rend que `{ ok, cause }`, jamais une donnée,
+  // un message brut ni un nom de variable. Derrière la garde, la vigie recevrait un 401 au
+  // lieu d'un diagnostic et ne verrait JAMAIS une panne de base. Même mécanisme que les deux
+  // ci-dessus : ici, jamais dans le matcher. `tests/gardePages.test.ts` la range dans une
+  // catégorie à part (ROUTES_PUBLIQUES_MUETTES) et vérifie qu'elle n'importe aucun module
+  // de données.
+  if (pathname === "/api/sante") return true;
   if (
     pathname.startsWith("/_next/static/") ||
     pathname.startsWith("/_next/image") ||

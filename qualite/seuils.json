@@ -29,13 +29,13 @@
       "max": 0
     },
     "couverture.lignes_coeur": {
-      "min": 88.3
+      "min": 92.8
     },
     "couverture.lignes_global": {
-      "min": 56.8
+      "min": 65.8
     },
     "couverture.branches_global": {
-      "min": 47.5
+      "min": 53
     },
     "code_mort.problemes": {
       "max": 3
