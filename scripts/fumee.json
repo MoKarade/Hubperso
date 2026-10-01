@@ -1,0 +1,5 @@
+{
+  "_doc": "URL PUBLIQUES de production sondées par `npm run fumee`. Jamais une page à jeton ni un cron. Les pages publiques viennent de isPublicPath (lib/authGuard.ts).",
+  "base": "https://hubperso.com",
+  "urls": ["/", "/login", "/api/sante", "/confidentialite", "/conditions"]
+}
