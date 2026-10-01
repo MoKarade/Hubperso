@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-01 — **Fusion native GitHub (phase P1 du plan « stratégie PR »)**
+
+La fusion automatique est désormais celle de GitHub (« Allow auto-merge » activé sur le dépôt, ruleset = contrôles requis).
+- **Règle d'ouverture de PR** : `gh pr create --base main …` puis `gh pr merge --auto --squash <n>`. Les PR qui touchent un chemin de `.github/CODEOWNERS` ne sont PAS armées : Marc approuve.
+- **Retirés** : `.github/workflows/auto-merge.yml`, `.github/auto-merge.json`, `modeles/auto-merge/`, `COPIES.md`, `tests/kitAutoMerge.test.ts`. Les paragraphes plus bas sur le kit (`fusionner.mjs`, `verifier-copies.mjs`, `COPIES.md`, `auto-merge.json`) décrivent l'ancien mécanisme : historique seulement. Les chemins sensibles de l'ancien `chemins_label_validation` (auth, middleware, `app/api/**`) n'exigent plus d'attestation ; leur revue relève des contrôles requis et de la phase 6 du plan (revue Claude sur chemins sensibles).
+- **Ajoutés** : `.github/CODEOWNERS` (4 cas humains : `.github/`, scripts de porte, `drizzle/`, secrets/variables), `cooldown: default-days: 3` dans Dependabot.
+- Arrêt d'urgence : décocher « Allow auto-merge » (Settings → General). La variable `AUTOMERGE_OFF` n'existe plus.
+
 
 ## 🟦 Session 2026-09-28 — **Kit auto-merge : deux notes qui n'ont plus d'autre foyer**
 
