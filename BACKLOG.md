@@ -201,14 +201,6 @@ section, libellé). Deux lignes homonymes dans une même section donneraient une
 saute d'une grandeur à l'autre — un graphe faux, sans rien d'anormal à l'écran. Le contrat
 les rejette ; le même libellé dans deux sections différentes reste accepté.
 
-- [ ] **[H-09] [HUB] Coûts et quotas détaillés, avec l'évolution dans le temps.** Au clic sur
-  « détails » d'une app : graphique de l'évolution de son coût ; sinon, le prix sur 7 jours.
-  Une bonne partie du socle existe déjà — `lib/historique.ts` (`serieCout`, `serieMetrique`,
-  PURES) et `lib/historiqueDb.ts` archivent un relevé par app toutes les 15 min sur 90 jours.
-  Reste le rendu. ⚠️ `serieCout` prend une `periode` ET une `devise` **exprès** : ne jamais
-  tracer une courbe qui mélange `total`, `mois` et `jour` — c'est le principe « jamais
-  d'agrégat entre unités incomparables » appliqué au temps.
-
 - **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Livré le
   15/09/2026 avec `[H-27]` — le bouton « Détail » est devenu une cible de 44 px remplie de
   la couleur de l'app, et le titre de la carte continue d'ouvrir l'app elle-même.

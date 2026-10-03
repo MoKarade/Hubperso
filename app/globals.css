@@ -826,6 +826,24 @@ a:focus-visible,
 .couts__barfill { display: block; height: 100%; background: var(--info); border-radius: 999px; }
 .couts__barfill--warn { background: var(--warn); }
 .couts__nolimit { margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--text-faint); }
+.courbe-cout { margin: 0 0 var(--gap); }
+.courbe-cout__legende { font-size: 0.8rem; color: var(--text-soft); margin-bottom: 0.4rem; }
+.courbe-cout__svg { width: 100%; height: 90px; display: block; overflow: visible; }
+.courbe-cout__trace {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.courbe-cout__axe {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+.courbe-cout__sur7j { margin: 0.3rem 0 0; font-size: 0.85rem; }
 .couts__note { margin-top: var(--gap); font-size: 0.78rem; color: var(--text-faint); max-width: 60ch; }
 
 /* --- Rendu en flux : places tenues pendant que les apps répondent ---------------

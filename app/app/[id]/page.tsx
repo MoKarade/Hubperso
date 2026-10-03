@@ -122,7 +122,7 @@ export default async function DetailAppPage({
           )}
 
           <DetailSections details={summary.details} />
-          <DetailCouts usage={summary.usage} />
+          <DetailCouts usage={summary.usage} historique={historique} maintenantMs={maintenantMs} />
           <DetailCoherence incoherences={incoherences} />
           <DetailFraicheur summary={summary} summaryUrl={source.summaryUrl} />
         </>

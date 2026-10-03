@@ -8,6 +8,8 @@ import type { HubQuota, HubUsage } from "@mokarade/hub-contract";
 import { barreQuota, libelleQuota } from "@/lib/carte";
 import { quotaRatio, toCad } from "@/lib/usage";
 import { formatCad, formatDateTime } from "@/lib/format";
+import type { Releve } from "@/lib/historique";
+import { CourbeCout } from "@/components/CourbeCout";
 
 function QuotaDetaille({ quota }: { quota: HubQuota }) {
   const ratio = quotaRatio(quota.used, quota.limit);
@@ -42,7 +44,15 @@ function CoutPeriode({ cost }: { cost: NonNullable<HubUsage["cost"]> }) {
   );
 }
 
-export function DetailCouts({ usage }: { usage: HubUsage | undefined }) {
+export function DetailCouts({
+  usage,
+  historique = [],
+  maintenantMs = Date.now(),
+}: {
+  usage: HubUsage | undefined;
+  historique?: Releve[];
+  maintenantMs?: number;
+}) {
   return (
     <section className="detail__bloc" aria-label="Coûts et quotas">
       <h2 className="detail__titre">Coûts &amp; quotas</h2>
@@ -51,6 +61,14 @@ export function DetailCouts({ usage }: { usage: HubUsage | undefined }) {
       ) : (
         <>
           {usage.cost && <CoutPeriode cost={usage.cost} />}
+          {usage.cost && (
+            <CourbeCout
+              releves={historique}
+              periode={usage.cost.period}
+              devise={usage.cost.currency}
+              maintenantMs={maintenantMs}
+            />
+          )}
           {usage.quotas?.map((q, i) => (
             <QuotaDetaille key={`${q.label}-${i}`} quota={q} />
           ))}
