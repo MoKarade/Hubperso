@@ -10,14 +10,14 @@ import { serieCout, type CoutReleve, type Point, type Releve } from "@/lib/histo
 
 export const FENETRE_7J_MS = 7 * 24 * 3_600_000;
 
-export interface Sur7j {
+interface Sur7j {
   debut: number;
   fin: number;
   /** `fin - debut`, négatif possible (remise à zéro d'un mois, par exemple). */
   delta: number;
 }
 
-export interface CourbeCout {
+interface CourbeCout {
   periode: CoutReleve["periode"];
   devise: CoutReleve["devise"];
   points: Point[];

@@ -201,6 +201,11 @@ section, libellé). Deux lignes homonymes dans une même section donneraient une
 saute d'une grandeur à l'autre — un graphe faux, sans rien d'anormal à l'écran. Le contrat
 les rejette ; le même libellé dans deux sections différentes reste accepté.
 
+- **[H-09] [HUB] Coûts et quotas détaillés, avec l'évolution dans le temps.** Livré le
+  03/10/2026 — la vue détaillée d'une app trace la courbe de son coût (SVG calculé côté
+  serveur, `lib/courbeCout.ts`) et donne le prix sur 7 jours. Une courbe = UNE période ET UNE
+  devise, écrites avec elle ; moins de deux relevés : « pas encore d'historique ».
+
 - **[H-10] [HUB] Un bouton d'ouverture d'app plus simple et plus visible.** Livré le
   15/09/2026 avec `[H-27]` — le bouton « Détail » est devenu une cible de 44 px remplie de
   la couleur de l'app, et le titre de la carte continue d'ouvrir l'app elle-même.
