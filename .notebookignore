@@ -1,0 +1,10 @@
+# Exclusions propres à Hubperso (en plus de la config centrale).
+# Captures d'écran des maquettes, y compris les fichiers mal nommés « captures${p}-*.png ».
+docs/maquettes/refonte/captures/
+docs/maquettes/refonte/captures*.png
+# Instantanés Drizzle générés par drizzle-kit (le schéma fait foi dans lib/db/schema.ts et drizzle/*.sql).
+drizzle/meta/
+# Seuils du cliquet qualité : chiffres régénérés par « npm run portes:maj ».
+qualite/seuils.json
+# Modèle de variables d'environnement : seulement des noms, sans valeur utile ici.
+.env.example

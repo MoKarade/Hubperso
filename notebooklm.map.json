@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "repo_label": "Hubperso",
+  "comment": "Carte Hubperso : découpage par couche (API et auth, données, logique lib/, interface, tests, CI et outillage, docs). Le premier motif qui correspond gagne : les fichiers d'auth et de base sont pris avant lib/**.",
+  "sources": [
+    { "name": "01_API_Auth_Acces", "title": "Routes API, authentification, accès par app et Server Actions",
+      "include": ["app/api/**", "auth.ts", "middleware.ts", "**/actions.ts", "types/**",
+                  "lib/auth*.ts", "lib/gardeHub.ts", "lib/personnes.ts", "lib/administration.ts", "lib/sessionPartagee.ts",
+                  "lib/jeton*.ts", "lib/cronAuth.ts", "lib/limiteDebit.ts", "lib/variablesAttendues.ts"] },
+    { "name": "02_Donnees_Schema", "title": "Base Neon : schéma Drizzle, migrations",
+      "include": ["lib/db/**", "drizzle/**", "drizzle.config.ts", "lib/migrations.ts", "lib/historiqueDb.ts"] },
+    { "name": "03_Logique_Contrat_Releves", "title": "Logique du hub : sources, fetch des summaries, relevés, gel, coûts, attention",
+      "include": ["lib/**"] },
+    { "name": "04_Interface_Pages_Composants", "title": "Interface : pages App Router, composants, PWA",
+      "include": ["app/**", "components/**", "public/**"] },
+    { "name": "05_Tests", "title": "Tests Vitest", "include": ["tests/**"] },
+    { "name": "06_CI_Scripts_Config", "title": "CI, scripts de fumée et de porte, qualité, configuration",
+      "include": [".github/**", "scripts/**", "qualite/**", ".claude/**", "package.json", "tsconfig.json", "next.config.mjs",
+                  "vercel.json", "eslint.config.mjs", "knip.json", "vitest.config.ts", ".dependency-cruiser.cjs",
+                  ".nvmrc", ".gitattributes", ".gitignore", ".gitleaks.toml"] },
+    { "name": "07_Docs_Handover", "title": "Documentation, ADR, backlog et passation",
+      "include": ["CLAUDE.md", "HANDOVER.md", "BACKLOG.md", "docs/**"] }
+  ],
+  "fallback": "99_Autres",
+  "master": {
+    "enabled": true,
+    "include": ["README.md", "app/api/**/route.ts", "lib/db/schema.ts", "drizzle/*.sql", "lib/sources.ts", "lib/fetchSummary.ts",
+                "lib/sessionPartagee.ts", "lib/usage.ts", "types/**", "docs/adr/**", "docs/ACCES-PAR-APP.md", "docs/CONNEXION-UNIQUE.md"],
+    "exclude": []
+  },
+  "limits": { "max_words_per_doc": 400000, "max_chars_per_doc": 900000, "max_json_bytes": 40000 }
+}
