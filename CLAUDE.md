@@ -3,7 +3,7 @@
 Dashboard du hub perso (`hubperso.com`). Il **consomme** le contrat
 [`@mokarade/hub-contract`](https://github.com/MoKarade/hub-contract) (il ne le définit pas) :
 fetch server-side des `GET .../hub/summary`, validation, rendu de widgets 100 % génériques.
-**Stack** : Next.js 15 (App Router) · Neon + Drizzle · Auth.js v5 · Vitest.
+**Stack** : Next.js 16 (App Router) · Neon + Drizzle · Auth.js v5 · Vitest.
 
 Ce fichier se charge à **chaque session** : il reste ≤ 60 lignes (`tests/claudeMd.test.ts`).
 Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — le lire par section
@@ -33,12 +33,13 @@ Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — l
   Ne jamais ajouter de route de données aux exclusions du matcher de `middleware.ts`.
 - **Liens** : href cliquable seulement via `safeHttpUrl`. **Dates** : `timeZone: FUSEAU`.
 - **Coûts** : somme par période, jamais de total global.
-- **Git** : PR `--base main` explicite, jamais `--force` sur `main`, jamais `--no-verify`. Fusion : `gh pr create --base main …` puis `gh pr merge --auto --squash <n>` (GitHub fusionne seul quand les contrôles requis sont verts ; jamais de fusion à la main). Sauf `.github/**`, `drizzle/**`, secrets : PR NON armée, l'approbation de Marc (CODEOWNERS) est requise.
+- **Git** : PR `--base main` explicite, jamais `--force` sur `main`, jamais `--no-verify`. Fusion : `gh pr create --base main …` puis `gh pr merge --auto --squash <n>` (GitHub fusionne seul quand les contrôles requis sont verts ; jamais de fusion à la main). Sauf chemins de `.github/CODEOWNERS` (`.github/`, `scripts/hooks/`, `qualite/`, `vercel.json`, `drizzle/`, `.env*`) : PR NON armée, l'approbation de Marc (CODEOWNERS) est requise.
 - **Déploiement** : CI verte ≠ en ligne ; vérifier le déploiement `READY` après un merge qui change ce qui est servi.
 - **Doc** : mettre à jour la doc touchée dans la MÊME PR que le code.
 
 ## Docs
 `README.md` · `HANDOVER.md` (état réel de l'auth, à lire en premier) · `BACKLOG.md` ·
 `docs/adr/` · `docs/ACCES-PAR-APP.md` · `docs/CONNEXION-UNIQUE.md` · `docs/ETAT.md` ·
-`docs/COMPTE-RENDU.md` (convention de compte-rendu, copie synchronisée).
+`docs/SECURITE.md` · `docs/prod-automatique.md` (fumée, retour arrière) · `docs/claude-github.md`
+(garde de correction) · `docs/COMPTE-RENDU.md` (convention de compte-rendu, copie synchronisée).
 Convention de structure : [STRUCTURE-DEPOT](https://github.com/MoKarade/claude-config/blob/main/conventions/STRUCTURE-DEPOT.md).

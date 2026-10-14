@@ -4,7 +4,8 @@
 **Correction seule** : quand la CI d'une PR est rouge, un workflow (écrit en P6.2, hors de cette PR) demande
 à Claude de corriger, puis la **garde** juge le correctif avant tout push. Pas de revue Claude avant
 5 PR corrigées. Cette PR ne livre que la garde, ses tests et ce runbook : aucun workflow, aucun
-appel à l'API Claude, aucun secret.
+appel à l'API Claude, aucun secret. Au 14/10/2026, le workflow P6.2 n'existe toujours pas dans
+`.github/workflows/`.
 
 ## La garde : `scripts/claude-garde.mjs`
 Script Node 20 indépendant, sans dépendance, sans jeton Claude. Il juge un DIFF local :

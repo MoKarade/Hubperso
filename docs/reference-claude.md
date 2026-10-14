@@ -9,7 +9,7 @@ Dashboard central du hub perso. Il **consomme** le contrat
 pas. Rôle unique : fetch server-side des `GET .../hub/summary`, validation, rendu de
 widgets 100 % génériques.
 
-**Stack** : Next.js 15 (App Router, Server Components) · Neon + Drizzle · Auth.js v5 · Vitest.
+**Stack** : Next.js 16 (App Router, Server Components) · Neon + Drizzle · Auth.js v5 · Vitest.
 **Destination** : `hubperso.com`.
 
 > 📐 Structure de ce fichier et de `docs/` : [convention commune aux huit dépôts](https://github.com/MoKarade/claude-config/blob/main/conventions/STRUCTURE-DEPOT.md).
@@ -152,8 +152,17 @@ widgets 100 % génériques.
 ## 3. Workflow git
 
 - Branches `claude/<slug>` pour le travail automatisé, `feature/<slug>` pour Marc.
-- Commits en français, préfixés (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`).
+- Commits en français, préfixés (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Le contrôle
+  « doc à jour » (`scripts/doc-a-jour.mjs`) exige en plus en tête du sujet l'ID du backlog
+  (`H-04: …`) ou l'échappatoire nommée `HORS-BACKLOG:` (voir `HANDOVER.md`).
 - **PR en draft** pour itérer.
+- **Fusion (depuis le 01/10/2026, #100)** : fusion native GitHub — `gh pr create --base main …`
+  puis `gh pr merge --auto --squash <n>` ; une PR qui touche un chemin de `.github/CODEOWNERS`
+  n'est pas armée, Marc l'approuve. Arrêt d'urgence : décocher « Allow auto-merge ».
+  ⚠️ À trancher par Marc (14/10) : trois textes ne disent pas la même chose — « PR en draft pour
+  itérer » (ci-dessus), « armer `--auto` dès l'ouverture, jamais de fusion à la main »
+  (`CLAUDE.md`) et « je fusionne moi-même une PR verte » (`claude-config/CLAUDE.md` §2, règle du
+  14/09). Règles laissées telles quelles.
 - ❌ Jamais `--force` sur `main`. ❌ Jamais `--no-verify`.
 - ⚠️ **`git fetch origin main` AVANT de committer.** Plusieurs sessions travaillent en
   parallèle sur l'écosystème ; le 20/08/2026, deux d'entre elles ont produit la même
@@ -182,9 +191,10 @@ npm run typecheck && npm run test && npm run lint && npm run build
 `ignores` de `eslint.config.mjs` est indispensable — l'ESLint CLI n'ignore pas
 `node_modules`/`.next` implicitement, contrairement à `next lint`.)*
 
-La **CI** (`.github/workflows/ci.yml`) rejoue exactement ce gate, plus deux workflows
-séparés — `constellation.yml` (quotidien, cf. §7) et un job `audit` (`npm audit --omit=dev`,
-aussi en hebdomadaire). Séparés volontairement : un avis
+La **CI** (`.github/workflows/ci.yml`) rejoue exactement ce gate, plus un job `audit`
+(`npm audit --omit=dev`, aussi en hebdomadaire) et des workflows séparés —
+`constellation.yml` (quotidien, cf. §7), `doc-a-jour.yml`, `releve.yml` (l'horloge, ADR 0003)
+et `fumee-prod.yml` (fumée après déploiement, `docs/prod-automatique.md`). Séparés volontairement : un avis
 de sécurité paraît sans qu'une ligne n'ait changé — mêlé au gate, il peindrait le dépôt
 en rouge sans rapport avec le code, et on prendrait l'habitude du rouge.
 
@@ -210,6 +220,9 @@ middleware, variables de build) : vérifier qu'un déploiement de production a b
 créé et qu'il est `READY`, puis **contrôler l'effet sur la réponse HTTP réelle** — un
 en-tête se lit dans la réponse, il ne se déduit pas du fichier source. Rattrapage :
 tableau de bord Vercel → Deployments → « … » → Redeploy.
+⚠️ Ce « Redeploy » est annulé par `scripts/build-necessaire.sh` (`ignoreCommand`) quand le
+dernier commit ne touche que de la doc ou des tests — vécu le 01/09, `[H-18]` au backlog.
+Contournement constaté alors : pousser un commit de code.
 
 Corollaire : un merge qui ne change QUE de la doc n'a pas de déploiement à vérifier. Le dire
 plutôt que de laisser croire qu'on a vérifié.
@@ -257,6 +270,10 @@ ne vérifie rien ne doit pas ressembler à un run vert.
 | `docs/ACCES-PAR-APP.md` | Le modèle d'accès par app, en détail. |
 | `docs/CONNEXION-UNIQUE.md` | Le cookie de session partagé entre les apps. |
 | `docs/RAPPORT_2026-09-25.md` | Récit DATÉ de la session du 18 au 25/09 : lot L2, apps installables, carte du héros, ce qui attend Marc. Ne se met pas à jour. |
+| `docs/ETAT.md` | Photo datée de l'état du dépôt (dernière relecture en tête du fichier). |
+| `docs/SECURITE.md` | Décisions issues de l'audit de sécurité du 26/09 (limite de débit, `/api/acces`, préversions, CSP). |
+| `docs/prod-automatique.md` | Fumée de production, retour arrière Vercel (à la main et `fumee-prod.yml`). |
+| `docs/claude-github.md` | Garde de correction automatique (`scripts/claude-garde.mjs`) et conditions du futur workflow P6.2. |
 
 ⚠️ **Doc périmée = pire que pas de doc.** Un audit du 19/08/2026 a trouvé la même règle
 d'accès écrite dans quatre fichiers de ce dépôt, avec **trois états de vérité différents** :

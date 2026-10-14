@@ -18,7 +18,7 @@ flowchart LR
 
 ## Architecture
 
-- **Next.js 15 (App Router), TypeScript strict.** La page `/` est un Server
+- **Next.js 16 (App Router), TypeScript strict.** La page `/` est un Server
   Component `force-dynamic` : le fetch part du serveur (jamais du navigateur), donc
   **aucun CORS à configurer côté apps**, et le jeton `x-hub-token` ne quitte pas le
   serveur.
@@ -85,10 +85,10 @@ un **login Google (Auth.js / NextAuth v5)**.
   atterrit sur `/sans-acces`, pas sur `/login` — sinon elle se reconnecterait aussitôt
   pour retomber sur le même refus.
 - **Tout est protégé.** `middleware.ts` garde l'ensemble des routes sauf `/api/auth/*`,
-  `/login`, `/api/acces` et les assets statiques. Sans session : une page → redirection
+  `/login`, `/api/acces`, `/api/cron/releve`, `/api/sante` et les assets statiques. Sans session : une page → redirection
   vers `/login` (avec `callbackUrl`) ; une route `/api/*` → **401 JSON** (la décision est
   isolée et testée dans `lib/authGuard.ts`).
-  `/api/acces` est le seul ajout à cette liste, et il ne passe **pas** par le matcher : le
+  `/api/acces` a été le premier ajout à cette liste, et il ne passe **pas** par le matcher : le
   matcher reste inchangé, c'est `isPublicPath` qui le laisse traverser. La distinction
   compte — l'endpoint n'est pas ouvert, il est authentifié **autrement** (par le `HUB_TOKEN`
   de l'app appelante, pas par une session de navigateur, puisque c'est un serveur qui
@@ -205,6 +205,7 @@ npm install
 npm run dev        # http://localhost:3000
 npm run test       # vitest (couche logique)
 npm run typecheck  # tsc --noEmit
+npm run lint       # eslint .
 npm run build      # build de production
 ```
 

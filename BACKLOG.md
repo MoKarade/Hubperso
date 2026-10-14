@@ -38,6 +38,8 @@ l'état réel avant de coder.
 
 - **[H-28] La chaîne de build : le `GITHUB_TOKEN` restait lisible tout le run.** Livré le
   18/09/2026 (lot L2 de l'audit du 18/09, périmètre arbitré par Marc).
+  Note du 14/10/2026 : `auto-merge.yml`, cité ci-dessous, a été retiré le 01/10 (#100).
+  Les commentaires de workflows qui le citent encore sont consignés plus bas (`[H-30]`).
   - Les **5** étapes `actions/checkout` portent `persist-credentials: false`. La v2+ écrit le
     `GITHUB_TOKEN` dans la config git du runner POUR TOUT LE RESTE DU RUN : n'importe quelle
     étape suivante peut le lire. Vérifié un par un qu'**aucun** workflow de ce dépôt ne fait de
@@ -142,6 +144,12 @@ l'état réel avant de coder.
   avec les mesures de ce dépôt. `scripts/autoMerge.mjs` se dit « identique dans les huit
   dépôts » : **DriveAI, JobAI, BatchChef, FinanceAI, hub-contract et app-template sont donc
   probablement dans le même état**, non vérifiés. À porter — ou à vérifier avant de conclure.
+  ⚠️ **Démenti, note du 14/10/2026** : la mesure dépôt par dépôt du 14/09 au soir
+  (`claude-config/CLAUDE.md` §2) a montré que DriveAI a une implémentation différente, non
+  atteinte, et que JobAI, BatchChef, FinanceAI, hub-contract et app-template n'avaient AUCUN
+  auto-merge — rien à porter. Et ici, `auto-merge.yml`, `scripts/autoMerge.mjs` et
+  `tests/autoMerge.test.ts` n'existent plus depuis le 01/10 (#100, fusion native GitHub) :
+  item clos, conservé comme historique.
 
 - **[H-19] Le hub observe sans toi, et il dit quand il a mal observé.** Diagnostic du
   14/09/2026 : `enregistrerReleve` n'était appelée que depuis `app/page.tsx`, donc rien ne
@@ -164,6 +172,8 @@ l'état réel avant de coder.
   **Reste** : 👤 `HUB_URL` = `https://www.hubperso.com` (le seul geste manquant) ; puis
   vérifier sur trois jours que la cadence réelle tient, puisque GitHub n'en garantit aucune
   (mesuré à ~3× plus lent sur CarAI, tous les runs verts).
+  Note du 14/10/2026 : le geste `HUB_URL` est fait (cause 2 « corrigé, secret changé » dans la
+  table du `HANDOVER.md`) ; la vérification de cadence sur trois jours n'est consignée nulle part.
 
 - **[H-18] `build-necessaire.sh` ne voit jamais une variable d'environnement changée
   sur Vercel.** Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
@@ -205,7 +215,8 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   « détails » d'une app : graphique de l'évolution de son coût ; sinon, le prix sur 7 jours.
   Une bonne partie du socle existe déjà — `lib/historique.ts` (`serieCout`, `serieMetrique`,
   PURES) et `lib/historiqueDb.ts` archivent un relevé par app toutes les 15 min sur 90 jours.
-  Reste le rendu. ⚠️ `serieCout` prend une `periode` ET une `devise` **exprès** : ne jamais
+  Reste le rendu — en cours au 14/10/2026 dans la PR #106 (ouverte le 03/10, non fusionnée).
+  ⚠️ `serieCout` prend une `periode` ET une `devise` **exprès** : ne jamais
   tracer une courbe qui mélange `total`, `mois` et `jour` — c'est le principe « jamais
   d'agrégat entre unités incomparables » appliqué au temps.
 
@@ -313,7 +324,8 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   par mutation le 15/09 sur `tests/migrationsAppelees.test.ts`. À concevoir posément, pas
   dans la foulée.
 
-- [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
+- [x] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** (Case
+  fermée le 14/10/2026 : livré côté contrat v1.3.0 ET côté hub le 15/09, cf. ci-dessous.) Plusieurs
   demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
   patrimoine pour FinanceAI). Le contrat n'avait aucun moyen de l'exprimer : le hub
   affichait six métriques de même poids.
@@ -329,7 +341,8 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   ⚠️ `primary: false` est traité comme une ABSENCE de désignation, pas comme une candidature
   négative — sinon le drapeau deviendrait une valeur à trois états. Verrouillé par test.
 
-- [ ] **[H-12] [CONTRAT] Une app peut-elle publier une RECOMMANDATION ?** Marc demande « voir
+- [x] **[H-12] [CONTRAT] Une app peut-elle publier une RECOMMANDATION ?** (Case fermée le
+  14/10/2026 : livré côté contrat v1.3.0 ET côté hub le 15/09, cf. ci-dessous.) Marc demande « voir
   recommandation directe » pour FinanceAI. Ça passait par une `alert` de sévérité `info`,
   ce qui la rangeait visuellement avec les problèmes.
   **Tranché et livré côté contrat** (`hub-contract` v1.3.0, 14/09/2026) : un CHAMP
@@ -413,12 +426,14 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   et les VRAIS backlogs du dépôt visé, jamais sur ce qu'on croit qu'ils sont. Trois angles
   morts, trois fois découverts en s'en servant pour de vrai, zéro fois par relecture.
 
-- **[H-08] Deux avertissements de lint dans `tests/autoMerge.test.ts`.** `isDraft` et
+- **[H-08] Deux avertissements de lint dans `tests/autoMerge.test.ts`.** Périmé (note du
+  14/10/2026) : le fichier a été supprimé le 01/10 (#100). `isDraft` et
   `isCrossRepository` assignés sans être utilisés (lignes 75 et 86). 0 erreur, le gate passe
   — c'est du bruit, pas une panne. Découvert le 21/08 en passant le gate pour [H-06]/[H-07] ;
   laissé tel quel, c'est du périmètre non demandé.
 
-- **[H-05] Propager l'auto-merge aux sept autres dépôts.** Livré ici le 21/08
+- **[H-05] Propager l'auto-merge aux sept autres dépôts.** Périmé (note du 14/10/2026) : ce
+  dépôt est passé à la fusion native GitHub le 01/10 (#100), le workflow maison est retiré. Livré ici le 21/08
   (`scripts/autoMerge.mjs` + `.github/workflows/auto-merge.yml`). ⚠️ **Correction du 21/08 au soir : la raison invoquée ici était fausse.**
   Ce point disait que l'auto-merge NATIF de GitHub était inutilisable, faute de plan payant
   sur des dépôts privés. Il a pourtant été armé avec succès sur FinanceAI#689 le 21/08 à
@@ -430,7 +445,8 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   dispatche `deploy.yml` après le merge (le moteur Apps Script), BatchChef a sa racine dans
   `web/`. Ne pas copier en lot.
 
-- **[H-01] Re-pinner le contrat sur `#v1.1.0`.** Le tag existe depuis le 20/08/2026 et
+- **[H-01] Re-pinner le contrat sur `#v1.1.0`.** Périmé (note du 14/10/2026) : `package.json`
+  épingle `#v1.3.1`. Le tag existe depuis le 20/08/2026 et
   pointe `3bbbf19`. Le dépôt épingle encore le SHA `2d37a61` — **valide** (le schéma est
   identique entre les deux, seuls des commentaires ont bougé), mais un tag se lit mieux
   qu'un SHA. À faire au prochain besoin de re-pin, pas dans l'urgence.
@@ -440,6 +456,14 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   a pas UN total. Depuis que DriveAI et JobAI publient `total`, toutes les apps suivies sont
   alignées — la note ne s'affiche donc plus. Elle reste juste et utile le jour où une app
   repassera à `mois`, mais rien ne le teste en conditions réelles.
+
+- [ ] **[H-30] Des commentaires de workflows décrivent encore `auto-merge.yml`, retiré le 01/10
+  (#100).** Constaté le 14/10/2026 : `ci.yml` (2 fois), `constellation.yml` et `doc-a-jour.yml`
+  justifient `persist-credentials: false` par « `auto-merge.yml` passe par l'API » ;
+  `ci-reutilisable.yml` cite `auto-merge.json` en commentaire et `.github/ci/voie-rapide.mjs`
+  le garde dans sa liste de fichiers (le fichier n'existe plus, donc sans effet) ;
+  `scripts/build-necessaire.sh` cite « la décision d'auto-merge ». Aucun effet sur l'exécution
+  constaté. Chemins CODEOWNERS (`.github/`) : correction soumise à Marc, jamais faite ici.
 
 - **[H-03] Aucune app ne publie encore d'action `trigger`.** Le hub sait en exécuter une
   depuis le 20/08 (ADR 0002) : verrous SSRF posés, testés, et le bouton apparaît tout seul

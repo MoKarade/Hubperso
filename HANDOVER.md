@@ -2,6 +2,32 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## État au 14/10/2026
+
+**Gel décidé par Marc le 14/10 : aucun nouveau travail sur les apps tant que le plan de
+réduction du temps des PR est en cours.**
+
+- **Ce qui tourne** : `main` = `e4be344` (01/10/2026). Next.js 16 (`^16.3.8`), contrat
+  `hub-contract` épinglé `v1.3.1`, six sources. Fusion native GitHub depuis le 01/10 (#100),
+  `.github/CODEOWNERS` pour les chemins humains. Workflows : `ci`, `constellation`,
+  `doc-a-jour`, `releve` (toutes les 30 min), `fumee-prod`.
+- **Livré depuis la dernière mise à jour de ce fichier (01/10, #100)**, d'après `git log` :
+  scripts de fumée et de retour arrière (#101, `docs/prod-automatique.md`) ; garde de
+  correction automatique `scripts/claude-garde.mjs` + runbook (#103, `docs/claude-github.md`,
+  le workflow de correction P6.2 n'existe pas encore) ; correctif Sonar S4036 de cette garde
+  (#105) ; workflow `fumee-prod.yml` (#104). Aucun commit sur `main` depuis le 01/10.
+- **En cours (PR ouvertes au 14/10)** : #106 courbe d'évolution du coût `[H-09]` (03/10) ;
+  #107 et #108 `ARCHITECTURE.md` et carte NotebookLM (11 et 13/10) ; #95 script de clé ES256
+  de session (29/09).
+- **À surveiller** : `fumee-prod.yml` fait un retour arrière Vercel RÉEL après deux fumées
+  rouges ; le secret `VERCEL_TOKEN` qu'il lit est [À vérifier]. `docs/prod-automatique.md`
+  prévoyait l'essai sur CarAI, mais le workflow est actif sur `main` de Hubperso depuis le
+  01/10. Plusieurs commentaires de workflows citent encore `auto-merge.yml` (retiré) — consigné
+  au `BACKLOG.md`.
+- **Historique** : les sessions du 28/09 et du 25/09 ci-dessous décrivent le kit auto-merge,
+  retiré le 01/10 ; la table « Portes qualité » en fin de fichier donne les seuils de DÉPART,
+  les seuils en vigueur sont dans `qualite/seuils.json`.
+
 ## 🟦 Session 2026-10-01 — **Fusion native GitHub (phase P1 du plan « stratégie PR »)**
 
 La fusion automatique est désormais celle de GitHub (« Allow auto-merge » activé sur le dépôt, ruleset = contrôles requis).
@@ -11,7 +37,7 @@ La fusion automatique est désormais celle de GitHub (« Allow auto-merge » act
 - Arrêt d'urgence : décocher « Allow auto-merge » (Settings → General). La variable `AUTOMERGE_OFF` n'existe plus.
 
 
-## 🟦 Session 2026-09-28 — **Kit auto-merge : deux notes qui n'ont plus d'autre foyer**
+## 🟦 Session 2026-09-28 — **Kit auto-merge : deux notes qui n'ont plus d'autre foyer** (historique : kit retiré le 01/10, #100)
 
 PR #92 (pole-securite, pose `securite_login`). Le retrait de `.github/workflows/armement-auto-merge.yml`
 (profil `prive` — dépôt privé Free, pas d'auto-fusion native, voir `COPIES.md`) régénère ce fichier
@@ -38,7 +64,7 @@ fusion, sans distinction (seul `Vercel Agent Review` est non bloquant, et ce n'e
 chose). **Un futur agent qui voit une PR bloquée par un hoquet de quota Vercel doit comprendre que
 c'est un choix connu et assumé, pas un bug à corriger en douce** en réintroduisant une garde locale.
 
-## 🟦 Session 2026-09-25 — **Auto-merge : garde des chemins sensibles et course Vercel Agent Review**
+## 🟦 Session 2026-09-25 — **Auto-merge : garde des chemins sensibles et course Vercel Agent Review** (historique : kit retiré le 01/10, #100)
 
 PR #84 (brouillon, NON armée : elle touche `.github/**`, donc jamais auto-fusionnée — relecture
 pole-securite puis Marc).
@@ -333,7 +359,9 @@ que Cloudflare protège pendant que l'app serait ouverte.
 
 Contrôles automatiques en CI, jobs **Qualité** et **Sécurité** : la fusion automatique les attend.
 Principe du **cliquet** : `qualite/seuils.json` fige l'état du jour de la mise en place ; rien ne peut
-reculer. `npm run portes` mesure en local, `npm run portes:maj` resserre après une amélioration.
+reculer. Le tableau ci-dessous est celui du 23/09 (historique) : les seuils EN VIGUEUR sont dans
+`qualite/seuils.json` (au 14/10, mis à jour le 30/09 : couverture `lib/` ≥ 92,8, globale ≥ 65,8 en
+lignes et ≥ 53 en branches, code mort ≤ 3). `npm run portes` mesure en local, `npm run portes:maj` resserre après une amélioration.
 
 | Porte | Seuil de départ |
 |---|---|
@@ -348,4 +376,5 @@ reculer. `npm run portes` mesure en local, `npm run portes:maj` resserre après 
 | Règles d'architecture (dependency-cruiser) | ≤ 0 |
 
 Sécurité : gitleaks sur tout l'historique + Semgrep (TypeScript, React, Next.js, secrets, OWASP), bloquants.
-Dependabot : mises à jour hebdomadaires (npm + actions), fusion automatique si tout est vert.
+Dependabot : mises à jour hebdomadaires (npm + actions), carence de 3 jours depuis le 01/10. Depuis la fusion
+native, qu'une PR Dependabot soit armée automatiquement est [À vérifier] (aucun workflow de ce dépôt ne l'arme).

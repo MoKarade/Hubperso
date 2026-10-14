@@ -162,6 +162,9 @@ Elle est aujourd'hui sur `batchchef-glu8-chi.vercel.app` : un cookie ne franchit
 frontière, elle ne peut donc pas participer. Ajoute `batchchef.hubperso.com` dans son projet
 Vercel (le nom est modifiable, il faut juste qu'il soit sous `hubperso.com`).
 
+> Au 14/10/2026 : fait — le hub interroge BatchChef sur `https://batchchef.hubperso.com`
+> (`lib/sources.ts`). Le paragraphe ci-dessus est conservé comme historique.
+
 ## L'ordre des opérations
 
 Il compte, mais aucune étape n'est destructrice.

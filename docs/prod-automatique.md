@@ -16,7 +16,8 @@ Vercel). Relancer une fois à la main : `npm run fumee`. Deux pannes de suite = 
    `VERCEL_TOKEN=… VERCEL_PROJECT_ID=… node scripts/retour-arriere-vercel.mjs`
    (jeton lu dans `VERCEL_TOKEN` seulement ; `VERCEL_TEAM_ID` si l'équipe l'exige).
 2. Vérifier la cible affichée, puis ajouter `--executer` (`--deploiement <uid>` pour choisir un autre
-   déploiement de production prêt : le plan Pro permet n'importe lequel déjà aliasé en production).
+   déploiement de production prêt : le plan Pro permet n'importe lequel déjà aliasé en production ; le
+   plan du projet est [À vérifier], `releve.yml` le dit Hobby).
 3. Après un rollback, Vercel suspend le déploiement automatique des domaines : pour le rétablir,
    promouvoir un déploiement (tableau de bord « Undo Rollback », ou `vercel promote <id>`).
 Alternative sans script : tableau de bord Vercel, « Instant Rollback ».
@@ -39,6 +40,8 @@ d'annulation automatique (étape suivante : identité de l'App + avis de pole-se
 - Le projet Vercel se lit dans la variable de dépôt `VERCEL_PROJECT_ID` (défaut : `hubperso`, nom accepté par
   l'API) ; `VERCEL_TEAM_ID` facultative.
 - Essai prévu sur CarAI, avec Marc présent, pas sur Hubperso.
+  ⚠️ Au 14/10/2026 : `fumee-prod.yml` est pourtant sur `main` de Hubperso depuis le 01/10 (#104),
+  donc actif à chaque déploiement Production réussi. Présence du secret `VERCEL_TOKEN` : [À vérifier].
 
 ## Désactiver
 Supprimer `.github/workflows/fumee-prod.yml` ; les scripts eux-mêmes ne font rien tout seuls.
