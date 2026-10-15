@@ -50,7 +50,7 @@ describe("DetailMetriques", () => {
     const html = renderToStaticMarkup(
       h(DetailMetriques, { metrics: [], historique: [], maintenantMs: T0 }),
     );
-    expect(texte(html)).toContain("Métriques (0/6)");
+    expect(texte(html)).toContain("Métriques (0)");
     expect(texte(html)).toContain("Cette app ne publie aucune métrique.");
     expect(html).not.toContain("detail__metriques");
   });
@@ -71,7 +71,7 @@ describe("DetailMetriques", () => {
         maintenantMs: T0,
       }),
     );
-    expect(texte(html)).toContain("Métriques (1/6)");
+    expect(texte(html)).toContain("Métriques (1)");
     expect(texte(html)).toContain("pas encore d’historique");
     expect(html).toContain('data-tone="warn"');
     expect(html).toContain('class="metric__trend" data-dir="down"');
@@ -93,7 +93,7 @@ describe("DetailMetriques", () => {
 describe("DetailAlertes", () => {
   it("aucune alerte : le dit comme une bonne nouvelle", () => {
     const html = renderToStaticMarkup(h(DetailAlertes, { alerts: [] }));
-    expect(texte(html)).toContain("Alertes (0/10)");
+    expect(texte(html)).toContain("Alertes (0)");
     expect(texte(html)).toContain("Aucune alerte — c’est une bonne nouvelle.");
   });
 
@@ -114,7 +114,7 @@ describe("DetailAlertes", () => {
         ],
       }),
     );
-    expect(texte(html)).toContain("Alertes (2/10)");
+    expect(texte(html)).toContain("Alertes (2)");
     expect(html).toContain('href="https://finance.hubperso.com/synchro"');
     expect(html).not.toContain("javascript:");
     expect((html.match(/<a /g) ?? []).length).toBe(1);
@@ -184,6 +184,8 @@ describe("DetailProbleme et BandeauPerime", () => {
     const html = renderToStaticMarkup(h(BandeauPerime));
     expect(html).toContain('role="alert"');
     expect(texte(html)).toContain("dernier résumé connu");
+    // Le triangle du hub (un dessin), pas un « ! » tapé au clavier.
+    expect(html).toContain("<svg");
   });
 });
 

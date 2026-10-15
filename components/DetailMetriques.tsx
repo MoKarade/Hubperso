@@ -16,9 +16,6 @@ import { severityTone } from "@/lib/status";
 import { formatDuree, formatMetricValue, formatTrend } from "@/lib/format";
 import { Sparkline } from "./Sparkline";
 
-/** Plafond du contrat : affiché dans le titre (« 3/6 »). */
-const METRIQUES_MAX = 6;
-
 function MetriqueDetaillee({
   metrique,
   historique,
@@ -79,7 +76,7 @@ export function DetailMetriques({
   return (
     <section className="detail__bloc" aria-label="Métriques">
       <h2 className="detail__titre">
-        Métriques ({metrics.length}/{METRIQUES_MAX})
+        Métriques ({metrics.length})
       </h2>
       {metrics.length === 0 ? (
         <p className="detail__vide">Cette app ne publie aucune métrique.</p>

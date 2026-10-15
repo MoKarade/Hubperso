@@ -8,9 +8,6 @@ import type { HubAlert } from "@mokarade/hub-contract";
 import { safeHttpUrl } from "@/lib/url";
 import { severityTone } from "@/lib/status";
 
-/** Plafond du contrat : affiché dans le titre (« 2/10 »). */
-const ALERTES_MAX = 10;
-
 /** Gravité d'une alerte en mots simples (jamais le mot anglais du contrat). */
 const LIBELLE_GRAVITE: Record<HubAlert["severity"], string> = {
   alert: "À régler",
@@ -54,7 +51,7 @@ export function DetailAlertes({ alerts }: { alerts: HubAlert[] }) {
   return (
     <section className="detail__bloc" aria-label="Alertes">
       <h2 className="detail__titre">
-        Alertes ({alerts.length}/{ALERTES_MAX})
+        Alertes ({alerts.length})
       </h2>
       {alerts.length === 0 ? (
         <p className="detail__vide">

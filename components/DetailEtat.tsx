@@ -10,6 +10,7 @@ import type { SummaryResult } from "@/lib/fetchSummary";
 import type { Incoherence } from "@/lib/constellation";
 import { messageProblemeDetail } from "@/lib/carte";
 import { formatDateTime } from "@/lib/format";
+import { Icone } from "./Icone";
 
 /** Échec de fetch : on dit exactement ce qui ne va pas, jamais une page vide. */
 export function DetailProbleme({
@@ -36,7 +37,7 @@ export function DetailProbleme({
 export function BandeauPerime() {
   return (
     <div className="bandeau" role="alert">
-      <span className="bandeau__icone" aria-hidden="true">!</span>
+      <Icone nom="alerte" className="bandeau__icone" />
       <span className="bandeau__label">
         L’app n’a pas répondu à temps — ceci est le dernier résumé connu, pas l’état
         courant.
