@@ -389,7 +389,7 @@ export function messageProblemeDetail(result: SummaryResult): string {
     case "contract-too-new":
       return (
         `L’app publie la version ${result.published} du contrat ; ce hub lit jusqu’à la ${result.supported}. ` +
-        "C’est le hub qui est à re-pinner — l’app va bien."
+        "Le hub doit être mis à jour pour lire cette app — l’app va bien."
       );
     default:
       return "";
