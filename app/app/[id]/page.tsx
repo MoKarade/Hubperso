@@ -112,7 +112,7 @@ export default async function DetailAppPage({
 
           {summary.actions.length > 0 && (
             <section className="detail__bloc" aria-label="Actions">
-              <h2 className="detail__titre">Actions ({summary.actions.length}/6)</h2>
+              <h2 className="detail__titre">Actions ({summary.actions.length})</h2>
               {/* Passe par ActionList plutôt que de refaire le rendu à la main : cette page
                   rendait TOUTE action en lien, `trigger` compris — donc un endpoint fait
                   pour un POST ouvert en GET, qui ne déclenche rien tout en ayant l'air de
