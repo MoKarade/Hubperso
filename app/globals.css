@@ -820,7 +820,7 @@ a:focus-visible,
 .couts__cost { margin: 0.6rem 0 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em; }
 .couts__costraw { font-size: 0.8rem; font-weight: 500; color: var(--text-faint); }
 .couts__quotas { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
-.couts__quotatop { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-soft); }
+.couts__quotatop { display: flex; flex-wrap: wrap; gap: 0.2rem 0.75rem; justify-content: space-between; font-size: 0.82rem; color: var(--text-soft); }
 .couts__quotawarn { color: var(--warn); font-weight: 600; }
 .couts__bar { margin-top: 0.3rem; height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
 .couts__barfill { display: block; height: 100%; background: var(--info); border-radius: 999px; }
