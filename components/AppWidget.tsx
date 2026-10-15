@@ -140,7 +140,7 @@ function CorpsProbleme({ result }: { result: SummaryResult }) {
         return `Réponse non conforme au contrat — ${result.detail}.`;
       case "contract-too-new":
         // Le ton dit à qui est le problème : l'app va bien, c'est le hub qui est en retard.
-        return `Cette app publie la version ${result.published} du contrat ; ce hub lit jusqu’à ${result.supported}. Re-pinner le hub.`;
+        return `Cette app publie la version ${result.published} du contrat ; ce hub lit jusqu’à ${result.supported}. Le hub doit être mis à jour pour lire cette app.`;
       default:
         return "";
     }
