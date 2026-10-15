@@ -56,7 +56,7 @@ while IFS= read -r f; do
     tests/*) ;;
     .github/*) ;;
     # PROPRE À HUBPERSO : `scripts/` ne contient QUE de l'outillage — ce garde-fou lui-même,
-    # le contrôle « doc à jour », la décision d'auto-merge, le vérificateur de constellation.
+    # le contrôle « doc à jour », le vérificateur de constellation.
     # Rien n'y est servi, et `next build` n'en lit aucun.
     #
     # Ajouté le 21/08 après que ce dossier a fait construire Hubperso pour rien, un jour où le
