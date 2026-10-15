@@ -133,7 +133,7 @@ function CorpsProbleme({ result }: { result: SummaryResult }) {
         // ne vient pas de son site web).
         return `Non branchée — ${phraseManques(result.manque)}.`;
       case "unauthorized":
-        return "Jeton refusé (401). Vérifie la valeur de x-hub-token.";
+        return "Le hub n’a pas la bonne clé pour lire cette app.";
       case "unreachable":
         return `App injoignable — ${result.detail}.`;
       case "invalid":
