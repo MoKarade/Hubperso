@@ -2,7 +2,7 @@
 # l'appeler depuis ci.yml (voir gabarit-appelant.yml et LISEZMOI.md). Ce fichier ne contient NI déclencheur de PR NI concurrency : ils vivent chez
 # l'appelant (un groupe de concurrency identique dans l'appelant et l'appelé s'annulerait lui-même).
 #
-# Nom du check REQUIS (protection de branche / auto-merge.json `controles_requis`) : « <id du job appelant> / portes », soit « ci / portes »
+# Nom du check REQUIS (protection de branche / conditions `check-success` de .mergify.yml) : « <id du job appelant> / portes », soit « ci / portes »
 # avec le gabarit-appelant.yml tel quel. Ne JAMAIS renommer le job `portes` ni l'id `ci` sans mettre à jour le check requis.
 # Ce check n'a JAMAIS de `paths:` : filtré, il ne tournerait pas et la PR resterait bloquée. Pour économiser des minutes on utilise la VOIE RAPIDE
 # (ci-dessous : le job tourne toujours, il saute seulement les étapes lourdes), l'ignoreCommand Vercel et la concurrency, jamais un filtre de chemins.
