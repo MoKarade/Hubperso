@@ -13,7 +13,7 @@ import { POST } from "../app/api/acces/route";
 import { DUREE_MIN_ACCES_MS } from "../lib/limiteDebit";
 
 const JETON_JOBAI = "jeton-de-test-jobai-0000000000";
-const PROPRIO = "marc.richard4@gmail.com";
+const PROPRIO = "proprietaire@exemple.com";
 const INVITEE = "quelquun@exemple.com";
 
 function requete(corps: unknown, jeton?: string): Request {
