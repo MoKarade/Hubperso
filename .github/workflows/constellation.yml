@@ -20,7 +20,8 @@ permissions:
 jobs:
   verifier:
     name: Cohérence hub ↔ apps
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows, atelier-pc]
+    if: github.event.repository.private == true && (!startsWith(github.event_name, 'pull_request') || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository)
     # Cinq apps derrière des réveils à froid, 9 s de budget chacune : large, mais borné.
     # Sans plafond le défaut GitHub est de SIX HEURES.
     timeout-minutes: 8
@@ -39,7 +40,8 @@ jobs:
           node-version: "24"
           cache: npm
 
-      - run: npm ci --ignore-scripts
+      - shell: pwsh
+        run: npm ci --ignore-scripts
 
       - name: Interroger les cinq apps et juger la cohérence
         env:
@@ -48,4 +50,5 @@ jobs:
           HUB_TOKEN_BATCHCHEF: ${{ secrets.HUB_TOKEN_BATCHCHEF }}
           HUB_TOKEN_CARAI: ${{ secrets.HUB_TOKEN_CARAI }}
           HUB_TOKEN_JOBAI: ${{ secrets.HUB_TOKEN_JOBAI }}
+        shell: pwsh
         run: npm run constellation

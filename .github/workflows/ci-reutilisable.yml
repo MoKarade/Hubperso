@@ -50,8 +50,8 @@ jobs:
   portes:
     name: portes
     # runner auto-hébergé : dépôt PRIVÉ seulement (jamais de code de PR sur un runner auto-hébergé d'un dépôt public), comme le gabarit d'armement
-    if: ${{ !inputs.lourds && (github.event.repository.private == true || !contains(inputs.runner, 'self-hosted')) }}
-    runs-on: ${{ fromJSON(inputs.runner) }}
+    if: ${{ (!inputs.lourds && (github.event.repository.private == true || !contains(inputs.runner, 'self-hosted'))) && github.event.repository.private == true && (!startsWith(github.event_name, 'pull_request') || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository) }}
+    runs-on: [self-hosted, windows, atelier-pc]
     # Plafond : sans lui un job figé tourne six heures avant d'échouer.
     timeout-minutes: 15
     steps:
@@ -68,12 +68,14 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_LUES_PAR_LES_TESTS: ${{ inputs.docs-lues-par-les-tests }}
+        shell: pwsh
         run: node .github/ci/voie-rapide.mjs
       # DOCUMENTATION LÉGÈRE : tourne TOUJOURS, même sur la voie rapide (quelques secondes, Node préinstallé sur le runner) : une PR de docs seule qui regonfle
       # CLAUDE.md (plafond 60 lignes / 10 Ko) ou périme docs/INDEX.md échoue ici. Seuls install, tests applicatifs et build sont sautés.
       - name: Documentation légère
         env:
           COMMANDE: ${{ inputs.commande-docs }}
+        shell: bash
         run: bash -c "$COMMANDE"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         if: steps.voie.outputs.rapide != 'true'
@@ -83,17 +85,19 @@ jobs:
       # `npm ci` et non `npm install` : le lockfile fait autorité.
       - name: Dépendances
         if: steps.voie.outputs.rapide != 'true'
+        shell: pwsh
         run: npm ci
       - name: Portes
         if: steps.voie.outputs.rapide != 'true'
         env:
           COMMANDE: ${{ inputs.commande-portes }}
+        shell: bash
         run: bash -c "$COMMANDE"
 
   lourds:
     name: lourds
-    if: ${{ inputs.lourds && inputs.commande-lourds != '' && (github.event.repository.private == true || !contains(inputs.runner, 'self-hosted')) }}
-    runs-on: ${{ fromJSON(inputs.runner) }}
+    if: ${{ (inputs.lourds && inputs.commande-lourds != '' && (github.event.repository.private == true || !contains(inputs.runner, 'self-hosted'))) && github.event.repository.private == true && (!startsWith(github.event_name, 'pull_request') || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository) }}
+    runs-on: [self-hosted, windows, atelier-pc]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -104,8 +108,10 @@ jobs:
           node-version-file: ${{ inputs.fichier-version-node }}
           cache: npm
       - name: Dépendances
+        shell: pwsh
         run: npm ci
       - name: Contrôles lourds (mutation, E2E)
         env:
           COMMANDE: ${{ inputs.commande-lourds }}
+        shell: bash
         run: bash -c "$COMMANDE"
