@@ -13,7 +13,7 @@
 //   node qualite/portes.mjs --seulement-mutation → juge uniquement le rapport de mutation (CI hebdo)
 //   node qualite/portes.mjs --maj       → resserre les seuils sur les chiffres améliorés
 //
-// Écrit qualite/rapport.json (non versionné) : c'est ce que lit le cockpit de l'Atelier.
+// Écrit qualite/rapport.json (non versionné).
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";

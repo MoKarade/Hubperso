@@ -22,7 +22,13 @@ const source = hubSource();
 
 describe("messageProblemeDetail — une phrase par état d'échec, jamais une page vide", () => {
   it("nomme ce qui manque quand l'app n'est pas branchée", () => {
-    expect(messageProblemeDetail({ state: "unconfigured", source, manque: ["url", "jeton"] })).toBe(
+    expect(
+      messageProblemeDetail({
+        state: "unconfigured",
+        source,
+        manque: ["url", "jeton"],
+      }),
+    ).toBe(
       "Non branchée dans l’environnement du hub — aucune URL de résumé configurée et aucun jeton x-hub-token configuré.",
     );
   });
@@ -34,24 +40,39 @@ describe("messageProblemeDetail — une phrase par état d'échec, jamais une pa
   });
 
   it("reprend le détail d'une app injoignable ou hors contrat", () => {
-    expect(messageProblemeDetail({ state: "unreachable", source, detail: "HTTP 503" })).toBe(
-      "App injoignable — HTTP 503.",
-    );
-    expect(messageProblemeDetail({ state: "invalid", source, detail: "champ manquant" })).toBe(
-      "Réponse non conforme au contrat — champ manquant.",
-    );
+    expect(
+      messageProblemeDetail({
+        state: "unreachable",
+        source,
+        detail: "l’app a répondu avec une erreur",
+      }),
+    ).toBe("App injoignable — l’app a répondu avec une erreur.");
+    expect(
+      messageProblemeDetail({
+        state: "invalid",
+        source,
+        detail: "champ manquant",
+      }),
+    ).toBe("Réponse non conforme au contrat — champ manquant.");
   });
 
   it("dit que c'est le HUB qui est en retard quand le contrat est trop récent", () => {
     expect(
-      messageProblemeDetail({ state: "contract-too-new", source, published: 2, supported: 1 }),
+      messageProblemeDetail({
+        state: "contract-too-new",
+        source,
+        published: 2,
+        supported: 1,
+      }),
     ).toBe(
-      "L’app publie la version 2 du contrat ; ce hub lit jusqu’à la 1. C’est le hub qui est à re-pinner — l’app va bien.",
+      "L’app publie la version 2 du contrat ; ce hub lit jusqu’à la 1. Le hub doit être mis à jour pour lire cette app — l’app va bien.",
     );
   });
 
   it("ne dit rien quand le résumé est là", () => {
-    expect(messageProblemeDetail({ state: "ok", source, summary: validSummary() })).toBe("");
+    expect(
+      messageProblemeDetail({ state: "ok", source, summary: validSummary() }),
+    ).toBe("");
   });
 });
 
@@ -65,13 +86,25 @@ describe("noteEvolutionDetail — l'évolution sur la fenêtre de comparaison", 
   });
 
   it("parle en pourcentage quand la valeur de départ n'est pas nulle", () => {
-    expect(noteEvolutionDetail(v(5, 0.125))).toEqual({ texte: `+12,5 % sur ${fenetre}`, dir: "up" });
-    expect(noteEvolutionDetail(v(-5, -0.5))).toEqual({ texte: `−50 % sur ${fenetre}`, dir: "down" });
+    expect(noteEvolutionDetail(v(5, 0.125))).toEqual({
+      texte: `+12,5 % sur ${fenetre}`,
+      dir: "up",
+    });
+    expect(noteEvolutionDetail(v(-5, -0.5))).toEqual({
+      texte: `−50 % sur ${fenetre}`,
+      dir: "down",
+    });
   });
 
   it("donne l'écart brut, signé, quand le départ est à zéro", () => {
-    expect(noteEvolutionDetail(v(3, null))).toEqual({ texte: `+3 sur ${fenetre}`, dir: "up" });
-    expect(noteEvolutionDetail(v(-3, null))).toEqual({ texte: `-3 sur ${fenetre}`, dir: "down" });
+    expect(noteEvolutionDetail(v(3, null))).toEqual({
+      texte: `+3 sur ${fenetre}`,
+      dir: "up",
+    });
+    expect(noteEvolutionDetail(v(-3, null))).toEqual({
+      texte: `-3 sur ${fenetre}`,
+      dir: "down",
+    });
   });
 
   it("une valeur stable compte comme « up » (même règle qu'avant le découpage)", () => {
@@ -98,20 +131,29 @@ describe("inchangeSignificatif — « inchangé depuis » seulement au-delà du 
     const hist = [releve(0, 10), releve(1000, 10)];
     expect(inchangeSignificatif(hist, "Valeur nette", T0 + 1000)).toBeNull();
     const loin = T0 + SEUIL_INCHANGE_MS * 2;
-    expect(inchangeSignificatif(hist, "Valeur nette", loin)).toBeGreaterThanOrEqual(SEUIL_INCHANGE_MS);
+    expect(
+      inchangeSignificatif(hist, "Valeur nette", loin),
+    ).toBeGreaterThanOrEqual(SEUIL_INCHANGE_MS);
   });
 });
 
 describe("lienRecoRefuse — le refus d'un lien de recommandation se voit", () => {
   it("vrai quand l'app a publié un lien que safeHttpUrl a écarté", () => {
-    const summary = validSummary({ recommendation: { label: "Faire X", href: "javascript:alert(1)" } });
+    const summary = validSummary({
+      recommendation: { label: "Faire X", href: "javascript:alert(1)" },
+    });
     const reco = recommandation(summary)!;
     expect(reco.href).toBeNull();
     expect(lienRecoRefuse(reco, summary)).toBe(true);
   });
 
   it("faux quand le lien est valide ou absent", () => {
-    const valide = validSummary({ recommendation: { label: "Faire X", href: "https://finance.hubperso.com/x" } });
+    const valide = validSummary({
+      recommendation: {
+        label: "Faire X",
+        href: "https://finance.hubperso.com/x",
+      },
+    });
     expect(lienRecoRefuse(recommandation(valide)!, valide)).toBe(false);
     const sansLien = validSummary({ recommendation: { label: "Faire X" } });
     expect(lienRecoRefuse(recommandation(sansLien)!, sansLien)).toBe(false);
@@ -120,10 +162,12 @@ describe("lienRecoRefuse — le refus d'un lien de recommandation se voit", () =
 
 describe("libelleQuota et barreQuota — la ligne d'un quota", () => {
   it("écrit le plafond seulement quand il est connu", () => {
-    expect(libelleQuota({ label: "Appels", used: 120, limit: 1000, unit: "appels" })).toBe(
-      "Appels — 120 / 1000 appels",
+    expect(
+      libelleQuota({ label: "Appels", used: 120, limit: 1000, unit: "appels" }),
+    ).toBe("Appels — 120 / 1000 appels");
+    expect(libelleQuota({ label: "Stockage", used: 4, limit: null })).toBe(
+      "Stockage — 4 ",
     );
-    expect(libelleQuota({ label: "Stockage", used: 4, limit: null })).toBe("Stockage — 4 ");
   });
 
   it("plafonne la barre à 100 % et passe en orange dès 80 %", () => {
@@ -139,11 +183,19 @@ describe("variablesAccent — la couleur de l'app et le texte lisible dessus", (
   });
 
   it("calcule le texte lisible sur la couleur", () => {
-    expect(variablesAccent("#0f766e")).toEqual({ "--accent": "#0f766e", "--accent-texte": "#ffffff" });
-    expect(variablesAccent("#fde047")).toEqual({ "--accent": "#fde047", "--accent-texte": "#000000" });
+    expect(variablesAccent("#0f766e")).toEqual({
+      "--accent": "#0f766e",
+      "--accent-texte": "#ffffff",
+    });
+    expect(variablesAccent("#fde047")).toEqual({
+      "--accent": "#fde047",
+      "--accent-texte": "#000000",
+    });
   });
 
   it("garde la couleur sans texte quand elle n'est pas lisible par texteSur", () => {
-    expect(variablesAccent("pas-une-couleur")).toEqual({ "--accent": "pas-une-couleur" });
+    expect(variablesAccent("pas-une-couleur")).toEqual({
+      "--accent": "pas-une-couleur",
+    });
   });
 });
