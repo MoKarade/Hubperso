@@ -80,10 +80,11 @@ jobs:
         with:
           node-version-file: ${{ inputs.fichier-version-node }}
           cache: npm
-      # `npm ci` et non `npm install` : le lockfile fait autorité.
+      # `npm ci` et non `npm install` : le lockfile fait autorité. `--ignore-scripts` : un script
+      # d'installation de paquet tournerait avec les droits du runner (même règle que ci.yml, [CI-IGNORE-SCRIPTS]).
       - name: Dépendances
         if: steps.voie.outputs.rapide != 'true'
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Portes
         if: steps.voie.outputs.rapide != 'true'
         env:
@@ -104,7 +105,7 @@ jobs:
           node-version-file: ${{ inputs.fichier-version-node }}
           cache: npm
       - name: Dépendances
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Contrôles lourds (mutation, E2E)
         env:
           COMMANDE: ${{ inputs.commande-lourds }}
