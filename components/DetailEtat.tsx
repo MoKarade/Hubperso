@@ -27,11 +27,7 @@ export function DetailProbleme({
         {/* Une source sans URL n'a pas d'endpoint à montrer : le dire, plutôt que de
             rendre un <code> vide qui se lit comme une adresse illisible. */}
         Endpoint interrogé :{" "}
-        {summaryUrl ? (
-          <code>{summaryUrl}</code>
-        ) : (
-          <em>aucun (non configuré)</em>
-        )}
+        {summaryUrl ? <code>{summaryUrl}</code> : <em>aucun (non configuré)</em>}
       </p>
     </section>
   );
@@ -43,8 +39,8 @@ export function BandeauPerime() {
     <div className="bandeau" role="alert">
       <Icone nom="alerte" className="bandeau__icone" />
       <span className="bandeau__label">
-        L’app n’a pas répondu à temps — ceci est le dernier résumé connu, pas
-        l’état courant.
+        L’app n’a pas répondu à temps — ceci est le dernier résumé connu, pas l’état
+        courant.
       </span>
     </div>
   );
@@ -57,18 +53,12 @@ export function BandeauPerime() {
  * rapprochés qu'en coulisses. Une divergence ne se voit pas à l'écran : le widget s'affiche,
  * avec le bon contenu, sous le bon nom.
  */
-export function DetailCoherence({
-  incoherences,
-}: {
-  incoherences: Incoherence[];
-}) {
+export function DetailCoherence({ incoherences }: { incoherences: Incoherence[] }) {
   return (
     <section className="detail__bloc" aria-label="Cohérence">
       <h2 className="detail__titre">Cohérence</h2>
       {incoherences.length === 0 ? (
-        <p className="detail__vide">
-          Ce que le hub déclare et ce que l’app publie concordent.
-        </p>
+        <p className="detail__vide">Ce que le hub déclare et ce que l’app publie concordent.</p>
       ) : (
         <ul className="detail__incoherences">
           {incoherences.map((inc, i) => (
