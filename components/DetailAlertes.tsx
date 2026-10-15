@@ -8,9 +8,6 @@ import type { HubAlert } from "@mokarade/hub-contract";
 import { safeHttpUrl } from "@/lib/url";
 import { severityTone } from "@/lib/status";
 
-/** Plafond du contrat : affiché dans le titre (« 2/10 »). */
-const ALERTES_MAX = 10;
-
 function AlerteDetaillee({ alerte }: { alerte: HubAlert }) {
   const href = safeHttpUrl(alerte.href);
   const contenu = (
@@ -26,7 +23,12 @@ function AlerteDetaillee({ alerte }: { alerte: HubAlert }) {
   return (
     <li className="alert">
       {href ? (
-        <a className="alert__link" href={href} target="_blank" rel="noreferrer noopener">
+        <a
+          className="alert__link"
+          href={href}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
           {contenu}
         </a>
       ) : (
@@ -39,11 +41,11 @@ function AlerteDetaillee({ alerte }: { alerte: HubAlert }) {
 export function DetailAlertes({ alerts }: { alerts: HubAlert[] }) {
   return (
     <section className="detail__bloc" aria-label="Alertes">
-      <h2 className="detail__titre">
-        Alertes ({alerts.length}/{ALERTES_MAX})
-      </h2>
+      <h2 className="detail__titre">Alertes ({alerts.length})</h2>
       {alerts.length === 0 ? (
-        <p className="detail__vide">Aucune alerte — c’est une bonne nouvelle.</p>
+        <p className="detail__vide">
+          Aucune alerte — c’est une bonne nouvelle.
+        </p>
       ) : (
         <ul className="alerts">
           {alerts.map((a, i) => (

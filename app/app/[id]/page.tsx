@@ -29,7 +29,10 @@ import { ActionList } from "@/components/ActionList";
 import { DetailMetriques } from "@/components/DetailMetriques";
 import { DetailAlertes } from "@/components/DetailAlertes";
 import { DetailCouts } from "@/components/DetailCouts";
-import { DetailRecommandation, DetailSections } from "@/components/DetailContenu";
+import {
+  DetailRecommandation,
+  DetailSections,
+} from "@/components/DetailContenu";
 import {
   BandeauPerime,
   DetailCoherence,
@@ -66,9 +69,9 @@ export default async function DetailAppPage({
 
   // La cohérence se juge sur l'ENSEMBLE (une période de coût n'est incomparable que par
   // rapport aux autres apps), puis on ne garde que ce qui concerne celle-ci.
-  const incoherences = verifierConstellation(await fetchAllSummaries(getSources())).filter(
-    (inc) => inc.source === source.id,
-  );
+  const incoherences = verifierConstellation(
+    await fetchAllSummaries(getSources()),
+  ).filter((inc) => inc.source === source.id);
   const nom = summary?.app.name ?? source.name;
   // Le pendant de la carte : couleur de l'app et texte lisible dessus, CALCULÉ (`lib/carte.ts`).
   const accent = variablesAccent(summary?.app.color);
@@ -77,7 +80,10 @@ export default async function DetailAppPage({
   // Chaque bloc vit dans son composant (`components/Detail*.tsx`) : cette fonction ne fait
   // que la garde, les fetchs et l'ordre des blocs.
   return (
-    <main className="page page--app" style={accent as React.CSSProperties | undefined}>
+    <main
+      className="page page--app"
+      style={accent as React.CSSProperties | undefined}
+    >
       <header className="page__head">
         <div>
           <p className="page__eyebrow">hubperso.com</p>
@@ -93,11 +99,15 @@ export default async function DetailAppPage({
               Ouvrir l’app ↗
             </a>
           )}
-          <Link href="/" className="btn">← Hub</Link>
+          <Link href="/" className="btn">
+            ← Hub
+          </Link>
         </div>
       </header>
 
-      {!summary && <DetailProbleme result={result} summaryUrl={source.summaryUrl} />}
+      {!summary && (
+        <DetailProbleme result={result} summaryUrl={source.summaryUrl} />
+      )}
 
       {summary && (
         <>
@@ -112,7 +122,9 @@ export default async function DetailAppPage({
 
           {summary.actions.length > 0 && (
             <section className="detail__bloc" aria-label="Actions">
-              <h2 className="detail__titre">Actions ({summary.actions.length}/6)</h2>
+              <h2 className="detail__titre">
+                Actions ({summary.actions.length})
+              </h2>
               {/* Passe par ActionList plutôt que de refaire le rendu à la main : cette page
                   rendait TOUTE action en lien, `trigger` compris — donc un endpoint fait
                   pour un POST ouvert en GET, qui ne déclenche rien tout en ayant l'air de
