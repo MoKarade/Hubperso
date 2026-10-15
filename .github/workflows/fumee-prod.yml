@@ -23,7 +23,7 @@ jobs:
     if: >-
       github.event.deployment_status.state == 'success' &&
       github.event.deployment_status.environment == 'Production'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
     timeout-minutes: 10
     permissions:
       contents: read
