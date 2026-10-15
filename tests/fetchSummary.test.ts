@@ -66,9 +66,13 @@ describe("fetchSummary", () => {
   it("dit les DEUX manques d'un coup plutôt qu'en cascade", async () => {
     // Sinon la seconde cause n'apparaît qu'une fois la première réparée : on corrige le
     // jeton, on relance, et on découvre l'URL (leçon n° 8 du CLAUDE.md).
-    const res = await fetchSummary(source({ summaryUrl: null, token: null }), okFetch());
+    const res = await fetchSummary(
+      source({ summaryUrl: null, token: null }),
+      okFetch(),
+    );
     expect(res.state).toBe("unconfigured");
-    if (res.state === "unconfigured") expect(res.manque).toEqual(["url", "jeton"]);
+    if (res.state === "unconfigured")
+      expect(res.manque).toEqual(["url", "jeton"]);
   });
 
   it("CONTRÔLE NÉGATIF : avec URL et jeton, la requête PART", async () => {
@@ -107,7 +111,10 @@ describe("fetchSummary", () => {
 
   it("unreachable sur 5xx", async () => {
     const res = await fetchSummary(source(), jsonFetch(500, { error: "boom" }));
-    expect(res).toMatchObject({ state: "unreachable", detail: "HTTP 500" });
+    expect(res).toMatchObject({
+      state: "unreachable",
+      detail: "l’app a répondu avec une erreur",
+    });
   });
 
   it("unreachable si le fetch jette (réseau coupé)", async () => {
@@ -116,7 +123,8 @@ describe("fetchSummary", () => {
     }) as unknown as typeof fetch;
     const res = await fetchSummary(source(), spy);
     expect(res).toMatchObject({ state: "unreachable" });
-    if (res.state === "unreachable") expect(res.detail).toContain("ECONNREFUSED");
+    if (res.state === "unreachable")
+      expect(res.detail).toBe("l’app ne répond pas");
   });
 
   it("unreachable avec détail « délai dépassé » sur TimeoutError", async () => {
@@ -125,7 +133,8 @@ describe("fetchSummary", () => {
     }) as unknown as typeof fetch;
     const res = await fetchSummary(source(), spy);
     expect(res.state).toBe("unreachable");
-    if (res.state === "unreachable") expect(res.detail).toContain("délai dépassé");
+    if (res.state === "unreachable")
+      expect(res.detail).toContain("délai dépassé");
   });
 
   it("invalid si le JSON ne respecte pas le contrat", async () => {
@@ -147,7 +156,10 @@ describe("fetchSummary", () => {
         headers: { "content-type": "text/html" },
       })) as unknown as typeof fetch;
     const res = await fetchSummary(source(), spy);
-    expect(res).toMatchObject({ state: "invalid" });
+    expect(res).toMatchObject({
+      state: "invalid",
+      detail: "l’app a renvoyé une réponse illisible",
+    });
   });
 
   it("préserve la source dans le résultat", async () => {
@@ -220,8 +232,14 @@ describe("fetchSummary — résilience (dernier bon résumé)", () => {
 
 describe("fetchAllSummaries", () => {
   it("interroge toutes les sources et conserve l'ordre", async () => {
-    const sources = [source({ id: "financeai" }), source({ id: "driveai", token: null })];
-    const results = await fetchAllSummaries(sources, jsonFetch(200, validSummary()));
+    const sources = [
+      source({ id: "financeai" }),
+      source({ id: "driveai", token: null }),
+    ];
+    const results = await fetchAllSummaries(
+      sources,
+      jsonFetch(200, validSummary()),
+    );
     expect(results).toHaveLength(2);
     expect(results[0]?.state).toBe("ok");
     expect(results[1]?.state).toBe("unconfigured"); // driveai sans jeton
@@ -243,7 +261,10 @@ describe("contrat trop récent — le seul échec qui n'est pas la faute de l'ap
   });
 
   it("un vrai payload hors contrat reste `invalid`", async () => {
-    const casse = { ...validSummary(), app: { ...validSummary().app, color: "rouge" } };
+    const casse = {
+      ...validSummary(),
+      app: { ...validSummary().app, color: "rouge" },
+    };
     const res = await fetchSummary(source(), jsonFetch(200, casse));
     expect(res.state).toBe("invalid");
   });
