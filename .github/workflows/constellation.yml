@@ -20,7 +20,7 @@ permissions:
 jobs:
   verifier:
     name: Cohérence hub ↔ apps
-    runs-on: [self-hosted, pc-marc]
+    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
     # Cinq apps derrière des réveils à froid, 9 s de budget chacune : large, mais borné.
     # Sans plafond le défaut GitHub est de SIX HEURES.
     timeout-minutes: 8
