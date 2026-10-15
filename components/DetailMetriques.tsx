@@ -28,12 +28,7 @@ function MetriqueDetaillee({
   // L'historique de CETTE métrique. Vide = mémoire encore jeune, jamais une courbe
   // inventée : la ligne le dit en toutes lettres.
   const serie = serieMetrique(historique, metrique.label);
-  const evolution = variation(
-    historique,
-    metrique.label,
-    FENETRE_VARIATION_MS,
-    maintenantMs,
-  );
+  const evolution = variation(historique, metrique.label, FENETRE_VARIATION_MS, maintenantMs);
   const note = evolution ? noteEvolutionDetail(evolution) : null;
   const fige = inchangeSignificatif(historique, metrique.label, maintenantMs);
   return (
@@ -42,17 +37,12 @@ function MetriqueDetaillee({
         <span className="metric__label">{metrique.label}</span>
         <span
           className="metric__value"
-          data-tone={
-            metrique.severity ? severityTone(metrique.severity) : undefined
-          }
+          data-tone={metrique.severity ? severityTone(metrique.severity) : undefined}
         >
           {formatMetricValue(metrique)}
         </span>
         {metrique.trend !== undefined && (
-          <span
-            className="metric__trend"
-            data-dir={metrique.trend >= 0 ? "up" : "down"}
-          >
+          <span className="metric__trend" data-dir={metrique.trend >= 0 ? "up" : "down"}>
             {formatTrend(metrique.trend)}
           </span>
         )}
@@ -67,9 +57,7 @@ function MetriqueDetaillee({
           <span className="detail__attente">pas encore d’historique</span>
         )}
         {fige !== null && (
-          <span className="detail__fige">
-            inchangé depuis {formatDuree(fige)}
-          </span>
+          <span className="detail__fige">inchangé depuis {formatDuree(fige)}</span>
         )}
       </p>
     </li>
@@ -87,7 +75,9 @@ export function DetailMetriques({
 }) {
   return (
     <section className="detail__bloc" aria-label="Métriques">
-      <h2 className="detail__titre">Métriques ({metrics.length})</h2>
+      <h2 className="detail__titre">
+        Métriques ({metrics.length})
+      </h2>
       {metrics.length === 0 ? (
         <p className="detail__vide">Cette app ne publie aucune métrique.</p>
       ) : (

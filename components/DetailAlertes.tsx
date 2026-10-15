@@ -23,12 +23,7 @@ function AlerteDetaillee({ alerte }: { alerte: HubAlert }) {
   return (
     <li className="alert">
       {href ? (
-        <a
-          className="alert__link"
-          href={href}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
+        <a className="alert__link" href={href} target="_blank" rel="noreferrer noopener">
           {contenu}
         </a>
       ) : (
@@ -41,11 +36,11 @@ function AlerteDetaillee({ alerte }: { alerte: HubAlert }) {
 export function DetailAlertes({ alerts }: { alerts: HubAlert[] }) {
   return (
     <section className="detail__bloc" aria-label="Alertes">
-      <h2 className="detail__titre">Alertes ({alerts.length})</h2>
+      <h2 className="detail__titre">
+        Alertes ({alerts.length})
+      </h2>
       {alerts.length === 0 ? (
-        <p className="detail__vide">
-          Aucune alerte — c’est une bonne nouvelle.
-        </p>
+        <p className="detail__vide">Aucune alerte — c’est une bonne nouvelle.</p>
       ) : (
         <ul className="alerts">
           {alerts.map((a, i) => (
