@@ -16,6 +16,11 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // 30 s au lieu de 5 s (tests) et 10 s (préparation) : sur le robot de tests du PC chargé, avec
+    // la couverture qui ralentit tout, un test passait le délai puis passait à la relance
+    // (porte qualité, 15/10/2026). Même réglage que MemoryAI. Aucun seuil ni assertion touché.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     // Couverture (porte qualité de l'Atelier, S6) : calculée seulement avec --coverage (npm run portes).
     coverage: {
       provider: "v8",

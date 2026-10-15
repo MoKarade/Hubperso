@@ -133,14 +133,14 @@ function CorpsProbleme({ result }: { result: SummaryResult }) {
         // ne vient pas de son site web).
         return `Non branchée — ${phraseManques(result.manque)}.`;
       case "unauthorized":
-        return "Jeton refusé (401). Vérifie la valeur de x-hub-token.";
+        return "Le hub n’a pas la bonne clé pour lire cette app.";
       case "unreachable":
         return `App injoignable — ${result.detail}.`;
       case "invalid":
         return `Réponse non conforme au contrat — ${result.detail}.`;
       case "contract-too-new":
         // Le ton dit à qui est le problème : l'app va bien, c'est le hub qui est en retard.
-        return `Cette app publie la version ${result.published} du contrat ; ce hub lit jusqu’à ${result.supported}. Re-pinner le hub.`;
+        return `Cette app publie la version ${result.published} du contrat ; ce hub lit jusqu’à ${result.supported}. Le hub doit être mis à jour pour lire cette app.`;
       default:
         return "";
     }
