@@ -121,7 +121,7 @@ describe("DetailCouts", () => {
         },
       }),
     );
-    expect(texte(html)).toContain("(mois — converti depuis USD)");
+    expect(texte(html)).toContain("(ce mois-ci — converti depuis USD)");
     expect(texte(html)).toContain("Appels — 150 / 100 appels");
     expect(html).toContain("width:100%");
     expect(html).toContain("couts__barfill--warn");
