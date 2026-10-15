@@ -3,7 +3,7 @@
 Dashboard du hub perso (`hubperso.com`). Il **consomme** le contrat
 [`@mokarade/hub-contract`](https://github.com/MoKarade/hub-contract) (il ne le définit pas) :
 fetch server-side des `GET .../hub/summary`, validation, rendu de widgets 100 % génériques.
-**Stack** : Next.js 15 (App Router) · Neon + Drizzle · Auth.js v5 · Vitest.
+**Stack** : Next.js 16 (App Router) · Neon + Drizzle · Auth.js v5 · Vitest.
 
 Ce fichier se charge à **chaque session** : il reste ≤ 60 lignes (`tests/claudeMd.test.ts`).
 Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — le lire par section
@@ -33,7 +33,7 @@ Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — l
   Ne jamais ajouter de route de données aux exclusions du matcher de `middleware.ts`.
 - **Liens** : href cliquable seulement via `safeHttpUrl`. **Dates** : `timeZone: FUSEAU`.
 - **Coûts** : somme par période, jamais de total global.
-- **Git** : PR `--base main` explicite, jamais `--force` sur `main`, jamais `--no-verify`. Fusion : `gh pr create --base main …` puis `gh pr merge --auto --squash <n>` (GitHub fusionne seul quand les contrôles requis sont verts ; jamais de fusion à la main). Sauf `.github/**`, `drizzle/**`, secrets : PR NON armée, l'approbation de Marc (CODEOWNERS) est requise.
+- **Git** : PR `--base main` explicite, jamais `--force` sur `main`, jamais `--no-verify`. Fusion : dépôt privé, donc pas de `gh pr merge --auto` ; Mergify (installation en cours au 15/10/2026) fusionne en squash une PR sortie du brouillon quand tous les contrôles sont verts ; jamais de fusion à la main. Chemins de `.github/CODEOWNERS` (`.github/`, `scripts/hooks/`, `qualite/`, `vercel.json`, `drizzle/`, secrets) : l'approbation de Marc est requise.
 - **Déploiement** : CI verte ≠ en ligne ; vérifier le déploiement `READY` après un merge qui change ce qui est servi.
 - **Doc** : mettre à jour la doc touchée dans la MÊME PR que le code.
 
