@@ -6,7 +6,7 @@
 
 import type { HubQuota, HubUsage } from "@mokarade/hub-contract";
 import { barreQuota, libelleQuota } from "@/lib/carte";
-import { quotaRatio, toCad } from "@/lib/usage";
+import { PERIOD_LABEL, quotaRatio, toCad } from "@/lib/usage";
 import { formatCad, formatDateTime } from "@/lib/format";
 
 function QuotaDetaille({ quota }: { quota: HubQuota }) {
@@ -35,7 +35,7 @@ function CoutPeriode({ cost }: { cost: NonNullable<HubUsage["cost"]> }) {
     <p className="detail__cout">
       {formatCad(toCad(cost.amount, cost.currency))}{" "}
       <span className="detail__periode">
-        ({cost.period}
+        ({PERIOD_LABEL[cost.period]}
         {cost.currency === "USD" && " — converti depuis USD"})
       </span>
     </p>
