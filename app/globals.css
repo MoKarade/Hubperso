@@ -1149,6 +1149,20 @@ a:focus-visible,
   color: var(--text);
   font: inherit;
 }
+/* Libellé toujours visible au-dessus du champ (le texte d'exemple disparaît à la frappe). */
+.admin__champ {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.admin__champ .admin__input {
+  flex: none;
+}
+.admin__etiquette {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
 .admin__input:focus-visible {
   outline: 2px solid var(--info);
   outline-offset: 1px;
@@ -1585,6 +1599,9 @@ a:focus-visible,
   /* ADMINISTRATION : champs et boutons d'ajout sur toute la largeur, actions d'une
      personne partagées d'un bord à l'autre (même méthode que login/accueil). */
   .admin__input {
+    flex: 1 1 100%;
+  }
+  .admin__champ {
     flex: 1 1 100%;
   }
   .admin__ajout .btn {
