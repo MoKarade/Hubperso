@@ -184,6 +184,8 @@ describe("DetailProbleme et BandeauPerime", () => {
     const html = renderToStaticMarkup(h(BandeauPerime));
     expect(html).toContain('role="alert"');
     expect(texte(html)).toContain("dernier résumé connu");
+    // Le triangle du hub (un dessin), pas un « ! » tapé au clavier.
+    expect(html).toContain("<svg");
   });
 });
 
