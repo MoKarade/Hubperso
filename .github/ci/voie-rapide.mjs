@@ -16,7 +16,7 @@ import { pathToFileURL } from "node:url";
 export const MAX_FICHIERS = 3000;
 
 const TOUJOURS_EXECUTES_NOMS = new Set(["package.json", "package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb",
-  ".nvmrc", ".node-version", ".tool-versions", "vercel.json", "dependabot.yml", "dependabot.yaml", "codeowners", "auto-merge.json"]);
+  ".nvmrc", ".node-version", ".tool-versions", "vercel.json", "dependabot.yml", "dependabot.yaml", "codeowners", ".mergify.yml"]);
 
 const nettoyer = (chemin) => String(chemin).replace(/\\/g, "/").replace(/^\.\//, "");
 
