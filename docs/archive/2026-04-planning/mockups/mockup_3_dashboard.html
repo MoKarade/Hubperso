@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup 3 — Self-hosted Dashboard (Homepage / Dashy style)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  background: #1c1f26;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(99,102,241,0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(34,197,94,0.05) 0px, transparent 50%);
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 32px;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #2d3748;
+}
+.greeting h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.greeting .sub { font-size: 13px; color: #718096; }
+.clock {
+  font-size: 32px;
+  color: #22c55e;
+  font-weight: 300;
+  letter-spacing: 2px;
+}
+
+.search-strip {
+  background: #252a36;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 18px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.search-strip-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #6366f1, #22c55e);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: sans-serif;
+  font-size: 18px;
+}
+.search-strip input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 16px;
+  color: #fff;
+  outline: none;
+}
+.search-strip input::placeholder { color: #4a5568; }
+
+.section-label {
+  font-size: 11px;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  margin-top: 28px;
+}
+
+/* Tile grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.tile {
+  background: #252a36;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.tile:hover {
+  border-color: #6366f1;
+  transform: translateY(-1px);
+}
+.tile-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.tile-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.tile-icon.green { background: rgba(34,197,94,0.15); color: #22c55e; }
+.tile-icon.blue { background: rgba(99,102,241,0.15); color: #6366f1; }
+.tile-icon.orange { background: rgba(251,146,60,0.15); color: #fb923c; }
+.tile-icon.purple { background: rgba(168,85,247,0.15); color: #a855f7; }
+.tile-icon.red { background: rgba(239,68,68,0.15); color: #ef4444; }
+.tile-icon.cyan { background: rgba(34,211,238,0.15); color: #22d3ee; }
+.tile-name {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 600;
+  font-family: sans-serif;
+}
+.tile-desc {
+  font-size: 12px;
+  color: #718096;
+  margin-bottom: 10px;
+  font-family: sans-serif;
+}
+.tile-status {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: rgba(34,197,94,0.12);
+  color: #22c55e;
+  border-radius: 4px;
+  display: inline-block;
+  font-family: sans-serif;
+}
+.tile-status.warn {
+  background: rgba(251,146,60,0.12);
+  color: #fb923c;
+}
+.tile-status.error {
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+.tile-stat {
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  font-family: sans-serif;
+  margin-top: 4px;
+}
+.tile-versions {
+  font-size: 11px;
+  color: #4a5568;
+  font-family: sans-serif;
+}
+.tile-versions strong { color: #22c55e; }
+
+/* AI Insights row */
+.insights-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.insight-tile {
+  background: linear-gradient(135deg, #252a36, #1c1f26);
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 3px solid;
+}
+.insight-tile.warn { border-left-color: #fb923c; }
+.insight-tile.info { border-left-color: #22d3ee; }
+.insight-tile.alert { border-left-color: #ef4444; }
+.insight-tile-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+.insight-tile-text {
+  font-size: 13px;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+/* System health bar */
+.health-bar {
+  background: #252a36;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 14px 22px;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.health-label { font-size: 11px; color: #4a5568; text-transform: uppercase; letter-spacing: 1.5px; }
+.health-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.health-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+.health-dot.warn { background: #fb923c; }
+.health-dot.error { background: #ef4444; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="greeting">
+    <h1>~/marc/hub</h1>
+    <div class="sub">★ All systems operational · Sync: 2 min ago · ★ 47.7 GB RAM free</div>
+  </div>
+  <div class="clock" id="clock">08:42:17</div>
+</header>
+
+<div class="search-strip">
+  <div class="search-strip-icon">★</div>
+  <input placeholder="$ ask hub --query 'combien j ai depense en restos en mars ?'">
+</div>
+
+<div class="section-label">★ AI Insights — last scan 2h ago</div>
+<div class="insights-row">
+  <div class="insight-tile alert">
+    <div class="insight-tile-label">Anomaly detected</div>
+    <div class="insight-tile-text">Netflix subscription billed 2x this month — $17.99 each</div>
+  </div>
+  <div class="insight-tile warn">
+    <div class="insight-tile-label">Pattern shift</div>
+    <div class="insight-tile-text">Restaurant spending +45% vs 3-month average</div>
+  </div>
+  <div class="insight-tile info">
+    <div class="insight-tile-label">Travel detected</div>
+    <div class="insight-tile-text">Trip to Seattle this weekend — 487 km tracked</div>
+  </div>
+</div>
+
+<div class="section-label">★ Data sources</div>
+<div class="grid">
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon green">$</div>
+      <div class="tile-name">Finances</div>
+    </div>
+    <div class="tile-desc">Plaid · 4 accounts</div>
+    <div class="tile-stat">$12 480</div>
+    <div class="tile-status">★ live · synced 12m ago</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon blue">◉</div>
+      <div class="tile-name">Localisation</div>
+    </div>
+    <div class="tile-desc">Google Timeline</div>
+    <div class="tile-stat">487 km</div>
+    <div class="tile-status">★ live · this month</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon orange">@</div>
+      <div class="tile-name">Emails</div>
+    </div>
+    <div class="tile-desc">Gmail · indexed</div>
+    <div class="tile-stat">23 412</div>
+    <div class="tile-status">★ live · last sync 2h ago</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon purple">▢</div>
+      <div class="tile-name">Photos</div>
+    </div>
+    <div class="tile-desc">Google Photos · CLIP indexed</div>
+    <div class="tile-stat">14 230</div>
+    <div class="tile-status warn">▲ batch indexing 78%</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon cyan">⌚</div>
+      <div class="tile-name">Calendar</div>
+    </div>
+    <div class="tile-desc">Google Calendar</div>
+    <div class="tile-stat">12</div>
+    <div class="tile-status">★ events this week</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon red">▥</div>
+      <div class="tile-name">Documents</div>
+    </div>
+    <div class="tile-desc">PDFs · contracts · invoices</div>
+    <div class="tile-stat">847</div>
+    <div class="tile-status">★ OCR'd</div>
+  </div>
+</div>
+
+<div class="section-label">★ My apps</div>
+<div class="grid">
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon blue">⌖</div>
+      <div class="tile-name">Trajets Google Earth</div>
+    </div>
+    <div class="tile-desc">3D map of all your trips</div>
+    <div class="tile-versions">v1 · v2 · <strong>v3 (live)</strong></div>
+    <div class="tile-status" style="margin-top:8px;">★ port :8011</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon green">€</div>
+      <div class="tile-name">Finance perso</div>
+    </div>
+    <div class="tile-desc">Accounts · subs · stocks</div>
+    <div class="tile-versions">v1 · v2 · <strong>v3 (live)</strong></div>
+    <div class="tile-status" style="margin-top:8px;">★ port :8012</div>
+  </div>
+</div>
+
+<div class="section-label">★ Quick actions</div>
+<div class="grid">
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon purple">⚙</div>
+      <div class="tile-name">Settings</div>
+    </div>
+    <div class="tile-desc">Hub configuration</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon cyan">▦</div>
+      <div class="tile-name">Backups</div>
+    </div>
+    <div class="tile-desc">Last: today 04:00</div>
+    <div class="tile-status">★ healthy</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon orange">↻</div>
+      <div class="tile-name">Logs</div>
+    </div>
+    <div class="tile-desc">View recent activity</div>
+  </div>
+  <div class="tile">
+    <div class="tile-header">
+      <div class="tile-icon red">×</div>
+      <div class="tile-name">Right to forget</div>
+    </div>
+    <div class="tile-desc">Delete data permanently</div>
+  </div>
+</div>
+
+<div class="health-bar">
+  <span class="health-label">★ Hub Health</span>
+  <span class="health-item"><span class="health-dot"></span>Backend</span>
+  <span class="health-item"><span class="health-dot"></span>DB Postgres</span>
+  <span class="health-item"><span class="health-dot"></span>Ollama (Qwen 2.5 14B)</span>
+  <span class="health-item"><span class="health-dot warn"></span>Photos worker</span>
+  <span class="health-item"><span class="health-dot"></span>Tunnel</span>
+  <span class="health-item"><span class="health-dot"></span>Backup</span>
+</div>
+
+<script>
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup 1 — Modern Web App (React/Tailwind)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0a0a0a;
+  color: #e5e5e5;
+  min-height: 100vh;
+  display: flex;
+}
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #111111;
+  border-right: 1px solid #222;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+.logo-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+.nav-section { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 12px 8px; }
+.nav-item {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #a3a3a3;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.15s;
+}
+.nav-item:hover { background: #1a1a1a; color: #fff; }
+.nav-item.active { background: #1f1f1f; color: #fff; }
+.nav-icon { width: 16px; opacity: 0.6; }
+.nav-item.active .nav-icon { opacity: 1; }
+
+/* Main */
+.main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.topbar h1 { font-size: 24px; font-weight: 600; color: #fff; }
+.topbar-right { display: flex; gap: 12px; align-items: center; }
+.search-bar {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  padding: 8px 14px;
+  border-radius: 8px;
+  width: 320px;
+  color: #e5e5e5;
+  font-size: 14px;
+}
+.search-bar::placeholder { color: #666; }
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px;
+}
+
+/* AI Search Card */
+.ai-search {
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08));
+  border: 1px solid #2a2a3e;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+.ai-search-label { font-size: 12px; color: #8b5cf6; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+.ai-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #fff;
+  padding: 4px 0;
+  outline: none;
+}
+.ai-suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.ai-chip {
+  font-size: 12px;
+  padding: 5px 10px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+  color: #a3a3a3;
+  cursor: pointer;
+}
+.ai-chip:hover { color: #fff; border-color: #6366f1; }
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.stat-card {
+  background: #111;
+  border: 1px solid #222;
+  padding: 18px;
+  border-radius: 10px;
+}
+.stat-label { font-size: 12px; color: #999; margin-bottom: 8px; }
+.stat-value { font-size: 24px; font-weight: 600; color: #fff; }
+.stat-delta { font-size: 12px; margin-top: 6px; }
+.stat-delta.up { color: #ef4444; }
+.stat-delta.down { color: #10b981; }
+
+/* Two-column */
+.two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.panel {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 20px;
+}
+.panel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.panel-title { font-size: 15px; font-weight: 600; color: #fff; }
+.panel-action { font-size: 12px; color: #6366f1; cursor: pointer; }
+
+/* Chart placeholder */
+.chart-area {
+  height: 200px;
+  background: linear-gradient(180deg, rgba(99,102,241,0.15), transparent);
+  border-radius: 6px;
+  display: flex;
+  align-items: end;
+  justify-content: space-around;
+  padding: 12px;
+}
+.bar { width: 14px; background: linear-gradient(180deg, #6366f1, #4f46e5); border-radius: 3px 3px 0 0; }
+
+/* Insights list */
+.insight {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+.insight:last-child { border-bottom: none; }
+.insight-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.insight-content { flex: 1; }
+.insight-title { font-size: 13px; color: #fff; margin-bottom: 2px; }
+.insight-meta { font-size: 11px; color: #666; }
+
+/* Apps tiles */
+.apps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.app-tile {
+  background: #1a1a1a;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.app-tile:hover { border-color: #6366f1; }
+.app-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.app-version { font-size: 11px; color: #6366f1; }
+.app-desc { font-size: 11px; color: #999; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo"><span class="logo-dot"></span> Hub</div>
+
+  <div class="nav-section">Vue d'ensemble</div>
+  <div class="nav-item active"><span class="nav-icon">▦</span> Dashboard</div>
+  <div class="nav-item"><span class="nav-icon">⌕</span> Recherche IA</div>
+  <div class="nav-item"><span class="nav-icon">★</span> Insights</div>
+
+  <div class="nav-section">Sources</div>
+  <div class="nav-item"><span class="nav-icon">$</span> Finances</div>
+  <div class="nav-item"><span class="nav-icon">◉</span> Localisation</div>
+  <div class="nav-item"><span class="nav-icon">✉</span> Emails</div>
+  <div class="nav-item"><span class="nav-icon">▢</span> Photos</div>
+
+  <div class="nav-section">Mes apps</div>
+  <div class="nav-item"><span class="nav-icon">⌖</span> Trajets v2</div>
+  <div class="nav-item"><span class="nav-icon">€</span> Finance v3</div>
+
+  <div class="nav-section" style="margin-top: auto;">Système</div>
+  <div class="nav-item"><span class="nav-icon">⚙</span> Paramètres</div>
+  <div class="nav-item"><span class="nav-icon">♥</span> Santé du hub</div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>Bonjour Marc</h1>
+    <div class="topbar-right">
+      <input class="search-bar" placeholder="Rechercher partout...">
+      <div class="user-avatar">M</div>
+    </div>
+  </div>
+
+  <div class="ai-search">
+    <div class="ai-search-label">★ Demande à ton hub</div>
+    <input class="ai-search-input" placeholder="Combien j'ai dépensé en restos en mars ?">
+    <div class="ai-suggestions">
+      <div class="ai-chip">Mes abos doublons</div>
+      <div class="ai-chip">Trajets de la semaine</div>
+      <div class="ai-chip">Email du syndic</div>
+      <div class="ai-chip">Photos à la plage</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Solde total</div>
+      <div class="stat-value">12 480 $</div>
+      <div class="stat-delta down">↓ -3.2% ce mois</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dépenses (avril)</div>
+      <div class="stat-value">2 145 $</div>
+      <div class="stat-delta up">↑ +12% vs mars</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Km parcourus</div>
+      <div class="stat-value">487 km</div>
+      <div class="stat-delta up">↑ +20% vs mars</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Photos indexées</div>
+      <div class="stat-value">14 230</div>
+      <div class="stat-delta down">142 ce mois</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Dépenses sur 30 jours</div>
+        <div class="panel-action">Voir détails →</div>
+      </div>
+      <div class="chart-area">
+        <div class="bar" style="height: 40%"></div>
+        <div class="bar" style="height: 65%"></div>
+        <div class="bar" style="height: 30%"></div>
+        <div class="bar" style="height: 80%"></div>
+        <div class="bar" style="height: 50%"></div>
+        <div class="bar" style="height: 70%"></div>
+        <div class="bar" style="height: 45%"></div>
+        <div class="bar" style="height: 90%"></div>
+        <div class="bar" style="height: 60%"></div>
+        <div class="bar" style="height: 35%"></div>
+        <div class="bar" style="height: 75%"></div>
+        <div class="bar" style="height: 55%"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">★ Insights pro-actifs</div>
+        <div class="panel-action">Tout voir</div>
+      </div>
+      <div class="insight">
+        <div class="insight-icon">!</div>
+        <div class="insight-content">
+          <div class="insight-title">Abo Netflix doublon détecté</div>
+          <div class="insight-meta">2 prélèvements ce mois, 17.99$ chacun</div>
+        </div>
+      </div>
+      <div class="insight">
+        <div class="insight-icon">↑</div>
+        <div class="insight-content">
+          <div class="insight-title">Dépenses restos +45%</div>
+          <div class="insight-meta">vs ta moyenne 3 mois</div>
+        </div>
+      </div>
+      <div class="insight">
+        <div class="insight-icon">◉</div>
+        <div class="insight-content">
+          <div class="insight-title">Voyage Seattle ce week-end ?</div>
+          <div class="insight-meta">487 km vers le nord détectés</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top: 16px;">
+    <div class="panel-header">
+      <div class="panel-title">Mes apps embarquées</div>
+      <div class="panel-action">Gérer</div>
+    </div>
+    <div class="apps-grid">
+      <div class="app-tile">
+        <div class="app-name">Trajets Google Earth</div>
+        <div class="app-version">v1 · v2 · <strong>v3 (live)</strong></div>
+        <div class="app-desc">Visualisation 3D des trajets sur globe</div>
+      </div>
+      <div class="app-tile">
+        <div class="app-name">Finance perso</div>
+        <div class="app-version">v1 · v2 · <strong>v3 (live)</strong></div>
+        <div class="app-desc">Comptes, abos, actions, dépenses</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup 2 — Streamlit-style (Python all-in-one)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Source Sans Pro', -apple-system, sans-serif;
+  background: #ffffff;
+  color: #262730;
+  display: flex;
+  min-height: 100vh;
+}
+/* Streamlit-style sidebar */
+.sidebar {
+  width: 280px;
+  background: #f0f2f6;
+  padding: 24px 20px;
+  border-right: 1px solid #e6e6e6;
+}
+.sidebar h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #262730;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-section label {
+  display: block;
+  font-size: 13px;
+  color: #4b4b4b;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.select, .input-text {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0d3d9;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #262730;
+}
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+.slider-row { margin-bottom: 8px; font-size: 13px; }
+.slider-track {
+  height: 4px;
+  background: #d0d3d9;
+  border-radius: 2px;
+  position: relative;
+  margin-top: 6px;
+}
+.slider-fill {
+  height: 100%;
+  width: 60%;
+  background: #ff4b4b;
+  border-radius: 2px;
+}
+.slider-thumb {
+  width: 14px; height: 14px;
+  background: #ff4b4b;
+  border-radius: 50%;
+  position: absolute;
+  top: -5px; left: 60%;
+  transform: translateX(-50%);
+}
+.btn-primary {
+  background: #ff4b4b;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-secondary {
+  background: white;
+  color: #262730;
+  border: 1px solid #d0d3d9;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Main content */
+.main {
+  flex: 1;
+  padding: 40px 56px;
+  max-width: 1100px;
+  overflow-y: auto;
+}
+.main h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #262730;
+}
+.main .caption {
+  color: #6b6b6b;
+  margin-bottom: 28px;
+  font-size: 14px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e6e6e6;
+  margin-bottom: 24px;
+}
+.tab {
+  padding: 10px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #6b6b6b;
+  border-bottom: 2px solid transparent;
+}
+.tab.active {
+  color: #ff4b4b;
+  border-bottom-color: #ff4b4b;
+  font-weight: 600;
+}
+
+/* AI Q&A box */
+.ai-box {
+  background: #f8f9fb;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.ai-box-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #262730;
+  margin-bottom: 8px;
+}
+.ai-box-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d3d9;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.ai-result {
+  background: #e3f6e8;
+  border-left: 3px solid #28a745;
+  padding: 14px;
+  font-size: 14px;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Metrics row */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.metric {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  padding: 14px 18px;
+}
+.metric-label { font-size: 12px; color: #6b6b6b; margin-bottom: 4px; }
+.metric-value { font-size: 26px; font-weight: 700; color: #262730; }
+.metric-delta { font-size: 12px; margin-top: 4px; }
+.metric-delta.pos { color: #28a745; }
+.metric-delta.neg { color: #ff4b4b; }
+
+/* Dataframe / table */
+.df-container {
+  background: white;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+.df-header {
+  background: #f8f9fb;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b6b6b;
+  border-bottom: 1px solid #e6e6e6;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td {
+  text-align: left;
+  padding: 8px 14px;
+  border-bottom: 1px solid #f0f2f6;
+}
+th { background: #fafbfc; color: #6b6b6b; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+
+/* Plot placeholder */
+.plot {
+  background: white;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  padding: 18px;
+  margin-bottom: 28px;
+}
+.plot-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+.plot-area {
+  height: 220px;
+  background: #fafbfc;
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  align-items: end;
+  padding: 18px;
+  gap: 6px;
+}
+.plot-bar {
+  flex: 1;
+  background: linear-gradient(to top, #ff4b4b, #ff7a7a);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Expander */
+.expander {
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.expander-header {
+  background: #f8f9fb;
+  padding: 12px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.expander-body {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #4b4b4b;
+}
+
+.alert {
+  padding: 12px 16px;
+  background: #fff3cd;
+  border-left: 3px solid #ffc107;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.alert.success { background: #d4edda; border-color: #28a745; }
+.alert.danger { background: #f8d7da; border-color: #dc3545; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <h2>Personal Hub</h2>
+
+  <div class="sidebar-section">
+    <label>Source</label>
+    <select class="select">
+      <option>Toutes les sources</option>
+      <option>Finances (Plaid)</option>
+      <option>Localisation</option>
+      <option>Emails</option>
+      <option>Photos</option>
+    </select>
+  </div>
+
+  <div class="sidebar-section">
+    <label>Période</label>
+    <select class="select">
+      <option>30 derniers jours</option>
+      <option>3 derniers mois</option>
+      <option>Année en cours</option>
+      <option>Personnalisé</option>
+    </select>
+  </div>
+
+  <div class="sidebar-section">
+    <label>Filtres</label>
+    <div class="checkbox-row"><input type="checkbox" checked> Inclure subscriptions</div>
+    <div class="checkbox-row"><input type="checkbox" checked> Inclure cash</div>
+    <div class="checkbox-row"><input type="checkbox"> Mode debug</div>
+  </div>
+
+  <div class="sidebar-section">
+    <label>Seuil d'anomalie : 60%</label>
+    <div class="slider-track">
+      <div class="slider-fill"></div>
+      <div class="slider-thumb"></div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <label>Modèle IA</label>
+    <select class="select">
+      <option>Qwen 2.5 14B (rapide)</option>
+      <option>Llama 3.1 70B (précis)</option>
+    </select>
+  </div>
+
+  <button class="btn-primary" style="width: 100%;">Rafraîchir</button>
+</aside>
+
+<main class="main">
+  <h1>Personal Data Hub</h1>
+  <div class="caption">Dernière sync : il y a 2 minutes · Toutes les sources OK</div>
+
+  <div class="tabs">
+    <div class="tab active">Vue d'ensemble</div>
+    <div class="tab">Recherche IA</div>
+    <div class="tab">Finances</div>
+    <div class="tab">Trajets</div>
+    <div class="tab">Apps</div>
+    <div class="tab">Réglages</div>
+  </div>
+
+  <div class="ai-box">
+    <div class="ai-box-label">Pose une question à ton hub</div>
+    <input class="ai-box-input" placeholder="ex: combien j'ai dépensé en restos en mars ?" value="Quelle est ma plus grosse dépense ce mois ?">
+    <button class="btn-primary">Demander</button>
+    <button class="btn-secondary" style="margin-left: 8px;">Effacer</button>
+    <div class="ai-result" style="margin-top: 14px;">
+      <strong>Réponse :</strong> Ta plus grosse dépense en avril 2026 est un loyer de 1 850 $ (le 03/04). Vient ensuite un achat MSI Center à 312 $ (le 14/04).
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Solde total</div><div class="metric-value">12 480 $</div><div class="metric-delta neg">↓ -3.2%</div></div>
+    <div class="metric"><div class="metric-label">Dépenses</div><div class="metric-value">2 145 $</div><div class="metric-delta pos">↑ +12%</div></div>
+    <div class="metric"><div class="metric-label">Km</div><div class="metric-value">487</div><div class="metric-delta pos">↑ +20%</div></div>
+    <div class="metric"><div class="metric-label">Photos</div><div class="metric-value">14 230</div><div class="metric-delta">+142</div></div>
+  </div>
+
+  <div class="alert danger">★ Alerte : abonnement Netflix prélevé 2 fois ce mois (17.99 $ chacun)</div>
+  <div class="alert">★ Insight : tes dépenses restos sont +45% vs ta moyenne 3 mois</div>
+
+  <div class="plot">
+    <div class="plot-title">Dépenses par jour (30 derniers jours)</div>
+    <div class="plot-area">
+      <div class="plot-bar" style="height: 30%"></div>
+      <div class="plot-bar" style="height: 50%"></div>
+      <div class="plot-bar" style="height: 25%"></div>
+      <div class="plot-bar" style="height: 70%"></div>
+      <div class="plot-bar" style="height: 40%"></div>
+      <div class="plot-bar" style="height: 60%"></div>
+      <div class="plot-bar" style="height: 35%"></div>
+      <div class="plot-bar" style="height: 80%"></div>
+      <div class="plot-bar" style="height: 55%"></div>
+      <div class="plot-bar" style="height: 25%"></div>
+      <div class="plot-bar" style="height: 65%"></div>
+      <div class="plot-bar" style="height: 45%"></div>
+      <div class="plot-bar" style="height: 75%"></div>
+      <div class="plot-bar" style="height: 30%"></div>
+      <div class="plot-bar" style="height: 50%"></div>
+      <div class="plot-bar" style="height: 40%"></div>
+      <div class="plot-bar" style="height: 90%"></div>
+      <div class="plot-bar" style="height: 35%"></div>
+      <div class="plot-bar" style="height: 60%"></div>
+      <div class="plot-bar" style="height: 45%"></div>
+    </div>
+  </div>
+
+  <div class="df-container">
+    <div class="df-header">Dernières transactions</div>
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Catégorie</th><th>Montant</th></tr></thead>
+      <tbody>
+        <tr><td>2026-04-26</td><td>Trader Joe's</td><td>Courses</td><td>87.42 $</td></tr>
+        <tr><td>2026-04-25</td><td>Shell #4231</td><td>Carburant</td><td>54.10 $</td></tr>
+        <tr><td>2026-04-24</td><td>Netflix</td><td>Abo</td><td>17.99 $</td></tr>
+        <tr><td>2026-04-23</td><td>Olive Garden</td><td>Restau</td><td>112.50 $</td></tr>
+        <tr><td>2026-04-22</td><td>Amazon Prime</td><td>Abo</td><td>14.99 $</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="expander">
+    <div class="expander-header"><span>★ Mes apps embarquées</span><span>▼</span></div>
+    <div class="expander-body">
+      <div style="margin-bottom: 8px;">★ Trajets Google Earth — versions disponibles : v1, v2, <strong>v3 (live)</strong></div>
+      <div>★ Finance perso — versions disponibles : v1, v2, <strong>v3 (live)</strong></div>
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>
