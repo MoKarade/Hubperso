@@ -13,6 +13,8 @@ import { exigerProprietaire } from "@/lib/gardeHub";
 import { baseConfiguree } from "@/lib/db";
 import { APPS_DISPONIBLES, listerPersonnes, type PersonneAvecAcces } from "@/lib/administration";
 import { formatDateTime } from "@/lib/format";
+import { confirmationRetrait } from "@/lib/messageAdmin";
+import { BoutonAdmin } from "@/components/BoutonAdmin";
 import {
   actionAccorderAcces,
   actionAjouterPersonne,
@@ -50,9 +52,12 @@ function PersonneCarte({ personne }: { personne: PersonneAvecAcces }) {
           </form>
           <form action={actionSupprimerPersonne}>
             <input type="hidden" name="email" value={personne.email} />
-            <button type="submit" className="btn admin__btn-danger">
+            <BoutonAdmin
+              className="btn admin__btn-danger"
+              confirmation={confirmationRetrait(personne.email)}
+            >
               Retirer
-            </button>
+            </BoutonAdmin>
           </form>
         </div>
       </div>
@@ -148,19 +153,20 @@ export default async function AdministrationPage() {
       </p>
 
       <form action={actionAjouterPersonne} className="admin__ajout">
-        <input
-          type="email"
-          name="email"
-          placeholder="adresse@exemple.com"
-          required
-          className="admin__input"
-        />
-        <input
-          type="text"
-          name="nom"
-          placeholder="nom (facultatif)"
-          className="admin__input"
-        />
+        <label className="admin__champ">
+          <span className="admin__etiquette">Adresse courriel</span>
+          <input
+            type="email"
+            name="email"
+            placeholder="adresse@exemple.com"
+            required
+            className="admin__input"
+          />
+        </label>
+        <label className="admin__champ">
+          <span className="admin__etiquette">Nom (facultatif)</span>
+          <input type="text" name="nom" className="admin__input" />
+        </label>
         <button type="submit" className="btn">
           Ajouter
         </button>

@@ -12,7 +12,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { DetailMetriques } from "@/components/DetailMetriques";
 import { DetailAlertes } from "@/components/DetailAlertes";
 import { DetailCouts } from "@/components/DetailCouts";
-import { DetailRecommandation, DetailSections } from "@/components/DetailContenu";
+import {
+  DetailRecommandation,
+  DetailSections,
+} from "@/components/DetailContenu";
 import {
   BandeauPerime,
   DetailCoherence,
@@ -44,8 +47,10 @@ const releve = (decalageMs: number, valeur: number): Releve => ({
 
 describe("DetailMetriques", () => {
   it("dit qu'il n'y a aucune métrique plutôt que de rendre une liste vide", () => {
-    const html = renderToStaticMarkup(h(DetailMetriques, { metrics: [], historique: [], maintenantMs: T0 }));
-    expect(texte(html)).toContain("Métriques (0/6)");
+    const html = renderToStaticMarkup(
+      h(DetailMetriques, { metrics: [], historique: [], maintenantMs: T0 }),
+    );
+    expect(texte(html)).toContain("Métriques (0)");
     expect(texte(html)).toContain("Cette app ne publie aucune métrique.");
     expect(html).not.toContain("detail__metriques");
   });
@@ -53,12 +58,20 @@ describe("DetailMetriques", () => {
   it("sans mémoire : « pas encore d’historique », jamais une courbe inventée", () => {
     const html = renderToStaticMarkup(
       h(DetailMetriques, {
-        metrics: [{ label: "Valeur nette", value: 42, format: "number", severity: "warn", trend: -2 }],
+        metrics: [
+          {
+            label: "Valeur nette",
+            value: 42,
+            format: "number",
+            severity: "warn",
+            trend: -2,
+          },
+        ],
         historique: [],
         maintenantMs: T0,
       }),
     );
-    expect(texte(html)).toContain("Métriques (1/6)");
+    expect(texte(html)).toContain("Métriques (1)");
     expect(texte(html)).toContain("pas encore d’historique");
     expect(html).toContain('data-tone="warn"');
     expect(html).toContain('class="metric__trend" data-dir="down"');
@@ -80,7 +93,7 @@ describe("DetailMetriques", () => {
 describe("DetailAlertes", () => {
   it("aucune alerte : le dit comme une bonne nouvelle", () => {
     const html = renderToStaticMarkup(h(DetailAlertes, { alerts: [] }));
-    expect(texte(html)).toContain("Alertes (0/10)");
+    expect(texte(html)).toContain("Alertes (0)");
     expect(texte(html)).toContain("Aucune alerte — c’est une bonne nouvelle.");
   });
 
@@ -88,17 +101,27 @@ describe("DetailAlertes", () => {
     const html = renderToStaticMarkup(
       h(DetailAlertes, {
         alerts: [
-          { label: "Synchro en retard", severity: "warn", href: "https://finance.hubperso.com/synchro" },
-          { label: "Lien douteux", severity: "alert", href: "javascript:alert(1)" },
+          {
+            label: "Synchro en retard",
+            severity: "warn",
+            href: "https://finance.hubperso.com/synchro",
+          },
+          {
+            label: "Lien douteux",
+            severity: "alert",
+            href: "javascript:alert(1)",
+          },
         ],
       }),
     );
-    expect(texte(html)).toContain("Alertes (2/10)");
+    expect(texte(html)).toContain("Alertes (2)");
     expect(html).toContain('href="https://finance.hubperso.com/synchro"');
     expect(html).not.toContain("javascript:");
     expect((html.match(/<a /g) ?? []).length).toBe(1);
     expect(html).toContain("alert__dot--danger");
-    expect(texte(html)).toContain("Lien douteux alert");
+    expect(texte(html)).toContain("Synchro en retard À surveiller");
+    expect(texte(html)).not.toMatch(/(warn|alert|info)(?!_)/);
+    expect(texte(html)).toContain("Lien douteux À régler");
   });
 });
 
@@ -121,7 +144,7 @@ describe("DetailCouts", () => {
         },
       }),
     );
-    expect(texte(html)).toContain("(mois — converti depuis USD)");
+    expect(texte(html)).toContain("(ce mois-ci — converti depuis USD)");
     expect(texte(html)).toContain("Appels — 150 / 100 appels");
     expect(html).toContain("width:100%");
     expect(html).toContain("couts__barfill--warn");
@@ -134,16 +157,24 @@ describe("DetailProbleme et BandeauPerime", () => {
   it("dit ce qui ne va pas et l'endpoint interrogé", () => {
     const source = hubSource();
     const html = renderToStaticMarkup(
-      h(DetailProbleme, { result: { state: "unauthorized", source }, summaryUrl: source.summaryUrl }),
+      h(DetailProbleme, {
+        result: { state: "unauthorized", source },
+        summaryUrl: source.summaryUrl,
+      }),
     );
     expect(texte(html)).toContain("Jeton refusé (401).");
+    expect(texte(html)).toContain("Adresse interrogée");
+    expect(texte(html)).not.toContain("Endpoint");
     expect(html).toContain(`<code>${source.summaryUrl}</code>`);
   });
 
   it("une source sans URL le dit, sans <code> vide", () => {
     const source = hubSource({ summaryUrl: null });
     const html = renderToStaticMarkup(
-      h(DetailProbleme, { result: { state: "unconfigured", source, manque: ["url"] }, summaryUrl: null }),
+      h(DetailProbleme, {
+        result: { state: "unconfigured", source, manque: ["url"] },
+        summaryUrl: null,
+      }),
     );
     expect(texte(html)).toContain("aucun (non configuré)");
     expect(html).not.toContain("<code>");
@@ -153,57 +184,89 @@ describe("DetailProbleme et BandeauPerime", () => {
     const html = renderToStaticMarkup(h(BandeauPerime));
     expect(html).toContain('role="alert"');
     expect(texte(html)).toContain("dernier résumé connu");
+    // Le triangle du hub (un dessin), pas un « ! » tapé au clavier.
+    expect(html).toContain("<svg");
   });
 });
 
 describe("DetailCoherence et DetailFraicheur", () => {
   it("concordance : une phrase ; divergence : une ligne par incohérence, avec sa gravité", () => {
-    expect(texte(renderToStaticMarkup(h(DetailCoherence, { incoherences: [] })))).toContain(
-      "Ce que le hub déclare et ce que l’app publie concordent.",
-    );
+    expect(
+      texte(renderToStaticMarkup(h(DetailCoherence, { incoherences: [] }))),
+    ).toContain("Ce que le hub déclare et ce que l’app publie concordent.");
     const html = renderToStaticMarkup(
       h(DetailCoherence, {
         incoherences: [
-          { source: "financeai", gravite: "bloquant", genre: "identite-divergente", detail: "id publié différent" },
+          {
+            source: "financeai",
+            gravite: "bloquant",
+            genre: "identite-divergente",
+            detail: "id publié différent",
+          },
         ],
       }),
     );
     expect(html).toContain('data-gravite="bloquant"');
-    expect(texte(html)).toContain("identite-divergente id publié différent");
+    expect(texte(html)).toContain("Nom différent id publié différent");
+    expect(texte(html)).not.toContain("identite-divergente");
   });
 
   it("sans dataAsOf, dit qu'on ne peut pas savoir si les chiffres sont à jour", () => {
     const html = renderToStaticMarkup(
-      h(DetailFraicheur, { summary: validSummary(), summaryUrl: "https://finance.hubperso.com/hub/summary" }),
+      h(DetailFraicheur, {
+        summary: validSummary(),
+        summaryUrl: "https://finance.hubperso.com/hub/summary",
+      }),
     );
-    expect(texte(html)).toContain("non publié par l’app — impossible de savoir si les chiffres sont à jour");
-    expect(html).toContain("<code>https://finance.hubperso.com/hub/summary</code>");
+    expect(texte(html)).toContain(
+      "non publié par l’app — impossible de savoir si les chiffres sont à jour",
+    );
+    expect(html).toContain(
+      "<code>https://finance.hubperso.com/hub/summary</code>",
+    );
   });
 });
 
 describe("DetailRecommandation et DetailSections", () => {
   it("un lien de recommandation refusé est signalé, le texte reste", () => {
-    const summary = validSummary({ recommendation: { label: "Ranger les reçus", href: "ftp://x" } });
-    const html = renderToStaticMarkup(h(DetailRecommandation, { reco: recommandation(summary)!, summary }));
+    const summary = validSummary({
+      recommendation: { label: "Ranger les reçus", href: "ftp://x" },
+    });
+    const html = renderToStaticMarkup(
+      h(DetailRecommandation, { reco: recommandation(summary)!, summary }),
+    );
     expect(texte(html)).toContain("Ranger les reçus");
     expect(html).toContain("detail__note");
   });
 
   it("un lien valide n'affiche pas l'avertissement", () => {
     const summary = validSummary({
-      recommendation: { label: "Ranger les reçus", href: "https://finance.hubperso.com/recus" },
+      recommendation: {
+        label: "Ranger les reçus",
+        href: "https://finance.hubperso.com/recus",
+      },
     });
-    const html = renderToStaticMarkup(h(DetailRecommandation, { reco: recommandation(summary)!, summary }));
+    const html = renderToStaticMarkup(
+      h(DetailRecommandation, { reco: recommandation(summary)!, summary }),
+    );
     expect(html).not.toContain("detail__note");
   });
 
   it("rend chaque section publiée, dans l'ordre de l'app, et rien sans details", () => {
-    expect(renderToStaticMarkup(h(DetailSections, { details: undefined }))).toBe("");
+    expect(
+      renderToStaticMarkup(h(DetailSections, { details: undefined })),
+    ).toBe("");
     const html = renderToStaticMarkup(
       h(DetailSections, {
         details: [
-          { title: "Comptes", items: [{ label: "Épargne", value: 1, format: "number" }] },
-          { title: "Campagnes", items: [{ label: "Tri", value: "en cours", format: "text" }] },
+          {
+            title: "Comptes",
+            items: [{ label: "Épargne", value: 1, format: "number" }],
+          },
+          {
+            title: "Campagnes",
+            items: [{ label: "Tri", value: "en cours", format: "text" }],
+          },
         ],
       }),
     );

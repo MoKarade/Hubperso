@@ -23,7 +23,7 @@ jobs:
     if: >-
       github.event.deployment_status.state == 'success' &&
       github.event.deployment_status.environment == 'Production'
-    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     timeout-minutes: 10
     permissions:
       contents: read

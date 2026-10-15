@@ -38,7 +38,7 @@ jobs:
     name: Gate (typecheck · tests · lint · build)
     # Le cron ne concerne que l'audit : inutile de rejouer le gate sur un code inchangé.
     if: github.event_name != 'schedule'
-    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     steps:
       - uses: actions/checkout@v7
         with:
@@ -90,7 +90,7 @@ jobs:
     # DriveAI le 19/08/2026). Calibre sur la duree reelle — 29 s observe.
     timeout-minutes: 10
     name: Audit des dépendances de production
-    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     # Job SÉPARÉ du gate, volontairement. Un avis de sécurité est publié sans qu'aucun
     # commit n'ait eu lieu : si l'audit vivait dans le gate, un dépôt sain deviendrait
     # « rouge » du jour au lendemain et on prendrait l'habitude du rouge — c'est
@@ -131,7 +131,7 @@ jobs:
     name: Qualité (lint · couverture · code mort · architecture)
     # Le cron ne concerne que l'audit : inutile de rejouer ce job sur un code inchangé.
     if: github.event_name != 'schedule'
-    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     steps:
       - uses: actions/checkout@v7
         with:
@@ -162,7 +162,7 @@ jobs:
     name: Sécurité (secrets · analyse statique)
     # Le cron ne concerne que l'audit : inutile de rejouer ce job sur un code inchangé.
     if: github.event_name != 'schedule'
-    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     steps:
       - uses: actions/checkout@v7
         with:

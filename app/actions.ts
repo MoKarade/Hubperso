@@ -25,7 +25,8 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { posterAction, type ResultatDeclenchement } from "@/lib/declencher";
+import { posterAction } from "@/lib/declencher";
+import { messageResultat, messageSansConfirmation } from "@/lib/messageAction";
 import { fetchSummaryLive } from "@/lib/fetchSummary";
 import { assurerMigrations } from "@/lib/migrations";
 import { APP_HUB, aAcces } from "@/lib/personnes";
@@ -86,7 +87,7 @@ export async function actionDeclencher(
   if (resume.state !== "ok") {
     return {
       statut: "erreur",
-      message: `${source.name} n'a pas confirmé ses actions (${resume.state}) — rien n'a été déclenché.`,
+      message: messageSansConfirmation(source.name),
     };
   }
 
@@ -99,23 +100,7 @@ export async function actionDeclencher(
   // L'app vient (peut-être) de changer d'état : le widget doit être refait au prochain rendu.
   if (resultat.etat === "ok") revalidatePath("/");
 
-  return message(source.name, resultat);
-}
-
-function message(nomApp: string, resultat: ResultatDeclenchement): EtatDeclenchement {
-  switch (resultat.etat) {
-    case "ok":
-      return { statut: "succes", message: `${nomApp} a accepté l'action (HTTP ${resultat.statut}).` };
-    case "non-configuree":
-      return { statut: "erreur", message: `${nomApp} n'a pas de jeton configuré.` };
-    case "refuse":
-      // Le détail du refus est affiché tel quel : c'est un diagnostic de sécurité, et le
-      // masquer derrière « une erreur est survenue » rendrait le verrou invisible le jour
-      // où il mord pour une raison légitime (une app qui change ses href, par exemple).
-      return { statut: "erreur", message: `Refusé par le hub — ${resultat.detail}` };
-    case "echec":
-      return { statut: "erreur", message: `${nomApp} n'a pas répondu — ${resultat.detail}` };
-  }
+  return messageResultat(source.name, resultat);
 }
 
 function champ(formData: FormData, nom: string): string {
