@@ -15,7 +15,7 @@ permissions:
 jobs:
   doc:
     name: La doc suit le code
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -23,8 +23,8 @@ jobs:
           # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
           # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
           # action tierce, peut le lire. Aucun workflow de ce dépôt ne fait de `git push` —
-          # vérifié un par un — et `auto-merge.yml` passe par l'API avec `GH_TOKEN` en variable
-          # d'environnement, que `gh` lit SANS toucher à la config git.
+          # vérifié un par un ; la fusion automatique (Mergify, .mergify.yml) ne passe par aucun
+          # workflow, donc par aucun jeton du runner.
           persist-credentials: false
           # ⚠️ UN SEUL bloc `with:` par étape. Deux blocs = clé YAML dupliquée = fichier invalide :
           # GitHub ne démarre même pas le workflow (échec « au démarrage », sans job ni log), et
