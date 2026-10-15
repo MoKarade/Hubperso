@@ -25,7 +25,7 @@ import {
 const client = new PGlite();
 const dbTest = drizzle(client);
 
-const PROPRIO = "marc.richard4@gmail.com";
+const PROPRIO = "proprietaire@exemple.com";
 const INVITEE = "quelquun@exemple.com";
 
 beforeAll(async () => {
@@ -40,7 +40,7 @@ describe("normaliser", () => {
   it("efface les différences qui n'en sont pas", () => {
     // Deux lignes qui ne diffèrent que par la casse seraient deux personnes pour la base
     // et une seule pour Google : l'écart exact où une révocation ne révoque rien.
-    expect(normaliser("  Marc.Richard4@GMAIL.com ")).toBe(PROPRIO);
+    expect(normaliser("  Proprietaire@EXEMPLE.com ")).toBe(PROPRIO);
   });
 
   it("rend une chaîne vide pour l'absence", () => {
@@ -54,7 +54,7 @@ describe("estProprietaire", () => {
   const env = { AUTHORIZED_EMAIL: PROPRIO };
 
   it("reconnaît le propriétaire quelle que soit la casse", () => {
-    expect(estProprietaire("MARC.RICHARD4@gmail.com", env)).toBe(true);
+    expect(estProprietaire("PROPRIETAIRE@exemple.com", env)).toBe(true);
   });
 
   it("refuse tout le monde d'autre", () => {

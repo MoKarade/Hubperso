@@ -17,9 +17,6 @@
 // ligne ; le contenu des chaînes ('…', "…"), des heredocs (<<EOF) et des commentaires n'est JAMAIS pris
 // pour une commande ; `$(…)` et `(…)` sont analysés (une commande y tourne réellement).
 
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-
 const MOTS_DE_TETE = new Set(['{', '!', 'then', 'do', 'else', 'elif', 'if', 'while', 'until', 'time', 'exec', 'command']);
 // Sous-commandes git qui modifient l'index de façon non prévisible ici → on ne devine pas.
 const GIT_MUTE_INDEX = new Set(['reset', 'restore', 'checkout', 'switch', 'rm', 'mv', 'stash', 'apply', 'merge', 'cherry-pick', 'rebase', 'revert', 'pull', 'am', 'clean']);
@@ -428,56 +425,4 @@ export function resoudreCommande(cmd, { execPath = process.execPath, existe = ()
     return existe(cli) ? { programme: execPath, args: [cli, ...args] } : { programme: 'npm', args };
   }
   return { programme: prog, args };
-}
-
-// ── kit 1.18.0 : liste blanche d'UNE forme prouvablement non committante (avis de pole-securite, 30/09) ──────────────────────
-// L'écriture du journal d'équipe par l'outil de l'Atelier : python + chemin absolu FIXE, un seul segment, arguments littéraux, aucun préfixe (VAR=),
-// ET le fichier doit avoir l'empreinte ci-dessous (le kit la recoupe avec son manifeste). Aucune variable d'environnement : une racine réglable
-// ferait exécuter en confiance un autre journal_ligne.py. Un worktree ou une autre machine tombe en « incertain » : coût de commodité seulement.
-// Si journal_ligne.py change, mettre à jour EMPREINTE_JOURNAL_LIGNE et régénérer le manifeste (un test du kit l'exige).
-export const CHEMIN_JOURNAL_LIGNE = 'C:\\dev\\atelier\\agence\\journal_ligne.py';
-export const EMPREINTE_JOURNAL_LIGNE = '60671e78335d7f85edcb0eb1427b3c4c2a6ff7a6fbbfc08dd895398feba966d9';
-const PYTHONS = new Set(['python', 'python3', 'py']);
-const cheminNormal = (p) => p.replace(/\\/g, '/').replace(/^\/([A-Za-z])\//, '$1:/').replace(/\/+/g, '/').toLowerCase();
-
-/** Mots d'une commande SANS aucune expansion (les caractères actifs ont été refusés avant) ; `hors` : un antislash hors guillemets a été vu. null si illisible. */
-function motsLitteraux(cmd) {
-  const mots = [];
-  let mot = null;
-  let horsAntislash = false;
-  for (let i = 0; i < cmd.length; i++) {
-    const c = cmd[i];
-    if (c === ' ' || c === '\t') { if (mot !== null) { mots.push(mot); mot = null; } continue; }
-    if (c === "'" || c === '"') {
-      const fin = cmd.indexOf(c, i + 1);
-      if (fin < 0) return null;
-      mot = (mot ?? '') + cmd.slice(i + 1, fin); i = fin; continue;
-    }
-    if (c === '\\') horsAntislash = true;
-    mot = (mot ?? '') + c;
-  }
-  if (mot !== null) mots.push(mot);
-  return { mots, horsAntislash };
-}
-
-/**
- * La commande est-elle EXACTEMENT `python C:\dev\atelier\agence\journal_ligne.py <arguments littéraux>` ? `outil` : outil de Claude Code (tool_name).
- * Sous tout outil autre que PowerShell, les règles de bash s'appliquent : un antislash hors guillemets y est un échappement (`C:\dev` devient `C:dev`, chemin
- * relatif au lecteur, donc un fichier de l'app) : refus. Pure : ne lit aucun fichier.
- */
-export function formeJournalLigne(cmd, outil) {
-  if (typeof cmd !== 'string' || /[$`;|&<>()\r\n]/.test(cmd) || /\\["']/.test(cmd)) return false;
-  const lu = motsLitteraux(cmd.trim());
-  if (!lu || lu.mots.length < 2) return false;
-  if (outil !== 'PowerShell' && lu.horsAntislash) return false;
-  const [programme, script] = lu.mots;
-  if (programme.includes('=')) return false;                                              // préfixe VAR=… (PYTHONPATH= ferait charger d'autres modules)
-  if (!PYTHONS.has(programme.replace(/^.*[\\/]/, '').toLowerCase().replace(/\.exe$/, ''))) return false;
-  if (script.split(/[\\/]/).includes('..')) return false;
-  return cheminNormal(script) === cheminNormal(CHEMIN_JOURNAL_LIGNE);
-}
-
-/** Le fichier `chemin` a-t-il l'empreinte du kit (SHA-256, fins de ligne ramenées à LF, comme le manifeste) ? Illisible ou différent : non. */
-export function empreinteJournalLigneOk(chemin) {
-  try { return createHash('sha256').update(readFileSync(chemin, 'utf8').replace(/\r\n/g, '\n')).digest('hex') === EMPREINTE_JOURNAL_LIGNE; } catch { return false; }
 }
