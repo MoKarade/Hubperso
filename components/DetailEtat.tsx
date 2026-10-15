@@ -26,11 +26,7 @@ export function DetailProbleme({
         {/* Une source sans URL n'a pas d'endpoint à montrer : le dire, plutôt que de
             rendre un <code> vide qui se lit comme une adresse illisible. */}
         Endpoint interrogé :{" "}
-        {summaryUrl ? (
-          <code>{summaryUrl}</code>
-        ) : (
-          <em>aucun (non configuré)</em>
-        )}
+        {summaryUrl ? <code>{summaryUrl}</code> : <em>aucun (non configuré)</em>}
       </p>
     </section>
   );
@@ -40,12 +36,10 @@ export function DetailProbleme({
 export function BandeauPerime() {
   return (
     <div className="bandeau" role="alert">
-      <span className="bandeau__icone" aria-hidden="true">
-        !
-      </span>
+      <span className="bandeau__icone" aria-hidden="true">!</span>
       <span className="bandeau__label">
-        L’app n’a pas répondu à temps — ceci est le dernier résumé connu, pas
-        l’état courant.
+        L’app n’a pas répondu à temps — ceci est le dernier résumé connu, pas l’état
+        courant.
       </span>
     </div>
   );
@@ -68,24 +62,17 @@ const LIBELLE_GENRE: Record<Incoherence["genre"], string> = {
   "devises-melangees": "Devises mélangées",
 };
 
-export function DetailCoherence({
-  incoherences,
-}: {
-  incoherences: Incoherence[];
-}) {
+export function DetailCoherence({ incoherences }: { incoherences: Incoherence[] }) {
   return (
     <section className="detail__bloc" aria-label="Cohérence">
       <h2 className="detail__titre">Cohérence</h2>
       {incoherences.length === 0 ? (
-        <p className="detail__vide">
-          Ce que le hub déclare et ce que l’app publie concordent.
-        </p>
+        <p className="detail__vide">Ce que le hub déclare et ce que l’app publie concordent.</p>
       ) : (
         <ul className="detail__incoherences">
           {incoherences.map((inc, i) => (
             <li key={`${inc.genre}-${i}`} data-gravite={inc.gravite}>
-              <span className="detail__genre">{LIBELLE_GENRE[inc.genre]}</span>{" "}
-              {inc.detail}
+              <span className="detail__genre">{LIBELLE_GENRE[inc.genre]}</span> {inc.detail}
             </li>
           ))}
         </ul>
