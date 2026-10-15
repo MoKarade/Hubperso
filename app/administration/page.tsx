@@ -13,6 +13,8 @@ import { exigerProprietaire } from "@/lib/gardeHub";
 import { baseConfiguree } from "@/lib/db";
 import { APPS_DISPONIBLES, listerPersonnes, type PersonneAvecAcces } from "@/lib/administration";
 import { formatDateTime } from "@/lib/format";
+import { confirmationRetrait } from "@/lib/messageAdmin";
+import { BoutonAdmin } from "@/components/BoutonAdmin";
 import {
   actionAccorderAcces,
   actionAjouterPersonne,
@@ -50,9 +52,12 @@ function PersonneCarte({ personne }: { personne: PersonneAvecAcces }) {
           </form>
           <form action={actionSupprimerPersonne}>
             <input type="hidden" name="email" value={personne.email} />
-            <button type="submit" className="btn admin__btn-danger">
+            <BoutonAdmin
+              className="btn admin__btn-danger"
+              confirmation={confirmationRetrait(personne.email)}
+            >
               Retirer
-            </button>
+            </BoutonAdmin>
           </form>
         </div>
       </div>
