@@ -40,7 +40,7 @@ on:
       runner:
         description: "Étiquette du runner (JSON) ; GitHub-hosted par défaut"
         type: string
-        default: '"ubuntu-latest"'
+        default: '["self-hosted", "pc-marc"]'
 
 permissions:
   contents: read
