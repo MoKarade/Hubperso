@@ -46,7 +46,7 @@ describe("messageProblemeDetail — une phrase par état d'échec, jamais une pa
     expect(
       messageProblemeDetail({ state: "contract-too-new", source, published: 2, supported: 1 }),
     ).toBe(
-      "L’app publie la version 2 du contrat ; ce hub lit jusqu’à la 1. C’est le hub qui est à re-pinner — l’app va bien.",
+      "L’app publie la version 2 du contrat ; ce hub lit jusqu’à la 1. Le hub doit être mis à jour pour lire cette app — l’app va bien.",
     );
   });
 
