@@ -34,7 +34,7 @@ jobs:
           # workflow, donc par aucun jeton du runner.
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: "24"
           cache: npm
