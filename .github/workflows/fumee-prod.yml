@@ -23,7 +23,7 @@ jobs:
     if: >-
       github.event.deployment_status.state == 'success' &&
       github.event.deployment_status.environment == 'Production'
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
     timeout-minutes: 10
     permissions:
       contents: read
@@ -97,6 +97,6 @@ jobs:
           Run : ${RUN_URL}
           Lire docs/prod-automatique.md ; fermer cette issue quand la production est rétablie."
 
-      - name: Fumée rouge : faire échouer le run
+      - name: "Fumée rouge : faire échouer le run"
         if: steps.fumee.outputs.ok == 'false'
         run: exit 1

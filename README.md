@@ -124,7 +124,7 @@ Aucune n'est committée.
 | `GOOGLE_CLIENT_ID` | Client OAuth Google (Web application) | (Google Cloud Console) |
 | `GOOGLE_CLIENT_SECRET` | Secret du client OAuth | (Google Cloud Console) |
 | `AUTH_SECRET` | Signature des JWT de session | `npx auth secret` |
-| `AUTHORIZED_EMAIL` | Le **propriétaire** : accès à tout, toujours, sans passer par la base (`lib/personnes.ts`) | `marc.richard4@gmail.com` |
+| `AUTHORIZED_EMAIL` | Le **propriétaire** : accès à tout, toujours, sans passer par la base (`lib/personnes.ts`) | `proprietaire@exemple.com` |
 | `DATABASE_URL` | Base Neon (connection string ***pooled***). **Techniquement optionnelle, pratiquement indispensable** — voir l'avertissement sous ce tableau | (Neon) |
 | `AUTH_URL` | **Optionnelle** — la config utilise `trustHost`, le host de la requête suffit (local et Vercel). À poser seulement pour forcer un domaine canonique en prod, avec le protocole : `https://hubperso.com` |
 
