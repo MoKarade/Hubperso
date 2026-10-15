@@ -25,7 +25,7 @@ export function DetailProbleme({
       <p className="detail__endpoint">
         {/* Une source sans URL n'a pas d'endpoint à montrer : le dire, plutôt que de
             rendre un <code> vide qui se lit comme une adresse illisible. */}
-        Endpoint interrogé :{" "}
+        Adresse interrogée :{" "}
         {summaryUrl ? <code>{summaryUrl}</code> : <em>aucun (non configuré)</em>}
       </p>
     </section>
@@ -102,7 +102,7 @@ export function DetailFraicheur({
             ? formatDateTime(summary.dataAsOf)
             : "non publié par l’app — impossible de savoir si les chiffres sont à jour"}
         </dd>
-        <dt>Endpoint</dt>
+        <dt>Adresse interrogée</dt>
         <dd>
           <code>{summaryUrl}</code>
         </dd>
