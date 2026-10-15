@@ -20,7 +20,7 @@ permissions:
 jobs:
   verifier:
     name: Cohérence hub ↔ apps
-    runs-on: [self-hosted, pc-marc] # NOSONAR dépôt privé : robot isolé du PC de Marc (WSL sans accès aux disques Windows)
+    runs-on: ${{ github.event.repository.visibility == 'private' && fromJSON('["self-hosted","pc-marc"]') || 'ubuntu-latest' }} # privé : robot du PC ; public, ou visibilité absente (un déclenchement planifié ne la porte pas toujours) : machines GitHub. Jamais le PC par défaut.
     # Cinq apps derrière des réveils à froid, 9 s de budget chacune : large, mais borné.
     # Sans plafond le défaut GitHub est de SIX HEURES.
     timeout-minutes: 8
