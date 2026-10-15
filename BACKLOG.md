@@ -205,7 +205,7 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   « détails » d'une app : graphique de l'évolution de son coût ; sinon, le prix sur 7 jours.
   Une bonne partie du socle existe déjà — `lib/historique.ts` (`serieCout`, `serieMetrique`,
   PURES) et `lib/historiqueDb.ts` archivent un relevé par app toutes les 15 min sur 90 jours.
-  Reste le rendu. ⚠️ `serieCout` prend une `periode` ET une `devise` **exprès** : ne jamais
+  Rendu livré le 14/10/2026 pour la page de détail (courbe sous le coût, même période et devise ; reste le « prix sur 7 jours » sur la carte). ⚠️ `serieCout` prend une `periode` ET une `devise` **exprès** : ne jamais
   tracer une courbe qui mélange `total`, `mois` et `jour` — c'est le principe « jamais
   d'agrégat entre unités incomparables » appliqué au temps.
 
