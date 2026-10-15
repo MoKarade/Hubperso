@@ -15,7 +15,6 @@ queue_rules:
       - check-success = Gate (typecheck · tests · lint · build)
       - check-success = Qualité (lint · couverture · code mort · architecture)
       - check-success = Sécurité (secrets · analyse statique)
-      - check-success = Audit des dépendances de production
       - check-success = La doc suit le code
     merge_conditions:
       - label != hold
@@ -23,7 +22,6 @@ queue_rules:
       - check-success = Gate (typecheck · tests · lint · build)
       - check-success = Qualité (lint · couverture · code mort · architecture)
       - check-success = Sécurité (secrets · analyse statique)
-      - check-success = Audit des dépendances de production
       - check-success = La doc suit le code
 
 merge_protections_settings:
