@@ -14,3 +14,4 @@
 # 3. Secrets et variables d'environnement.
 /.env*                     @MoKarade
 /.env.example              @MoKarade
+/.mergify.yml @MoKarade
