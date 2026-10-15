@@ -13,6 +13,7 @@ import { exigerProprietaire } from "@/lib/gardeHub";
 import { baseConfiguree } from "@/lib/db";
 import { APPS_DISPONIBLES, listerPersonnes, type PersonneAvecAcces } from "@/lib/administration";
 import { formatDateTime } from "@/lib/format";
+import { BoutonEnvoi } from "@/components/BoutonEnvoi";
 import {
   actionAccorderAcces,
   actionAjouterPersonne,
@@ -44,9 +45,7 @@ function PersonneCarte({ personne }: { personne: PersonneAvecAcces }) {
           <form action={actionDefinirActif}>
             <input type="hidden" name="email" value={personne.email} />
             <input type="hidden" name="actif" value={String(!personne.actif)} />
-            <button type="submit" className="btn">
-              {personne.actif ? "Désactiver" : "Réactiver"}
-            </button>
+            <BoutonEnvoi className="btn" libelle={personne.actif ? "Désactiver" : "Réactiver"} />
           </form>
           <form action={actionSupprimerPersonne}>
             <input type="hidden" name="email" value={personne.email} />
@@ -65,13 +64,11 @@ function PersonneCarte({ personne }: { personne: PersonneAvecAcces }) {
               <form action={accorde ? actionRetirerAcces : actionAccorderAcces}>
                 <input type="hidden" name="email" value={personne.email} />
                 <input type="hidden" name="appId" value={app.id} />
-                <button
-                  type="submit"
+                <BoutonEnvoi
                   className={`admin__app-toggle${accorde ? " admin__app-toggle--actif" : ""}`}
-                  aria-pressed={accorde}
-                >
-                  {accorde ? "✓" : "+"} {app.nom}
-                </button>
+                  pressed={accorde}
+                  libelle={`${accorde ? "✓" : "+"} ${app.nom}`}
+                />
               </form>
             </li>
           );
@@ -161,9 +158,7 @@ export default async function AdministrationPage() {
           placeholder="nom (facultatif)"
           className="admin__input"
         />
-        <button type="submit" className="btn">
-          Ajouter
-        </button>
+        <BoutonEnvoi className="btn" libelle="Ajouter" />
       </form>
 
       {personnes.length === 0 ? (
