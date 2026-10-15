@@ -22,7 +22,7 @@ queue_rules:
               - '-files ~= ^(?!\.github/)'
               - 'dependabot-update-type ~= ^version-update:semver-(minor|patch)$'
               - '-dependabot-update-type = version-update:semver-major'
-              - '-commits[*].gh_author_login ~= ^(?!(dependabot\[bot\]|mergify\[bot\])$)'
+              - '-commits[*].author ~= ^(?!(dependabot\[bot\]|mergify\[bot\])$)'
       - check-success = Gate (typecheck · tests · lint · build)
       - check-success = Qualité (lint · couverture · code mort · architecture)
       - check-success = Sécurité (secrets · analyse statique)
@@ -40,7 +40,7 @@ queue_rules:
               - '-files ~= ^(?!\.github/)'
               - 'dependabot-update-type ~= ^version-update:semver-(minor|patch)$'
               - '-dependabot-update-type = version-update:semver-major'
-              - '-commits[*].gh_author_login ~= ^(?!(dependabot\[bot\]|mergify\[bot\])$)'
+              - '-commits[*].author ~= ^(?!(dependabot\[bot\]|mergify\[bot\])$)'
       - check-success = Gate (typecheck · tests · lint · build)
       - check-success = Qualité (lint · couverture · code mort · architecture)
       - check-success = Sécurité (secrets · analyse statique)
@@ -62,4 +62,4 @@ merge_protections_settings:
             - '-files ~= ^(?!\.github/)'
             - 'dependabot-update-type ~= ^version-update:semver-(minor|patch)$'
             - '-dependabot-update-type = version-update:semver-major'
-            - '-commits[*].gh_author_login ~= ^(?!(dependabot\[bot\]|mergify\[bot\])$)'
+            - '-commits[*].author ~= ^(?!(dependabot\[bot\]|mergify\[bot\])$)'
