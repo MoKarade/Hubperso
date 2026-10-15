@@ -42,3 +42,5 @@ Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — l
 `docs/adr/` · `docs/ACCES-PAR-APP.md` · `docs/CONNEXION-UNIQUE.md` · `docs/ETAT.md` ·
 `docs/COMPTE-RENDU.md` (convention de compte-rendu, copie synchronisée).
 Convention de structure : [STRUCTURE-DEPOT](https://github.com/MoKarade/claude-config/blob/main/conventions/STRUCTURE-DEPOT.md).
+
+@docs/COMPTE-RENDU.md
