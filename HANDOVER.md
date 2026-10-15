@@ -242,7 +242,7 @@ Production **et** Preview :
 - `AUTH_SECRET` — `npx auth secret`. **Identique** à celui des autres apps du hub : c'est
   ce qui, avec `AUTH_COOKIE_DOMAIN`, fait la connexion unique.
 - `AUTH_COOKIE_DOMAIN` = `.hubperso.com` — voir `docs/CONNEXION-UNIQUE.md`.
-- `AUTHORIZED_EMAIL` = `marc.richard4@gmail.com` — le propriétaire.
+- `AUTHORIZED_EMAIL` = l'adresse Google de Marc (variable Vercel, jamais écrite dans le dépôt) — le propriétaire.
 - `DATABASE_URL` — base Neon, connection string **pooled**. Sans elle, seul le
   propriétaire entre : l'app le dit, elle n'ouvre rien « en attendant ».
 - `AUTH_URL` — **optionnelle** (`trustHost` est actif). Seulement pour forcer le domaine
