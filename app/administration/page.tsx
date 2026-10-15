@@ -153,19 +153,20 @@ export default async function AdministrationPage() {
       </p>
 
       <form action={actionAjouterPersonne} className="admin__ajout">
-        <input
-          type="email"
-          name="email"
-          placeholder="adresse@exemple.com"
-          required
-          className="admin__input"
-        />
-        <input
-          type="text"
-          name="nom"
-          placeholder="nom (facultatif)"
-          className="admin__input"
-        />
+        <label className="admin__champ">
+          <span className="admin__etiquette">Adresse courriel</span>
+          <input
+            type="email"
+            name="email"
+            placeholder="adresse@exemple.com"
+            required
+            className="admin__input"
+          />
+        </label>
+        <label className="admin__champ">
+          <span className="admin__etiquette">Nom (facultatif)</span>
+          <input type="text" name="nom" className="admin__input" />
+        </label>
         <button type="submit" className="btn">
           Ajouter
         </button>
