@@ -137,6 +137,8 @@ describe("DetailProbleme et BandeauPerime", () => {
       h(DetailProbleme, { result: { state: "unauthorized", source }, summaryUrl: source.summaryUrl }),
     );
     expect(texte(html)).toContain("Jeton refusé (401).");
+    expect(texte(html)).toContain("Adresse interrogée");
+    expect(texte(html)).not.toContain("Endpoint");
     expect(html).toContain(`<code>${source.summaryUrl}</code>`);
   });
 
