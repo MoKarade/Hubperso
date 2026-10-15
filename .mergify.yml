@@ -1,0 +1,32 @@
+# Fusion automatique (Mergify, plan gratuit) — 15/10/2026.
+# Une PR prête (pas brouillon, sans l'étiquette « hold ») entre dans la file,
+# est remise à jour sur la tête de main, retestée par le robot du PC, puis fusionnée en squash.
+# Fichiers sensibles (ceux du CODEOWNERS : .github, hooks, qualite, vercel.json, drizzle, .env) : jamais de fusion automatique, Marc fusionne.
+# Une PR à la fois : pas de regroupement. Étiquette « hold » sur une PR = elle ne fusionne pas.
+queue_rules:
+  - name: default
+    merge_method: squash
+    batch_size: 1
+    queue_conditions:
+      - base = main
+      - -draft
+      - label != hold
+      - -files~=^(\.github/|scripts/hooks/|qualite/|vercel\.json|drizzle/|\.env)
+      - check-success = Gate (typecheck · tests · lint · build)
+      - check-success = Qualité (lint · couverture · code mort · architecture)
+      - check-success = Sécurité (secrets · analyse statique)
+      - check-success = La doc suit le code
+    merge_conditions:
+      - label != hold
+      - -files~=^(\.github/|scripts/hooks/|qualite/|vercel\.json|drizzle/|\.env)
+      - check-success = Gate (typecheck · tests · lint · build)
+      - check-success = Qualité (lint · couverture · code mort · architecture)
+      - check-success = Sécurité (secrets · analyse statique)
+      - check-success = La doc suit le code
+
+merge_protections_settings:
+  auto_merge_conditions:
+    - base = main
+    - -draft
+    - label != hold
+    - -files~=^(\.github/|scripts/hooks/|qualite/|vercel\.json|drizzle/|\.env)
