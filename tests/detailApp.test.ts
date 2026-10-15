@@ -203,7 +203,8 @@ describe("DetailCoherence et DetailFraicheur", () => {
       }),
     );
     expect(html).toContain('data-gravite="bloquant"');
-    expect(texte(html)).toContain("identite-divergente id publié différent");
+    expect(texte(html)).toContain("Nom différent id publié différent");
+    expect(texte(html)).not.toContain("identite-divergente");
   });
 
   it("sans dataAsOf, dit qu'on ne peut pas savoir si les chiffres sont à jour", () => {

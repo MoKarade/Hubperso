@@ -52,6 +52,16 @@ export function BandeauPerime() {
  * rapprochés qu'en coulisses. Une divergence ne se voit pas à l'écran : le widget s'affiche,
  * avec le bon contenu, sous le bon nom.
  */
+const LIBELLE_GENRE: Record<Incoherence["genre"], string> = {
+  "identite-divergente": "Nom différent",
+  "contrat-trop-recent": "Hub à mettre à jour",
+  "hors-contrat": "Réponse non conforme",
+  injoignable: "App injoignable",
+  jeton: "Clé refusée",
+  "periodes-melangees": "Périodes mélangées",
+  "devises-melangees": "Devises mélangées",
+};
+
 export function DetailCoherence({ incoherences }: { incoherences: Incoherence[] }) {
   return (
     <section className="detail__bloc" aria-label="Cohérence">
@@ -62,7 +72,7 @@ export function DetailCoherence({ incoherences }: { incoherences: Incoherence[] 
         <ul className="detail__incoherences">
           {incoherences.map((inc, i) => (
             <li key={`${inc.genre}-${i}`} data-gravite={inc.gravite}>
-              <span className="detail__genre">{inc.genre}</span> {inc.detail}
+              <span className="detail__genre">{LIBELLE_GENRE[inc.genre]}</span> {inc.detail}
             </li>
           ))}
         </ul>
