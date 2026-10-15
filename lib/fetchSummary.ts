@@ -35,7 +35,9 @@ export type ManqueConfig = "url" | "jeton";
 export function phraseManques(manque: readonly ManqueConfig[]): string {
   return manque
     .map((m) =>
-      m === "url" ? "aucune URL de résumé configurée" : "aucun jeton x-hub-token configuré",
+      m === "url"
+        ? "aucune URL de résumé configurée"
+        : "aucun jeton x-hub-token configuré",
     )
     .join(" et ");
 }
@@ -64,7 +66,11 @@ export type SummaryResult =
    * n'apparaîtrait qu'une fois la première réparée (leçon n° 8 du `CLAUDE.md`). Liste, et
    * pas valeur unique : les deux peuvent manquer ensemble, et on le dit d'un coup.
    */
-  | { state: "unconfigured"; source: HubSource; manque: readonly ManqueConfig[] }
+  | {
+      state: "unconfigured";
+      source: HubSource;
+      manque: readonly ManqueConfig[];
+    }
   | { state: "unauthorized"; source: HubSource }
   | { state: "unreachable"; source: HubSource; detail: string }
   | { state: "invalid"; source: HubSource; detail: string }
@@ -154,7 +160,13 @@ export async function fetchSummary(
     if (cached) {
       const age = now() - cached.at;
       if (age <= STALE_MAX_MS) {
-        return { state: "ok", source, summary: cached.summary, stale: true, cachedAgeMs: age };
+        return {
+          state: "ok",
+          source,
+          summary: cached.summary,
+          stale: true,
+          cachedAgeMs: age,
+        };
       }
     }
   }
@@ -192,30 +204,39 @@ async function fetchLive(
   let response: Response;
   try {
     response = await fetchImpl(source.summaryUrl ?? "", {
-      headers: { [HUB_TOKEN_HEADER]: source.token!, accept: "application/json" },
+      headers: {
+        [HUB_TOKEN_HEADER]: source.token!,
+        accept: "application/json",
+      },
       cache: "no-store",
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
     const detail =
-      err instanceof Error
-        ? err.name === "TimeoutError"
-          ? `délai dépassé (${timeoutMs} ms)`
-          : err.message
-        : String(err);
+      err instanceof Error && err.name === "TimeoutError"
+        ? `délai dépassé (${timeoutMs} ms)`
+        : "l’app ne répond pas";
     return { state: "unreachable", source, detail };
   }
 
   if (response.status === 401) return { state: "unauthorized", source };
   if (!response.ok) {
-    return { state: "unreachable", source, detail: `HTTP ${response.status}` };
+    return {
+      state: "unreachable",
+      source,
+      detail: "l’app a répondu avec une erreur",
+    };
   }
 
   let data: unknown;
   try {
     data = await response.json();
   } catch {
-    return { state: "invalid", source, detail: "réponse non-JSON" };
+    return {
+      state: "invalid",
+      source,
+      detail: "l’app a renvoyé une réponse illisible",
+    };
   }
 
   try {
@@ -232,7 +253,7 @@ async function fetchLive(
     return {
       state: "invalid",
       source,
-      detail: err instanceof Error ? err.message : String(err),
+      detail: "l’app a renvoyé une réponse illisible",
     };
   }
 }
@@ -249,6 +270,8 @@ export function fetchAllSummaries(
   timeoutMs: number = TIMEOUT_MS,
 ): Promise<SummaryResult[]> {
   return Promise.all(
-    sources.map((source) => fetchSummary(source, fetchImpl, Date.now, timeoutMs)),
+    sources.map((source) =>
+      fetchSummary(source, fetchImpl, Date.now, timeoutMs),
+    ),
   );
 }
