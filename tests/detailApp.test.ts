@@ -274,3 +274,29 @@ describe("DetailRecommandation et DetailSections", () => {
     expect(html).toContain('aria-label="Campagnes"');
   });
 });
+
+describe("DetailCouts — courbe d'évolution du coût", () => {
+  const rel = (t: number, montant: number, periode: "mois" | "jour" = "mois"): Releve => ({
+    appId: "x",
+    releveLe: t,
+    etat: "ok",
+    dataAsOf: null,
+    metriques: [],
+    cout: { montant, devise: "USD", periode },
+  });
+  const usage = { cost: { amount: 10, currency: "USD" as const, period: "mois" as const } };
+
+  it("trace la courbe de la MÊME période et devise, et l'annonce", () => {
+    const html = renderToStaticMarkup(
+      h(DetailCouts, { usage, historique: [rel(1, 4), rel(2, 7), rel(3, 9, "jour")] }),
+    );
+    expect(html).toContain("sparkline");
+    expect(texte(html)).toContain("Évolution du coût (mois, USD) : 2 relevés");
+  });
+
+  it("n'invente aucune courbe sans au moins deux relevés comparables", () => {
+    const html = renderToStaticMarkup(h(DetailCouts, { usage, historique: [rel(1, 4)] }));
+    expect(html).not.toContain("sparkline");
+    expect(texte(html)).toContain("pas encore d’historique");
+  });
+});

@@ -8,6 +8,8 @@ import type { HubQuota, HubUsage } from "@mokarade/hub-contract";
 import { barreQuota, libelleQuota } from "@/lib/carte";
 import { PERIOD_LABEL, quotaRatio, toCad } from "@/lib/usage";
 import { formatCad, formatDateTime } from "@/lib/format";
+import { Sparkline } from "@/components/Sparkline";
+import { serieCout, type Releve } from "@/lib/historique";
 
 function QuotaDetaille({ quota }: { quota: HubQuota }) {
   const ratio = quotaRatio(quota.used, quota.limit);
@@ -42,7 +44,36 @@ function CoutPeriode({ cost }: { cost: NonNullable<HubUsage["cost"]> }) {
   );
 }
 
-export function DetailCouts({ usage }: { usage: HubUsage | undefined }) {
+// La courbe du coût : UNE période et UNE devise, celles affichées juste au-dessus (jamais de
+// mélange total/mois/jour). Moins de deux relevés comparables : on le dit, on ne trace rien.
+function CourbeCout({
+  cost,
+  historique,
+}: {
+  cost: NonNullable<HubUsage["cost"]>;
+  historique: Releve[];
+}) {
+  const points = serieCout(historique, cost.period, cost.currency);
+  if (points.length < 2) return <p className="detail__attente">pas encore d’historique</p>;
+  return (
+    <div className="detail__metrique">
+      <div className="detail__metrique-courbe">
+        <Sparkline points={points} label={`coût (${cost.period}, ${cost.currency})`} />
+      </div>
+      <p className="detail__metrique-note">
+        Évolution du coût ({cost.period}, {cost.currency}) : {points.length} relevés
+      </p>
+    </div>
+  );
+}
+
+export function DetailCouts({
+  usage,
+  historique = [],
+}: {
+  usage: HubUsage | undefined;
+  historique?: Releve[];
+}) {
   return (
     <section className="detail__bloc" aria-label="Coûts et quotas">
       <h2 className="detail__titre">Coûts &amp; quotas</h2>
@@ -51,6 +82,7 @@ export function DetailCouts({ usage }: { usage: HubUsage | undefined }) {
       ) : (
         <>
           {usage.cost && <CoutPeriode cost={usage.cost} />}
+          {usage.cost && <CourbeCout cost={usage.cost} historique={historique} />}
           {usage.quotas?.map((q, i) => (
             <QuotaDetaille key={`${q.label}-${i}`} quota={q} />
           ))}
