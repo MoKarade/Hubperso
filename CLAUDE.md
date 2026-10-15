@@ -33,7 +33,7 @@ Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — l
   Ne jamais ajouter de route de données aux exclusions du matcher de `middleware.ts`.
 - **Liens** : href cliquable seulement via `safeHttpUrl`. **Dates** : `timeZone: FUSEAU`.
 - **Coûts** : somme par période, jamais de total global.
-- **Git** : PR `--base main` explicite, jamais `--force` sur `main`, jamais `--no-verify`. Fusion : dépôt privé, donc pas de `gh pr merge --auto` ; Mergify (installation en cours au 15/10/2026) fusionne en squash une PR sortie du brouillon quand tous les contrôles sont verts ; jamais de fusion à la main. Chemins de `.github/CODEOWNERS` (`.github/`, `scripts/hooks/`, `qualite/`, `vercel.json`, `drizzle/`, secrets) : l'approbation de Marc est requise.
+- **Git** : PR `--base main` explicite, jamais `--force` sur `main`, jamais `--no-verify`. Fusion : dépôt privé, donc pas de `gh pr merge --auto` ; Mergify (installation en cours au 15/10/2026) fusionne en squash une PR sortie du brouillon quand tous les contrôles sont verts ; sinon jamais de fusion à la main. Une PR qui touche un chemin de `.github/CODEOWNERS` (`.github/`, `scripts/hooks/`, `qualite/`, `vercel.json`, `drizzle/`, `.env*`) n'entre jamais dans la file : Marc la fusionne lui-même.
 - **Déploiement** : CI verte ≠ en ligne ; vérifier le déploiement `READY` après un merge qui change ce qui est servi.
 - **Doc** : mettre à jour la doc touchée dans la MÊME PR que le code.
 
