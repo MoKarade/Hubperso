@@ -6,10 +6,14 @@
 
 Les seuils de couverture étaient restés bien en dessous de la mesure (lignes globales : seuil 65,8 pour 82,7 mesurés) : une PR pouvait perdre 17 points sans rougir. `npm run portes:maj` les a ramenés à la mesure (cœur 94,5 ; global 82,7 ; branches 73,9 ; avertissements lint 0). Détail et table : section « Portes qualité » plus bas ; trace dans `historique` de `qualite/seuils.json`.
 
+## 🟦 Session 2026-10-16 — **Préversions Vercel coupées (Hubperso#160)**
+
+`vercel.json` : `git.deploymentEnabled` coupe tout (`**`, `*`) et rouvre la seule `main`, comme app-template (#41). Avant, seules `claude/*`, `agence/**` et `dependabot/**` étaient coupées : les branches `mergify/merge-queue/*` de la file de fusion créaient une préversion à chaque PR (constaté le 16/10 : « Merge of #220 », `target: null`). Verrou : `tests/vercelJson.test.ts` (discrimine : sans `main: true` la production serait coupée). À vérifier après fusion : un déploiement de production `READY` sur le commit de `main`, puis qu'une PR suivante ne crée plus de déploiement de préversion. Ligne 8 de la grille : verte.
+
 ## 🟦 Session 2026-10-16 — **Contrôles communs branchés (Hubperso#158)**
 
 La CI appelle maintenant les contrôles communs de `MoKarade/.github` : `securite-commune` (gitleaks, OSV-Scanner, CodeQL) et `conformite` (non bloquante) dans `ci.yml`, `fumee.yml` (sonde `https://www.hubperso.com` : santé et connexion ; Hubperso consomme `/hub/summary`, il ne le sert pas). `fumee-prod.yml` reste : lui seul sait revenir en arrière sur Vercel. Toutes les actions des workflows sont épinglées par SHA (ligne 13 de la grille). `osv-scanner.toml` tolère `braces` 3.0.3 (dépendance de développement, décision de Marc du 16/10/2026) jusqu'au 16/01/2027. `BACKLOG.md` n'est plus qu'un renvoi vers les issues ; l'ancien contenu se lit avec `git show c9f3335:BACKLOG.md`.
-- **Lignes encore rouges de la grille, chacune avec sa tâche** : 8 (préversions Vercel) → Hubperso#160 ; 9 (Sentry) → #162 ; 12 (socle visuel, thème sombre, verrou `tests/theme`) → #161 ; 15 (un ancien commit sans préfixe, `H-18: fix: …`) se règle seul quand dix commits préfixés le suivent. Ligne 10 : « à relire », la sauvegarde vit sur le PC.
+- **Lignes encore rouges de la grille, chacune avec sa tâche** : 9 (Sentry) → #162 ; 12 (socle visuel, thème sombre, verrou `tests/theme`) → #161 ; 15 (un ancien commit sans préfixe, `H-18: fix: …`) se règle seul quand dix commits préfixés le suivent. Ligne 10 : « à relire », la sauvegarde vit sur le PC.
 - `bloquant: false` dans `ci.yml` tant que ces lignes ne sont pas vertes ; le passer à `true` à ce moment-là.
 
 ## 🟦 Session 2026-10-01 — **Fusion native GitHub (phase P1 du plan « stratégie PR »)**
