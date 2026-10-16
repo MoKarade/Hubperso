@@ -12,7 +12,7 @@ Ce fichier dit comment travailler ici. `CLAUDE.md` fait foi pour le métier (gar
 - Toute donnée personnelle de Marc (adresse, montant réel, nom de tiers) dans le code, les tests, la doc ou le texte de la PR : données fictives seulement.
 - Désactiver, sauter ou affaiblir un test, un seuil ou un contrôle.
 - Modifier `package.json` ou le fichier de verrouillage des dépendances, sauf si l'issue le demande.
-- Chaque commit de la PR commence par l'ID de tâche entre crochets ou par `HORS-BACKLOG:` (contrôle « La doc suit le code »). Ne touche pas à `middleware.ts`.
+- Chaque commit de la PR commence par `HORS-BACKLOG:`, sauf si « Fichiers permis » contient `BACKLOG.md` : un commit qui cite un ID (`[H-25]`) exige que son entrée du BACKLOG soit cochée (contrôle « La doc suit le code »). Ne touche pas à `middleware.ts`.
 
 ## Français
 - Code, commentaires, docs, commits et PR en français. Ne traduis rien, ne « corrige » aucun mot français existant, accents compris, hors des lignes que l'issue te demande de changer.
@@ -22,6 +22,6 @@ Ce fichier dit comment travailler ici. `CLAUDE.md` fait foi pour le métier (gar
 ## Livrer
 - Branche par défaut : `main`. PR vers `main`, en brouillon si tu peux.
 - Titre `type: verbe et objet en français` (`docs:`, `test:`, `fix:`, `chore:`). Corps : Avant / Après / Comment.
-- Une ligne `Tâche : #<numéro de l'issue>` (ou `Tâche : MoKarade/<dépôt>#n`). N'écris jamais `Fixes`, `Closes` ni `Resolves` : la tâche se ferme seulement par la preuve « Acceptée » posée par Claude.
+- Une ligne `Tâche : #<numéro de l'issue GitHub>` (ou `Tâche : MoKarade/<dépôt>#n`) : le numéro de l'issue elle-même, jamais celui d'un ID du BACKLOG (`H-25` n'est pas `#25`). N'écris jamais `Fixes`, `Closes` ni `Resolves` : la tâche se ferme seulement par la preuve « Acceptée » posée par Claude.
 - Avant de livrer, lance : `npm run typecheck && npm run test && npm run lint && npm run build`. Montre dans la PR la sortie de la commande du « Fini quand » de l'issue.
 - Une PR qui change un écran porte des captures avant/après prises avec des données fictives.
