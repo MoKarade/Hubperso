@@ -80,6 +80,13 @@ widgets 100 % génériques.
   La liste des variables attendues (noms, requise/optionnelle, effet si absente) vit dans
   `lib/variablesAttendues.ts` (F7) ; `tests/variablesAttendues.test.ts` vérifie qu'elle
   couvre chaque `process.env` lu par l'app.
+- **Suivi des erreurs (Sentry, #162, 16/10/2026)** : `instrumentation.ts` (serveur),
+  `instrumentation-client.ts` et `app/error.tsx` / `app/global-error.tsx` (navigateur), réglages purs
+  dans `lib/sentryConfig.ts`. **Éteint sans `SENTRY_DSN`**, aucune donnée personnelle (ni IP, ni
+  cookie, ni en-tête, ni corps, ni chaîne de requête). Ne jamais appeler `Sentry.init` hors des deux
+  points d'entrée ni mettre `sendDefaultPii` à vrai. Le DSN doit être défini AU BUILD (la CSP en
+  déduit l'hôte autorisé, `docs/SECURITE.md`). Essai : workflow manuel « Essai Sentry ». Verrous :
+  `tests/sentryConfig.test.ts`, `tests/cspSentry.test.ts`.
 
   ⚠️ Cette section a écrit « c'est la SEULE exception » jusqu'au 14/09/2026, puis « deux
   routes » jusqu'au 30/09/2026. En ajouter une **oblige à corriger la phrase dans la même PR** : une règle qu'on sait fausse
