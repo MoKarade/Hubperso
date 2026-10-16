@@ -170,11 +170,13 @@ puis pour le *schéma*.
 passage : `app/actions.ts` et `app/administration/actions.ts` lisaient ou écrivaient le modèle
 d'accès sans assurer le schéma. Les trois sont corrigés.
 
-⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER.** Vercel fige les variables
+⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER (PAR UN COMMIT DE CODE).** Vercel fige les variables
 d'environnement au moment où un déploiement est créé ; celui qui sert déjà ne les voit jamais
-apparaître. C'est le piège de `[H-18]` — et il a coûté une mesure fausse de plus le 15/09 :
-le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée, simplement
-parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
+apparaître. C'est le piège de `[H-18]` — et un simple bouton « Redeploy » sur un commit ne touchant que
+de la documentation ou des tests sera annulé en silence par `scripts/build-necessaire.sh` (qui ne voit que le diff git).
+Pour appliquer une nouvelle variable Vercel, il faut **pousser un commit de code** (même trivial) sur `main`.
+Cela a aussi coûté une mesure fausse de plus le 15/09 : le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée,
+simplement parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
 d'écart, et une conclusion « ça n'a pas marché » qui aurait été fausse.
 
 👤 **CE QUI PROUVERA QUE C'EST RÉGLÉ, ET RIEN D'AUTRE** : un run du workflow `Relevé` à
@@ -209,8 +211,9 @@ Vérifs vertes en local : `npm run typecheck`, `npm run test`, `npm run lint`, `
 | `lib/administration.ts` + `app/administration/` | Ajouter/retirer une personne, app par app. Réservée au propriétaire. `APPS_DISPONIBLES` dérive de `SOURCE_DEFS` — pas de seconde liste à tenir. |
 | `app/api/acces/route.ts` | `POST`. Répond aux **autres apps** « telle adresse a-t-elle accès à toi ? ». L'`appId` vient du **jeton**, jamais du corps : une app ne peut pas interroger les accès d'une autre. `POST` et non `GET` pour que l'adresse ne finisse pas dans les journaux d'URL. |
 | `lib/db/schema.ts` + `drizzle/` | Tables `personnes` et `acces` (Neon). **Rien d'autre** : ni donnée d'app, ni session. |
-| `lib/authGuard.ts` | Décision du middleware. Laisse passer `/api/acces`, `/api/cron/releve` et `/api/sante` — le matcher, lui, est inchangé. |
+| `lib/authGuard.ts` | Décision du middleware. Laisse passer `/api/acces`, `/api/cron/releve`, `/api/sante` et `/api/cout` — le matcher, lui, est inchangé. |
 | `app/api/sante/route.ts` | `GET` public, sonde de la vigie : `{ ok: true }` ou 503 `{ ok: false, cause: "base" \| "configuration" }`, `no-store`. Noms des variables requises absentes au journal serveur seulement. Limite de débit : 10/min par client (429), vérifiée avant la base. |
+| `app/api/cout/route.ts` + `lib/coutCumule.ts` | `GET` public (#191) : le coût API cumulé en CAD (période `total` seulement), sa `dataAsOf` (la plus ancienne mesure) et les apps `nonLisibles` (jamais 0). Lit les relevés en base, jamais une app ; 503 si la base ne répond pas ; 10/min par client (429). Lu par le relevé du suivi. |
 | `lib/variablesAttendues.ts` | Liste des NOMS de variables attendues (requise/optionnelle, effet si absente) + contrôle de présence booléen. Jamais une valeur. |
 | `middleware.ts` | Garde global : page → `/login`, `/api/*` → 401 JSON. |
 | `app/sans-acces/page.tsx` | Connectée, mais pas ici. |

@@ -29,7 +29,11 @@ BASE="${1:-}"
 TETE="${2:-HEAD}"
 
 lancer() { echo "build : $1"; exit 1; }
-ignorer() { echo "build ignoré : $1"; exit 0; }
+ignorer() {
+  echo "build ignoré : $1"
+  echo "⚠️ Note Vercel : Si une variable d'environnement a changé sur Vercel, un Redeploy de ce commit ne reconstruira pas. Pousser un commit de code pour forcer le build."
+  exit 0
+}
 
 # Sans parent, on ne peut pas comparer. Le clone de Vercel est superficiel : ce cas est
 # normal, pas une anomalie — et il se résout en construisant.

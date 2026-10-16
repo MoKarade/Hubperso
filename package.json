@@ -15,7 +15,8 @@
     "portes": "node qualite/portes.mjs",
     "portes:maj": "node qualite/portes.mjs --maj",
     "db:generate": "drizzle-kit generate",
-    "constellation": "tsx scripts/verifier-constellation.ts"
+    "constellation": "tsx scripts/verifier-constellation.ts",
+    "cle-session": "node scripts/generer-cle-session.mjs"
   },
   "dependencies": {
     "@fontsource-variable/outfit": "^5.3.0",
@@ -23,14 +24,13 @@
     "@neondatabase/serverless": "^1.2.0",
     "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.4",
-    "next": "^16.4.0",
+    "next": "^16.4.1",
     "next-auth": "^5.0.0-beta.32",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.9",
-    "@eslint/eslintrc": "^3.3.7",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -40,7 +40,7 @@
     "dependency-cruiser": "^18.6.0",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9.18.0",
-    "eslint-config-next": "^15.5.4",
+    "eslint-config-next": "^16.4.0",
     "jsdom": "^30.1.2",
     "knip": "^6.41.0",
     "tsx": "^4.23.15",
@@ -53,5 +53,6 @@
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.12"
     }
-  }
+  },
+  "//planchers": "Planchers de version, jamais redescendus. next >= 16.4.1 : GHSA-673q-mjm6-r5xr et GHSA-2464-fhr4-w9xw (RCE non authentifiée, CRITICAL) et GHSA-p3m5-59mp-jv5r (DoS Server Actions, HIGH), avis du 14/10/2026 (versions touchées : 16.0.0 à 16.4.0)."
 }

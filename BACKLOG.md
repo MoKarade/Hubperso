@@ -166,17 +166,15 @@ l'état réel avant de coder.
   (mesuré à ~3× plus lent sur CarAI, tous les runs verts).
 
 - **[H-18] `build-necessaire.sh` ne voit jamais une variable d'environnement changée
-  sur Vercel.** Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
+  sur Vercel.** Livré. Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
   Vercel après une panne de connexion, mais le dernier commit sur `main` (#48) ne touchait
   que de la doc. `build-necessaire.sh` juge uniquement le diff git — il a donc annulé DEUX
   tentatives de « Redeploy » d'affilée (« build ignoré : documentation et tests uniquement »)
   pendant que le site continuait de servir l'ancien secret invalide. Le script n'a aucun
   moyen de voir qu'une variable Vercel a bougé : ce n'est pas dans git.
-  Débloqué en urgence par un commit de code trivial (celui-ci) pour forcer une vraie
-  reconstruction. Reste à trancher, sans urgence : ajouter au script un avertissement
-  visible sur `Redeploy` d'un commit doc-only (« si tu changes une variable d'env, ce
-  bouton ne fera rien »), ou documenter la procédure de contournement (pousser un commit
-  de code trivial) dans le HANDOVER.
+  Réglé : `scripts/build-necessaire.sh` affiche un avertissement explicite dans les journaux de build
+  Vercel lorsqu'il ignore un build, et `docs/reference-claude.md` ainsi que `HANDOVER.md` documentent
+  la même procédure de contournement (pousser un commit de code).
 
 ### Demande de Marc du 21/08/2026 — cartes, coûts, ouverture des apps
 
@@ -303,7 +301,7 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
     prouvées — le contraste du texte, et la hauteur des cibles tactiles ; le reste se juge à
     l'écran. Dit avant le merge, pas après.
 
-- [ ] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
+- [x] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
   principe est écrit en §1 du `CLAUDE.md` et respecté partout à ce jour (vérifié à la main le
   15/09 : `ActionList`, `AlertList`, `Recommandation`, la vue détaillée). Mais rien ne le
   FAIT respecter — c'est un rappel, pas un contrôle, et la leçon n°2 dit qu'un rappel ne
@@ -312,6 +310,11 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   délicat à rendre discriminant sans devenir une sonde sur la formulation — le piège attrapé
   par mutation le 15/09 sur `tests/migrationsAppelees.test.ts`. À concevoir posément, pas
   dans la foulée.
+  Livré le 16/10/2026 : `tests/securiteLiens.test.ts` (écrit par Jules, relu et contre-prouvé par
+  Claude). Il lit le code source de `components/` et `app/` et échoue quand un `href` issu d'un
+  summary n'a pas traversé `safeHttpUrl` : retrait simulé dans `ActionList`, `AlertList`,
+  `AlertBanner` et `DetailAlertes`, quatre rouges sur quatre. C'est une sonde sur la formulation,
+  assumée : elle ne voit pas un nouveau nom de propriété hors de sa liste.
 
 - [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
   demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
