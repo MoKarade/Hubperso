@@ -40,7 +40,7 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest # machines GitHub (dépôt public, gratuites)
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
           # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
@@ -57,7 +57,7 @@ jobs:
       - name: La convention de compte-rendu n'a pas dérivé
         run: echo "97e36acba8770c9614b6295773267b9690d07bc5bcd130b3bc0d03da996ab62b  docs/COMPTE-RENDU.md" | sha256sum -c -
 
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -98,7 +98,7 @@ jobs:
     # rouges de suite sans que personne ne le voie). Séparés, « gate vert / audit rouge »
     # se lit d'un coup d'œil et désigne la vraie cause.
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # [CI-PERSIST-CREDS] `actions/checkout` v2+ écrit le GITHUB_TOKEN dans la config git du
           # runner POUR TOUT LE RESTE DU RUN : n'importe quelle étape suivante, y compris une
@@ -107,7 +107,7 @@ jobs:
           # workflow, donc par aucun jeton du runner.
           persist-credentials: false
 
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -133,10 +133,10 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest # machines GitHub (dépôt public, gratuites)
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -146,7 +146,7 @@ jobs:
         run: node qualite/portes.mjs
       - name: Rapport
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: rapport-qualite
           path: qualite/rapport.json
@@ -164,7 +164,7 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest # machines GitHub (dépôt public, gratuites)
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0 # gitleaks lit l'historique complet, pas seulement le dernier commit
           persist-credentials: false
@@ -176,7 +176,7 @@ jobs:
           echo "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb  gitleaks.tgz" | sha256sum -c -
           tar xzf gitleaks.tgz gitleaks
           ./gitleaks git . --no-banner --redact --log-opts="--full-history HEAD"
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
       - name: Analyse statique (Semgrep)
@@ -186,6 +186,32 @@ jobs:
           semgrep scan --metrics off --error --exclude .github \
             --config p/typescript --config p/react --config p/nextjs \
             --config p/secrets --config p/owasp-top-ten .
+
+  # ---------------------------------------------------------------------------------------
+  # Contrôles COMMUNS aux dix dépôts, écrits une seule fois dans MoKarade/.github (plan de
+  # standardisation du 15/10/2026). Ce fichier ne fait que les appeler ; l'appel reste en `@main`
+  # (voulu : un correctif y atteint tous les dépôts sans PR).
+  #
+  # `securite-commune` s'ajoute au job `securite` ci-dessus sans le remplacer : le renommer
+  # changerait le contrôle « Sécurité (secrets · analyse statique) » que .mergify.yml exige.
+  securite-commune:
+    name: Sécurité commune
+    if: github.event_name != 'schedule'
+    uses: MoKarade/.github/.github/workflows/securite.yml@main
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+  # La grille de conformité : un tableau ligne par ligne dans le résumé du job. `bloquant: false`
+  # tant que des lignes rouges attendent leur tâche (Hubperso#160 préversions Vercel, #161 socle
+  # visuel, #162 Sentry) ; passer à `true` quand toute la grille est verte.
+  conformite:
+    name: Conformité
+    if: github.event_name != 'schedule'
+    uses: MoKarade/.github/.github/workflows/conformite.yml@main
+    with:
+      bloquant: false
 
 # ── Note sur le cron ──────────────────────────────────────────────────────────
 # GitHub désactive les workflows planifiés d'un dépôt resté 60 jours sans activité, et

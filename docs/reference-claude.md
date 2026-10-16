@@ -266,7 +266,7 @@ ne vérifie rien ne doit pas ressembler à un run vert.
 | `README.md` | À quoi sert le hub, pour un lecteur extérieur. |
 | `CLAUDE.md` | Ce fichier. Se charge à **chaque session** → il reste **court**. |
 | `HANDOVER.md` | L'état RÉEL de l'auth et des accès, et comment le vérifier. À lire en premier. |
-| `BACKLOG.md` | Ce qui est décidé mais pas fait. |
+| `BACKLOG.md` | Un renvoi vers les issues du dépôt, où vit le backlog (depuis le 16/10/2026). |
 | `docs/adr/` | Décisions architecturales, `NNNN-slug.md`. L'ADR 0001 porte le modèle d'accès **et son amendement** ; l'ADR 0002, le déclenchement d'actions et ses verrous SSRF ; l'ADR 0003, l'horloge du hub, la deuxième route à jeton et la détection de gel. |
 | `docs/ACCES-PAR-APP.md` | Le modèle d'accès par app, en détail. |
 | `docs/CONNEXION-UNIQUE.md` | Le cookie de session partagé entre les apps. |

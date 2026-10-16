@@ -1,0 +1,26 @@
+name: Fumée commune
+
+# Après chaque déploiement de production réussi, sonde l'app EN LIGNE avec le contrôle commun des dix
+# dépôts (MoKarade/.github, plan de standardisation du 15/10/2026, décision 5) : une CI verte ne prouve
+# pas que le site répond. Ce fichier ne fait que l'appeler.
+#
+# Il s'ajoute à `fumee-prod.yml` (sonde propre à Hubperso, avec retour arrière Vercel) sans le remplacer :
+# lui seul sait revenir en arrière, celui-ci apporte le contrôle commun que la grille de conformité
+# (ligne 5) cherche. Hubperso ne publie pas de `/hub/summary` : il le CONSOMME, d'où le chemin vide.
+# Contrôles (rouge si l'un échoue après 3 essais) : santé, page de connexion. Le journal ne contient
+# ni corps de réponse ni jeton.
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  fumee:
+    name: Fumée commune
+    if: github.event.deployment_status.state == 'success' && github.event.deployment_status.environment == 'Production'
+    uses: MoKarade/.github/.github/workflows/fumee.yml@main
+    with:
+      # `hubperso.com` redirige vers `www.hubperso.com` : on sonde l'adresse finale.
+      url-base: https://www.hubperso.com
+      chemin-summary: ""

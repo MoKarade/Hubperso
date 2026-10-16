@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-16 — **Contrôles communs branchés (Hubperso#158)**
+
+La CI appelle maintenant les contrôles communs de `MoKarade/.github` : `securite-commune` (gitleaks, OSV-Scanner, CodeQL) et `conformite` (non bloquante) dans `ci.yml`, `fumee.yml` (sonde `https://www.hubperso.com` : santé et connexion ; Hubperso consomme `/hub/summary`, il ne le sert pas). `fumee-prod.yml` reste : lui seul sait revenir en arrière sur Vercel. Toutes les actions des workflows sont épinglées par SHA (ligne 13 de la grille). `osv-scanner.toml` tolère `braces` 3.0.3 (dépendance de développement, décision de Marc du 16/10/2026) jusqu'au 16/01/2027. `BACKLOG.md` n'est plus qu'un renvoi vers les issues ; l'ancien contenu se lit avec `git show c9f3335:BACKLOG.md`.
+- **Lignes encore rouges de la grille, chacune avec sa tâche** : 8 (préversions Vercel) → Hubperso#160 ; 9 (Sentry) → #162 ; 12 (socle visuel, thème sombre, verrou `tests/theme`) → #161 ; 15 (un ancien commit sans préfixe, `H-18: fix: …`) se règle seul quand dix commits préfixés le suivent. Ligne 10 : « à relire », la sauvegarde vit sur le PC.
+- `bloquant: false` dans `ci.yml` tant que ces lignes ne sont pas vertes ; le passer à `true` à ce moment-là.
+
 ## 🟦 Session 2026-10-01 — **Fusion native GitHub (phase P1 du plan « stratégie PR »)**
 
 La fusion automatique est désormais celle de GitHub (« Allow auto-merge » activé sur le dépôt, ruleset = contrôles requis).
