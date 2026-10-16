@@ -170,11 +170,13 @@ puis pour le *schéma*.
 passage : `app/actions.ts` et `app/administration/actions.ts` lisaient ou écrivaient le modèle
 d'accès sans assurer le schéma. Les trois sont corrigés.
 
-⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER.** Vercel fige les variables
+⚠️ **POSER LA VARIABLE NE SUFFIT PAS : IL FAUT REDÉPLOYER (PAR UN COMMIT DE CODE).** Vercel fige les variables
 d'environnement au moment où un déploiement est créé ; celui qui sert déjà ne les voit jamais
-apparaître. C'est le piège de `[H-18]` — et il a coûté une mesure fausse de plus le 15/09 :
-le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée, simplement
-parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
+apparaître. C'est le piège de `[H-18]` — et un simple bouton « Redeploy » sur un commit ne touchant que
+de la documentation ou des tests sera annulé en silence par `scripts/build-necessaire.sh` (qui ne voit que le diff git).
+Pour appliquer une nouvelle variable Vercel, il faut **pousser un commit de code** (même trivial) sur `main`.
+Cela a aussi coûté une mesure fausse de plus le 15/09 : le relevé lancé à 12:39:51 Z a rendu `503` alors que la variable était posée,
+simplement parce que le redéploiement créé à 12:39:05 Z était encore en construction. 46 secondes
 d'écart, et une conclusion « ça n'a pas marché » qui aurait été fausse.
 
 👤 **CE QUI PROUVERA QUE C'EST RÉGLÉ, ET RIEN D'AUTRE** : un run du workflow `Relevé` à

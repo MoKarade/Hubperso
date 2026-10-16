@@ -211,6 +211,12 @@ créé et qu'il est `READY`, puis **contrôler l'effet sur la réponse HTTP rée
 en-tête se lit dans la réponse, il ne se déduit pas du fichier source. Rattrapage :
 tableau de bord Vercel → Deployments → « … » → Redeploy.
 
+⚠️ **Cas particulier d'un changement de variable sur Vercel** : si la variable est modifiée dans
+l'interface Vercel alors que le dernier commit sur `main` ne touche que de la documentation ou
+des tests, faire « Redeploy » sur ce commit sera annulé en silence par `scripts/build-necessaire.sh`
+(qui ne voit que le diff git). La procédure de contournement est de **pousser un commit de code**
+(même trivial) sur `main` pour forcer une vraie reconstruction qui prendra en compte la nouvelle variable.
+
 Corollaire : un merge qui ne change QUE de la doc n'a pas de déploiement à vérifier. Le dire
 plutôt que de laisser croire qu'on a vérifié.
 
