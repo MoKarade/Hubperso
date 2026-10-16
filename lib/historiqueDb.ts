@@ -166,6 +166,37 @@ export async function lireHistoriqueTous(
 }
 
 /**
+ * Le relevé le plus récent PORTANT UN COÛT, pour chaque app (au plus un par app).
+ *
+ * Pas simplement « le dernier relevé » : une app injoignable laisse un relevé sans coût, et le
+ * cumulé d'hier reste vrai tant qu'il est daté. La date voyage avec la valeur.
+ *
+ * ⚠️ `null` quand la base n'a PAS pu répondre (absente ou en échec), `[]` quand elle a répondu
+ * « aucun coût ». Les confondre ferait afficher « aucun coût » pour une panne.
+ */
+export async function lireDerniersCouts(appIds: string[]): Promise<Releve[] | null> {
+  if (!baseConfiguree()) return null;
+  if (appIds.length === 0) return [];
+  try {
+    const lignes = await db
+      .selectDistinctOn([releves.appId])
+      .from(releves)
+      .where(
+        and(
+          inArray(releves.appId, appIds),
+          sql`${releves.coutMontant} IS NOT NULL`,
+          gt(releves.releveLe, sql`now() - make_interval(days => ${RETENTION_JOURS})`),
+        ),
+      )
+      .orderBy(releves.appId, desc(releves.releveLe));
+    return lignes.map(versReleve);
+  } catch (err) {
+    console.error("[historique] derniers coûts illisibles", err);
+    return null;
+  }
+}
+
+/**
  * Élague ce qui a dépassé la rétention. Sans effet s'il n'y a rien à retirer.
  *
  * ⚠️ Rend `null` quand l'élagage n'a PAS PU être jugé — base absente ou requête en échec.

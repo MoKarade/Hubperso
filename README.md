@@ -95,7 +95,9 @@ un **login Google (Auth.js / NextAuth v5)**.
   appelle un serveur). `/api/cron/releve` suit le même mécanisme (`CRON_SECRET`), et
   `GET /api/sante` aussi, mais **sans** authentification : c'est la sonde de la vigie, elle
   ne rend que `{ ok, cause }` — jamais une donnée ni un nom de variable
-  (`docs/reference-claude.md` §1).
+  (`docs/reference-claude.md` §1). `GET /api/cout` est la seule route publique qui rend une
+  donnée : le coût API cumulé des apps (un total, sa date, les apps non lisibles), pour le
+  relevé du suivi, qui n'a aucun jeton.
 - **Défense en profondeur.** La page `/` (Server Component qui porte les jetons
   `x-hub-token` des apps) revérifie la session côté serveur avant tout fetch : sans
   session, aucune donnée n'est récupérée ni rendue.
