@@ -96,8 +96,8 @@ un **login Google (Auth.js / NextAuth v5)**.
   `GET /api/sante` aussi, mais **sans** authentification : c'est la sonde de la vigie, elle
   ne rend que `{ ok, cause }` — jamais une donnée ni un nom de variable
   (`docs/reference-claude.md` §1). `GET /api/cout` est la seule route publique qui rend une
-  donnée : le coût API des apps (le cumul avec sa date, les apps non lisibles, et la dépense du
-  mois en cours par app : identifiant et montant), pour le relevé du suivi, qui n'a aucun jeton.
+  donnée : le coût API des apps (le cumul avec sa date, les apps non lisibles, et le total de la
+  dépense du mois en cours, jamais le détail par app), pour le relevé du suivi, qui n'a aucun jeton.
 - **Défense en profondeur.** La page `/` (Server Component qui porte les jetons
   `x-hub-token` des apps) revérifie la session côté serveur avant tout fetch : sans
   session, aucune donnée n'est récupérée ni rendue.
