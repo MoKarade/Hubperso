@@ -24,8 +24,7 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
 - Fichiers les plus longs : `app/app/[id]/page.tsx` (412 lignes), `lib/carte.ts` (268),
   `components/AppWidget.tsx` (266), `lib/fetchSummary.ts` (254), `lib/gel.ts` (248).
 - Duplication Sonar proche du seuil (table `SOURCE_DEFS`, six entrées quasi identiques).
-- `BACKLOG.md` (~475 lignes) : plusieurs items H-xx ouverts ; H-25 : rien n'empêche par test de
-  rendre un `href` du contrat sans `safeHttpUrl`.
+- Le backlog vit dans les issues du dépôt (`BACKLOG.md` n'est plus qu'un renvoi, 16/10/2026).
 - `CLAUDE.md` (44 lignes, détail dans `docs/reference-claude.md`) recoupe `HANDOVER.md` : risque de dérive entre les deux.
 
 ## Risques
