@@ -48,10 +48,6 @@ export function PaletteCommandes({ commandes }: { commandes: Commande[] }) {
     if (ouverte) champRef.current?.focus();
   }, [ouverte]);
 
-  // Le curseur revient en tête à chaque frappe : sinon il resterait sur un index qui ne
-  // désigne plus la même commande, et Entrée ouvrirait autre chose que ce qui est surligné.
-  useEffect(() => setCurseur(0), [requete]);
-
   const lancer = useCallback(
     (commande: Commande) => {
       fermer();
@@ -95,7 +91,12 @@ export function PaletteCommandes({ commandes }: { commandes: Commande[] }) {
           className="palette__champ"
           type="text"
           value={requete}
-          onChange={(e) => setRequete(e.target.value)}
+          onChange={(e) => {
+            setRequete(e.target.value);
+            // Le curseur revient en tête à chaque frappe : sinon il resterait sur un index qui ne
+            // désigne plus la même commande, et Entrée ouvrirait autre chose que ce qui est surligné.
+            setCurseur(0);
+          }}
           onKeyDown={surToucheChamp}
           placeholder="Aller à une app, une page…"
           aria-label="Rechercher une commande"

@@ -28,7 +28,6 @@ export function BoutonEnvoi({
   useEffect(() => {
     if (pending) {
       etaitEnCours.current = true;
-      setFait(false);
       return;
     }
     if (!etaitEnCours.current) return;
