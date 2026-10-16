@@ -11,6 +11,7 @@
 import Link from "next/link";
 import { exigerAccesHub } from "@/lib/gardeHub";
 import { getSources } from "@/lib/sources";
+import { maintenantMs } from "@/lib/horloge";
 import { fetchAllSummaries } from "@/lib/fetchSummary";
 import { attentions, compteParGravite, phrasesRienASignaler, type Gravite } from "@/lib/attention";
 import { CADENCE_HORLOGE_MS, continuite, etatObservation } from "@/lib/gel";
@@ -33,7 +34,7 @@ export default async function PageAttention() {
   await exigerAccesHub();
 
   const sources = getSources();
-  const maintenant = Date.now();
+  const maintenant = maintenantMs();
   const [resultats, historiques] = await Promise.all([
     fetchAllSummaries(sources),
     lireHistoriqueTous(sources.map((s) => s.id)),
