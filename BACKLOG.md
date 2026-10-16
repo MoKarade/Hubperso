@@ -301,7 +301,7 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
     prouvées — le contraste du texte, et la hauteur des cibles tactiles ; le reste se juge à
     l'écran. Dit avant le merge, pas après.
 
-- [ ] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
+- [x] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
   principe est écrit en §1 du `CLAUDE.md` et respecté partout à ce jour (vérifié à la main le
   15/09 : `ActionList`, `AlertList`, `Recommandation`, la vue détaillée). Mais rien ne le
   FAIT respecter — c'est un rappel, pas un contrôle, et la leçon n°2 dit qu'un rappel ne
@@ -310,6 +310,11 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   délicat à rendre discriminant sans devenir une sonde sur la formulation — le piège attrapé
   par mutation le 15/09 sur `tests/migrationsAppelees.test.ts`. À concevoir posément, pas
   dans la foulée.
+  Livré le 16/10/2026 : `tests/securiteLiens.test.ts` (écrit par Jules, relu et contre-prouvé par
+  Claude). Il lit le code source de `components/` et `app/` et échoue quand un `href` issu d'un
+  summary n'a pas traversé `safeHttpUrl` : retrait simulé dans `ActionList`, `AlertList`,
+  `AlertBanner` et `DetailAlertes`, quatre rouges sur quatre. C'est une sonde sur la formulation,
+  assumée : elle ne voit pas un nouveau nom de propriété hors de sa liste.
 
 - [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
   demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
