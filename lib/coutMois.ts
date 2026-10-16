@@ -52,6 +52,24 @@ function ecartFuseauMs(instant: number): number {
   return Date.UTC(n("year"), n("month") - 1, n("day"), n("hour"), n("minute"), n("second")) - instant;
 }
 
+/** Ce que `depenseDuMois` calcule : le détail par app reste interne, il ne sort jamais de la route. */
+export type DepenseDuMois = ReturnType<typeof depenseDuMois>;
+
+/**
+ * La part PUBLIQUE de la dépense du mois : les totaux seulement (oui de Marc, 16/10/2026). Liste
+ * blanche explicite, pas un « tout sauf `apps` » : un champ ajouté plus tard à `depenseDuMois`
+ * ne devient pas public sans qu'on l'écrive ici.
+ */
+export function totauxDuMois(d: DepenseDuMois) {
+  return {
+    debut: d.debut,
+    totalCad: d.totalCad,
+    partiel: d.partiel,
+    nonLisibles: d.nonLisibles,
+    dernierReleve: d.dernierReleve,
+  };
+}
+
 export function depenseDuMois(
   appIds: readonly string[],
   debutMs: number,

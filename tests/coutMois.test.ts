@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { Releve } from "../lib/historique";
-import { debutDuMois, depenseDuMois } from "../lib/coutMois";
+import { debutDuMois, depenseDuMois, totauxDuMois } from "../lib/coutMois";
 import { USD_TO_CAD } from "../lib/usage";
 
 const T = (iso: string) => new Date(iso).getTime();
@@ -86,5 +86,34 @@ describe("depenseDuMois", () => {
     const mois: Releve = { ...fin, cout: { montant: 3, devise: "CAD", periode: "mois" } };
     const r = depenseDuMois(["a"], DEBUT, [mois], [releve("a", "2026-09-30T12:00:00Z", 1)], []);
     expect(r.nonLisibles).toEqual(["a"]);
+  });
+});
+
+describe("totauxDuMois", () => {
+  it("ne garde que les totaux : aucun montant par app ne sort", () => {
+    const d = depenseDuMois(
+      ["a", "b"],
+      DEBUT,
+      [releve("a", "2026-10-16T12:00:00Z", 15), releve("b", "2026-10-16T12:00:00Z", 9)],
+      [releve("a", "2026-09-30T23:00:00Z", 10), releve("b", "2026-09-30T23:00:00Z", 4)],
+      [],
+    );
+    expect(d.apps).toHaveLength(2); // le détail existe en interne…
+    const publie = totauxDuMois(d);
+    expect(publie).toEqual({
+      debut: "2026-10-01T04:00:00.000Z",
+      totalCad: 10,
+      partiel: false,
+      nonLisibles: [],
+      dernierReleve: "2026-10-16T12:00:00.000Z",
+    });
+    expect(Object.keys(publie)).not.toContain("apps"); // …mais ne sort pas
+  });
+
+  it("ne publie pas un champ ajouté plus tard à depenseDuMois", () => {
+    const d = { ...depenseDuMois(["a"], DEBUT, [], [], []), secret: "x" };
+    expect(Object.keys(totauxDuMois(d)).sort()).toEqual(
+      ["debut", "dernierReleve", "nonLisibles", "partiel", "totalCad"],
+    );
   });
 });
