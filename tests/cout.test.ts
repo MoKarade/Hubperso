@@ -22,16 +22,27 @@ function releve(appId: string, montant: number, periode: "total" | "mois" = "tot
   };
 }
 
-async function appeler(derniers: Releve[] | null, baseConfiguree = true) {
+type Refs = { avant: Releve[]; apres: Releve[] } | null;
+
+async function appeler(
+  derniers: Releve[] | null,
+  baseConfiguree = true,
+  references: Refs = { avant: [], apres: [] },
+) {
   vi.resetModules();
   vi.doMock("@/lib/db", () => ({ baseConfiguree: () => baseConfiguree }));
   vi.doMock("@/lib/migrations", () => ({ assurerMigrations: async () => {} }));
-  vi.doMock("@/lib/historiqueDb", () => ({ lireDerniersCouts: async () => derniers }));
+  vi.doMock("@/lib/horloge", () => ({ maintenantMs: () => Date.parse("2026-10-16T14:00:00Z") }));
+  vi.doMock("@/lib/historiqueDb", () => ({
+    lireDerniersCouts: async () => derniers,
+    lireReferencesMois: async () => references,
+  }));
   const { GET } = await import("../app/api/cout/route");
   return GET(requete());
 }
 
 afterEach(() => {
+  vi.doUnmock("@/lib/horloge");
   vi.doUnmock("@/lib/db");
   vi.doUnmock("@/lib/historiqueDb");
   vi.doUnmock("@/lib/migrations");
@@ -74,19 +85,42 @@ describe("GET /api/cout", () => {
     expect(res.status).toBe(503);
   });
 
-  it("le corps ne porte aucun détail par app, jeton ni adresse", async () => {
+  it("le corps ne porte ni jeton, ni adresse, ni rien hors des clés prévues", async () => {
     const texte = JSON.stringify(await (await appeler([releve("batchchef", 4)])).json());
     expect(texte).not.toMatch(/token|jeton|https?:|summary|@/i);
     expect(Object.keys(JSON.parse(texte)).sort()).toEqual(
-      ["apps", "cumulCad", "dataAsOf", "devise", "ok", "periode", "tauxUsdCad"].sort(),
+      ["apps", "cumulCad", "dataAsOf", "devise", "mois", "ok", "periode", "tauxUsdCad"].sort(),
     );
+  });
+
+  it("rend la dépense du mois par app (cumul d'aujourd'hui moins cumul d'avant le 1er)", async () => {
+    const avant = { ...releve("batchchef", 3), releveLe: Date.parse("2026-09-30T20:00:00Z") };
+    const corps = await (await appeler([releve("batchchef", 4)], true, { avant: [avant], apres: [] })).json();
+    expect(corps.mois).toMatchObject({
+      debut: "2026-10-01T04:00:00.000Z",
+      totalCad: 1,
+      partiel: false,
+      apps: [{ id: "batchchef", cad: 1, partiel: false }],
+    });
+    expect(corps.mois.nonLisibles).toContain("financeai");
+  });
+
+  it("garde le cumul et met `mois: null` quand les références du mois sont illisibles", async () => {
+    const res = await appeler([releve("batchchef", 4)], true, null);
+    expect(res.status).toBe(200);
+    const corps = await res.json();
+    expect(corps.mois).toBeNull();
+    expect(corps.cumulCad).toBe(4);
   });
 
   it("freine un client qui martèle (429 au-delà de 10 appels par minute)", async () => {
     vi.resetModules();
     vi.doMock("@/lib/db", () => ({ baseConfiguree: () => true }));
     vi.doMock("@/lib/migrations", () => ({ assurerMigrations: async () => {} }));
-    vi.doMock("@/lib/historiqueDb", () => ({ lireDerniersCouts: async () => [] }));
+    vi.doMock("@/lib/historiqueDb", () => ({
+      lireDerniersCouts: async () => [],
+      lireReferencesMois: async () => ({ avant: [], apres: [] }),
+    }));
     const { GET } = await import("../app/api/cout/route");
     const memeClient = () =>
       new Request("https://hubperso.com/api/cout", { headers: { "x-real-ip": "10.9.9.9" } });
