@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-16 — **Couverture au cliquet (Hubperso#159)**
+
+Les seuils de couverture étaient restés bien en dessous de la mesure (lignes globales : seuil 65,8 pour 82,7 mesurés) : une PR pouvait perdre 17 points sans rougir. `npm run portes:maj` les a ramenés à la mesure (cœur 94,5 ; global 82,7 ; branches 73,9 ; avertissements lint 0). Détail et table : section « Portes qualité » plus bas ; trace dans `historique` de `qualite/seuils.json`.
+
 ## 🟦 Session 2026-10-16 — **Contrôles communs branchés (Hubperso#158)**
 
 La CI appelle maintenant les contrôles communs de `MoKarade/.github` : `securite-commune` (gitleaks, OSV-Scanner, CodeQL) et `conformite` (non bloquante) dans `ci.yml`, `fumee.yml` (sonde `https://www.hubperso.com` : santé et connexion ; Hubperso consomme `/hub/summary`, il ne le sert pas). `fumee-prod.yml` reste : lui seul sait revenir en arrière sur Vercel. Toutes les actions des workflows sont épinglées par SHA (ligne 13 de la grille). `osv-scanner.toml` tolère `braces` 3.0.3 (dépendance de développement, décision de Marc du 16/10/2026) jusqu'au 16/01/2027. `BACKLOG.md` n'est plus qu'un renvoi vers les issues ; l'ancien contenu se lit avec `git show c9f3335:BACKLOG.md`.
@@ -344,17 +348,21 @@ Contrôles automatiques en CI, jobs **Qualité** et **Sécurité** : la fusion a
 Principe du **cliquet** : `qualite/seuils.json` fige l'état du jour de la mise en place ; rien ne peut
 reculer. `npm run portes` mesure en local, `npm run portes:maj` resserre après une amélioration.
 
-| Porte | Seuil de départ |
+| Porte | Seuil au 16/10/2026 |
 |---|---|
 | Typage (erreurs) | ≤ 0 |
 | Lint (erreurs) | ≤ 0 |
-| Lint (avertissements) | ≤ 2 |
+| Lint (avertissements) | ≤ 0 |
 | Tests en échec | ≤ 0 |
-| Couverture `lib/` (% lignes) | ≥ 88.1 |
-| Couverture globale (% lignes) | ≥ 40.4 |
-| Couverture globale (% branches) | ≥ 92.5 |
-| Code mort (knip) | ≤ 23 |
+| Couverture `lib/` (% lignes) | ≥ 94.5 |
+| Couverture globale (% lignes) | ≥ 82.7 |
+| Couverture globale (% branches) | ≥ 73.9 |
+| Code mort (knip) | ≤ 3 |
 | Règles d'architecture (dependency-cruiser) | ≤ 0 |
+
+Source des chiffres : `qualite/seuils.json` (la table se relit contre lui, pas l'inverse). La couverture
+s'affiche dans le journal du job **Qualité** (tableau « Portes qualité ») et dans l'artefact `rapport-qualite` ;
+une valeur plus basse que le seuil (tolérance 0,2 point) rend le job rouge. Hubperso#159.
 
 Sécurité : gitleaks sur tout l'historique + Semgrep (TypeScript, React, Next.js, secrets, OWASP), bloquants.
 Dependabot : mises à jour hebdomadaires (npm + actions), fusion automatique si tout est vert.

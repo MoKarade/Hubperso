@@ -1,6 +1,6 @@
 {
   "_doc": "Seuils du cliquet (portes qualité de l'Atelier, S6). Valeurs mesurées le jour de la mise en place (Linux, Node 24.21) : l'existant est toléré, rien ne peut reculer. `npm run portes:maj` resserre un seuil quand le chiffre s'améliore ; le desserrer demande `--forcer` et une décision de Marc.",
-  "mis_a_jour": "2026-09-30",
+  "mis_a_jour": "2026-10-16",
   "config": {
     "app": "Hubperso",
     "lint": "eslint .",
@@ -23,19 +23,19 @@
       "max": 0
     },
     "lint.avertissements": {
-      "max": 2
+      "max": 0
     },
     "tests.echecs": {
       "max": 0
     },
     "couverture.lignes_coeur": {
-      "min": 92.8
+      "min": 94.5
     },
     "couverture.lignes_global": {
-      "min": 65.8
+      "min": 82.7
     },
     "couverture.branches_global": {
-      "min": 53
+      "min": 73.9
     },
     "code_mort.problemes": {
       "max": 3
@@ -57,6 +57,22 @@
         "couverture.lignes_coeur": 88.3,
         "couverture.lignes_global": 56.8,
         "couverture.branches_global": 47.5
+      }
+    },
+    {
+      "date": "2026-10-16",
+      "motif": "resserrement au cliquet (Hubperso#159) : les seuils de couverture étaient restés très en dessous de la mesure (lignes globales 65.8 pour 82.7 mesurés), donc une PR pouvait faire perdre 17 points sans rougir ; `npm run portes:maj` les ramène à la mesure (Linux, Node 22.22)",
+      "avant": {
+        "couverture.lignes_coeur": 92.8,
+        "couverture.lignes_global": 65.8,
+        "couverture.branches_global": 53,
+        "lint.avertissements": 2
+      },
+      "apres": {
+        "couverture.lignes_coeur": 94.5,
+        "couverture.lignes_global": 82.7,
+        "couverture.branches_global": 73.9,
+        "lint.avertissements": 0
       }
     }
   ]
