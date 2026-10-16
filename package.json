@@ -23,7 +23,7 @@
     "@neondatabase/serverless": "^1.2.0",
     "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.4",
-    "next": "^16.4.0",
+    "next": "^16.4.1",
     "next-auth": "^5.0.0-beta.32",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
@@ -53,5 +53,6 @@
     "@esbuild-kit/core-utils": {
       "esbuild": "^0.25.12"
     }
-  }
+  },
+  "//planchers": "Planchers de version, jamais redescendus. next >= 16.4.1 : GHSA-673q-mjm6-r5xr et GHSA-2464-fhr4-w9xw (RCE non authentifiée, CRITICAL) et GHSA-p3m5-59mp-jv5r (DoS Server Actions, HIGH), avis du 14/10/2026 (versions touchées : 16.0.0 à 16.4.0)."
 }
