@@ -20,7 +20,7 @@
 // endroits où avaler une erreur est le bon choix, et il est nommé pour qu'on ne l'imite pas
 // ailleurs. Un `throw` ici ferait tomber le tableau de bord pour cause d'échec d'archivage.
 
-import { and, desc, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, gt, gte, inArray, lt, sql } from "drizzle-orm";
 import { db, baseConfiguree } from "./db";
 import { releves } from "./db/schema";
 import type { Releve } from "./historique";
@@ -192,6 +192,41 @@ export async function lireDerniersCouts(appIds: string[]): Promise<Releve[] | nu
     return lignes.map(versReleve);
   } catch (err) {
     console.error("[historique] derniers coûts illisibles", err);
+    return null;
+  }
+}
+
+/**
+ * Les points de départ de la dépense du mois, par app : le dernier cumul AVANT `debut`, et le
+ * premier cumul à partir de `debut` (repli quand rien n'existe avant : voir `lib/coutMois.ts`).
+ * `null` si la base est absente ou en échec — jamais « aucun relevé ».
+ */
+export async function lireReferencesMois(
+  appIds: string[],
+  debut: Date,
+): Promise<{ avant: Releve[]; apres: Releve[] } | null> {
+  if (!baseConfiguree()) return null;
+  if (appIds.length === 0) return { avant: [], apres: [] };
+  const filtre = and(
+    inArray(releves.appId, appIds),
+    sql`${releves.coutMontant} IS NOT NULL`,
+    sql`${releves.coutPeriode} = 'total'`,
+    gt(releves.releveLe, sql`now() - make_interval(days => ${RETENTION_JOURS})`),
+  );
+  try {
+    const avant = await db
+      .selectDistinctOn([releves.appId])
+      .from(releves)
+      .where(and(filtre, lt(releves.releveLe, debut)))
+      .orderBy(releves.appId, desc(releves.releveLe));
+    const apres = await db
+      .selectDistinctOn([releves.appId])
+      .from(releves)
+      .where(and(filtre, gte(releves.releveLe, debut)))
+      .orderBy(releves.appId, asc(releves.releveLe));
+    return { avant: avant.map(versReleve), apres: apres.map(versReleve) };
+  } catch (err) {
+    console.error("[historique] références du mois illisibles", err);
     return null;
   }
 }
