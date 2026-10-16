@@ -69,6 +69,14 @@ export function isPublicPath(pathname: string): boolean {
   // catégorie à part (ROUTES_PUBLIQUES_MUETTES) et vérifie qu'elle n'importe aucun module
   // de données.
   if (pathname === "/api/sante") return true;
+
+  // GET /api/cout : le coût API cumulé des apps, pour le relevé du suivi du projet (#191),
+  // qui n'a aucun jeton. QUATRIÈME route qui traverse le garde, SANS authentification, et la
+  // seule à rendre une donnée : un total en dollars, son heure de mesure et les identifiants
+  // (publics) des apps — rien par app, rien de personnel (lib/coutCumule.ts). Oui de Marc,
+  // 16/10/2026. Même mécanisme que les autres : ici, jamais dans le matcher.
+  // `tests/gardePages.test.ts` la range dans ROUTES_PUBLIQUES_AGREGAT.
+  if (pathname === "/api/cout") return true;
   if (
     pathname.startsWith("/_next/static/") ||
     pathname.startsWith("/_next/image") ||

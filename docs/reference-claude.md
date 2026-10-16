@@ -28,7 +28,7 @@ widgets 100 % génériques.
   Components). Pas de `x-hub-token` exposé au client, pas de CORS demandé aux apps.
 - **Hub privé, protégé par auth.** Le hub affiche des données personnelles réelles : il est
   derrière un **login Google (Auth.js v5)**. `middleware.ts` garde tout sauf `/api/auth/*`,
-  `/login`, `/api/acces`, `/api/cron/releve`, `/api/sante` et les assets. **Toute nouvelle route affichant des données doit
+  `/login`, `/api/acces`, `/api/cron/releve`, `/api/sante`, `/api/cout` et les assets. **Toute nouvelle route affichant des données doit
   rester derrière la middleware** (ne jamais l'ajouter aux exclusions du matcher) et, si
   elle porte des jetons, revérifier la session côté serveur (défense en profondeur, cf.
   `app/page.tsx`). Voir la section « Authentification » du README.
@@ -66,6 +66,14 @@ widgets 100 % génériques.
   message brut ni un **nom** de variable — les noms des variables requises absentes partent
   au journal serveur seulement. `tests/gardePages.test.ts` la range à part
   (`ROUTES_PUBLIQUES_MUETTES`) et lui interdit d'importer un module de données.
+- **Une quatrième traverse le garde SANS authentification et rend UNE donnée : `GET /api/cout`**
+  (16/10/2026, tâche #191, oui de Marc). Le coût API cumulé des apps, que le relevé du suivi du
+  projet lit sans jeton : un total en CAD (période `total` seulement, jamais fusionnée avec un
+  coût « mois »), sa date de mesure (la plus ancienne) et les identifiants des apps « non
+  lisibles » (jamais comptées comme 0). Rien par app, rien de personnel. Elle lit la mémoire du
+  hub (les relevés), jamais une app ni un jeton ; 503 si la base ne répond pas ; 10 appels/min par
+  client. `tests/gardePages.test.ts` la range à part (`ROUTES_PUBLIQUES_AGREGAT`) : pas de
+  `getSources`, ni personnes, ni administration, ni jeton. Logique pure : `lib/coutCumule.ts`.
   La liste des variables attendues (noms, requise/optionnelle, effet si absente) vit dans
   `lib/variablesAttendues.ts` (F7) ; `tests/variablesAttendues.test.ts` vérifie qu'elle
   couvre chaque `process.env` lu par l'app.

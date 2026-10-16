@@ -41,7 +41,9 @@ const client = new PGlite();
 const dbTest = drizzle(client);
 porteur.db = dbTest;
 
-const { enregistrerReleve, elaguerHistorique } = await import("../lib/historiqueDb");
+const { enregistrerReleve, elaguerHistorique, lireDerniersCouts } = await import(
+  "../lib/historiqueDb"
+);
 const { releves } = await import("../lib/db/schema");
 
 const resultatOk = () => ({
@@ -114,5 +116,37 @@ describe("elaguerHistorique ne déguise pas une panne en ménage réussi", () =>
     // Il rendait `0` — soit exactement ce que rend un élagage parfaitement réussi sur une
     // table propre. Le même mensonge que l'ancien booléen, un cran plus bas.
     expect(await sansLaTable(() => elaguerHistorique())).toBeNull();
+  });
+});
+
+describe("lireDerniersCouts rend le dernier relevé PORTANT un coût, par app", () => {
+  const il_y_a = (minutes: number) => sql`now() - make_interval(mins => ${minutes})`;
+
+  async function inserer(appId: string, minutes: number, cout: [number, string, string] | null) {
+    await dbTest.execute(sql`
+      INSERT INTO ${releves} (app_id, releve_le, etat, metriques, cout_montant, cout_devise, cout_periode)
+      VALUES (${appId}, ${il_y_a(minutes)}, 'ok', '[]'::jsonb,
+              ${cout?.[0] ?? null}::numeric, ${cout?.[1] ?? null}, ${cout?.[2] ?? null})
+    `);
+  }
+
+  it("garde le plus récent par app, et saute un relevé sans coût (app injoignable)", async () => {
+    await inserer("batchchef", 120, [4.5, "USD", "total"]);
+    await inserer("batchchef", 60, [5.25, "USD", "total"]);
+    await inserer("batchchef", 5, null); // injoignable depuis : aucun coût dans ce relevé
+    await inserer("financeai", 30, [1, "CAD", "total"]);
+
+    const derniers = await lireDerniersCouts(["batchchef", "financeai", "carai"]);
+
+    expect(derniers).not.toBeNull();
+    const parApp = new Map(derniers!.map((r) => [r.appId, r]));
+    expect(parApp.get("batchchef")?.cout).toEqual({ montant: 5.25, devise: "USD", periode: "total" });
+    expect(parApp.get("financeai")?.cout?.montant).toBe(1);
+    // Aucune ligne pour carai : l'appelant la comptera « non lisible », pas à zéro.
+    expect(parApp.has("carai")).toBe(false);
+  });
+
+  it("rend null (et non []) quand la base ne répond pas", async () => {
+    expect(await sansLaTable(() => lireDerniersCouts(["batchchef"]))).toBeNull();
   });
 });
