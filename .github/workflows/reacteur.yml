@@ -23,7 +23,7 @@ jobs:
     if: >-
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.actor.type != 'Bot')
-    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
+    runs-on: ubuntu-latest # machines GitHub (dépôt public, gratuites)
     steps:
       - name: Appeler la routine
         # Ne fait JAMAIS échouer le job : un échec ici redéclencherait ce workflow. Pas de jeton

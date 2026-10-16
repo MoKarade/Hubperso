@@ -66,7 +66,7 @@ concurrency:
 jobs:
   relever:
     name: Interroger les apps et archiver
-    runs-on: ${{ github.event.repository.visibility == 'private' && fromJSON('["self-hosted","pc-marc"]') || 'ubuntu-latest' }} # privé : robot du PC ; public, ou visibilité absente (un déclenchement planifié ne la porte pas toujours) : machines GitHub. Jamais le PC par défaut.
+    runs-on: ubuntu-latest # machines GitHub (dépôt public, gratuites)
     # Plafond : sans lui, le défaut GitHub est de SIX HEURES — vécu sur DriveAI le
     # 19/08/2026, où une installation figée a tourné 2 h 15 pendant que la PR restait
     # « en attente » sans rien de rouge. Calibré sur la durée réelle : cinq apps à 20 s de
