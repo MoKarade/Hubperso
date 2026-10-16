@@ -5,6 +5,7 @@ import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
 import { enregistrerReleve, lireHistoriqueTous } from "@/lib/historiqueDb";
 import { attentions } from "@/lib/attention";
+import { maintenantMs } from "@/lib/horloge";
 import { BandeauAttention } from "@/components/BandeauAttention";
 import type { Releve } from "@/lib/historique";
 import { aggregateUsage } from "@/lib/usage";
@@ -89,7 +90,7 @@ async function OnlineCount({ promises }: { promises: Promise<SummaryResult>[] })
  */
 async function StreamedAttention({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
-  return <BandeauAttention liste={attentions(results, Date.now())} />;
+  return <BandeauAttention liste={attentions(results, maintenantMs())} />;
 }
 
 /** Carte des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
