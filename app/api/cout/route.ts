@@ -3,7 +3,8 @@
 // Demande de Marc (15/10/2026, « quota précis sans action de ma part »), tâche #191. Le
 // relevé du suivi n'a aucun jeton et n'en recevra pas : la réponse est donc publique, comme
 // `/api/sante`, et ne porte QUE ce qui peut l'être — un total en dollars, une heure de mesure,
-// les identifiants (publics) des apps, et la dépense du mois par app (id + montant, sans détail).
+// les identifiants (publics) des apps non lisibles, et la dépense du MOIS en total (oui de Marc :
+// les totaux seulement, jamais un montant par app).
 // Voir `lib/coutCumule.ts` et `lib/coutMois.ts`.
 //
 // ⚠️ Route SANS authentification, délibérément (oui de Marc, 16/10/2026). Elle traverse le
@@ -20,7 +21,7 @@
 
 import { baseConfiguree } from "@/lib/db";
 import { cumulerCouts } from "@/lib/coutCumule";
-import { debutDuMois, depenseDuMois } from "@/lib/coutMois";
+import { debutDuMois, depenseDuMois, totauxDuMois } from "@/lib/coutMois";
 import { maintenantMs } from "@/lib/horloge";
 import { lireDerniersCouts, lireReferencesMois } from "@/lib/historiqueDb";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
@@ -52,7 +53,7 @@ export async function GET(request: Request): Promise<Response> {
   const mois =
     references === null
       ? null
-      : depenseDuMois(ids, debut, derniers, references.avant, references.apres);
+      : totauxDuMois(depenseDuMois(ids, debut, derniers, references.avant, references.apres));
 
   return Response.json({ ok: true, ...cumulerCouts(ids, derniers), mois }, { headers: NO_STORE });
 }
