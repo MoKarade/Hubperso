@@ -70,10 +70,10 @@ widgets 100 % génériques.
   (16/10/2026, tâche #191, oui de Marc). Le coût API cumulé des apps, que le relevé du suivi du
   projet lit sans jeton : un total en CAD (période `total` seulement, jamais fusionnée avec un
   coût « mois »), sa date de mesure (la plus ancienne) et les identifiants des apps « non
-  lisibles » (jamais comptées comme 0). Depuis le 16/10/2026 elle porte aussi `mois` : la dépense du
-  mois en cours PAR APP (identifiant et montant en CAD, estimée par différence de cumuls, voir
-  `lib/coutMois.ts`), demandée par le coordinateur pour mesurer le plafond de 20 $/mois de Marc. Rien
-  d'autre par app, rien de personnel. Elle lit la mémoire du
+  lisibles » (jamais comptées comme 0). Depuis le 16/10/2026 elle porte aussi `mois` : le TOTAL de la
+  dépense du mois en cours (estimé par différence de cumuls, voir `lib/coutMois.ts`), pour mesurer
+  le plafond de 20 $/mois de Marc. Jamais un montant par app (oui de Marc : les totaux seulement,
+  liste blanche `totauxDuMois`), rien de personnel. Elle lit la mémoire du
   hub (les relevés), jamais une app ni un jeton ; 503 si la base ne répond pas ; 10 appels/min par
   client. `tests/gardePages.test.ts` la range à part (`ROUTES_PUBLIQUES_AGREGAT`) : pas de
   `getSources`, ni personnes, ni administration, ni jeton. Logique pure : `lib/coutCumule.ts`.

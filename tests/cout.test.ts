@@ -93,15 +93,17 @@ describe("GET /api/cout", () => {
     );
   });
 
-  it("rend la dépense du mois par app (cumul d'aujourd'hui moins cumul d'avant le 1er)", async () => {
+  it("rend le TOTAL de la dépense du mois (cumul d'aujourd'hui moins cumul d'avant le 1er), jamais le détail par app", async () => {
     const avant = { ...releve("batchchef", 3), releveLe: Date.parse("2026-09-30T20:00:00Z") };
     const corps = await (await appeler([releve("batchchef", 4)], true, { avant: [avant], apres: [] })).json();
     expect(corps.mois).toMatchObject({
       debut: "2026-10-01T04:00:00.000Z",
       totalCad: 1,
       partiel: false,
-      apps: [{ id: "batchchef", cad: 1, partiel: false }],
     });
+    expect(corps.mois).not.toHaveProperty("apps");
+    expect(Object.keys(corps.mois).sort()).toEqual(["debut", "dernierReleve", "nonLisibles", "partiel", "totalCad"]);
+    expect(JSON.stringify(corps.mois)).not.toContain('"cad"');
     expect(corps.mois.nonLisibles).toContain("financeai");
   });
 
