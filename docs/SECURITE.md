@@ -23,9 +23,10 @@ maintenant**, car les préversions Vercel ont des hôtes variables et une liste 
 enfermerait dehors. À reprendre avec le déploiement.
 
 ## Préversions (M2) — `vercel.json`
-`git.deploymentEnabled` refuse maintenant `claude/*`, `agence/**` et `dependabot/**` (motifs
-minimatch, vérifiés dans la doc Vercel : `*` ne franchit pas `/`, d'où `**` pour
-`agence/<session>/<sujet>`). Cela évite des préversions inutiles. **Reste à vérifier dans la
+`git.deploymentEnabled` coupe tout (`**` et `*`, motifs minimatch de la doc Vercel : `*` ne franchit
+pas `/`, d'où `**`) et rouvre la seule `main`. Aucune branche ne crée de préversion, ni `claude/*`,
+`agence/**`, `dependabot/**` ni les branches `mergify/merge-queue/*` (Hubperso#160, 16/10/2026,
+même règle qu'app-template). Verrou : `tests/vercelJson.test.ts`. Cela évite des préversions inutiles. **Reste à vérifier dans la
 console** (par `hubperso-deploiement` ou Marc, noms seulement, jamais les valeurs) : qu'aucune
 variable de production (`DATABASE_URL`, `HUB_TOKEN_*`, `CRON_SECRET`) n'est dans le scope
 Preview. Le code ne peut pas le garantir.
