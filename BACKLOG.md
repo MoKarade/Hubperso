@@ -166,17 +166,15 @@ l'état réel avant de coder.
   (mesuré à ~3× plus lent sur CarAI, tous les runs verts).
 
 - **[H-18] `build-necessaire.sh` ne voit jamais une variable d'environnement changée
-  sur Vercel.** Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
+  sur Vercel.** Livré. Incident du 01/09/2026 : le secret OAuth Google a été mis à jour dans
   Vercel après une panne de connexion, mais le dernier commit sur `main` (#48) ne touchait
   que de la doc. `build-necessaire.sh` juge uniquement le diff git — il a donc annulé DEUX
   tentatives de « Redeploy » d'affilée (« build ignoré : documentation et tests uniquement »)
   pendant que le site continuait de servir l'ancien secret invalide. Le script n'a aucun
   moyen de voir qu'une variable Vercel a bougé : ce n'est pas dans git.
-  Débloqué en urgence par un commit de code trivial (celui-ci) pour forcer une vraie
-  reconstruction. Reste à trancher, sans urgence : ajouter au script un avertissement
-  visible sur `Redeploy` d'un commit doc-only (« si tu changes une variable d'env, ce
-  bouton ne fera rien »), ou documenter la procédure de contournement (pousser un commit
-  de code trivial) dans le HANDOVER.
+  Réglé : `scripts/build-necessaire.sh` affiche un avertissement explicite dans les journaux de build
+  Vercel lorsqu'il ignore un build, et `docs/reference-claude.md` ainsi que `HANDOVER.md` documentent
+  la même procédure de contournement (pousser un commit de code).
 
 ### Demande de Marc du 21/08/2026 — cartes, coûts, ouverture des apps
 
