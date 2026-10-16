@@ -100,7 +100,7 @@ l'état réel avant de coder.
   des requêtes Vercel prouve qu'aucune page n'avait été chargée depuis le déploiement. La
   leçon n°5 un étage plus bas : l'observateur était requis pour le SCHÉMA.
   Le message ne pouvait pas être juste : `enregistrerReleve` rendait un booléen, donc
-  « espacé » et « échoué » arrivaient sous la même forme. Corrigé par un TYPE
+  « espaced » et « échoué » arrivaient sous la même forme. Corrigé par un TYPE
   (`IssueReleve`), pas par une reformulation — plus `HTTP 500` sur échec, deux autres
   instances du même oubli trouvées par le nouveau test, et `elaguerHistorique` qui rend `null`
   au lieu de `0` quand il n'a rien pu juger.
@@ -197,7 +197,7 @@ reste va dans la vue détaillée.
 ⚠️ Les libellés de détail servent de CLÉ à l'historique : la clé est le couple (titre de
 section, libellé). Deux lignes homonymes dans une même section donneraient une courbe qui
 saute d'une grandeur à l'autre — un graphe faux, sans rien d'anormal à l'écran. Le contrat
-les rejette ; le même libellé dans deux sections différentes reste accepté.
+les rejette ; le même libellé dans deux sections différentes reste accepted.
 
 - [ ] **[H-09] [HUB] Coûts et quotas détaillés, avec l'évolution dans le temps.** Au clic sur
   « détails » d'une app : graphique de l'évolution de son coût ; sinon, le prix sur 7 jours.
@@ -248,7 +248,7 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   nommées : le tableau de bord, `/app/<id>`, `/attention`, `/couts`.
   - **Le « Détail » était le plus petit élément cliquable du hub** : un texte nu de 0,78 rem
     en `--text-faint`, sans fond ni rembourrage — environ 14 px de haut. Il est devenu un
-    bouton de 44 px rempli de la couleur de l'app, et **toute la carte est cliquable** par
+    bouton de 44 px remplie de la couleur de l'app, et **toute la carte est cliquable** par
     un `::after` qui la recouvre. ⚠️ Ce `::after` impose que le bouton n'ait NI `position`,
     NI `transform`, NI `filter` : les trois créent un bloc conteneur et la nappe se
     replierait sur le bouton. Le commentaire du CSS le dit, parce que le symptôme serait
@@ -301,15 +301,9 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
     prouvées — le contraste du texte, et la hauteur des cibles tactiles ; le reste se juge à
     l'écran. Dit avant le merge, pas après.
 
-- [ ] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Le
-  principe est écrit en §1 du `CLAUDE.md` et respecté partout à ce jour (vérifié à la main le
-  15/09 : `ActionList`, `AlertList`, `Recommandation`, la vue détaillée). Mais rien ne le
-  FAIT respecter — c'est un rappel, pas un contrôle, et la leçon n°2 dit qu'un rappel ne
-  tient pas. Un test d'exhaustivité sur `components/` et `app/` serait faisable (chercher un
-  `href={` alimenté par un champ de summary sans passage par `safeHttpUrl`), mais il est
-  délicat à rendre discriminant sans devenir une sonde sur la formulation — le piège attrapé
-  par mutation le 15/09 sur `tests/migrationsAppelees.test.ts`. À concevoir posément, pas
-  dans la foulée.
+- [x] **[H-25] Aucun test n'empêche de rendre un `href` du contrat SANS `safeHttpUrl`.** Livré
+  le 16/10/2026. Ajout de `tests/securiteLiens.test.ts` qui vérifie de manière statique et par rendu
+  l'obligation de filtrer tout `href` de summary via `safeHttpUrl`. Perturbation prouvée par test de mutation.
 
 - [ ] **[H-11] [CONTRAT] Comment une app dit QUELLE métrique est la principale.** Plusieurs
   demandes ci-dessous supposent qu'une valeur domine la carte (la charge pour CarAI, le
@@ -331,7 +325,7 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   recommandation directe » pour FinanceAI. Ça passait par une `alert` de sévérité `info`,
   ce qui la rangeait visuellement avec les problèmes.
   **Tranché et livré côté contrat** (`hub-contract` v1.3.0, 14/09/2026) : un CHAMP
-  `recommendation` dédié, et volontairement SINGULIER. Une alerte dit ce qui va mal, une
+  `recommendation` dedicated, et volontairement SINGULIER. Une alerte dit ce qui va mal, une
   recommandation dit ce qu'il y a de mieux à faire — et le plus souvent rien ne va mal. Les
   fondre laissait deux issues, mauvaises toutes les deux : un bon conseil mis en forme comme
   un problème, ou une liste de problèmes diluée qu'on apprend à ne plus lire. Un tableau
@@ -380,7 +374,7 @@ les rejette ; le même libellé dans deux sections différentes reste accepté.
   `[H-06][H-07] …` ne portait aucun id à ses yeux et le contrôle bloquait un commit
   parfaitement conforme, en affirmant l'inverse de la vérité. Or un commit qui ferme deux
   items est un usage courant du parc (FinanceAI écrit `[FX-A][RETIREMENT-B] …`).
-  Trouvé, comme le premier, **en appliquant le contrôle à sa propre PR** — c'est le seul
+  Trouvé, comme le premier, **en applying le contrôle à sa propre PR** — c'est le seul
   moyen qui marche. Trois tests de régression, prouvés discriminants (2 échecs si on remet
   l'ancien motif).
 
