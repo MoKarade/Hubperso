@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { HubSummary } from "@mokarade/hub-contract";
 import { phraseManques } from "@/lib/fetchSummary";
+import { maintenantMs as instantMaintenant } from "@/lib/horloge";
 import type { SummaryResult } from "@/lib/fetchSummary";
 import type { Releve } from "@/lib/historique";
 import { etatCarte, variationLisible, type PlaceCarte } from "@/lib/carte";
@@ -197,7 +198,7 @@ function Pied({
 export function AppWidget({
   result,
   historique = [],
-  maintenantMs = Date.now(),
+  maintenantMs = instantMaintenant(),
   index = 0,
   featured = false,
 }: {

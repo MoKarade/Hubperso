@@ -18,6 +18,7 @@ import { notFound, redirect } from "next/navigation";
 import { exigerAccesHub } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources } from "@/lib/sources";
+import { maintenantMs } from "@/lib/horloge";
 import { fetchAllSummaries, fetchSummary } from "@/lib/fetchSummary";
 import { lireHistorique } from "@/lib/historiqueDb";
 import { recommandation, variablesAccent } from "@/lib/carte";
@@ -53,7 +54,7 @@ export default async function DetailAppPage({
   // 404 plutôt qu'une page vide : un identifiant inconnu est une URL fausse, pas un état.
   if (!source) notFound();
 
-  const maintenantMs = Date.now();
+  const maintenant = maintenantMs();
   // Le résumé de CETTE app et sa mémoire, en parallèle : l'un n'a pas à attendre l'autre.
   const [result, historique] = await Promise.all([
     fetchSummary(source),
@@ -106,7 +107,7 @@ export default async function DetailAppPage({
           <DetailMetriques
             metrics={summary.metrics}
             historique={historique}
-            maintenantMs={maintenantMs}
+            maintenantMs={maintenant}
           />
           <DetailAlertes alerts={summary.alerts} />
 
