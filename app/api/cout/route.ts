@@ -3,7 +3,8 @@
 // Demande de Marc (15/10/2026, « quota précis sans action de ma part »), tâche #191. Le
 // relevé du suivi n'a aucun jeton et n'en recevra pas : la réponse est donc publique, comme
 // `/api/sante`, et ne porte QUE ce qui peut l'être — un total en dollars, une heure de mesure,
-// les identifiants (publics) des apps. Voir `lib/coutCumule.ts`.
+// les identifiants (publics) des apps, et la dépense du mois par app (id + montant, sans détail).
+// Voir `lib/coutCumule.ts` et `lib/coutMois.ts`.
 //
 // ⚠️ Route SANS authentification, délibérément (oui de Marc, 16/10/2026). Elle traverse le
 // garde par `isPublicPath` (lib/authGuard.ts), JAMAIS par une exclusion du matcher de
@@ -19,7 +20,9 @@
 
 import { baseConfiguree } from "@/lib/db";
 import { cumulerCouts } from "@/lib/coutCumule";
-import { lireDerniersCouts } from "@/lib/historiqueDb";
+import { debutDuMois, depenseDuMois } from "@/lib/coutMois";
+import { maintenantMs } from "@/lib/horloge";
+import { lireDerniersCouts, lireReferencesMois } from "@/lib/historiqueDb";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import { assurerMigrations } from "@/lib/migrations";
 import { SOURCE_DEFS } from "@/lib/sources";
@@ -42,5 +45,14 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json({ ok: false, cause: "base" }, { status: 503, headers: NO_STORE });
   }
 
-  return Response.json({ ok: true, ...cumulerCouts(ids, derniers) }, { headers: NO_STORE });
+  // Le mois est un COMPLÉMENT : s'il n'est pas lisible, le cumul part quand même, avec `mois: null`
+  // (jamais un 0). Voir `lib/coutMois.ts` : c'est une différence de cumuls, donc une estimation.
+  const debut = debutDuMois(maintenantMs());
+  const references = await lireReferencesMois(ids, new Date(debut));
+  const mois =
+    references === null
+      ? null
+      : depenseDuMois(ids, debut, derniers, references.avant, references.apres);
+
+  return Response.json({ ok: true, ...cumulerCouts(ids, derniers), mois }, { headers: NO_STORE });
 }

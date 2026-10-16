@@ -41,7 +41,7 @@ const client = new PGlite();
 const dbTest = drizzle(client);
 porteur.db = dbTest;
 
-const { enregistrerReleve, elaguerHistorique, lireDerniersCouts } = await import(
+const { enregistrerReleve, elaguerHistorique, lireDerniersCouts, lireReferencesMois } = await import(
   "../lib/historiqueDb"
 );
 const { releves } = await import("../lib/db/schema");
@@ -148,5 +148,43 @@ describe("lireDerniersCouts rend le dernier relevé PORTANT un coût, par app", 
 
   it("rend null (et non []) quand la base ne répond pas", async () => {
     expect(await sansLaTable(() => lireDerniersCouts(["batchchef"]))).toBeNull();
+  });
+});
+
+describe("lireReferencesMois rend les points de départ du mois", () => {
+  const il_y_a_jours = (jours: number) => sql`now() - make_interval(days => ${jours})`;
+
+  async function inserer(appId: string, jours: number, montant: number | null, periode = "total") {
+    await dbTest.execute(sql`
+      INSERT INTO ${releves} (app_id, releve_le, etat, metriques, cout_montant, cout_devise, cout_periode)
+      VALUES (${appId}, ${il_y_a_jours(jours)}, 'ok', '[]'::jsonb,
+              ${montant}::numeric, ${montant === null ? null : "USD"}, ${montant === null ? null : periode})
+    `);
+  }
+
+  it("garde le dernier cumul avant le début et le premier à partir du début, par app", async () => {
+    await inserer("batchchef", 20, 1);
+    await inserer("batchchef", 12, 2); // dernier avant le début
+    await inserer("batchchef", 8, 3); // premier du mois
+    await inserer("batchchef", 2, 5);
+    await inserer("financeai", 3, 7); // rien avant : seul le « premier du mois » existe
+    await inserer("driveai", 12, 9, "mois"); // pas un cumul : ignoré
+
+    const debut = new Date(Date.now() - 10 * 86_400_000);
+    const refs = await lireReferencesMois(["batchchef", "financeai", "driveai"], debut);
+
+    expect(refs).not.toBeNull();
+    const avant = new Map(refs!.avant.map((r) => [r.appId, r.cout?.montant]));
+    const apres = new Map(refs!.apres.map((r) => [r.appId, r.cout?.montant]));
+    expect(avant.get("batchchef")).toBe(2);
+    expect(apres.get("batchchef")).toBe(3);
+    expect(avant.has("financeai")).toBe(false);
+    expect(apres.get("financeai")).toBe(7);
+    expect(avant.has("driveai")).toBe(false);
+    expect(apres.has("driveai")).toBe(false);
+  });
+
+  it("rend null (et non des listes vides) quand la base ne répond pas", async () => {
+    expect(await sansLaTable(() => lireReferencesMois(["batchchef"], new Date()))).toBeNull();
   });
 });

@@ -11,7 +11,9 @@
 //
 // ── POURQUOI CE RÉSULTAT PEUT ÊTRE PUBLIC ───────────────────────────────────────────
 // Il ne porte qu'un total en dollars, une heure de mesure et les identifiants des apps (déjà
-// publics : ce sont les sous-domaines). Ni détail par app, ni personne, ni jeton.
+// publics : ce sont les sous-domaines). Ni personne, ni jeton. La dépense du mois PAR APP
+// (`lib/coutMois.ts`, ajoutée le 16/10/2026 à la demande du coordinateur pour mesurer le plafond
+// de 20 $/mois) n'ajoute que l'identifiant et un montant en dollars par app.
 
 import type { Releve } from "@/lib/historique";
 import { toCad, USD_TO_CAD } from "@/lib/usage";
