@@ -177,6 +177,19 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "sonde de santé de la vigie de l'Atelier : ne rend que { ok, cause }, jamais une donnée ni un nom de variable",
   };
 
+  /**
+   * Route publique qui rend UNE donnée agrégée, et seulement elle (oui de Marc, 16/10/2026,
+   * tâche #191) : le coût API cumulé, que le suivi du projet lit sans jeton. Elle lit la
+   * mémoire du hub (jamais une app) ; la preuve exigée plus bas est qu'elle n'importe ni les
+   * personnes, ni l'administration, ni un fetch d'app, ni un jeton, et n'appelle jamais
+   * `getSources` (qui porte les jetons). Elle peut importer `SOURCE_DEFS` : des identifiants
+   * publics, aucun secret.
+   */
+  const ROUTES_PUBLIQUES_AGREGAT: Record<string, string> = {
+    "api/cout/route.ts":
+      "coût API cumulé des apps : un total en dollars, son heure de mesure et les identifiants publics des apps, rien d'autre",
+  };
+
   const routes = fichiersDeApp(RACINE_APP, "route.ts").map((p) => ({
     relatif: relative(RACINE_APP, p).replace(/\\/g, "/"),
     source: readFileSync(p, "utf8"),
@@ -192,7 +205,8 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       if (
         ROUTES_A_JETON[route.relatif] ||
         ROUTES_D_AUTH[route.relatif] ||
-        ROUTES_PUBLIQUES_MUETTES[route.relatif]
+        ROUTES_PUBLIQUES_MUETTES[route.relatif] ||
+        ROUTES_PUBLIQUES_AGREGAT[route.relatif]
       ) {
         continue;
       }
@@ -241,6 +255,7 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
     const attendus = [
       ...Object.keys(ROUTES_A_JETON),
       ...Object.keys(ROUTES_PUBLIQUES_MUETTES),
+      ...Object.keys(ROUTES_PUBLIQUES_AGREGAT),
     ].map((relatif) => `/${relatif.replace(/\/route\.ts$/, "")}`);
     expect([...declaresDansLeGarde].sort()).toEqual([...attendus].sort());
   });
@@ -265,6 +280,29 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
         expect(route!.source, `${relatif} importe ${interdit}`).not.toContain(`"${interdit}"`);
       }
       expect(route!.source, `${relatif} doit interdire le cache`).toContain("no-store");
+    }
+  });
+
+  it("une route publique d'agrégat PROUVE qu'elle ne lit que la mémoire, sans secret", () => {
+    // Elle rend une donnée sans session ni secret : la seule défense est de borner D'OÙ elle
+    // la tire. Ni les personnes, ni l'administration, ni un fetch d'app, ni un jeton, ni la
+    // session ; et jamais `getSources` (c'est lui qui lit les `HUB_TOKEN_*`).
+    const INTERDITS = [
+      "@/lib/personnes",
+      "@/lib/administration",
+      "@/lib/fetchSummary",
+      "@/lib/jetonApp",
+      "@/auth",
+    ];
+    for (const [relatif, raison] of Object.entries(ROUTES_PUBLIQUES_AGREGAT)) {
+      const route = routes.find((r) => r.relatif === relatif);
+      expect(route, `exception morte : ${relatif} (${raison})`).toBeDefined();
+      for (const interdit of INTERDITS) {
+        expect(route!.source, `${relatif} importe ${interdit}`).not.toContain(`"${interdit}"`);
+      }
+      expect(route!.source, `${relatif} appelle getSources (jetons)`).not.toContain("getSources(");
+      expect(route!.source, `${relatif} doit interdire le cache`).toContain("no-store");
+      expect(route!.source, `${relatif} doit être freinée`).toContain("creerLimiteur");
     }
   });
 });
