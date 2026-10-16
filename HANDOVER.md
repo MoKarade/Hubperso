@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-16 — **Socle visuel verrouillé, thème sombre seul (Hubperso#161)**
+
+Le hub reste en thème SOMBRE seul (décision de Marc du 26/09, reprise par JobAI#116) : aucun changement visible. Ajout de `tests/theme.test.ts`, même nom et même rôle que le verrou d'app-template, adapté au sombre seul : aucune couleur en dur dans `app/`, `components/`, `lib/` (exceptions nommées avec leur raison : barre système et manifeste = `--bg`, noir/blanc de `texteSur`, couleurs de marque des apps dans `lib/sources.ts`), tout `var(--x)` sans repli est défini, toute classe statique a une règle, champs ≥ 16 px, `--cible` ≥ 44 px. Le verrou a relevé deux classes posées sans aucune règle (`page__sub`, `couts__quota`) : listées dans le test, non corrigées ici. Contrastes et valeurs du fond : toujours `tests/themeSombre.test.ts`.
+
 ## 🟦 Session 2026-10-16 — **Couverture au cliquet (Hubperso#159)**
 
 Les seuils de couverture étaient restés bien en dessous de la mesure (lignes globales : seuil 65,8 pour 82,7 mesurés) : une PR pouvait perdre 17 points sans rougir. `npm run portes:maj` les a ramenés à la mesure (cœur 94,5 ; global 82,7 ; branches 73,9 ; avertissements lint 0). Détail et table : section « Portes qualité » plus bas ; trace dans `historique` de `qualite/seuils.json`.
