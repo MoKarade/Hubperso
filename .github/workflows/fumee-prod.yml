@@ -23,7 +23,7 @@ jobs:
     if: >-
       github.event.deployment_status.state == 'success' &&
       github.event.deployment_status.environment == 'Production'
-    runs-on: ${{ github.event.repository.visibility == 'public' && 'ubuntu-latest' || fromJSON('["self-hosted","pc-marc"]') }} # dépôt public : machines GitHub (gratuites) ; privé : robot du PC
+    runs-on: ubuntu-latest # machines GitHub (dépôt public, gratuites)
     timeout-minutes: 10
     permissions:
       contents: read
