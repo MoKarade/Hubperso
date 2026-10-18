@@ -76,7 +76,7 @@ const FIXES: readonly VariableAttendue[] = [
   {
     nom: "SENTRY_DSN",
     exigence: "optionnelle",
-    siAbsente: "suivi des erreurs éteint : aucune erreur n'est envoyée à Sentry (lu au build ET à l'exécution)",
+    siAbsente: "suivi des erreurs éteint : aucune erreur n'est envoyée à Sentry (variable serveur, lue à l'exécution)",
   },
 ];
 

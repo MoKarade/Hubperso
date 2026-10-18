@@ -4,7 +4,7 @@
 // bruit), et même avec un DSN aucune donnée personnelle ne part.
 
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { optionsSentry, retirerDonneesPersonnelles } from "@/lib/sentryConfig";
 
@@ -60,10 +60,7 @@ describe("branchement", () => {
   it("aucun fichier ne réactive l'envoi de données personnelles", () => {
     for (const chemin of [
       "instrumentation.ts",
-      "instrumentation-client.ts",
       "lib/sentryConfig.ts",
-      "app/error.tsx",
-      "app/global-error.tsx",
     ]) {
       expect(lire(chemin), chemin).not.toMatch(/sendDefaultPii\s*:\s*true/);
     }
@@ -71,21 +68,21 @@ describe("branchement", () => {
 
   it("aucun fichier de l'app n'appelle Sentry.init hors des deux points d'entrée", () => {
     // Un `Sentry.init` libre contournerait le nettoyage des données personnelles.
-    const fautes = ["app/error.tsx", "app/global-error.tsx", "lib/sentryConfig.ts", "next.config.mjs"].filter(
+    const fautes = ["app/error.tsx", "lib/sentryConfig.ts", "next.config.mjs"].filter(
       (chemin) => /Sentry\.init\(/.test(lire(chemin)),
     );
     expect(fautes).toEqual([]);
   });
 
-  it("les deux écrans d'erreur envoient l'erreur à Sentry", () => {
-    for (const chemin of ["app/error.tsx", "app/global-error.tsx"]) {
-      expect(lire(chemin), chemin).toMatch(/Sentry\.captureException\(error\)/);
-    }
+  it("le serveur passe par optionsSentry, jamais par un Sentry.init libre", () => {
+    expect(lire("instrumentation.ts")).toMatch(/Sentry\.init\(optionsSentry\(/);
   });
 
-  it("le serveur et le navigateur passent par optionsSentry, jamais par un Sentry.init libre", () => {
-    for (const chemin of ["instrumentation.ts", "instrumentation-client.ts"]) {
-      expect(lire(chemin), chemin).toMatch(/Sentry\.init\(optionsSentry\(/);
+  it("aucune copie du DSN vers le navigateur (variable NEXT_PUBLIC_, CSP, fichier client)", () => {
+    // Le DSN reste une variable serveur : le navigateur n'envoie rien à Sentry (choix du 18/10/2026).
+    expect(existsSync(join(process.cwd(), "instrumentation-client.ts"))).toBe(false);
+    for (const chemin of ["next.config.mjs", "app/error.tsx", "instrumentation.ts"]) {
+      expect(lire(chemin), chemin).not.toMatch(/NEXT_PUBLIC_SENTRY/);
     }
   });
 });

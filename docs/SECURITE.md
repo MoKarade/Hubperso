@@ -34,12 +34,7 @@ Preview. Le code ne peut pas le garantir.
 ## CSP `'unsafe-inline'` (F3)
 Choix documenté dans `next.config.mjs` : aucune ressource externe, `connect-src 'self'`,
 `frame-ancestors 'none'`. Un nonce est envisageable quand le lot CSP de l'Atelier le
-généralisera.
-
-**Exception unique, ajoutée le 16/10/2026 (tâche #162, Sentry)** : si `SENTRY_DSN` est défini AU
-BUILD, `connect-src` ajoute l'hôte d'ingestion EXACT de ce DSN (jamais `*.sentry.io`, qui
-laisserait envoyer vers n'importe quel projet Sentry). Sans DSN, la CSP est inchangée. Verrou :
-`tests/cspSentry.test.ts`. Aucune donnée personnelle n'est envoyée (`lib/sentryConfig.ts`).
+généralisera. Rien de changé ici.
 
 ## Clé de signature de la session (chantier auth-asym)
 Plan : `plan-auth-asym-hubperso.md` (Option A). Le cookie de session partagé sera un JWS
