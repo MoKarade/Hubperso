@@ -97,6 +97,11 @@ export interface SecondaireCarte {
  * remplit sans déborder, et le reste de l'écart est absorbé par les courbes des secondaires.
  * Si Marc trouve la carte encore trop vide ou déjà trop chargée, ce sont CES trois nombres
  * qu'on bouge — ils sont ici, ensemble, et nulle part ailleurs.
+ *
+ * ⚠️ Ces bornes comptent des LIGNES ; le vide, lui, se mesure en pixels et dépend de la hauteur
+ * des cartes voisines (la grille est en rangées `auto`). Le 19/10 (#252) Marc le trouvait
+ * encore : le reste du surplus est désormais réparti par le CSS de `.widget--lg`
+ * (`app/globals.css`), pas par de nouvelles bornes.
  */
 const ALERTES_SECONDAIRES_LARGE = 3;
 const DETAILS_SECTIONS_LARGE = 2;
