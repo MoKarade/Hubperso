@@ -34,4 +34,4 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
 - Dépendances : `next-auth` en beta ; `hub-contract` épinglé par tag GitHub.
 - Le propriétaire passe sans réseau : « je me connecte, ça marche » ne prouve rien sur le modèle
   d'accès (voir la procédure d'invitation du README).
-- À vérifier par Marc : la réponse réellement servie par `hubperso.com` (HANDOVER, session 21/09).
+- Constaté par Marc le 19/10/2026 (14 h 19, heure du Québec) : la carte FinanceAI montre ses tuiles sur `hubperso.com` (Hubperso#138). Plus rien à vérifier de son côté sur la réponse servie.
