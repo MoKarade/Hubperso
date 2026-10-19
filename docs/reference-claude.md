@@ -362,6 +362,9 @@ toujours, sur téléphone il ouvre Chrome au lieu de l'app, et personne ne relie
 ajouté trois semaines plus tôt. D'où `tests/pwaLiens.test.ts`, qui épingle les DEUX liens
 ouvrant une app (le titre de la carte, le bouton « Ouvrir l'app ») avec une anti-vacuité : si le
 lien change de forme, le test le dit au lieu de passer en ne regardant plus rien.
+⚠️ Cette bascule ne vaut que pour une URL DANS le périmètre de l'app installée : les cartes
+pointent vers d'AUTRES origines (`*.hubperso.com`), donc un onglet qui s'ouvre est le comportement
+attendu, pas un défaut (Marc, 19/10 ; cause, sources et ce qui reste à vérifier : `docs/adr/0004`).
 ⚠️ Et il garde aussi le manifeste, sur un point qui ne se voit pas : `sizes` est une
 DÉCLARATION, pas une mesure. Un manifeste qui annonce `512x512` en servant un PNG de 192 est
 faux, et **Chrome croit le fichier**. Les dimensions se relisent donc dans l'en-tête IHDR du
