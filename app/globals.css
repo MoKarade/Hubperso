@@ -143,6 +143,30 @@ a:focus-visible,
   grid-column: span 2;
   grid-row: span 2;
 }
+/* ── LE SURPLUS DU HÉROS SE RÉPARTIT, IL NE S'AMASSE PAS (#252, Marc 19/10 : « encore du vide »)
+   La carte large occupe deux rangées de la grille, dont la hauteur est dictée par les cartes
+   voisines (`grid-auto-rows: auto`), pas par son contenu. Quand les voisines sont hautes et
+   le contenu court, le surplus se ramassait en UN trou : `.actions` porte `margin-top: auto`
+   et absorbait tout. Les bornes de `lib/carte.ts` ne peuvent pas régler ça — elles comptent
+   des lignes, le vide se mesure en pixels et dépend de la hauteur des voisines.
+
+   Ici, sur la carte large seulement : le corps répartit le surplus ENTRE ses blocs
+   (`space-between`) au lieu de le verser au-dessus des actions, et la courbe du chiffre
+   principal est plus haute. Sans surplus, rien ne change ; la carte ne grossit jamais, elle
+   ne fait que mieux répartir la hauteur que la grille lui réserve. Aucune donnée ajoutée. */
+.widget--lg .widget__body {
+  justify-content: space-between;
+}
+.widget--lg .widget__body > .actions {
+  margin-top: 0;
+}
+.widget--lg .heros__courbe {
+  height: 96px;
+}
+/* Pas d'historique : rien à tracer, donc rien à réserver (le trou aurait juste grandi). */
+.widget--lg .heros__courbe:empty {
+  height: 0;
+}
 .widget--md {
   grid-column: span 1;
 }
