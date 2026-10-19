@@ -73,6 +73,11 @@ const FIXES: readonly VariableAttendue[] = [
     exigence: "optionnelle",
     siAbsente: "session limitée à hubperso.com, non partagée avec les sous-domaines des apps",
   },
+  {
+    nom: "SENTRY_DSN",
+    exigence: "optionnelle",
+    siAbsente: "suivi des erreurs éteint : aucune erreur n'est envoyée à Sentry (variable serveur, lue à l'exécution)",
+  },
 ];
 
 const PAR_APP: readonly VariableAttendue[] = SOURCE_DEFS.flatMap((def) => [

@@ -196,6 +196,7 @@ secrets (variables d'environnement uniquement, jamais committés).
 | `CARAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://carai.hubperso.com/hub/summary` |
 | `JOBAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://emploi.hubperso.com/api/hub/summary` |
 | `MEMORYAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://memoryai.hubperso.com/hub/summary` |
+| `SENTRY_DSN` | (option) active l'envoi des erreurs à Sentry, sans donnée personnelle (`lib/sentryConfig.ts`). Variable SERVEUR seulement (jamais envoyée au navigateur). Absente → Sentry éteint, aucun appel réseau. La CSP reste `connect-src 'self'` : le navigateur n'envoie rien à Sentry. |
 
 Sans jeton, l'app concernée s'affiche « non configurée » — les autres continuent de
 fonctionner. Ajouter une app = une entrée dans `lib/sources.ts` + sa variable de jeton.

@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-16 — **Sentry branché, éteint sans DSN (Hubperso#162)**
+
+Les erreurs SERVEUR (Server Components, routes, Server Actions via `onRequestError`) partent à Sentry dès que `SENTRY_DSN` est défini ; sans lui, Sentry est éteint et rien ne change. Repris d'app-template#40 (`lib/sentryConfig.ts`, `instrumentation.ts`, workflow manuel « Essai Sentry »), aucune donnée personnelle (verrou `tests/sentryConfig.test.ts`). **Choix du 18/10/2026 : serveur seul.** Le DSN n'est jamais copié vers le navigateur (pas de `NEXT_PUBLIC_SENTRY_DSN`, pas de `instrumentation-client.ts`) et la CSP reste `connect-src 'self'` : la relecture IA refuse une variable secrète côté navigateur ; les erreurs d'écran côté navigateur ne remontent donc pas. **État de la production : `SENTRY_DSN` n'est PAS posé dans Vercel** (décision de Marc du 16/10, « on laisse ») : tant qu'il manque, la production n'envoie rien. Le secret `SENTRY_DSN` existe dans les secrets du dépôt GitHub (workflow d'essai seulement).
+
 ## 🟦 Session 2026-10-16 — **Socle visuel verrouillé, thème sombre seul (Hubperso#161)**
 
 Le hub reste en thème SOMBRE seul (décision de Marc du 26/09, reprise par JobAI#116) : aucun changement visible. Ajout de `tests/theme.test.ts`, même nom et même rôle que le verrou d'app-template, adapté au sombre seul : aucune couleur en dur dans `app/`, `components/`, `lib/` (exceptions nommées avec leur raison : barre système et manifeste = `--bg`, noir/blanc de `texteSur`, couleurs de marque des apps dans `lib/sources.ts`), tout `var(--x)` sans repli est défini, toute classe statique a une règle, champs ≥ 16 px, `--cible` ≥ 44 px. Le verrou a relevé deux classes posées sans aucune règle (`page__sub`, `couts__quota`) : listées dans le test, non corrigées ici. Contrastes et valeurs du fond : toujours `tests/themeSombre.test.ts`.

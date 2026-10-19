@@ -30,6 +30,9 @@ const CSP = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // Sans cela Next empaquette le SDK Sentry côté serveur et son chargeur de crochets échoue avec
+  // « Cannot find package '@sentry/server-runtime-injection' » (constaté dans app-template).
+  serverExternalPackages: ["@sentry/server-runtime-injection"],
   // En-têtes de sécurité pour toute exposition Internet.
   async headers() {
     return [
