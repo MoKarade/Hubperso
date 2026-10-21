@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { HubMetric } from "@mokarade/hub-contract";
-import { formatMetricValue, formatTrend, formatDateTime } from "../lib/format";
+import { formatMetricValue, formatTrend, formatDateTime, ilYa } from "../lib/format";
 
 function metric(over: Partial<HubMetric>): HubMetric {
   return { label: "x", value: 0, format: "number", ...over };
@@ -52,5 +52,24 @@ describe("formatDateTime", () => {
   });
   it("retourne l'entrée brute si non parsable", () => {
     expect(formatDateTime("pas-une-date")).toBe("pas-une-date");
+  });
+});
+
+describe("ilYa", () => {
+  const MAINTENANT = Date.parse("2026-10-21T20:00:00Z");
+
+  it("dit l'âge dans l'unité la plus parlante", () => {
+    expect(ilYa("2026-10-21T19:50:00Z", MAINTENANT)).toBe("il y a 10 min");
+    expect(ilYa("2026-10-21T17:00:00Z", MAINTENANT)).toBe("il y a 3 h");
+    expect(ilYa("2026-10-19T20:00:00Z", MAINTENANT)).toBe("il y a 2 j");
+  });
+
+  it("ne rend jamais un âge négatif ni « 0 min » : à l'instant", () => {
+    expect(ilYa("2026-10-21T19:59:30Z", MAINTENANT)).toBe("à l'instant");
+    expect(ilYa("2026-10-21T20:05:00Z", MAINTENANT)).toBe("à l'instant");
+  });
+
+  it("rend une date illisible telle quelle plutôt qu'un âge inventé", () => {
+    expect(ilYa("pas une date", MAINTENANT)).toBe("pas une date");
   });
 });

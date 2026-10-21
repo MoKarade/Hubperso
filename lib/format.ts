@@ -76,6 +76,19 @@ export function formatDateTime(iso: string): string {
 }
 
 /**
+ * « il y a 3 h » : l'âge d'une date ISO, en un coup d'œil. `maintenant` est passé par l'appelant
+ * (voir `lib/horloge.ts`) pour que la fonction reste pure. Une date illisible ou à venir (dérive
+ * d'horloge) devient « à l'instant » : jamais un âge négatif.
+ */
+export function ilYa(iso: string, maintenant: number): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const ms = maintenant - t;
+  if (ms < 60_000) return "à l'instant";
+  return `il y a ${formatDuree(ms)}`;
+}
+
+/**
  * Une durée en français, courte et lisible : « 3 min », « 5 h », « 14 j ».
  *
  * Arrondie à l'unité la plus parlante, jamais plus précise qu'utile : « inchangé depuis

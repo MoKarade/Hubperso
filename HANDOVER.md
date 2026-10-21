@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-21 (soir) — **Accès aux graphes et page animée (Hubperso#279)**
+
+Marc, 21/10/2026 : il voit les graphes de toutes les apps sauf FinanceAI (le graphe de FinanceAI vient du fil Graphify), mais n'a aucun accès depuis le hub, veut moins de texte en plus gros, de l'animation, et une vue 3D (tâche suivante : #280).
+- **Tuile d'accueil** `components/TuileGraphes.tsx` : une entrée « Graphes de code » vers `/graphes`, rendue SEULEMENT si `estProprietaire(session.user?.email)` (`app/page.tsx`) ; elle ne lit rien (pas d'appel GitHub à chaque ouverture de l'accueil).
+- **Page `/graphes`** : une grande carte par dépôt (nom en gros, commit et âge `ilYa`, bouton « Ouvrir »). Chaque dépôt a une constellation DÉCORATIVE déterministe (`lib/dessinDepot.ts`, rendue par `components/ConstellationSvg.tsx`) : ce n'est PAS son graphe. Animée (lumière qui court sur les liens, points qui pulsent, entrée en cascade) seulement pour un graphe PRÊT ; un dépôt sans graphe garde une constellation éteinte et immobile. Tout est coupé par `prefers-reduced-motion`.
+- Vérifié en local (Chromium, session d'essai du propriétaire, faux relevé GitHub : 7 prêts, 1 aucun, 1 expiré, 1 erreur) : 10 cartes, tuile → `/graphes`, mobile 390 px lisible.
+- ⚠️ `lib/constellation.ts` existe déjà (cohérence de la constellation d'apps) : le dessin des cartes vit dans `lib/dessinDepot.ts`.
+
 ## 🟦 Session 2026-10-21 — **Graphes de code de tous les dépôts dans le hub (Hubperso#265)**
 
 Marc, 21/10/2026 : voir tous les graphes de code dans le hub, à jour à chaque fusion (mission MoKarade/.github#327). **Côté Hubperso : livré, éteint tant que deux choses manquent** : (1) les dépôts doivent PUBLIER leur artefact (workflow commun du fil Graphify, `MoKarade/.github`) ; (2) un jeton GitHub en lecture seule (« Actions : read » sur les dépôts) à poser dans Vercel sous `GITHUB_GRAPHES_TOKEN` (geste de Marc). Sans lui, `/graphes` répond « non branché » (état honnête, aucun appel réseau).

@@ -6,13 +6,18 @@
 //
 // NO FAKE DATA : chaque dépôt affiche son état réel (graphe prêt, aucun graphe, expiré, erreur),
 // jamais un graphe ou une date présumés. Sans jeton de lecture, la page le dit en tête.
+//
+// Peu de texte, gros (Marc, 21/10/2026) : le nom du dépôt, un état en quelques mots, un bouton.
+// La constellation de chaque carte est un dessin décoratif (lib/dessinDepot.ts), pas le graphe.
 
 import Link from "next/link";
 import { exigerProprietaire } from "@/lib/gardeHub";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { redirect } from "next/navigation";
 import { DEPOTS, etatDepot, idDepot, jetonGraphes, type EtatGraphe } from "@/lib/graphes";
-import { formatDateTime } from "@/lib/format";
+import { ilYa } from "@/lib/format";
+import { maintenantMs } from "@/lib/horloge";
+import { ConstellationSvg } from "@/components/ConstellationSvg";
 
 export const metadata = {
   title: "Graphes de code — Hub perso",
@@ -20,31 +25,28 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-function Etat({ depot, etat }: { depot: string; etat: EtatGraphe }) {
+/** L'état en quelques mots : un commit et un âge, ou la raison honnête de l'absence. */
+function Etat({ etat, maintenant }: { etat: EtatGraphe; maintenant: number }) {
   switch (etat.etat) {
     case "ok":
       return (
-        <p className="admin__personne-meta">
-          commit {etat.sha.slice(0, 7)} · publié le {formatDateTime(etat.creeLe)} ·{" "}
-          {Math.max(1, Math.round(etat.octets / 1024))} Ko
+        <p className="carte-graphe__etat">
+          <code className="carte-graphe__commit">{etat.sha.slice(0, 7)}</code>
+          <span>{ilYa(etat.creeLe, maintenant)}</span>
         </p>
       );
     case "aucun":
-      return <p className="admin__personne-meta">aucun graphe publié pour l’instant</p>;
+      return <p className="carte-graphe__etat">Pas encore de graphe</p>;
     case "expire":
-      return (
-        <p className="admin__personne-meta">
-          expiré (publié le {formatDateTime(etat.creeLe)}) — se renouvelle à la prochaine fusion
-        </p>
-      );
+      return <p className="carte-graphe__etat">Expiré, revient à la prochaine fusion</p>;
     case "erreur":
       return (
-        <p className="admin__personne-meta" role="alert">
-          {depot} : {etat.detail}
+        <p className="carte-graphe__etat" role="alert">
+          {etat.detail}
         </p>
       );
     case "non-branche":
-      return <p className="admin__personne-meta">non branché</p>;
+      return <p className="carte-graphe__etat">Non branché</p>;
   }
 }
 
@@ -54,55 +56,52 @@ export default async function GraphesPage() {
 
   const branche = jetonGraphes() !== null;
   const etats = await Promise.all(DEPOTS.map((d) => etatDepot(d)));
+  const maintenant = maintenantMs();
+  const prets = etats.filter((e) => e.etat === "ok").length;
 
   return (
     <main className="page">
       <header className="page__head">
         <div>
           <p className="page__eyebrow">hubperso.com</p>
-          <h1 className="page__title">Graphes de code</h1>
+          <h1 className="page__title">Graphes</h1>
         </div>
         <div className="page__aside">
-          <p className="page__meta">{DEPOTS.length} dépôts</p>
+          <p className="page__meta">
+            {prets}/{DEPOTS.length} prêts
+          </p>
           <Link href="/" className="btn">← Hub</Link>
         </div>
       </header>
 
-      <p className="admin__intro">
-        Le graphe de chaque dépôt est reconstruit à chaque fusion sur <code>main</code>. Il s’ouvre
-        dans un onglet isolé.
-      </p>
-
       {!branche && (
         <p className="admin__vide" role="alert">
-          Pas encore branché : le hub n’a pas de jeton de lecture GitHub (variable serveur
-          GITHUB_GRAPHES_TOKEN). Aucun graphe ne peut être lu tant qu’elle n’est pas posée.
+          Non branché : le jeton de lecture GitHub manque (GITHUB_GRAPHES_TOKEN).
         </p>
       )}
 
-      <ul className="admin__liste">
+      <ul className="graphes__grille">
         {DEPOTS.map((depot, i) => {
           const etat = etats[i]!;
           return (
-            <li key={depot} className="admin__personne">
-              <div className="admin__personne-tete">
-                <div>
-                  <p className="admin__personne-email">{depot}</p>
-                  <Etat depot={depot} etat={etat} />
-                </div>
-                {etat.etat === "ok" && (
-                  <div className="admin__personne-actions">
-                    <a
-                      className="btn"
-                      href={`/api/graphes/${idDepot(depot)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Ouvrir le graphe
-                    </a>
-                  </div>
-                )}
-              </div>
+            <li
+              key={depot}
+              className={`carte-graphe carte-graphe--${etat.etat}`}
+              style={{ "--i": i } as React.CSSProperties}
+            >
+              <ConstellationSvg nom={depot} />
+              <h2 className="carte-graphe__nom">{depot}</h2>
+              <Etat etat={etat} maintenant={maintenant} />
+              {etat.etat === "ok" && (
+                <a
+                  className="btn carte-graphe__ouvrir"
+                  href={`/api/graphes/${idDepot(depot)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ouvrir
+                </a>
+              )}
             </li>
           );
         })}
