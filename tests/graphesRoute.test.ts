@@ -20,9 +20,16 @@ vi.mock("@/lib/graphes", async (importOriginal) => ({
 
 import { CSP_GRAPHE, GET } from "../app/api/graphes/[depot]/route";
 import { VIS_LOCAL, VIS_SRI } from "../lib/grapheHtml";
+import { BASCULE_2D, LIB3D, VISUALISEUR3D } from "../lib/grapheVue3d";
 
-const appeler = (depot: string) =>
-  GET(new Request(`https://www.hubperso.com/api/graphes/${depot}`), {
+const PAGE_GRAPHE = `<html><script>
+const RAW_NODES = [{"id": "a", "label": "</script><img src=x onerror=alert(1)>", "source_file": "lib/a.ts", "file_type": "code", "size": 14, "degree": 1}, {"id": "b", "label": "b", "source_file": "app/b.tsx", "file_type": "code", "size": 10, "degree": 1}];
+const RAW_EDGES = [{"from": "a", "to": "b", "label": "calls", "confidence": "EXTRACTED"}];
+const LEGEND = [];
+</script></html>`;
+
+const appeler = (depot: string, requete = "") =>
+  GET(new Request(`https://www.hubperso.com/api/graphes/${depot}${requete}`), {
     params: Promise.resolve({ depot }),
   });
 
@@ -57,15 +64,16 @@ describe("GET /api/graphes/[depot]", () => {
     expect(moq.charger).not.toHaveBeenCalled();
   });
 
-  it("propriétaire : sert le HTML réécrit, en bac à sable, sans cache", async () => {
+  it("propriétaire, vue 2D : sert le HTML réécrit avec le bouton 3D, en bac à sable, sans cache", async () => {
     moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
     moq.charger.mockResolvedValue({ ok: true, graphe: { meta: {}, html: HTML } });
-    const r = await appeler("hubperso");
+    const r = await appeler("hubperso", "?vue=2d");
     expect(r.status).toBe(200);
     expect(moq.charger).toHaveBeenCalledWith("Hubperso");
     const corps = await r.text();
     expect(corps).toContain(`<script src="${VIS_LOCAL}"></script>`);
     expect(corps).not.toContain("unpkg.com");
+    expect(corps).toContain(`<script src="${BASCULE_2D}"></script>`);
     expect(r.headers.get("content-type")).toMatch(/^text\/html/);
     expect(r.headers.get("content-security-policy")).toBe(CSP_GRAPHE);
     expect(r.headers.get("cache-control")).toContain("no-store");
@@ -97,9 +105,56 @@ describe("GET /api/graphes/[depot]", () => {
       ok: true,
       graphe: { meta: {}, html: HTML.replace("9.1.6", "9.9.9") },
     });
-    const r = await appeler("hubperso");
+    const r = await appeler("hubperso", "?vue=2d");
     expect(r.status).toBe(502);
     expect(await r.text()).toContain("version inattendue");
+  });
+});
+
+describe("GET /api/graphes/[depot] — vue 3D", () => {
+  const graphe = (html: string) => ({ ok: true, graphe: { meta: { sha: "abcdef0123456789abcdef0123456789abcdef01" }, html } });
+
+  it("par défaut : une page du hub (scripts du hub seulement), pas le HTML du dépôt", async () => {
+    moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
+    moq.charger.mockResolvedValue(graphe(PAGE_GRAPHE));
+    const r = await appeler("hubperso");
+    expect(r.status).toBe(200);
+    const corps = await r.text();
+    expect(corps).toContain(`<script src="${LIB3D}"></script>`);
+    expect(corps).toContain(`<script src="${VISUALISEUR3D}"></script>`);
+    // le HTML du dépôt n'est jamais servi : ni son script, ni son texte non échappé
+    expect(corps).not.toContain("RAW_NODES");
+    expect(corps).not.toContain("</script><img");
+    expect(corps).toContain("\\u003c/script>\\u003cimg");
+    expect(r.headers.get("content-security-policy")).toBe(CSP_GRAPHE);
+    expect(r.headers.get("cache-control")).toContain("no-store");
+  });
+
+  it("?vue=3d explicite = la même vue ; une valeur inconnue donne aussi la 3D", async () => {
+    moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
+    moq.charger.mockResolvedValue(graphe(PAGE_GRAPHE));
+    for (const q of ["?vue=3d", "?vue=nimporte"]) {
+      expect(await (await appeler("hubperso", q)).text()).toContain(LIB3D);
+    }
+  });
+
+  it("format de graph.html inattendu : repli sur la 2D, avec la raison écrite sur la page", async () => {
+    moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
+    moq.charger.mockResolvedValue(graphe(HTML));
+    const r = await appeler("hubperso");
+    expect(r.status).toBe(200);
+    const corps = await r.text();
+    expect(corps).toContain(VIS_LOCAL);
+    expect(corps).toMatch(/data-cause="Vue 3D indisponible : RAW_NODES introuvable/);
+    expect(corps).not.toContain(LIB3D);
+  });
+
+  it("refuse la vue 3D sans session et pour un invité, comme la 2D", async () => {
+    moq.auth.mockResolvedValue(null);
+    expect((await appeler("hubperso", "?vue=3d")).status).toBe(401);
+    moq.auth.mockResolvedValue({ user: { email: "invite@exemple.test" } });
+    expect((await appeler("hubperso", "?vue=3d")).status).toBe(403);
+    expect(moq.charger).not.toHaveBeenCalled();
   });
 });
 
