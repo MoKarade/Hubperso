@@ -78,6 +78,11 @@ const FIXES: readonly VariableAttendue[] = [
     exigence: "optionnelle",
     siAbsente: "suivi des erreurs éteint : aucune erreur n'est envoyée à Sentry (variable serveur, lue à l'exécution)",
   },
+  {
+    nom: "GITHUB_GRAPHES_TOKEN",
+    exigence: "optionnelle",
+    siAbsente: "page /graphes « non branchée » : aucun graphe de code lu (jeton GitHub en lecture seule, variable serveur)",
+  },
 ];
 
 const PAR_APP: readonly VariableAttendue[] = SOURCE_DEFS.flatMap((def) => [
