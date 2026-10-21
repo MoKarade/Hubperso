@@ -22,8 +22,8 @@ regexes = ['''(?i)["'](secret|jeton|token)-de-test[a-z0-9-]*["']''']
 # la copie est identique octet pour octet à celle d'unpkg (empreinte verrouillée par
 # tests/grapheHtml.test.ts). Allowlist limitée à CE fichier ET à CETTE règle : toute autre règle
 # (clé AWS, jeton GitHub…) reste active sur lui, et ce chemin n'ouvre rien ailleurs.
-[[allowlists]]
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
 description = "vis-network 9.1.6 minifié : faux positif generic-api-key"
-condition = "AND"
-targetRules = ["generic-api-key"]
 paths = ['''^public/vendor/vis-network-9\.1\.6\.min\.js$''']
