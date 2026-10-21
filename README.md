@@ -197,6 +197,7 @@ secrets (variables d'environnement uniquement, jamais committés).
 | `JOBAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://emploi.hubperso.com/api/hub/summary` |
 | `MEMORYAI_SUMMARY_URL` | (option) surcharge l'URL par défaut `https://memoryai.hubperso.com/hub/summary` |
 | `SENTRY_DSN` | (option) active l'envoi des erreurs à Sentry, sans donnée personnelle (`lib/sentryConfig.ts`). Variable SERVEUR seulement (jamais envoyée au navigateur). Absente → Sentry éteint, aucun appel réseau. La CSP reste `connect-src 'self'` : le navigateur n'envoie rien à Sentry. |
+| `GITHUB_GRAPHES_TOKEN` | (option) jeton GitHub en LECTURE SEULE (permission « Actions : read » sur les dépôts du hub) qui permet à `/graphes` de lire l'artefact `graphe` de chaque dépôt (`lib/graphes.ts`). Variable SERVEUR seulement. Absente → la page dit « non branché », aucun appel réseau. |
 
 Sans jeton, l'app concernée s'affiche « non configurée » — les autres continuent de
 fonctionner. Ajouter une app = une entrée dans `lib/sources.ts` + sa variable de jeton.

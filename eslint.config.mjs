@@ -16,6 +16,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Bibliothèque tierce déjà minifiée (public/vendor/LISEZMOI.md) : on ne la relit pas.
+      "public/vendor/**",
     ],
   },
   ...nextVitals,

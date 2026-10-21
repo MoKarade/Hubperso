@@ -16,3 +16,14 @@ condition = "AND"
 paths = ['''^tests/.*\.(ts|tsx)$''']
 regexTarget = "match"
 regexes = ['''(?i)["'](secret|jeton|token)-de-test[a-z0-9-]*["']''']
+
+# Bibliothèque tierce minifiée auto-hébergée (public/vendor/LISEZMOI.md) : un nom de méthode
+# (`key:"…"`) y ressemble à une clé d'API (generic-api-key, entropie 3,9). Ce n'est pas un secret :
+# la copie est identique octet pour octet à celle d'unpkg (empreinte verrouillée par
+# tests/grapheHtml.test.ts). Allowlist limitée à CE fichier ET à CETTE règle : toute autre règle
+# (clé AWS, jeton GitHub…) reste active sur lui, et ce chemin n'ouvre rien ailleurs.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "vis-network 9.1.6 minifié : faux positif generic-api-key"
+paths = ['''^public/vendor/vis-network-9\.1\.6\.min\.js$''']
