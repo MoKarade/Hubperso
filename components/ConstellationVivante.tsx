@@ -25,6 +25,8 @@ import {
   type PositionAstre,
 } from "@/lib/astres";
 import { texteSur } from "@/lib/couleur";
+import { aUnLogo } from "@/lib/logos";
+import { LogoApp, LogoHub } from "@/components/LogoApp";
 
 const ETOILES = etoiles(56);
 
@@ -155,20 +157,24 @@ function styleAstre(position: PositionAstre, n: number, accent?: string): CSSPro
   } as CSSProperties;
 }
 
-/** Le corps de l'astre : disque, graduation, souffle, satellites, initiale, pastille d'état. */
+/**
+ * Le corps de l'astre : le LOGO de l'app (ou, faute de logo, son initiale), ses satellites et la
+ * pastille d'état. Pas de disque : c'est le logo lui-même qui prend la couleur et le mouvement.
+ */
 function Corps({
+  id,
   nom,
   genre,
   tons,
 }: {
+  id: string;
   nom: string;
   genre: GenreAstre | "attente";
   tons: readonly string[];
 }) {
   return (
     <span className="astre__corps" aria-hidden>
-      <span className="astre__graduation" />
-      <span className="astre__halo" />
+      <span className="astre__aura" />
       {tons.length > 0 && (
         <span className="astre__orbite">
           {tons.map((ton, k) => (
@@ -181,7 +187,12 @@ function Corps({
           ))}
         </span>
       )}
-      <span className="astre__initiale">{nom.charAt(0)}</span>
+      {aUnLogo(id) ? (
+        <LogoApp id={id} />
+      ) : (
+        // Pas de logo dessiné pour cette app : son initiale, jamais un logo inventé.
+        <span className="astre__initiale">{nom.charAt(0)}</span>
+      )}
       <span className="astre__pastille" data-etat={genre}>
         <Glyphe genre={genre} />
       </span>
@@ -211,7 +222,7 @@ export function AstreApp({
   const alertes = nbAlertes > 0 ? `, ${nbAlertes} alerte${nbAlertes > 1 ? "s" : ""}` : "";
   const contenu: ReactNode = (
     <>
-      <Corps nom={nom} genre={genre} tons={tons} />
+      <Corps id={result.source.id} nom={nom} genre={genre} tons={tons} />
       <span className="astre__nom">{nom}</span>
       <span className="astre__mot">{mot}</span>
     </>
@@ -266,7 +277,7 @@ export function AstreAttente({
         data-grand={grand ? "oui" : undefined}
         style={styleAstre(position, n, source.couleur)}
       >
-        <Corps nom={source.name} genre="attente" tons={[]} />
+        <Corps id={source.id} nom={source.name} genre="attente" tons={[]} />
         <span className="astre__nom">{source.name}</span>
         <span className="sr-only">Lecture en cours</span>
       </span>
@@ -302,7 +313,9 @@ export function ConstellationVivante({ children }: { children: ReactNode }) {
         </span>
       </div>
       <span className="ciel__coeur" aria-hidden>
-        <span className="ciel__noyau" />
+        <span className="ciel__noyau">
+          <LogoHub />
+        </span>
       </span>
       <ul className="ciel__liste">{children}</ul>
     </section>

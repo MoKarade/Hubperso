@@ -2583,12 +2583,8 @@ a:focus-visible,
 }
 .ciel__noyau {
   position: absolute;
-  inset: 2.7rem;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, color-mix(in oklch, var(--marque) 70%, white), var(--marque) 52%, color-mix(in oklch, var(--marque) 50%, var(--bg)));
-  box-shadow:
-    0 0 24px color-mix(in oklch, var(--marque) 60%, transparent),
-    0 0 70px color-mix(in oklch, var(--marque) 28%, transparent);
+  inset: 2.5rem;
+  filter: drop-shadow(0 0 14px color-mix(in oklch, var(--marque) 55%, transparent));
 }
 .ciel__noyau::before,
 .ciel__noyau::after {
@@ -2716,14 +2712,19 @@ a:focus-visible,
   }
 }
 
-/* ── L'astre : le centre du DISQUE est posé sur (x, y) ; le nom pend dessous ───────────────── */
+/* ── L'astre : le centre du LOGO est posé sur (x, y) ; le nom pend dessous ─────────────────────
+   Marc, 21/10/2026 : « le logo lui-même porte l'animation, la couleur ». Le logo de l'app
+   (`components/LogoApp.tsx`) remplace le disque : il prend la couleur de l'état (l'app à jour a
+   la sienne, la panne est rouge, la non-branchée est grise) et chaque partie bouge à sa façon. */
 .astre {
-  --taille: 4.25rem;
+  --taille: 4.5rem;
   /* Valeurs de repli : la vraie position est posée en ligne par le composant (lib/astres.ts). */
   --x: 50%;
   --y: 50%;
   --lx: 50%;
   --ly: 50%;
+  /* La couleur du logo : celle de l'app, sauf état qui en décide autrement (plus bas). */
+  --logo: var(--accent, var(--marque));
   position: absolute;
   left: var(--x);
   top: var(--y);
@@ -2741,7 +2742,7 @@ a:focus-visible,
   -webkit-tap-highlight-color: transparent;
 }
 .astre[data-grand="oui"] {
-  --taille: 5.25rem;
+  --taille: 5.5rem;
 }
 @media (min-width: 700px) {
   .astre {
@@ -2755,38 +2756,23 @@ a:focus-visible,
   place-items: center;
   width: var(--taille);
   height: var(--taille);
-  border-radius: 50%;
+  color: var(--logo);
+}
+/* Une lueur douce derrière le logo, sans bord : de la lumière, pas un cercle. */
+.astre__aura {
+  position: absolute;
+  inset: -45%;
+  /* Un fond sombre sous le logo : le fil qui rejoint le cœur ne le traverse pas. */
   background:
-    radial-gradient(circle at 32% 26%, color-mix(in oklch, var(--accent, var(--marque)) 26%, transparent), transparent 62%),
-    color-mix(in oklch, var(--accent, var(--marque)) 9%, var(--bg));
-  border: 1.5px solid var(--accent, var(--marque));
-  box-shadow:
-    inset 0 0 18px color-mix(in oklch, var(--accent, var(--marque)) 16%, transparent),
-    0 0 26px color-mix(in oklch, var(--accent, var(--marque)) 22%, transparent);
-}
-.astre__halo {
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1px solid var(--accent, var(--marque));
-  opacity: 0.5;
-}
-/* La graduation : de fines dents autour du disque, comme un cadran. */
-.astre__graduation {
-  position: absolute;
-  inset: -0.5rem;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, color-mix(in oklch, var(--accent, var(--marque)) 75%, transparent) 0 0.9deg, transparent 0.9deg 7.5deg);
-  mask-image: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px), #000 100%);
-  -webkit-mask-image: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px), #000 100%);
-  opacity: 0.55;
+    radial-gradient(closest-side, var(--bg) 0 30%, transparent 48%),
+    radial-gradient(closest-side, color-mix(in oklch, var(--logo) 24%, transparent), transparent);
+  pointer-events: none;
 }
 .astre__initiale {
-  font-size: calc(var(--taille) * 0.5);
-  font-weight: 300;
+  position: relative;
+  font-size: calc(var(--taille) * 0.7);
+  font-weight: 200;
   line-height: 1;
-  letter-spacing: -0.01em;
-  color: var(--text);
 }
 .astre__nom {
   margin-top: 0.7rem;
@@ -2823,11 +2809,108 @@ a:focus-visible,
   clip-path: none;
 }
 
-/* La pastille : le pictogramme de l'état, en bas à droite du disque. */
+/* ── Le logo : l'animation et la couleur viennent de lui ───────────────────────────────────── */
+.logo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--logo);
+  filter: drop-shadow(0 0 8px color-mix(in oklch, var(--logo) 55%, transparent));
+}
+.logo__plein {
+  fill: currentColor;
+  stroke: currentColor;
+}
+.logo__trait {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.logo__arc {
+  display: none;
+}
+.logo__chevron {
+  stroke-linejoin: round;
+}
+.logo__marmite {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+/* Un contour fin (en pixels d'écran) pour tout ce qui n'est pas « à jour ». */
+.astre[data-etat="panne"] .logo__plein,
+.astre[data-etat="construction"] .logo__plein,
+.astre[data-etat="attente"] .logo__plein,
+.astre[data-etat="absent"] .logo__plein {
+  fill: transparent;
+  stroke-width: 1.4px;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 4 3;
+}
+.astre[data-etat="panne"] .logo__trait,
+.astre[data-etat="absent"] .logo__trait {
+  stroke-dasharray: 0.01 4.5;
+}
+.astre[data-etat="panne"] .logo__trait,
+.astre[data-etat="absent"] .logo__trait,
+.astre[data-etat="construction"] .logo__trait,
+.astre[data-etat="attente"] .logo__trait {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1.6px;
+}
+.astre[data-etat="construction"] .logo__trait,
+.astre[data-etat="attente"] .logo__trait {
+  stroke-dasharray: 5 4;
+}
+/* Une app à jour ou en retard montre aussi l'arc de charge de CarAI. */
+.astre[data-etat="vivant"] .logo__arc,
+.astre[data-etat="retard"] .logo__arc {
+  display: inline;
+  stroke-dasharray: 22 78;
+  stroke-opacity: 0.95;
+  transform-origin: 16px 16px;
+}
+.astre[data-etat="vivant"] .logo__cercle,
+.astre[data-etat="retard"] .logo__cercle {
+  stroke-opacity: 0.4;
+}
+
+/* La couleur de l'état : le logo lui-même la prend. */
+.astre[data-etat="retard"] {
+  --logo: color-mix(in oklch, var(--accent, var(--marque)) 70%, var(--warn));
+}
+.astre[data-etat="retard"] .logo {
+  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--warn) 45%, transparent));
+}
+.astre[data-etat="panne"] {
+  --logo: var(--danger);
+}
+.astre[data-etat="panne"] .logo {
+  filter: drop-shadow(0 0 5px color-mix(in oklch, var(--danger) 40%, transparent));
+}
+.astre[data-etat="construction"] {
+  --logo: color-mix(in oklch, var(--accent, var(--marque)) 80%, var(--info));
+}
+.astre[data-etat="absent"] {
+  --logo: var(--neutral);
+}
+.astre[data-etat="absent"] .logo,
+.astre[data-etat="attente"] .logo {
+  filter: none;
+}
+.astre[data-etat="attente"] {
+  --logo: color-mix(in oklch, var(--accent, var(--marque)) 55%, var(--neutral));
+}
+.astre[data-etat="absent"] .astre__initiale {
+  color: var(--text-soft);
+}
+
+/* La pastille : le pictogramme de l'état, en bas à droite du logo. */
 .astre__pastille {
   position: absolute;
-  right: -0.15rem;
-  bottom: -0.15rem;
+  right: -0.35rem;
+  bottom: -0.2rem;
   display: grid;
   place-items: center;
   width: 1.3rem;
@@ -2858,7 +2941,7 @@ a:focus-visible,
   color: var(--info);
 }
 
-/* Les satellites : un par alerte publiée par l'app, sur une orbite autour du disque. */
+/* Les satellites : un par alerte publiée par l'app, sur une orbite autour du logo. */
 .astre__orbite {
   position: absolute;
   inset: 0;
@@ -2873,7 +2956,7 @@ a:focus-visible,
   margin: -0.225rem 0 0 -0.225rem;
   border-radius: 50%;
   background: var(--neutral);
-  transform: rotate(var(--a)) translateY(calc(var(--taille) / -2 - 0.95rem));
+  transform: rotate(var(--a)) translateY(calc(var(--taille) / -2 - 0.8rem));
 }
 .astre__sat[data-ton="danger"] {
   background: var(--danger);
@@ -2887,59 +2970,29 @@ a:focus-visible,
   background: var(--info);
   box-shadow: 0 0 8px var(--info);
 }
-
-/* Les états : la FORME de l'anneau d'abord. */
-.astre[data-etat="retard"] .astre__corps {
-  box-shadow: 0 0 18px color-mix(in oklch, var(--warn) 22%, transparent);
-}
-.astre[data-etat="retard"] .astre__halo {
-  border-color: var(--warn);
-}
-.astre[data-etat="panne"] .astre__corps {
-  border-style: dashed;
-  border-color: var(--danger);
-  background: color-mix(in oklch, var(--danger) 9%, var(--bg));
-  box-shadow: none;
-}
-.astre[data-etat="panne"] .astre__halo,
-.astre[data-etat="panne"] .astre__graduation {
-  display: none;
-}
-/* En construction ou en lecture : le disque s'efface, un pointillé tourne autour de lui. */
-.astre[data-etat="construction"] .astre__corps,
-.astre[data-etat="attente"] .astre__corps {
-  border-color: color-mix(in oklch, var(--accent, var(--marque)) 35%, transparent);
-}
-.astre[data-etat="construction"] .astre__halo,
-.astre[data-etat="attente"] .astre__halo {
-  inset: -5px;
-  border: 2px dotted var(--accent, var(--marque));
-  opacity: 0.9;
-}
-.astre[data-etat="construction"] .astre__graduation,
-.astre[data-etat="attente"] .astre__graduation {
-  display: none;
-}
-.astre[data-etat="absent"] .astre__corps {
-  border-style: dashed;
-  border-color: var(--neutral);
-  background: transparent;
-  box-shadow: none;
-}
-.astre[data-etat="absent"] .astre__halo,
-.astre[data-etat="absent"] .astre__graduation {
-  display: none;
-}
-.astre[data-etat="absent"] .astre__initiale {
-  color: var(--text-soft);
-}
-.astre[data-etat="attente"] .astre__corps {
-  box-shadow: none;
-  opacity: 0.75;
-}
 .astre:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 6px;
+}
+
+/* ── Le logo du hub, au cœur : quatre tuiles aux teintes du hub ────────────────────────────── */
+.logo-hub {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.logo-hub__tuile--1 {
+  fill: var(--info);
+}
+.logo-hub__tuile--2 {
+  fill: var(--ok);
+}
+.logo-hub__tuile--3 {
+  fill: var(--warn);
+}
+.logo-hub__tuile--4 {
+  fill: var(--text);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -2989,8 +3042,17 @@ a:focus-visible,
   .ciel__coeur::before {
     animation: ciel-tourne 60s linear infinite;
   }
-  .ciel__noyau {
-    animation: ciel-bat 3.6s ease-in-out infinite;
+  .logo-hub__tuile {
+    animation: logo-tuile 4.8s ease-in-out infinite;
+  }
+  .logo-hub__tuile--2 {
+    animation-delay: -1.2s;
+  }
+  .logo-hub__tuile--3 {
+    animation-delay: -2.4s;
+  }
+  .logo-hub__tuile--4 {
+    animation-delay: -3.6s;
   }
   .ciel__noyau::before {
     animation: ciel-sonar 5.2s ease-out infinite;
@@ -2998,23 +3060,65 @@ a:focus-visible,
   .ciel__noyau::after {
     animation: ciel-sonar 5.2s ease-out 2.6s infinite;
   }
-  .astre[data-etat="vivant"] .astre__halo {
-    animation: ciel-souffle 4.2s ease-in-out infinite;
+  /* Chaque logo bouge à sa façon quand l'app est à jour (et plus lentement quand elle est en retard). */
+  .astre[data-etat="vivant"] .logo {
+    animation: logo-respire 4.2s ease-in-out infinite;
     animation-delay: calc(var(--n, 0) * -0.7s);
   }
-  .astre[data-etat="vivant"] .astre__graduation {
-    animation: ciel-tourne 48s linear infinite;
-  }
-  .astre[data-etat="retard"] .astre__halo {
-    animation: ciel-souffle 9s ease-in-out infinite;
+  .astre[data-etat="retard"] .logo {
+    animation: logo-respire 9s ease-in-out infinite;
     animation-delay: calc(var(--n, 0) * -1.3s);
   }
-  .astre[data-etat="retard"] .astre__graduation {
-    animation: ciel-tourne 140s linear infinite;
+  .astre[data-etat="vivant"] .logo__arc,
+  .astre[data-etat="retard"] .logo__arc {
+    animation: ciel-tourne 3.2s linear infinite;
   }
-  .astre[data-etat="construction"] .astre__halo,
-  .astre[data-etat="attente"] .astre__halo {
-    animation: ciel-tourne 14s linear infinite;
+  .astre[data-etat="retard"] .logo__arc {
+    animation-duration: 9s;
+  }
+  .astre[data-etat="vivant"] .logo__eclair {
+    animation: logo-charge 2.4s ease-in-out infinite;
+  }
+  .astre[data-etat="vivant"] .logo__curseur {
+    animation: logo-curseur 1.2s steps(1, end) infinite;
+  }
+  .astre[data-etat="retard"] .logo__curseur {
+    animation: logo-curseur 3.2s steps(1, end) infinite;
+  }
+  .astre[data-etat="vivant"] .logo__marmite {
+    animation: logo-mijote 3.4s ease-in-out infinite;
+  }
+  .astre[data-etat="vivant"] .logo__vapeur {
+    animation: logo-vapeur 3.4s ease-in-out infinite;
+    animation-delay: calc(var(--k, 0) * -1.1s);
+  }
+  .astre[data-etat="retard"] .logo__vapeur {
+    animation: logo-vapeur 8s ease-in-out infinite;
+    animation-delay: calc(var(--k, 0) * -2.6s);
+  }
+  .astre[data-etat="vivant"] .logo__lettre {
+    animation: logo-lettre 3.2s ease-in-out infinite;
+    animation-delay: calc(var(--k, 0) * -1.6s);
+  }
+  .astre[data-etat="vivant"] .logo__barre {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: logo-barre 3.6s ease-in-out infinite;
+    animation-delay: calc(var(--k, 0) * -0.5s);
+  }
+  .astre[data-etat="vivant"] .logo__point {
+    animation: logo-point 3.6s ease-in-out infinite;
+  }
+  /* En construction : le contour se trace en boucle. En panne : il clignote, irrégulièrement. */
+  .astre[data-etat="construction"] .logo__plein,
+  .astre[data-etat="construction"] .logo__trait,
+  .astre[data-etat="attente"] .logo__plein,
+  .astre[data-etat="attente"] .logo__trait {
+    animation: logo-trace 1.6s linear infinite;
+  }
+  .astre[data-etat="panne"] .logo {
+    animation: logo-panne 5.5s steps(1, end) infinite;
+    animation-delay: calc(var(--n, 0) * -0.9s);
   }
   .astre__orbite {
     animation: ciel-tourne 16s linear infinite;
@@ -3035,7 +3139,113 @@ a:focus-visible,
   }
   .astre:hover .astre__corps,
   .astre:focus-visible .astre__corps {
-    transform: scale(1.07);
+    transform: scale(1.1);
+  }
+}
+@keyframes logo-respire {
+  0%,
+  100% {
+    opacity: 0.82;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes logo-charge {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+@keyframes logo-curseur {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes logo-vapeur {
+  0% {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  35% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -22px;
+  }
+}
+@keyframes logo-mijote {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  50% {
+    scale: 1.02 0.985;
+  }
+}
+@keyframes logo-lettre {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes logo-barre {
+  0%,
+  100% {
+    scale: 0.78 1;
+  }
+  50% {
+    scale: 1 1;
+  }
+}
+@keyframes logo-point {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -1.4px;
+  }
+}
+@keyframes logo-trace {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+@keyframes logo-panne {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 0.35;
+  }
+  64% {
+    opacity: 1;
+  }
+  66% {
+    opacity: 0.4;
+  }
+  68% {
+    opacity: 1;
+  }
+}
+@keyframes logo-tuile {
+  0%,
+  100% {
+    opacity: 0.7;
+    scale: 1;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.035;
   }
 }
 @keyframes ciel-coeur-entre {
@@ -3150,18 +3360,18 @@ a:focus-visible,
     height: 10.4rem;
   }
   .ciel__noyau {
-    inset: 3.4rem;
+    inset: 3.1rem;
   }
   .ciel__coeur::after {
     inset: 1.9rem;
   }
   .astre {
-    --taille: 5rem;
+    --taille: 5.25rem;
     width: 9rem;
     margin-left: -4.5rem;
   }
   .astre[data-grand="oui"] {
-    --taille: 6.25rem;
+    --taille: 6.5rem;
   }
   .astre__nom {
     font-size: 1.05rem;
