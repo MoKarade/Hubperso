@@ -498,3 +498,6 @@ peut recevoir l'accès.
 Supprimer `.claude/settings.json` (ou ses trois blocs), `.mcp.json`, `scripts/graphe.sh`, `.graphifyignore`, les deux lignes de `.gitignore` et la ligne de `CLAUDE.md`. Rien d'autre n'a été modifié.
 
 Évaluation : commun/plans/2026-10-21_graphify-analyse.md. Mesure à refaire sur 10 questions réelles après un jour d'usage.
+
+**Artefact `graphe` pour Hubperso (tâche MoKarade/.github#433, 21/10/2026)**
+- `.github/workflows/graphe.yml` appelle le workflow commun de `MoKarade/.github` à chaque push sur `main` : artefact Actions `graphe` (`graph.html` filtré de moins de 1 Mo et `meta.json`), conservé 90 jours. Job séparé, jamais un check requis. Format et règles : `docs/graphe-code.md` de `MoKarade/.github`. L'artefact ne contient que des chemins de fichiers et des dossiers.
