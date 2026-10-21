@@ -85,6 +85,7 @@ export function commandes(apps: AppPalette[]): Commande[] {
     { id: "page-attention", libelle: "Ce qui demande mon attention", genre: "page", cible: "/attention" },
     { id: "page-couts", libelle: "Coûts & quotas", genre: "page", cible: "/couts" },
     { id: "page-admin", libelle: "Administration", genre: "page", cible: "/administration" },
+    { id: "page-graphes", libelle: "Graphes de code", genre: "page", cible: "/graphes" },
   ];
 
   const parApp = apps.flatMap<Commande>((app) => {

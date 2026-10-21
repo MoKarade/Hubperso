@@ -37,7 +37,10 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        // Tout SAUF les graphes de code : ces pages (code d'un dépôt, non fiable) portent leur
+        // propre CSP en bac à sable (app/api/graphes/[depot]/route.ts). Deux CSP s'additionnent
+        // en intersection, et `script-src 'self'` du hub y serait redondant et trompeur.
+        source: "/((?!api/graphes/).*)",
         headers: [
           { key: "Content-Security-Policy", value: CSP },
           // HSTS : le hub est 100 % HTTPS (Vercel). 1 an, sous-domaines inclus — les apps
@@ -49,6 +52,21 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      {
+        // Les graphes gardent tous les autres en-têtes de sécurité du hub, sans la CSP globale :
+        // la route pose la sienne, et les réponses du garde (401/503) restent durcies.
+        source: "/api/graphes/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "no-referrer" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },

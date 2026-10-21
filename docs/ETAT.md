@@ -6,12 +6,12 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
 ## Architecture
 - Next.js 15 / React 19, Auth.js v5 (beta), Drizzle + Neon (PGlite en test), Vitest.
 - Le hub consomme `GET /hub/summary` des 6 apps via `@mokarade/hub-contract` (épinglé `v1.3.0`).
-- `app/` : pages (accueil, `app/[id]`, attention, couts, administration, login, sans-acces) et
-  routes `api/acces`, `api/auth`, `api/cron/releve`.
+- `app/` : pages (accueil, `app/[id]`, attention, couts, administration, graphes, login, sans-acces) et
+  routes `api/acces`, `api/auth`, `api/cron/releve`, `api/graphes/[depot]`.
 - `lib/` : ~48 modules (accès, sources, dérivés, historique, base) ; `components/` : 17 ;
   `drizzle/` : 2 migrations ; `tests/` : ~44 fichiers.
 - CI (`.github/workflows`) : ci, auto-merge, constellation, doc-a-jour, releve (cron `*/30`).
-- ADR : `docs/adr/0001` à `0004`.
+- ADR : `docs/adr/0001` à `0005`.
 
 ## État
 - Fusion auto active (`auto-merge.yml`). Aucun `TODO`/`FIXME`/`eslint-disable`/`@ts-ignore`
