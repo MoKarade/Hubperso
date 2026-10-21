@@ -8,7 +8,9 @@
 // jamais un graphe ou une date présumés. Sans jeton de lecture, la page le dit en tête.
 //
 // Peu de texte, gros (Marc, 21/10/2026) : le nom du dépôt, un état en quelques mots, un bouton.
-// La constellation de chaque carte est un dessin décoratif (lib/dessinDepot.ts), pas le graphe.
+// La constellation de chaque carte est un dessin décoratif (lib/dessinDepot.ts) : elle tient la place
+// pendant que le VRAI graphe 3D du dépôt se charge dans la carte (components/GraphesVivants.tsx), et
+// reste seule quand il n'y a pas de graphe. « Ouvrir » ouvre le graphe sur place, sans changer de page.
 
 import Link from "next/link";
 import { exigerProprietaire } from "@/lib/gardeHub";
@@ -18,6 +20,7 @@ import { DEPOTS, etatDepot, idDepot, jetonGraphes, type EtatGraphe } from "@/lib
 import { ilYa } from "@/lib/format";
 import { maintenantMs } from "@/lib/horloge";
 import { ConstellationSvg } from "@/components/ConstellationSvg";
+import { GraphesVivants } from "@/components/GraphesVivants";
 
 export const metadata = {
   title: "Graphes de code — Hub perso",
@@ -57,10 +60,11 @@ export default async function GraphesPage() {
   const branche = jetonGraphes() !== null;
   const etats = await Promise.all(DEPOTS.map((d) => etatDepot(d)));
   const maintenant = maintenantMs();
-  const prets = etats.filter((e) => e.etat === "ok").length;
+  const nbPrets = etats.filter((e) => e.etat === "ok").length;
 
   return (
-    <main className="page">
+    <main className="page graphes">
+      <div className="graphes__aurore" aria-hidden />
       <header className="page__head">
         <div>
           <p className="page__eyebrow">hubperso.com</p>
@@ -68,7 +72,7 @@ export default async function GraphesPage() {
         </div>
         <div className="page__aside">
           <p className="page__meta">
-            {prets}/{DEPOTS.length} prêts
+            {nbPrets}/{DEPOTS.length} prêts
           </p>
           <Link href="/" className="btn">← Hub</Link>
         </div>
@@ -83,21 +87,29 @@ export default async function GraphesPage() {
       <ul className="graphes__grille">
         {DEPOTS.map((depot, i) => {
           const etat = etats[i]!;
+          const pret = etat.etat === "ok";
           return (
             <li
               key={depot}
               className={`carte-graphe carte-graphe--${etat.etat}`}
               style={{ "--i": i } as React.CSSProperties}
+              {...(pret ? { "data-graphe": idDepot(depot), "data-nom": depot } : {})}
             >
-              <ConstellationSvg nom={depot} />
+              <div className="carte-graphe__vue" {...(pret ? { "data-ouvrir": "" } : {})}>
+                <ConstellationSvg nom={depot} />
+                {pret && <div className="carte-graphe__apercu" />}
+              </div>
               <h2 className="carte-graphe__nom">{depot}</h2>
               <Etat etat={etat} maintenant={maintenant} />
-              {etat.etat === "ok" && (
+              {pret && (
+                // Sans JavaScript le lien ouvre la vue 2D d'origine ; avec, le graphe 3D s'ouvre sur place.
                 <a
                   className="btn carte-graphe__ouvrir"
-                  href={`/api/graphes/${idDepot(depot)}`}
+                  href={`/api/graphes/${idDepot(depot)}?vue=2d`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  data-ouvrir=""
+                  aria-label={`Ouvrir le graphe de ${depot}`}
                 >
                   Ouvrir
                 </a>
@@ -106,6 +118,7 @@ export default async function GraphesPage() {
           );
         })}
       </ul>
+      <GraphesVivants />
     </main>
   );
 }

@@ -2,9 +2,18 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-21 (nuit) — **Graphes en 3D, ouverts sur place (Hubperso#280)**
+
+Marc, 21/10/2026 : « quand j'ouvre un graph je veux pas que ça ouvre une autre page », la vignette doit montrer le VRAI graphe de chaque dépôt, beaucoup plus d'animations ; la refonte complète de la page Hubperso viendra APRÈS (pas commencée).
+- **Vignettes vivantes** : chaque carte prête monte une 3D du vrai graphe (`public/graphes/vue3d.js`, chargé par `components/GraphesVivants.tsx`) quand elle est visible ; la constellation décorative reste dessous et sans WebGL. **Ouvrir** ouvre un plein écran DANS `/graphes` (hash `#graphe-<id>`, Échap, Fermer ou retour du navigateur ferment) : rotation, zoom, clic = la caméra vole vers le nœud et éclaire ses voisins, recherche, légende par dossier, noms en gros à la demande. La 2D d'origine reste en lien secondaire.
+- **Route** `app/api/graphes/[depot]` : `?vue=2d` (défaut, `graph.html` en bac à sable + bouton « 3D ») ou `?vue=donnees` (JSON inerte de `lib/grapheDonnees.ts`, 502 avec la cause si le format change). Le visualiseur tourne dans l'origine du hub : le contenu du dépôt n'y est que des chaînes (`textContent`), verrouillé par `tests/grapheVue3d.test.ts`. Choix : `docs/adr/0005-graphes-de-code-dans-le-hub.md`.
+- **Bug corrigé** : batchchef- publie sur `master` ; `lib/graphes.ts` filtre l'artefact sur la branche par défaut de chaque dépôt (`brancheDe`), avec test.
+- Bibliothèque : 3d-force-graph 1.80.1 dans `public/vendor/` (empreinte verrouillée, `LISEZMOI.md`, allowlist gitleaks limitée à la règle `generic-api-key`).
+- Vérifié en local (Chromium, rendu logiciel, faux relevé GitHub sur le vrai `graph.html` de 953 nœuds) : vignettes, ouverture sur place sans nouvel onglet, Échap, retour, lien direct, bouton 3D de la 2D, mobile 390 px, mouvement réduit. **Non éprouvé sur GPU réel** ; FinanceAI et DriveAI sans graphe publié restent affichés honnêtement (« pas encore de graphe », « expiré »).
+
 ## 🟦 Session 2026-10-21 (soir) — **Accès aux graphes et page animée (Hubperso#279)**
 
-Marc, 21/10/2026 : il voit les graphes de toutes les apps sauf FinanceAI (le graphe de FinanceAI vient du fil Graphify), mais n'a aucun accès depuis le hub, veut moins de texte en plus gros, de l'animation, et une vue 3D (tâche suivante : #280).
+Marc, 21/10/2026 : il voit les graphes de toutes les apps sauf FinanceAI (le graphe de FinanceAI vient du fil Graphify), mais n'a aucun accès depuis le hub, veut moins de texte en plus gros, de l'animation, et une vue 3D (la 3D est venue avec #280).
 - **Tuile d'accueil** `components/TuileGraphes.tsx` : une entrée « Graphes de code » vers `/graphes`, rendue SEULEMENT si `estProprietaire(session.user?.email)` (`app/page.tsx`) ; elle ne lit rien (pas d'appel GitHub à chaque ouverture de l'accueil).
 - **Page `/graphes`** : une grande carte par dépôt (nom en gros, commit et âge `ilYa`, bouton « Ouvrir »). Chaque dépôt a une constellation DÉCORATIVE déterministe (`lib/dessinDepot.ts`, rendue par `components/ConstellationSvg.tsx`) : ce n'est PAS son graphe. Animée (lumière qui court sur les liens, points qui pulsent, entrée en cascade) seulement pour un graphe PRÊT ; un dépôt sans graphe garde une constellation éteinte et immobile. Tout est coupé par `prefers-reduced-motion`.
 - Vérifié en local (Chromium, session d'essai du propriétaire, faux relevé GitHub : 7 prêts, 1 aucun, 1 expiré, 1 erreur) : 10 cartes, tuile → `/graphes`, mobile 390 px lisible.

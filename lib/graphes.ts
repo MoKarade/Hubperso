@@ -1,6 +1,6 @@
 // lib/graphes.ts — les graphes de code des dépôts, lus dans leurs artefacts GitHub Actions.
 //
-// Chaque dépôt publie, à chaque push sur `main`, un artefact `graphe` : `graph.html` (la vue
+// Chaque dépôt publie, à chaque push sur sa branche par défaut (`main`, `master` pour BatchChef), un artefact `graphe` : `graph.html` (la vue
 // interactive, déjà triée par fichier) et `meta.json` (dépôt, commit, date, nombres). Le hub ne
 // construit rien : il LIT le dernier artefact de chaque dépôt par l'API GitHub, avec UN jeton de
 // lecture seule posé côté serveur (`GITHUB_GRAPHES_TOKEN`). Sans lui, la page le dit.
@@ -35,6 +35,28 @@ export const DEPOTS = [
 ] as const;
 
 export type Depot = (typeof DEPOTS)[number];
+
+/**
+ * La branche par défaut de chaque dépôt : c'est elle qui fait l'état du dépôt. BatchChef reste sur
+ * `master` ; tous les autres sont sur `main`. Un dépôt absent de cette table n'a pas de graphe lu
+ * (le type l'exige : ajouter un dépôt à `DEPOTS` sans sa branche ne compile pas).
+ */
+const BRANCHE_PAR_DEFAUT: Record<Depot, "main" | "master"> = {
+  Hubperso: "main",
+  FinanceAI: "main",
+  JobAI: "main",
+  CarAI: "main",
+  MemoryAI: "main",
+  DriveAI: "main",
+  "batchchef-": "master",
+  "app-template": "main",
+  "hub-contract": "main",
+  ".github": "main",
+};
+
+export function brancheDe(depot: Depot): string {
+  return BRANCHE_PAR_DEFAUT[depot];
+}
 
 /** Nom de l'artefact publié par chaque dépôt. */
 const NOM_ARTEFACT = "graphe";
@@ -93,16 +115,17 @@ interface ArtefactApi {
 }
 
 /**
- * Le dernier artefact `graphe` produit sur `main`, ou `null`.
+ * Le dernier artefact `graphe` produit sur la branche par défaut du dépôt (`main`, ou `master`
+ * pour BatchChef), ou `null`.
  *
- * ⚠️ Filtré sur la branche `main` : un artefact venu d'une PR n'est pas l'état du dépôt. L'API
+ * ⚠️ Filtré sur cette branche : un artefact venu d'une PR n'est pas l'état du dépôt. L'API
  * les rend du plus récent au plus ancien ; on garde le premier qui convient.
  */
-export function choisirArtefact(reponse: unknown): ArtefactApi | null {
+export function choisirArtefact(reponse: unknown, branche = "main"): ArtefactApi | null {
   const liste = (reponse as { artifacts?: unknown })?.artifacts;
   if (!Array.isArray(liste)) return null;
   for (const a of liste as ArtefactApi[]) {
-    if (a && typeof a.id === "number" && a.workflow_run?.head_branch === "main") return a;
+    if (a && typeof a.id === "number" && a.workflow_run?.head_branch === branche) return a;
   }
   return null;
 }
@@ -148,7 +171,7 @@ export async function etatDepot(
     }
     if (rep.status === 404) return { etat: "erreur", detail: "dépôt introuvable pour ce jeton (HTTP 404)" };
     if (!rep.ok) return { etat: "erreur", detail: `GitHub répond HTTP ${rep.status}` };
-    const a = choisirArtefact(await rep.json());
+    const a = choisirArtefact(await rep.json(), brancheDe(depot));
     if (!a) return { etat: "aucun" };
     if (a.expired) return { etat: "expire", creeLe: a.created_at };
     const sha = a.workflow_run?.head_sha;

@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": ["docs/maquettes/**","public/vendor/**",".github/ci/**", "scripts/hooks/**"],
+  "ignore": ["docs/maquettes/**","public/vendor/**","public/graphes/**",".github/ci/**", "scripts/hooks/**"],
   "ignoreDependencies": [
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser"
