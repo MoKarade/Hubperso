@@ -121,7 +121,12 @@ function entetes(jeton: string): HeadersInit {
   };
 }
 
-/** Le jeton de lecture, ou `null` : la page dit alors « non branchée » plutôt que d'échouer. */
+/**
+ * Le jeton de lecture, ou `null` : la page dit alors « non branchée » plutôt que d'échouer.
+ *
+ * Lu à l'exécution, mais Vercel ne l'injecte qu'à un NOUVEAU déploiement : poser ou changer
+ * `GITHUB_GRAPHES_TOKEN` ne se voit qu'après un push de code sur `main` (jamais « Redeploy »).
+ */
 export function jetonGraphes(env: Env = process.env): string | null {
   const v = env.GITHUB_GRAPHES_TOKEN?.trim();
   return v ? v : null;
