@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { exigerAccesHub } from "@/lib/gardeHub";
+import { estProprietaire } from "@/lib/personnes";
+import { DEPOTS } from "@/lib/graphes";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
@@ -13,6 +15,7 @@ import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
 import { WidgetSkeleton } from "@/components/WidgetSkeleton";
 import { CostsCard } from "@/components/CostsCard";
+import { TuileGraphes } from "@/components/TuileGraphes";
 import { RefreshControls } from "@/components/RefreshControls";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -126,7 +129,10 @@ export default async function Page() {
   // Et pas seulement la session : l'ACCÈS AU HUB. Une personne invitée sur une seule app a
   // une session valide (la connexion est unique) — cette page-ci affiche les données des
   // cinq apps, elle exige donc `aAcces(…, APP_HUB)`. Voir lib/gardeHub.ts.
-  await exigerAccesHub();
+  const session = await exigerAccesHub();
+  // Les graphes de code décrivent des dépôts privés : l'entrée n'existe que pour le propriétaire
+  // (la page, elle, se garde toute seule avec `exigerProprietaire`).
+  const proprietaire = estProprietaire(session.user?.email);
 
   const sources: HubSource[] = getSources();
   // Lancées tout de suite et toutes ensemble : le parallélisme vient d'ici, pas de Suspense.
@@ -174,6 +180,8 @@ export default async function Page() {
       <Suspense fallback={null}>
         <StreamedAttention promises={promises} />
       </Suspense>
+
+      {proprietaire && <TuileGraphes nombre={DEPOTS.length} />}
 
       <Suspense fallback={<div className="costs costs--loading" aria-busy="true" />}>
         <StreamedCosts promises={promises} />
