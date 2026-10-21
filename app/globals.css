@@ -2433,21 +2433,24 @@ a:focus-visible,
   }
 }
 
-
 /* ── Accueil : la constellation vivante (Hubperso#286) ─────────────────────────────────────────
    Un astre par app, à la couleur de l'app, qui respire selon son VRAI état (`lib/astres.ts`).
-   Marc, 21/10/2026 : thème sombre, peu de texte, gros caractères, beaucoup d'animations.
-   L'état se lit à la FORME de l'anneau avant la teinte : plein = vivant, plein et dim = retard,
-   tirets rouges = panne, pointillé qui tourne = en construction ou en lecture, tirets gris =
-   non branchée. Tout mouvement vit dans le bloc `no-preference` en bas : sans lui, la scène est
-   complète et immobile.
-   ⚠️ `--accent` vient de l'app (contrat) et peut être clair (JobAI, DriveAI) : il ne porte
-   JAMAIS du texte directement, le texte reste `--text`. */
+   Marc, 21/10/2026 : thème sombre, presque aucun texte, fin, rempli, animé, riche en détails.
+   L'état se lit d'abord à la FORME : anneau plein qui respire = vivant, plein et lent = en retard,
+   tirets rouges = panne, pointillé qui tourne = en construction ou en lecture, tirets gris = non
+   branchée ; la pastille à pictogramme double la forme. Le mot reste dans la page (lecteurs
+   d'écran) et apparaît au survol et au focus. Les détails qui parlent sont vrais : un satellite par
+   alerte, un segment de l'anneau du cœur par app, un paquet de lumière vers chaque app à jour.
+   Étoiles et orbites sont du DÉCOR. Tout mouvement vit dans le bloc `no-preference` plus bas :
+   sans lui, la scène est complète et immobile.
+   ⚠️ `--accent` vient de l'app (contrat) et peut être clair : il ne porte JAMAIS du texte. */
 .ciel {
   position: relative;
   /* Téléphone : presque carré, assez haut pour que le nom du dernier astre ne sorte pas. */
   aspect-ratio: 1 / 1.25;
   margin-bottom: var(--gap);
+  /* Les orbites se mesurent sur le plus petit côté de la scène (`cqmin`). */
+  container-type: size;
 }
 @media (min-width: 700px) {
   .ciel {
@@ -2459,6 +2462,185 @@ a:focus-visible,
     aspect-ratio: 2.6 / 1;
   }
 }
+
+/* ── Le fond : voile, étoiles, orbites (aucune donnée) ─────────────────────────────────────── */
+.ciel__fond {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse 46% 52% at 50% 50%, color-mix(in oklch, var(--marque) 11%, transparent), transparent 70%),
+    radial-gradient(ellipse 30% 40% at 18% 80%, color-mix(in oklch, var(--info) 5%, transparent), transparent 70%),
+    radial-gradient(ellipse 30% 40% at 84% 22%, color-mix(in oklch, var(--marque) 6%, transparent), transparent 70%);
+  /* Les bords fondent dans le fond de la page : pas de cadre. */
+  mask-image: radial-gradient(ellipse 72% 78% at 50% 50%, #000 55%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 78% at 50% 50%, #000 55%, transparent 100%);
+}
+.ciel__etoile {
+  /* Replis : la vraie position, taille et phase viennent de `etoiles()` (style en ligne). */
+  --x: 50%;
+  --y: 50%;
+  --r: 1px;
+  --d: 0s;
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--r);
+  height: var(--r);
+  border-radius: 50%;
+  background: var(--text);
+  opacity: 0.45;
+}
+.ciel__filante {
+  position: absolute;
+  left: 12%;
+  top: 14%;
+  width: 5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--text));
+  opacity: 0;
+  rotate: 24deg;
+}
+.ciel__filante--2 {
+  left: 66%;
+  top: 62%;
+  width: 3.5rem;
+}
+.ciel__orbite {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Repli sans unités de conteneur, puis la mesure exacte. */
+  width: 60%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in oklch, var(--text) 9%, transparent);
+}
+.ciel__orbite > i {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--marque);
+  box-shadow: 0 0 10px var(--marque);
+}
+.ciel__orbite--1 {
+  width: 46cqmin;
+}
+.ciel__orbite--2 {
+  width: 72cqmin;
+  border-style: dashed;
+  border-color: color-mix(in oklch, var(--text) 7%, transparent);
+}
+.ciel__orbite--3 {
+  width: 98cqmin;
+  border-color: color-mix(in oklch, var(--text) 5%, transparent);
+}
+.ciel__orbite--2 > i {
+  background: var(--text);
+  box-shadow: 0 0 8px var(--text);
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+}
+.ciel__orbite--3 > i {
+  background: var(--info);
+  box-shadow: 0 0 8px var(--info);
+}
+
+/* ── Le cœur : le hub lui-même, en indigo de marque ────────────────────────────────────────── */
+.ciel__coeur {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8.4rem;
+  height: 8.4rem;
+  translate: -50% -50%;
+  border-radius: 50%;
+}
+/* Une graduation fine autour du cœur, comme un cadran. */
+.ciel__coeur::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in oklch, var(--marque) 55%, transparent) 0 0.7deg, transparent 0.7deg 7.5deg);
+  mask-image: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px), #000 100%);
+  -webkit-mask-image: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px), #000 100%);
+  opacity: 0.7;
+}
+.ciel__coeur::after {
+  content: "";
+  position: absolute;
+  inset: 1.55rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in oklch, var(--marque) 40%, transparent);
+}
+.ciel__noyau {
+  position: absolute;
+  inset: 2.7rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, color-mix(in oklch, var(--marque) 70%, white), var(--marque) 52%, color-mix(in oklch, var(--marque) 50%, var(--bg)));
+  box-shadow:
+    0 0 24px color-mix(in oklch, var(--marque) 60%, transparent),
+    0 0 70px color-mix(in oklch, var(--marque) 28%, transparent);
+}
+.ciel__noyau::before,
+.ciel__noyau::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--marque);
+  opacity: 0;
+}
+
+/* L'anneau du cœur : un segment par app, à la teinte de son état. */
+.ciel__segment {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8.4rem;
+  height: 8.4rem;
+  translate: -50% -50%;
+  overflow: visible;
+  pointer-events: none;
+}
+.ciel__segment circle {
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-opacity: 0.45;
+}
+.ciel__segment[data-etat="vivant"] circle {
+  stroke: var(--accent, var(--marque));
+  stroke-opacity: 1;
+}
+.ciel__segment[data-etat="retard"] circle {
+  stroke: var(--warn);
+  stroke-opacity: 0.9;
+}
+.ciel__segment[data-etat="panne"] circle {
+  stroke: var(--danger);
+  stroke-opacity: 0.9;
+  stroke-width: 1.2;
+}
+.ciel__segment[data-etat="construction"] circle {
+  stroke: var(--info);
+  stroke-opacity: 0.8;
+}
+.ciel__segment[data-etat="absent"] circle {
+  stroke: var(--neutral);
+  stroke-opacity: 0.4;
+}
+
+/* ── Les fils et leurs paquets de lumière ──────────────────────────────────────────────────── */
 .ciel__liste {
   position: absolute;
   inset: 0;
@@ -2495,47 +2677,48 @@ a:focus-visible,
 }
 .ciel__lien line {
   stroke: var(--text-faint);
-  stroke-width: 1.5;
-  stroke-opacity: 0.35;
-  stroke-dasharray: 3 7;
+  stroke-width: 1;
+  stroke-opacity: 0.28;
+  stroke-dasharray: 1 6;
+  stroke-linecap: round;
 }
 .ciel__item:has(.astre[data-etat="vivant"]) .ciel__lien line {
   stroke: var(--accent, var(--marque));
-  stroke-opacity: 0.7;
+  stroke-opacity: 0.55;
+  stroke-dasharray: 2 5;
 }
 .ciel__item:has(.astre[data-etat="panne"]) .ciel__lien line {
   stroke: var(--danger);
-  stroke-opacity: 0.5;
-  stroke-dasharray: 2 10;
+  stroke-opacity: 0.4;
+  stroke-dasharray: 1 9;
 }
-
-/* Le cœur : le hub lui-même, en indigo de marque. */
-.ciel__coeur {
+.ciel__paquet {
+  --dx: var(--x);
+  --dy: var(--y);
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 3.4rem;
-  height: 3.4rem;
-  translate: -50% -50%;
+  left: var(--x);
+  top: var(--y);
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, color-mix(in oklch, var(--marque) 85%, white), var(--marque) 55%, color-mix(in oklch, var(--marque) 55%, var(--bg)));
-  box-shadow:
-    0 0 0 6px color-mix(in oklch, var(--marque) 14%, transparent),
-    0 0 40px color-mix(in oklch, var(--marque) 45%, transparent);
-}
-.ciel__coeur::before,
-.ciel__coeur::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid var(--marque);
+  background: var(--accent, var(--marque));
+  box-shadow: 0 0 10px var(--accent, var(--marque));
   opacity: 0;
+  pointer-events: none;
+}
+@media (min-width: 700px) {
+  .ciel__paquet {
+    --dx: var(--lx);
+    --dy: var(--ly);
+    left: var(--lx);
+    top: var(--ly);
+  }
 }
 
-/* L'astre. Le centre du DISQUE est posé sur (x, y) ; le nom et l'état pendent dessous. */
+/* ── L'astre : le centre du DISQUE est posé sur (x, y) ; le nom pend dessous ───────────────── */
 .astre {
-  --taille: 4.5rem;
+  --taille: 4.25rem;
   /* Valeurs de repli : la vraie position est posée en ligne par le composant (lib/astres.ts). */
   --x: 50%;
   --y: 50%;
@@ -2544,13 +2727,13 @@ a:focus-visible,
   position: absolute;
   left: var(--x);
   top: var(--y);
-  width: 9rem;
-  margin-left: -4.5rem;
+  width: 8rem;
+  margin-left: -4rem;
   margin-top: calc(var(--taille) / -2);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0.1rem;
   text-align: center;
   text-decoration: none;
   color: var(--text);
@@ -2558,7 +2741,7 @@ a:focus-visible,
   -webkit-tap-highlight-color: transparent;
 }
 .astre[data-grand="oui"] {
-  --taille: 5.75rem;
+  --taille: 5.25rem;
 }
 @media (min-width: 700px) {
   .astre {
@@ -2573,25 +2756,46 @@ a:focus-visible,
   width: var(--taille);
   height: var(--taille);
   border-radius: 50%;
-  background: color-mix(in oklch, var(--accent, var(--marque)) 18%, var(--bg));
-  border: 3px solid var(--accent, var(--marque));
-  box-shadow: 0 0 28px color-mix(in oklch, var(--accent, var(--marque)) 28%, transparent);
+  background:
+    radial-gradient(circle at 32% 26%, color-mix(in oklch, var(--accent, var(--marque)) 26%, transparent), transparent 62%),
+    color-mix(in oklch, var(--accent, var(--marque)) 9%, var(--bg));
+  border: 1.5px solid var(--accent, var(--marque));
+  box-shadow:
+    inset 0 0 18px color-mix(in oklch, var(--accent, var(--marque)) 16%, transparent),
+    0 0 26px color-mix(in oklch, var(--accent, var(--marque)) 22%, transparent);
 }
 .astre__halo {
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
-  border: 2px solid var(--accent, var(--marque));
+  border: 1px solid var(--accent, var(--marque));
+  opacity: 0.5;
+}
+/* La graduation : de fines dents autour du disque, comme un cadran. */
+.astre__graduation {
+  position: absolute;
+  inset: -0.5rem;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in oklch, var(--accent, var(--marque)) 75%, transparent) 0 0.9deg, transparent 0.9deg 7.5deg);
+  mask-image: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px), #000 100%);
+  -webkit-mask-image: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px), #000 100%);
   opacity: 0.55;
 }
 .astre__initiale {
-  font-size: calc(var(--taille) * 0.46);
-  font-weight: 800;
+  font-size: calc(var(--taille) * 0.5);
+  font-weight: 300;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
-/* Le fond du ciel « découpe » les fils derrière les mots : un fil ne traverse jamais un texte. */
+.astre__nom {
+  margin-top: 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+/* Le fond du ciel « découpe » les fils derrière le nom : un fil ne traverse jamais un texte. */
 .astre__nom,
 .astre__mot {
   text-shadow:
@@ -2599,47 +2803,122 @@ a:focus-visible,
     0 0 6px var(--bg),
     0 0 12px var(--bg);
 }
-.astre__nom {
-  margin-top: 0.5rem;
-  font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.3rem);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-}
+/* Le mot d'état : toujours dans la page (lecteurs d'écran), visible au survol et au focus. */
 .astre__mot {
-  font-size: 0.95rem;
-  line-height: 1.2;
+  position: absolute;
+  top: 100%;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  font-size: 0.85rem;
   color: var(--text-soft);
+}
+.astre:hover .astre__mot,
+.astre:focus-visible .astre__mot {
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
+/* La pastille : le pictogramme de l'état, en bas à droite du disque. */
+.astre__pastille {
+  position: absolute;
+  right: -0.15rem;
+  bottom: -0.15rem;
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px solid var(--neutral);
+  color: var(--neutral);
+}
+.astre__glyphe {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+.astre__pastille[data-etat="vivant"] {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.astre__pastille[data-etat="retard"] {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.astre__pastille[data-etat="panne"] {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.astre__pastille[data-etat="construction"] {
+  border-color: var(--info);
+  color: var(--info);
+}
+
+/* Les satellites : un par alerte publiée par l'app, sur une orbite autour du disque. */
+.astre__orbite {
+  position: absolute;
+  inset: 0;
+}
+.astre__sat {
+  --a: 0deg;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin: -0.225rem 0 0 -0.225rem;
+  border-radius: 50%;
+  background: var(--neutral);
+  transform: rotate(var(--a)) translateY(calc(var(--taille) / -2 - 0.95rem));
+}
+.astre__sat[data-ton="danger"] {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+}
+.astre__sat[data-ton="warn"] {
+  background: var(--warn);
+  box-shadow: 0 0 8px var(--warn);
+}
+.astre__sat[data-ton="info"] {
+  background: var(--info);
+  box-shadow: 0 0 8px var(--info);
 }
 
 /* Les états : la FORME de l'anneau d'abord. */
 .astre[data-etat="retard"] .astre__corps {
-  box-shadow: 0 0 18px color-mix(in oklch, var(--warn) 25%, transparent);
+  box-shadow: 0 0 18px color-mix(in oklch, var(--warn) 22%, transparent);
 }
 .astre[data-etat="retard"] .astre__halo {
   border-color: var(--warn);
 }
-.astre[data-etat="retard"] .astre__mot {
-  color: var(--warn);
-}
 .astre[data-etat="panne"] .astre__corps {
   border-style: dashed;
   border-color: var(--danger);
-  background: color-mix(in oklch, var(--danger) 12%, var(--bg));
+  background: color-mix(in oklch, var(--danger) 9%, var(--bg));
   box-shadow: none;
 }
-.astre[data-etat="panne"] .astre__halo {
+.astre[data-etat="panne"] .astre__halo,
+.astre[data-etat="panne"] .astre__graduation {
   display: none;
 }
-.astre[data-etat="panne"] .astre__mot {
-  color: var(--danger);
-}
+/* En construction ou en lecture : le disque s'efface, un pointillé tourne autour de lui. */
 .astre[data-etat="construction"] .astre__corps,
 .astre[data-etat="attente"] .astre__corps {
-  border-style: dotted;
+  border-color: color-mix(in oklch, var(--accent, var(--marque)) 35%, transparent);
 }
-.astre[data-etat="construction"] .astre__mot {
-  color: var(--info);
+.astre[data-etat="construction"] .astre__halo,
+.astre[data-etat="attente"] .astre__halo {
+  inset: -5px;
+  border: 2px dotted var(--accent, var(--marque));
+  opacity: 0.9;
+}
+.astre[data-etat="construction"] .astre__graduation,
+.astre[data-etat="attente"] .astre__graduation {
+  display: none;
 }
 .astre[data-etat="absent"] .astre__corps {
   border-style: dashed;
@@ -2648,7 +2927,7 @@ a:focus-visible,
   box-shadow: none;
 }
 .astre[data-etat="absent"] .astre__halo,
-.astre[data-etat="attente"] .astre__halo {
+.astre[data-etat="absent"] .astre__graduation {
   display: none;
 }
 .astre[data-etat="absent"] .astre__initiale {
@@ -2656,69 +2935,119 @@ a:focus-visible,
 }
 .astre[data-etat="attente"] .astre__corps {
   box-shadow: none;
-  opacity: 0.8;
+  opacity: 0.75;
 }
-
 .astre:focus-visible {
   outline: 2px solid var(--text);
-  outline-offset: 4px;
+  outline-offset: 6px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* UN moment orchestré, une seule fois : le cœur s'allume, les fils partent, les astres éclosent. */
-  .ciel__coeur {
-    animation: ciel-coeur-entre 700ms var(--ease-out) backwards;
+  /* UN moment orchestré, une seule fois : le cœur s'allume, les orbites se tracent, les fils
+     partent, les astres éclosent. */
+  .ciel__coeur,
+  .ciel__segment {
+    animation: ciel-coeur-entre 800ms var(--ease-out) backwards;
+  }
+  .ciel__segment {
+    animation-delay: calc(300ms + var(--n, 0) * 60ms);
+  }
+  .ciel__orbite {
+    animation: ciel-orbite-entre 1100ms var(--ease-out) backwards;
   }
   .ciel__lien {
     animation: ciel-fondu 700ms var(--ease-out) backwards;
-    animation-delay: calc(350ms + var(--n, 0) * 90ms);
+    animation-delay: calc(450ms + var(--n, 0) * 90ms);
   }
   .astre {
-    animation: ciel-eclot 650ms var(--ease-out) backwards;
-    animation-delay: calc(520ms + var(--n, 0) * 90ms);
+    animation: ciel-eclot 700ms var(--ease-out) backwards;
+    animation-delay: calc(600ms + var(--n, 0) * 90ms);
   }
 
-  /* Ensuite, le souffle de chaque état. */
+  /* Ensuite, le souffle de chaque chose. */
+  .ciel__etoile {
+    animation: ciel-scintille 5s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  .ciel__filante {
+    animation: ciel-filante 13s ease-in infinite;
+    animation-delay: 4s;
+  }
+  .ciel__filante--2 {
+    animation-duration: 17s;
+    animation-delay: 11s;
+  }
+  .ciel__orbite--1 {
+    animation: ciel-orbite-entre 1100ms var(--ease-out) backwards, ciel-tourne 46s linear infinite;
+  }
+  .ciel__orbite--2 {
+    animation: ciel-orbite-entre 1100ms 150ms var(--ease-out) backwards, ciel-tourne 78s linear infinite reverse;
+  }
+  .ciel__orbite--3 {
+    animation: ciel-orbite-entre 1100ms 300ms var(--ease-out) backwards, ciel-tourne 120s linear infinite;
+  }
   .ciel__coeur::before {
+    animation: ciel-tourne 60s linear infinite;
+  }
+  .ciel__noyau {
+    animation: ciel-bat 3.6s ease-in-out infinite;
+  }
+  .ciel__noyau::before {
     animation: ciel-sonar 5.2s ease-out infinite;
   }
-  .ciel__coeur::after {
+  .ciel__noyau::after {
     animation: ciel-sonar 5.2s ease-out 2.6s infinite;
   }
   .astre[data-etat="vivant"] .astre__halo {
     animation: ciel-souffle 4.2s ease-in-out infinite;
     animation-delay: calc(var(--n, 0) * -0.7s);
   }
+  .astre[data-etat="vivant"] .astre__graduation {
+    animation: ciel-tourne 48s linear infinite;
+  }
   .astre[data-etat="retard"] .astre__halo {
     animation: ciel-souffle 9s ease-in-out infinite;
     animation-delay: calc(var(--n, 0) * -1.3s);
   }
-  .astre[data-etat="construction"] .astre__corps,
-  .astre[data-etat="attente"] .astre__corps {
+  .astre[data-etat="retard"] .astre__graduation {
+    animation: ciel-tourne 140s linear infinite;
+  }
+  .astre[data-etat="construction"] .astre__halo,
+  .astre[data-etat="attente"] .astre__halo {
     animation: ciel-tourne 14s linear infinite;
   }
-  .astre[data-etat="construction"] .astre__initiale,
-  .astre[data-etat="attente"] .astre__initiale {
-    animation: ciel-tourne 14s linear infinite reverse;
+  .astre__orbite {
+    animation: ciel-tourne 16s linear infinite;
   }
   .ciel__item:has(.astre[data-etat="vivant"]) .ciel__lien line {
-    animation: constellation-flux 2.2s linear infinite;
+    animation: constellation-flux 2.4s linear infinite;
     animation-delay: calc(var(--n, 0) * -0.3s);
   }
+  /* Un paquet de lumière part du cœur vers chaque app à jour (et seulement celles-là). */
+  .ciel__paquet {
+    animation: ciel-paquet 4.4s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+    animation-delay: calc(900ms + var(--n, 0) * -0.8s);
+  }
 
-  /* Réponse au geste : l'astre grossit sous le doigt ou le pointeur. */
+  /* Réponse au geste : le disque grossit sous le doigt ou le pointeur. */
   .astre__corps {
-    transition: transform 220ms var(--ease-out);
+    transition: transform 240ms var(--ease-out);
   }
   .astre:hover .astre__corps,
   .astre:focus-visible .astre__corps {
-    transform: scale(1.08);
+    transform: scale(1.07);
   }
 }
 @keyframes ciel-coeur-entre {
   from {
     opacity: 0;
-    transform: scale(0.2);
+    scale: 0.2;
+  }
+}
+@keyframes ciel-orbite-entre {
+  from {
+    opacity: 0;
+    scale: 0.6;
   }
 }
 @keyframes ciel-fondu {
@@ -2732,29 +3061,117 @@ a:focus-visible,
     transform: translateY(10px) scale(0.6);
   }
 }
+@keyframes ciel-scintille {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@keyframes ciel-filante {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  93% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    translate: 7rem 3.2rem;
+  }
+}
+@keyframes ciel-bat {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.07;
+  }
+}
 @keyframes ciel-sonar {
   0% {
-    opacity: 0.55;
+    opacity: 0.6;
     transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(3.4);
+    transform: scale(3.1);
   }
 }
 @keyframes ciel-souffle {
   0%,
   100% {
-    opacity: 0.35;
+    opacity: 0.3;
     transform: scale(1);
   }
   50% {
-    opacity: 0.9;
-    transform: scale(1.14);
+    opacity: 0.85;
+    transform: scale(1.12);
   }
 }
 @keyframes ciel-tourne {
   to {
-    transform: rotate(360deg);
+    rotate: 360deg;
+  }
+}
+@keyframes ciel-paquet {
+  0% {
+    left: 50%;
+    top: 50%;
+    opacity: 0;
+    scale: 0.4;
+  }
+  12% {
+    opacity: 1;
+    scale: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--dx);
+    top: var(--dy);
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+/* Grand écran : le ciel a la place, tout grandit d'un cran (disques, cœur, noms). */
+@media (min-width: 1100px) {
+  .ciel__coeur,
+  .ciel__segment {
+    width: 10.4rem;
+    height: 10.4rem;
+  }
+  .ciel__noyau {
+    inset: 3.4rem;
+  }
+  .ciel__coeur::after {
+    inset: 1.9rem;
+  }
+  .astre {
+    --taille: 5rem;
+    width: 9rem;
+    margin-left: -4.5rem;
+  }
+  .astre[data-grand="oui"] {
+    --taille: 6.25rem;
+  }
+  .astre__nom {
+    font-size: 1.05rem;
+  }
+  .astre__pastille {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .astre__glyphe {
+    width: 0.95rem;
+    height: 0.95rem;
   }
 }

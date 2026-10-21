@@ -12,7 +12,7 @@ import { safeHttpUrl } from "./url";
  * Cinq genres d'état, et chacun a une FORME différente à l'écran (anneau plein, tiret, pointillé
  * qui tourne), pas seulement une couleur : l'état se lit sans distinguer les teintes.
  */
-type GenreAstre = "vivant" | "retard" | "panne" | "construction" | "absent";
+export type GenreAstre = "vivant" | "retard" | "panne" | "construction" | "absent";
 
 export interface EtatAstre {
   genre: GenreAstre;
@@ -85,4 +85,71 @@ export function dispositionAstres(n: number): PositionAstre[] {
       ly: i % 2 === 0 ? HAUT : BAS,
     };
   });
+}
+
+/** Ton d'un satellite : celui de l'alerte du contrat (`alert` se dit `danger` dans les jetons). */
+type TonSatellite = "danger" | "warn" | "info";
+
+const TON_DE_GRAVITE = { alert: "danger", warn: "warn", info: "info" } as const;
+const RANG_DU_TON: Record<TonSatellite, number> = { danger: 0, warn: 1, info: 2 };
+
+/** Au plus cinq satellites dessinés : au-delà, le disque serait un essaim illisible. */
+export const SATELLITES_MAX = 5;
+
+export interface SatellitesAstre {
+  /** Les satellites dessinés, les plus graves d'abord (cinq au plus). */
+  tons: TonSatellite[];
+  /** Le nombre RÉEL d'alertes publiées par l'app : dit au lecteur d'écran, jamais tronqué. */
+  total: number;
+}
+
+/**
+ * Un satellite par alerte publiée par l'app. Seule une app qui répond a des alertes : une app
+ * injoignable ou en cache n'en montre aucune (le hub ne sait pas), jamais « 0 alerte ».
+ */
+export function satellitesAstre(result: SummaryResult): SatellitesAstre {
+  if (result.state !== "ok" || result.stale) return { tons: [], total: 0 };
+  const alertes = result.summary.alerts;
+  const tons = alertes
+    .map((a) => TON_DE_GRAVITE[a.severity])
+    .sort((a, b) => RANG_DU_TON[a] - RANG_DU_TON[b])
+    .slice(0, SATELLITES_MAX);
+  return { tons, total: alertes.length };
+}
+
+export interface Etoile {
+  /** En pourcentage de la scène. */
+  x: number;
+  y: number;
+  /** Rayon en pixels, de 0,5 à 1,5. */
+  r: number;
+  /** Décalage du scintillement, en secondes (négatif : l'animation est déjà en cours). */
+  d: number;
+}
+
+/** Mulberry32, graine fixe : le même ciel au rendu serveur et au rendu client, et testable. */
+function aleaSemee(graine: number): () => number {
+  let a = graine >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Le fond d'étoiles : DÉCOR pur, déterministe, qui ne représente rien (aucune donnée). Une
+ * étoile ne s'allume jamais pour dire quelque chose : le mouvement qui parle est celui des astres.
+ */
+export function etoiles(n: number): Etoile[] {
+  if (!Number.isInteger(n) || n < 0) throw new RangeError(`nombre d'étoiles invalide : ${n}`);
+  const alea = aleaSemee(0x48ab21);
+  return Array.from({ length: n }, () => ({
+    x: arrondi(alea() * 100),
+    y: arrondi(alea() * 100),
+    r: arrondi(0.5 + alea()),
+    d: -arrondi(alea() * 8),
+  }));
 }

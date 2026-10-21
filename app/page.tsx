@@ -80,15 +80,17 @@ async function StreamedAstre({
   promise,
   position,
   n,
+  total,
   grand,
 }: {
   promise: Promise<SummaryResult>;
   position: PositionAstre;
   n: number;
+  total: number;
   grand: boolean;
 }) {
   const result = await promise;
-  return <AstreApp result={result} position={position} n={n} grand={grand} />;
+  return <AstreApp result={result} position={position} n={n} total={total} grand={grand} />;
 }
 
 /** Compteur d'en-tête : a besoin de TOUTES les réponses, donc il arrive en dernier. */
@@ -211,10 +213,22 @@ export default async function Page() {
             <Suspense
               key={source.id}
               fallback={
-                <AstreAttente source={source} position={position} n={index} grand={source.hero} />
+                <AstreAttente
+                  source={source}
+                  position={position}
+                  n={index}
+                  total={jobs.length}
+                  grand={source.hero}
+                />
               }
             >
-              <StreamedAstre promise={promise} position={position} n={index} grand={source.hero} />
+              <StreamedAstre
+                promise={promise}
+                position={position}
+                n={index}
+                total={jobs.length}
+                grand={source.hero}
+              />
             </Suspense>
           );
         })}

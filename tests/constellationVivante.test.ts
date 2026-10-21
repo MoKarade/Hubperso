@@ -36,7 +36,7 @@ const resumeOk = (status: "ok" | "degraded" | "error" | "building"): SummaryResu
 });
 
 const rendre = (result: SummaryResult, grand = false) =>
-  renderToStaticMarkup(h("ul", null, h(AstreApp, { result, position, n: 1, grand })));
+  renderToStaticMarkup(h("ul", null, h(AstreApp, { result, position, n: 1, total: 3, grand })));
 
 describe("AstreApp", () => {
   it("dit le nom et l'état de la carte, et porte le genre en attribut (la forme de l'anneau)", () => {
@@ -85,10 +85,55 @@ describe("AstreApp", () => {
   });
 });
 
+describe("AstreApp : les détails disent quelque chose de vrai", () => {
+  const avecAlertes = (n: number): SummaryResult => {
+    const base = resumeOk("ok") as Extract<SummaryResult, { state: "ok" }>;
+    return {
+      ...base,
+      summary: {
+        ...base.summary,
+        alerts: Array.from({ length: n }, (_, i) => ({ label: `a${i}`, severity: "warn" as const })),
+      },
+    };
+  };
+
+  it("un satellite par alerte, et le vrai nombre dit au lecteur d'écran", () => {
+    const html = rendre(avecAlertes(2));
+    expect(html.match(/class="astre__sat"/g)).toHaveLength(2);
+    expect(html).toContain('aria-label="Exemple : À jour, 2 alertes"');
+    expect(rendre(avecAlertes(1))).toContain(", 1 alerte\"");
+    expect(rendre(avecAlertes(0))).not.toContain("astre__sat");
+  });
+
+  it("au-delà de cinq alertes, cinq satellites mais le total réel dans le nom", () => {
+    const html = rendre(avecAlertes(8));
+    expect(html.match(/class="astre__sat"/g)).toHaveLength(5);
+    expect(html).toContain("8 alertes");
+  });
+
+  it("le paquet de lumière ne part que vers une app à jour", () => {
+    expect(rendre(resumeOk("ok"))).toContain("ciel__paquet");
+    expect(rendre(resumeOk("degraded"))).not.toContain("ciel__paquet");
+    expect(rendre({ state: "unreachable", source, detail: "x" })).not.toContain("ciel__paquet");
+  });
+
+  it("chaque app a son segment d'anneau, à la teinte de son état", () => {
+    const html = rendre(resumeOk("error"));
+    expect(html).toContain('class="ciel__segment"');
+    expect(html).toContain('data-etat="panne"');
+  });
+
+  it("le mot d'état reste dans la page (lecteurs d'écran, survol) mais le disque porte une pastille", () => {
+    const html = rendre(resumeOk("degraded"));
+    expect(html).toContain('class="astre__mot">Données en retard<');
+    expect(html).toContain("astre__pastille");
+  });
+});
+
 describe("AstreAttente et ConstellationVivante", () => {
   it("l'attente n'affirme aucun état : pas de lien, pas de mot d'état", () => {
     const html = renderToStaticMarkup(
-      h("ul", null, h(AstreAttente, { source, position, n: 0, grand: false })),
+      h("ul", null, h(AstreAttente, { source, position, n: 0, total: 3, grand: false })),
     );
     expect(html).toContain('data-etat="attente"');
     expect(html).toContain('aria-busy="true"');
@@ -98,10 +143,17 @@ describe("AstreAttente et ConstellationVivante", () => {
 
   it("la scène est une région nommée qui contient une liste", () => {
     const html = renderToStaticMarkup(
-      h(ConstellationVivante, null, h(AstreAttente, { source, position, n: 0, grand: false })),
+      h(ConstellationVivante, null, h(AstreAttente, { source, position, n: 0, total: 3, grand: false })),
     );
     expect(html).toContain('aria-label="État des apps"');
     expect(html).toContain("<ul");
     expect(html).toContain('role="listitem"');
+  });
+
+  it("le fond est décoratif : étoiles et orbites cachées aux lecteurs d'écran", () => {
+    const html = renderToStaticMarkup(h(ConstellationVivante, null));
+    expect(html).toMatch(/class="ciel__fond" aria-hidden/);
+    expect(html.match(/class="ciel__etoile"/g)).toHaveLength(56);
+    expect(html.match(/ciel__orbite ciel__orbite--/g)).toHaveLength(3);
   });
 });

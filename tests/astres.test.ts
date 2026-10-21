@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 import type { HubSummary } from "@mokarade/hub-contract";
 import type { SummaryResult } from "../lib/fetchSummary";
 import type { HubSource } from "../lib/sources";
-import { destinationAstre, dispositionAstres, etatAstre } from "../lib/astres";
+import {
+  destinationAstre,
+  dispositionAstres,
+  etatAstre,
+  etoiles,
+  satellitesAstre,
+  SATELLITES_MAX,
+} from "../lib/astres";
 
 const source: HubSource = {
   id: "exemple",
@@ -113,5 +120,53 @@ describe("dispositionAstres", () => {
     expect(dispositionAstres(0)).toEqual([]);
     expect(() => dispositionAstres(-1)).toThrow(RangeError);
     expect(() => dispositionAstres(2.5)).toThrow(RangeError);
+  });
+});
+
+describe("satellitesAstre : une alerte publiée = un satellite", () => {
+  const avecAlertes = (...severites: ("info" | "warn" | "alert")[]): SummaryResult => {
+    const base = ok("ok") as Extract<SummaryResult, { state: "ok" }>;
+    return {
+      ...base,
+      summary: { ...base.summary, alerts: severites.map((severity, i) => ({ label: `a${i}`, severity })) },
+    };
+  };
+
+  it("classe les plus graves d'abord et nomme le ton du jeton", () => {
+    expect(satellitesAstre(avecAlertes("info", "alert", "warn"))).toEqual({
+      tons: ["danger", "warn", "info"],
+      total: 3,
+    });
+  });
+
+  it("n'en dessine que cinq, mais dit le vrai nombre", () => {
+    const r = satellitesAstre(avecAlertes(...Array.from({ length: 8 }, () => "warn" as const)));
+    expect(r.tons).toHaveLength(SATELLITES_MAX);
+    expect(r.total).toBe(8);
+  });
+
+  it("une app qui ne répond pas, ou servie du cache, n'a AUCUN satellite (inconnu ≠ zéro)", () => {
+    expect(satellitesAstre({ state: "unreachable", source, detail: "x" })).toEqual({ tons: [], total: 0 });
+    const enCache = { ...avecAlertes("alert"), stale: true } as SummaryResult;
+    expect(satellitesAstre(enCache)).toEqual({ tons: [], total: 0 });
+  });
+
+  it("une app sans alerte n'en montre pas", () => {
+    expect(satellitesAstre(ok("ok"))).toEqual({ tons: [], total: 0 });
+  });
+});
+
+describe("etoiles", () => {
+  it("est déterministe, dans la scène, et refuse un nombre invalide", () => {
+    expect(etoiles(40)).toEqual(etoiles(40));
+    expect(etoiles(40)).toHaveLength(40);
+    for (const e of etoiles(40)) {
+      expect(e.x).toBeGreaterThanOrEqual(0);
+      expect(e.x).toBeLessThanOrEqual(100);
+      expect(e.r).toBeGreaterThanOrEqual(0.5);
+      expect(e.r).toBeLessThanOrEqual(1.5);
+      expect(e.d).toBeLessThanOrEqual(0);
+    }
+    expect(() => etoiles(-1)).toThrow(RangeError);
   });
 });
