@@ -20,6 +20,7 @@ Le détail vit dans [`docs/reference-claude.md`](docs/reference-claude.md) — l
 - Carte des docs, ADR → `## 8. Documentation (où vit quoi)`
 - Leçons (PWA, Sonar, relevés) → `## 9. Leçons apprises`
 - Style et compte-rendu → `## 10.` · Ajouter une app → `## 11. Ajouter une app`
+- Graphe de code (hooks et MCP `graphify` posés, 0 jeton ; `scripts/graphe.sh query|affected|path|explain` avant de grepper) → `## 12. Graphe de code local`
 
 ## Commandes
 `npm run dev` · `test` (vitest) · `typecheck` · `lint` (ESLint CLI) · `build` · `constellation`
