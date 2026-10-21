@@ -11,7 +11,7 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
 - `lib/` : ~48 modules (accès, sources, dérivés, historique, base) ; `components/` : 17 ;
   `drizzle/` : 2 migrations ; `tests/` : ~44 fichiers.
 - CI (`.github/workflows`) : ci, auto-merge, constellation, doc-a-jour, releve (cron `*/30`).
-- ADR : `docs/adr/0001` à `0005`.
+- ADR : `docs/adr/0001` à `0006`.
 
 ## État
 - Fusion auto active (`auto-merge.yml`). Aucun `TODO`/`FIXME`/`eslint-disable`/`@ts-ignore`

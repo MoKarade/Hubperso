@@ -153,7 +153,8 @@ describe("AstreAttente et ConstellationVivante", () => {
   it("le fond est décoratif : étoiles et orbites cachées aux lecteurs d'écran", () => {
     const html = renderToStaticMarkup(h(ConstellationVivante, null));
     expect(html).toMatch(/class="ciel__fond" aria-hidden/);
-    expect(html.match(/class="ciel__etoile"/g)).toHaveLength(56);
+    expect(html.match(/class="ciel__etoile( ciel__etoile--brillante)?"/g)).toHaveLength(84);
+    expect(html).toContain("ciel__balayage");
     expect(html.match(/ciel__orbite ciel__orbite--/g)).toHaveLength(3);
   });
 });

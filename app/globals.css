@@ -2471,7 +2471,7 @@ a:focus-visible,
   border-radius: var(--radius);
   background:
     radial-gradient(ellipse 46% 52% at 50% 50%, color-mix(in oklch, var(--marque) 11%, transparent), transparent 70%),
-    radial-gradient(ellipse 30% 40% at 18% 80%, color-mix(in oklch, var(--info) 5%, transparent), transparent 70%),
+    radial-gradient(ellipse 30% 40% at 18% 80%, color-mix(in oklch, var(--text) 4%, transparent), transparent 70%),
     radial-gradient(ellipse 30% 40% at 84% 22%, color-mix(in oklch, var(--marque) 6%, transparent), transparent 70%);
   /* Les bords fondent dans le fond de la page : pas de cadre. */
   mask-image: radial-gradient(ellipse 72% 78% at 50% 50%, #000 55%, transparent 100%);
@@ -2549,8 +2549,32 @@ a:focus-visible,
   margin: -1.5px 0 0 -1.5px;
 }
 .ciel__orbite--3 > i {
-  background: var(--info);
-  box-shadow: 0 0 8px var(--info);
+  background: var(--text-soft);
+  box-shadow: 0 0 8px var(--text-soft);
+}
+/* Plus rempli, sans surcharger : un faisceau lent qui balaie le ciel depuis le cœur, et quelques
+   étoiles qui brillent en croix. Décor : couleur du hub et blanc, jamais une couleur d'état. */
+.ciel__balayage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 98cqmin;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0, color-mix(in oklch, var(--marque) 14%, transparent) 20%, transparent 24%);
+  mask-image: radial-gradient(closest-side, transparent 18%, #000 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 18%, #000 60%, transparent 100%);
+  opacity: 0.7;
+}
+.ciel__etoile--brillante {
+  width: calc(var(--r) * 2);
+  height: calc(var(--r) * 2);
+  background:
+    linear-gradient(var(--text), var(--text)) center / 1px 100% no-repeat,
+    linear-gradient(var(--text), var(--text)) center / 100% 1px no-repeat;
+  border-radius: 0;
+  box-shadow: 0 0 6px color-mix(in oklch, var(--text) 50%, transparent);
 }
 
 /* ── Le cœur : le hub lui-même, en indigo de marque ────────────────────────────────────────── */
@@ -2877,20 +2901,14 @@ a:focus-visible,
 }
 
 /* La couleur de l'état : le logo lui-même la prend. */
-.astre[data-etat="retard"] {
-  --logo: color-mix(in oklch, var(--accent, var(--marque)) 70%, var(--warn));
-}
 .astre[data-etat="retard"] .logo {
-  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--warn) 45%, transparent));
+  opacity: 0.72;
 }
 .astre[data-etat="panne"] {
   --logo: var(--danger);
 }
 .astre[data-etat="panne"] .logo {
   filter: drop-shadow(0 0 5px color-mix(in oklch, var(--danger) 40%, transparent));
-}
-.astre[data-etat="construction"] {
-  --logo: color-mix(in oklch, var(--accent, var(--marque)) 80%, var(--info));
 }
 .astre[data-etat="absent"] {
   --logo: var(--neutral);
@@ -2900,7 +2918,7 @@ a:focus-visible,
   filter: none;
 }
 .astre[data-etat="attente"] {
-  --logo: color-mix(in oklch, var(--accent, var(--marque)) 55%, var(--neutral));
+  --logo: var(--neutral);
 }
 .astre[data-etat="absent"] .astre__initiale {
   color: var(--text-soft);
@@ -3041,6 +3059,9 @@ a:focus-visible,
   }
   .ciel__coeur::before {
     animation: ciel-tourne 60s linear infinite;
+  }
+  .ciel__balayage {
+    animation: ciel-tourne 22s linear infinite;
   }
   .logo-hub__tuile {
     animation: logo-tuile 4.8s ease-in-out infinite;

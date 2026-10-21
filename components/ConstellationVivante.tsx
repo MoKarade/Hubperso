@@ -28,7 +28,9 @@ import { texteSur } from "@/lib/couleur";
 import { aUnLogo } from "@/lib/logos";
 import { LogoApp, LogoHub } from "@/components/LogoApp";
 
-const ETOILES = etoiles(56);
+const ETOILES = etoiles(84);
+/** Les plus grosses étoiles brillent en croix (décor). */
+const ETOILE_BRILLANTE = 1.3;
 
 /** Tracés des pastilles, grille 24×24 : une FORME par genre, pas seulement une teinte. */
 const GLYPHES: Record<GenreAstre | "attente", ReactNode> = {
@@ -296,10 +298,11 @@ export function ConstellationVivante({ children }: { children: ReactNode }) {
         {ETOILES.map((e, i) => (
           <i
             key={i}
-            className="ciel__etoile"
+            className={e.r >= ETOILE_BRILLANTE ? "ciel__etoile ciel__etoile--brillante" : "ciel__etoile"}
             style={{ "--x": `${e.x}%`, "--y": `${e.y}%`, "--r": `${e.r}px`, "--d": `${e.d}s` } as CSSProperties}
           />
         ))}
+        <i className="ciel__balayage" />
         <i className="ciel__filante" />
         <i className="ciel__filante ciel__filante--2" />
         <span className="ciel__orbite ciel__orbite--1">
