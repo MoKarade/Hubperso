@@ -14,7 +14,7 @@ const MAX_TEXTE = 200;
 /** Dossier des fichiers sans répertoire (à la racine du dépôt). */
 export const DOSSIER_RACINE = "(racine)";
 
-export interface NoeudGraphe {
+interface NoeudGraphe {
   nom: string;
   /** Chemin du fichier source, tel que publié par l'outil. */
   fichier: string;
@@ -27,7 +27,7 @@ export interface NoeudGraphe {
   taille: number;
 }
 
-export interface LienGraphe {
+interface LienGraphe {
   /** Indices dans `noeuds`. */
   de: number;
   vers: number;
@@ -36,7 +36,7 @@ export interface LienGraphe {
   sur: boolean;
 }
 
-export interface DonneesGraphe {
+interface DonneesGraphe {
   noeuds: NoeudGraphe[];
   liens: LienGraphe[];
   /** Liens écartés parce qu'une extrémité n'existe pas. */

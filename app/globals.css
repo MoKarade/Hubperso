@@ -2145,8 +2145,39 @@ a:focus-visible,
   transition: border-color 0.25s var(--ease-out), transform 0.25s var(--ease-out),
     background-color 0.25s var(--ease-out);
 }
-.carte-graphe .constellation {
+/* La vitrine de la carte : la constellation tient la place, puis le VRAI graphe 3D du dépôt (canvas
+   posé par components/GraphesVivants.tsx dans `.carte-graphe__apercu`) la remplace en fondu. */
+.carte-graphe__vue {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 11rem;
+  margin: -0.4rem -0.5rem 0;
+  border-radius: calc(var(--radius) - 4px);
+  overflow: hidden;
+  /* Sa propre couche : sans elle, le canvas WebGL fait mal repeindre le fond de la carte (halo décalé,
+     vu en rendu logiciel quand le mouvement est réduit). */
+  isolation: isolate;
+  transform: translateZ(0);
+}
+.carte-graphe[data-graphe] .carte-graphe__vue {
+  cursor: pointer;
+}
+.carte-graphe__vue .constellation {
   max-height: 8rem;
+  transition: opacity 0.9s var(--ease-out);
+}
+.carte-graphe__apercu {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s var(--ease-out);
+}
+.carte-graphe__apercu.v3-pret {
+  opacity: 1;
+}
+.carte-graphe__vue:has(.v3-pret) .constellation {
+  opacity: 0;
 }
 .carte-graphe__nom {
   margin: 0;
@@ -2261,5 +2292,143 @@ a:focus-visible,
   }
   50% {
     transform: translateY(-4px);
+  }
+}
+
+
+/* ── /graphes : plus de mouvement (Marc, 21/10/2026 : « je veux plus d'animations ») ──────────
+   Tout ce qui suit est décor : coupé par `prefers-reduced-motion`, la page reste complète sans. */
+.graphes {
+  position: relative;
+  isolation: isolate;
+}
+.graphes__aurore {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.graphes__aurore::before,
+.graphes__aurore::after {
+  content: "";
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--marque) 14%, transparent), transparent 65%);
+}
+.graphes__aurore::before {
+  top: -25vmax;
+  left: -15vmax;
+}
+.graphes__aurore::after {
+  right: -20vmax;
+  bottom: -30vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--info) 11%, transparent), transparent 65%);
+}
+.graphes .page__title {
+  background: linear-gradient(100deg, var(--text) 30%, var(--marque) 50%, var(--text) 70%) 0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.carte-graphe--ok::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    22rem circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in srgb, var(--marque) 18%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out);
+}
+.carte-graphe--ok:hover::after {
+  opacity: 1;
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .graphes__aurore::before {
+    animation: aurore-derive 22s ease-in-out infinite alternate;
+  }
+  .graphes__aurore::after {
+    animation: aurore-derive 28s ease-in-out infinite alternate-reverse;
+  }
+  .graphes .page__title {
+    animation: titre-balaye 6s ease-in-out infinite, rise-in 700ms var(--ease-out) backwards;
+  }
+  .graphes .page__aside {
+    animation: rise-in 700ms 120ms var(--ease-out) backwards;
+  }
+  .carte-graphe--ok {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: border-color 0.25s var(--ease-out), transform 0.18s ease-out, background-color 0.25s var(--ease-out);
+  }
+  .carte-graphe--ok:hover {
+    transform: perspective(900px) translateY(-4px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  }
+  /* Une lumière qui fait le tour de la bordure des cartes prêtes. */
+  .carte-graphe--ok {
+    --angle: 0deg;
+    border-color: transparent;
+    background:
+      radial-gradient(
+          120% 70% at 50% 0%,
+          color-mix(in srgb, var(--marque) 16%, transparent),
+          transparent 70%
+        )
+        padding-box,
+      linear-gradient(var(--surface), var(--surface)) padding-box,
+      conic-gradient(
+          from var(--angle),
+          color-mix(in srgb, var(--marque) 6%, var(--border)) 0 55%,
+          var(--marque) 80%,
+          color-mix(in srgb, var(--marque) 6%, var(--border)) 100%
+        )
+        border-box;
+    animation: rise-in 560ms var(--ease-out) backwards, bordure-tourne 7s linear infinite;
+    animation-delay: calc(var(--i, 0) * 70ms), calc(var(--i, 0) * -0.9s);
+  }
+  .carte-graphe--ok:hover {
+    animation-duration: 560ms, 3s;
+  }
+  .carte-graphe__ouvrir {
+    transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+  }
+  .carte-graphe__ouvrir:hover {
+    background: var(--marque);
+    color: var(--bg);
+    transform: scale(1.03);
+  }
+}
+@keyframes aurore-derive {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(14vmax, 10vmax) scale(1.25);
+  }
+}
+@keyframes titre-balaye {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0 0;
+  }
+}
+@keyframes bordure-tourne {
+  to {
+    --angle: 360deg;
   }
 }

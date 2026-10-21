@@ -6,6 +6,7 @@
   "use strict";
   var script = document.currentScript;
   var cause = script ? script.getAttribute("data-cause") : null;
+  var depot = script ? script.getAttribute("data-depot") : null;
 
   var style = document.createElement("style");
   style.textContent =
@@ -18,9 +19,10 @@
   var boite = document.createElement("div");
   boite.className = "hub-bascule";
   var lien = document.createElement("a");
-  lien.href = "?vue=3d";
+  // Ramène à /graphes, où la carte du dépôt s'ouvre sur place (aucune page de plus).
+  lien.href = "/graphes#graphe-" + encodeURIComponent(depot || "");
   lien.textContent = "3D";
-  lien.setAttribute("aria-label", "Ouvrir la vue 3D");
+  lien.setAttribute("aria-label", "Ouvrir la vue 3D dans la page des graphes");
   boite.appendChild(lien);
   if (cause) {
     var p = document.createElement("p");
