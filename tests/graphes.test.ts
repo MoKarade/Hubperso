@@ -7,6 +7,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   DEPOTS,
+  brancheDe,
   chargerGraphe,
   choisirArtefact,
   depotDepuisId,
@@ -77,6 +78,17 @@ describe("choisirArtefact", () => {
       ],
     });
     expect(r?.id).toBe(2);
+  });
+  it("suit la branche demandée : master pour BatchChef, jamais main", () => {
+    const liste = {
+      artifacts: [
+        artefact({ id: 2, workflow_run: { head_sha: SHA, head_branch: "main" } }),
+        artefact({ id: 1, workflow_run: { head_sha: SHA, head_branch: "master" } }),
+      ],
+    };
+    expect(choisirArtefact(liste, "master")?.id).toBe(1);
+    expect(choisirArtefact(liste)?.id).toBe(2);
+    expect(choisirArtefact({ artifacts: [liste.artifacts[1]] })).toBeNull();
   });
   it("rend null s'il n'y en a pas, ou si la réponse est bizarre", () => {
     expect(choisirArtefact({ artifacts: [] })).toBeNull();
@@ -166,9 +178,9 @@ describe("etatDepot", () => {
       vu = { url, auth: new Headers(init?.headers).get("authorization") };
       return json({ artifacts: [artefact()] });
     }) as unknown as typeof fetch;
-    const e = await etatDepot("batchchef-", ENV, f);
+    const e = await etatDepot("Hubperso", ENV, f);
     expect(vu!.url).toBe(
-      "https://api.github.com/repos/MoKarade/batchchef-/actions/artifacts?name=graphe&per_page=20",
+      "https://api.github.com/repos/MoKarade/Hubperso/actions/artifacts?name=graphe&per_page=20",
     );
     expect(vu!.auth).toBe("Bearer jeton-de-test");
     expect(e).toEqual({ etat: "ok", artefactId: 7, sha: SHA, creeLe: "2026-10-21T15:00:00Z", octets: 2048 });
@@ -208,6 +220,27 @@ describe("etatDepot", () => {
       (async () => json({ artifacts: [artefact({ workflow_run: { head_branch: "main" } })] })) as typeof fetch,
     );
     expect(e.etat).toBe("erreur");
+  });
+});
+
+describe("branche par défaut de chaque dépôt", () => {
+  const sur = (branche: string) =>
+    (async () =>
+      json({ artifacts: [artefact({ id: 9, workflow_run: { head_sha: SHA, head_branch: branche } })] })) as typeof fetch;
+
+  it("seul batchchef- est sur master ; tous les autres sur main", () => {
+    expect(DEPOTS.filter((d) => brancheDe(d) === "master")).toEqual(["batchchef-"]);
+    expect(DEPOTS.filter((d) => brancheDe(d) === "main")).toHaveLength(DEPOTS.length - 1);
+  });
+
+  it("batchchef- : l'artefact de master est lu, celui de main est ignoré", async () => {
+    expect((await etatDepot("batchchef-", ENV, sur("master"))).etat).toBe("ok");
+    expect(await etatDepot("batchchef-", ENV, sur("main"))).toEqual({ etat: "aucun" });
+  });
+
+  it("Hubperso : l'artefact de main est lu, celui de master est ignoré", async () => {
+    expect((await etatDepot("Hubperso", ENV, sur("main"))).etat).toBe("ok");
+    expect(await etatDepot("Hubperso", ENV, sur("master"))).toEqual({ etat: "aucun" });
   });
 });
 
