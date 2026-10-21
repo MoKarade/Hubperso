@@ -2,6 +2,15 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-21 (soir tard) — **Refonte de l'accueil : constellation vivante (Hubperso#286, mission #285)**
+
+Marc, 21/10/2026 : refonte complète de la page Hubperso. Cadrage validé (« Go » = tout en recommandé) : accueil + page d'une app + navigation ; constellation vivante ; un gros chiffre et un mot par carte ; animations riches coupées si mouvement réduit ; on garde `#07090D`, `#93A0FF`, Outfit. Tâches : #286 (cette PR, constellation), #287 (cartes), #288 (navigation), #289 (page d'une app) — une à la fois, la première reste en brouillon jusqu'au « ok » de Marc sur les captures.
+- **Ce qui change** : sous l'en-tête de l'accueil, un astre par app déclarée (`components/ConstellationVivante.tsx`), à la couleur de l'app, relié au cœur du hub. L'état vient du MÊME `statusBadge` que la carte (`lib/astres.ts`, `etatAstre`) : anneau plein qui respire = à jour, plein et lent = en retard ou en cache, tirets rouges = panne, pointillé qui tourne = en construction, tirets gris = non branchée. Un résumé en cache n'est jamais « vivant ». Aucun chiffre, aucune jauge, aucune app inventée.
+- **Où mène un astre** : l'app elle-même si elle répond (sans `target="_blank"`, verrou PWA), sinon son détail dans le hub (où la cause est écrite).
+- **Rendu en flux conservé** : la scène ne dépend que du NOMBRE d'apps (`dispositionAstres`, deux dispositions : ellipse sous 700 px, rangée en zigzag au-dessus) ; chaque astre attend sa propre promesse et montre un pointillé « Lecture… » en attendant.
+- **Mouvement** : un seul moment d'entrée (cœur, fils, astres), puis le souffle propre à chaque état ; tout est dans `@media (prefers-reduced-motion: no-preference)`, la scène est complète et immobile sans. ⚠️ Les souffles sont infinis mais lents (4 à 9 s), sans clignotement ; critère 2.2.2 (« pause ») non couvert par un bouton : décoratif, coupé par la préférence système.
+- **Vérifié en local** (Chromium, rendu logiciel, données FICTIVES, 390 et 1440 px) : captures dans `docs/captures/2026-10-21-constellation/` (avant, états variés, tout à jour). Contrastes mesurés sur `#07090D` : texte 7,2 à 16,2:1, anneaux d'app 3,5 à 9,5:1 (≥ 3:1). **Non éprouvé** : GPU réel, lecteur d'écran réel, session de production.
+
 ## 🟦 Session 2026-10-21 (nuit) — **Graphes en 3D, ouverts sur place (Hubperso#280)**
 
 Marc, 21/10/2026 : « quand j'ouvre un graph je veux pas que ça ouvre une autre page », la vignette doit montrer le VRAI graphe de chaque dépôt, beaucoup plus d'animations ; la refonte complète de la page Hubperso viendra APRÈS (pas commencée).

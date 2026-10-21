@@ -2432,3 +2432,329 @@ a:focus-visible,
     --angle: 360deg;
   }
 }
+
+
+/* ── Accueil : la constellation vivante (Hubperso#286) ─────────────────────────────────────────
+   Un astre par app, à la couleur de l'app, qui respire selon son VRAI état (`lib/astres.ts`).
+   Marc, 21/10/2026 : thème sombre, peu de texte, gros caractères, beaucoup d'animations.
+   L'état se lit à la FORME de l'anneau avant la teinte : plein = vivant, plein et dim = retard,
+   tirets rouges = panne, pointillé qui tourne = en construction ou en lecture, tirets gris =
+   non branchée. Tout mouvement vit dans le bloc `no-preference` en bas : sans lui, la scène est
+   complète et immobile.
+   ⚠️ `--accent` vient de l'app (contrat) et peut être clair (JobAI, DriveAI) : il ne porte
+   JAMAIS du texte directement, le texte reste `--text`. */
+.ciel {
+  position: relative;
+  /* Téléphone : presque carré, assez haut pour que le nom du dernier astre ne sorte pas. */
+  aspect-ratio: 1 / 1.25;
+  margin-bottom: var(--gap);
+}
+@media (min-width: 700px) {
+  .ciel {
+    aspect-ratio: 1.7 / 1;
+  }
+}
+@media (min-width: 1100px) {
+  .ciel {
+    aspect-ratio: 2.6 / 1;
+  }
+}
+.ciel__liste {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ciel__item {
+  /* Statique exprès : le lien et l'astre se positionnent par rapport à la liste, pas à l'item. */
+  display: contents;
+}
+.ciel__lien {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.ciel__fil {
+  vector-effect: non-scaling-stroke;
+}
+/* Deux tracés par fil (ellipse / rangée) : le CSS garde celui du format courant. */
+.ciel__fil--rangee {
+  display: none;
+}
+@media (min-width: 700px) {
+  .ciel__fil--rond {
+    display: none;
+  }
+  .ciel__fil--rangee {
+    display: inline;
+  }
+}
+.ciel__lien line {
+  stroke: var(--text-faint);
+  stroke-width: 1.5;
+  stroke-opacity: 0.35;
+  stroke-dasharray: 3 7;
+}
+.ciel__item:has(.astre[data-etat="vivant"]) .ciel__lien line {
+  stroke: var(--accent, var(--marque));
+  stroke-opacity: 0.7;
+}
+.ciel__item:has(.astre[data-etat="panne"]) .ciel__lien line {
+  stroke: var(--danger);
+  stroke-opacity: 0.5;
+  stroke-dasharray: 2 10;
+}
+
+/* Le cœur : le hub lui-même, en indigo de marque. */
+.ciel__coeur {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3.4rem;
+  height: 3.4rem;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklch, var(--marque) 85%, white), var(--marque) 55%, color-mix(in oklch, var(--marque) 55%, var(--bg)));
+  box-shadow:
+    0 0 0 6px color-mix(in oklch, var(--marque) 14%, transparent),
+    0 0 40px color-mix(in oklch, var(--marque) 45%, transparent);
+}
+.ciel__coeur::before,
+.ciel__coeur::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--marque);
+  opacity: 0;
+}
+
+/* L'astre. Le centre du DISQUE est posé sur (x, y) ; le nom et l'état pendent dessous. */
+.astre {
+  --taille: 4.5rem;
+  /* Valeurs de repli : la vraie position est posée en ligne par le composant (lib/astres.ts). */
+  --x: 50%;
+  --y: 50%;
+  --lx: 50%;
+  --ly: 50%;
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 9rem;
+  margin-left: -4.5rem;
+  margin-top: calc(var(--taille) / -2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: var(--radius);
+  -webkit-tap-highlight-color: transparent;
+}
+.astre[data-grand="oui"] {
+  --taille: 5.75rem;
+}
+@media (min-width: 700px) {
+  .astre {
+    left: var(--lx);
+    top: var(--ly);
+  }
+}
+.astre__corps {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--taille);
+  height: var(--taille);
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--accent, var(--marque)) 18%, var(--bg));
+  border: 3px solid var(--accent, var(--marque));
+  box-shadow: 0 0 28px color-mix(in oklch, var(--accent, var(--marque)) 28%, transparent);
+}
+.astre__halo {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--accent, var(--marque));
+  opacity: 0.55;
+}
+.astre__initiale {
+  font-size: calc(var(--taille) * 0.46);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+/* Le fond du ciel « découpe » les fils derrière les mots : un fil ne traverse jamais un texte. */
+.astre__nom,
+.astre__mot {
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 6px var(--bg),
+    0 0 12px var(--bg);
+}
+.astre__nom {
+  margin-top: 0.5rem;
+  font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.astre__mot {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: var(--text-soft);
+}
+
+/* Les états : la FORME de l'anneau d'abord. */
+.astre[data-etat="retard"] .astre__corps {
+  box-shadow: 0 0 18px color-mix(in oklch, var(--warn) 25%, transparent);
+}
+.astre[data-etat="retard"] .astre__halo {
+  border-color: var(--warn);
+}
+.astre[data-etat="retard"] .astre__mot {
+  color: var(--warn);
+}
+.astre[data-etat="panne"] .astre__corps {
+  border-style: dashed;
+  border-color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 12%, var(--bg));
+  box-shadow: none;
+}
+.astre[data-etat="panne"] .astre__halo {
+  display: none;
+}
+.astre[data-etat="panne"] .astre__mot {
+  color: var(--danger);
+}
+.astre[data-etat="construction"] .astre__corps,
+.astre[data-etat="attente"] .astre__corps {
+  border-style: dotted;
+}
+.astre[data-etat="construction"] .astre__mot {
+  color: var(--info);
+}
+.astre[data-etat="absent"] .astre__corps {
+  border-style: dashed;
+  border-color: var(--neutral);
+  background: transparent;
+  box-shadow: none;
+}
+.astre[data-etat="absent"] .astre__halo,
+.astre[data-etat="attente"] .astre__halo {
+  display: none;
+}
+.astre[data-etat="absent"] .astre__initiale {
+  color: var(--text-soft);
+}
+.astre[data-etat="attente"] .astre__corps {
+  box-shadow: none;
+  opacity: 0.8;
+}
+
+.astre:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* UN moment orchestré, une seule fois : le cœur s'allume, les fils partent, les astres éclosent. */
+  .ciel__coeur {
+    animation: ciel-coeur-entre 700ms var(--ease-out) backwards;
+  }
+  .ciel__lien {
+    animation: ciel-fondu 700ms var(--ease-out) backwards;
+    animation-delay: calc(350ms + var(--n, 0) * 90ms);
+  }
+  .astre {
+    animation: ciel-eclot 650ms var(--ease-out) backwards;
+    animation-delay: calc(520ms + var(--n, 0) * 90ms);
+  }
+
+  /* Ensuite, le souffle de chaque état. */
+  .ciel__coeur::before {
+    animation: ciel-sonar 5.2s ease-out infinite;
+  }
+  .ciel__coeur::after {
+    animation: ciel-sonar 5.2s ease-out 2.6s infinite;
+  }
+  .astre[data-etat="vivant"] .astre__halo {
+    animation: ciel-souffle 4.2s ease-in-out infinite;
+    animation-delay: calc(var(--n, 0) * -0.7s);
+  }
+  .astre[data-etat="retard"] .astre__halo {
+    animation: ciel-souffle 9s ease-in-out infinite;
+    animation-delay: calc(var(--n, 0) * -1.3s);
+  }
+  .astre[data-etat="construction"] .astre__corps,
+  .astre[data-etat="attente"] .astre__corps {
+    animation: ciel-tourne 14s linear infinite;
+  }
+  .astre[data-etat="construction"] .astre__initiale,
+  .astre[data-etat="attente"] .astre__initiale {
+    animation: ciel-tourne 14s linear infinite reverse;
+  }
+  .ciel__item:has(.astre[data-etat="vivant"]) .ciel__lien line {
+    animation: constellation-flux 2.2s linear infinite;
+    animation-delay: calc(var(--n, 0) * -0.3s);
+  }
+
+  /* Réponse au geste : l'astre grossit sous le doigt ou le pointeur. */
+  .astre__corps {
+    transition: transform 220ms var(--ease-out);
+  }
+  .astre:hover .astre__corps,
+  .astre:focus-visible .astre__corps {
+    transform: scale(1.08);
+  }
+}
+@keyframes ciel-coeur-entre {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+@keyframes ciel-fondu {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ciel-eclot {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+}
+@keyframes ciel-sonar {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+@keyframes ciel-souffle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.14);
+  }
+}
+@keyframes ciel-tourne {
+  to {
+    transform: rotate(360deg);
+  }
+}
