@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **lia-ui passe à v0.2.1 (Hubperso#348)**
+
+L'épingle `@mokarade/lia-ui` passe de `github:MoKarade/lia-ui#v0.1.0` à `#v0.2.1` (tag dac20b7 : suivi du défilement et du curseur, tirette et parole de la maquette). `package.json` et `package-lock.json` seuls changent : `LiaHub` n'a aucune option renommée. `npm audit --omit=dev` rend 0. L'export `@mokarade/lia-ui/blocs` (`rendreBlocs`, `renderBlocks`) viendra avec v0.3.0, dans une tâche séparée.
+
 ## 🟦 Session 2026-10-22 (soir) — **Page d'une app selon la maquette (Hubperso#289)**
 
 `/app/[id]` suit la maquette validée : lien « ‹ Accueil », identité (logo série A, nom, état, « Ouvrir l'app »), gros chiffre de la carte d'où l'on vient (`etatCarte(...).heros`, composant `Heros` partagé avec `AppWidget`), recommandation, alertes et actions côte à côte (≥ 900 px), métriques, coûts, puis deux blocs repliés (`DetailPli`, `<details>` natif) : « Détail publié par l'app » et « Technique » (ouvert d'office s'il y a une incohérence : l'anormal ne se cache pas).
