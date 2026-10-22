@@ -19,7 +19,7 @@ export const CORPS_MAX_OCTETS = 8 * 1024;
 export const DELAI_MEMORYAI_MS = 30_000;
 
 /** Les douze humeurs de lia-ui (`HUMEURS_LIA`, contrat du fil Assistant). */
-const HUMEURS = [
+export const HUMEURS = [
   "neutre", "joyeux", "calme", "curieux", "fatigue", "inquiet",
   "excite", "triste", "concentre", "espiegle", "fier", "timide",
 ] as const;

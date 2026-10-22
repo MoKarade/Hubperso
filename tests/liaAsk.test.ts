@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BLOCS_MAX,
   PUCES_MAX,
+  HUMEURS,
   QUESTION_MAX,
   TEXTE_MAX,
   corpsPourMemoryAi,
@@ -73,6 +74,13 @@ describe("validerReponse", () => {
       { text: "x", blocks: Array.from({ length: BLOCS_MAX + 1 }, () => ({})) }, { text: "x", blocks: {} },
     ];
     for (const m of mauvais) expect(validerReponse(m).ok, JSON.stringify(m)).toBe(false);
+  });
+});
+
+describe("humeurs", () => {
+  it("sont celles de lia-ui", async () => {
+    const lia = await import("@mokarade/lia-ui");
+    expect([...HUMEURS]).toEqual([...lia.HUMEURS_LIA]);
   });
 });
 
