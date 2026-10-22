@@ -8,7 +8,8 @@ import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
 import { enregistrerReleve, lireHistoriqueTous } from "@/lib/historiqueDb";
 import { attentions } from "@/lib/attention";
 import { maintenantMs } from "@/lib/horloge";
-import { BandeauAttention } from "@/components/BandeauAttention";
+import { ResumeHub } from "@/components/ResumeHub";
+import { resumeHub } from "@/lib/resume";
 import type { Releve } from "@/lib/historique";
 import { aggregateUsage } from "@/lib/usage";
 import { formatDateTime } from "@/lib/format";
@@ -87,13 +88,14 @@ async function OnlineCount({ promises }: { promises: Promise<SummaryResult>[] })
 }
 
 /**
- * Le bandeau « attention » : agrégat, donc il attend toutes les réponses — et il est streamé
- * pour ça. Il ne rend RIEN quand tout va bien : un bandeau permanent qui annonce « 0 problème »
- * cesse d'être vu en trois jours, et le jour où il passe à « 1 » l'œil ne s'y arrête plus.
+ * Le résumé : une phrase vraie sur l'état du hub et les points à regarder. Agrégat, donc il
+ * attend toutes les réponses — et il est streamé pour ça. La phrase est calculée des états
+ * réels (`lib/resume.ts`), jamais écrite d'avance ; les points sont ceux de `/attention`.
  */
 async function StreamedAttention({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
-  return <BandeauAttention liste={attentions(results, maintenantMs())} />;
+  const liste = attentions(results, maintenantMs());
+  return <ResumeHub resume={resumeHub(results, liste)} liste={liste} />;
 }
 
 /** Carte des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
@@ -175,8 +177,8 @@ export default async function Page() {
         </div>
       </header>
 
-      {/* Rien à afficher tant que les réponses n'arrivent pas : pas de squelette non plus,
-          puisque le bandeau est souvent vide et qu'un squelette promettrait du contenu. */}
+      {/* Rien à afficher tant que les réponses n'arrivent pas : une phrase d'attente serait
+          une phrase inventée, et le résumé n'a pas de forme connue d'avance. */}
       <Suspense fallback={null}>
         <StreamedAttention promises={promises} />
       </Suspense>

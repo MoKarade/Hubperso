@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **Phrase d'état de l'accueil (Hubperso#315)**
+
+Maquette validée par Marc (22/10/2026) : sous l'en-tête, une phrase vraie sur l'état du hub, puis au plus trois points « à regarder ». `lib/resume.ts` (pur) calcule la phrase des MÊMES états que les badges des cartes (`lib/status.ts`) : « Tout est à jour. » seulement si chaque app branchée est à jour ; une app en panne ou en retard est nommée (« DriveAI : injoignable. ») ; plusieurs : un compte (« 2 apps à régler. ») ; en construction ou non branchée : jamais présentée comme à jour. Les points sont les entrées de `lib/attention.ts` (alertes, apps muettes, données figées ; les infos n'y sont pas), chacun mène à la page de l'app ; au-delà de trois, le bandeau d'attention existant mène à `/attention`. `components/ResumeHub.tsx` remplace l'usage direct de `BandeauAttention` dans `app/page.tsx` ; rien ne s'affiche tant que les réponses n'arrivent pas (le compteur d'en-tête reste). Captures (données fictives) : `docs/captures/2026-10-22-resume/`.
+
 ## 🟦 Session 2026-10-22 (soir) — **Logos série A sur les cartes (refonte, tâche Hubperso#286)**
 
 Marc, 22/10/2026 : « go » pour intégrer la refonte, en PR courtes. Première pièce : le logo de chaque app (série A : pièce au dollar, voiture, loupe, marmite, arborescence, strates, étincelle IA) devant le nom sur sa carte (`components/LogoApp.tsx`, `lib/logos.ts`). Il prend la couleur de l'app ; hors « à jour » (panne, construction, non branchée) ses aplats deviennent des contours en tirets, et il ne bouge que si l'app est à jour et que le système n'a pas demandé moins de mouvement. Une app sans logo n'en reçoit pas un inventé. Le même composant servira #291 (icônes du hub). Pas encore branché : l'assistant (nom et cerveau en cours de décision) ni le reste de la maquette. Captures (données fictives) : `docs/captures/2026-10-22-logos/`.

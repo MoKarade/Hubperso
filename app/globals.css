@@ -1633,6 +1633,67 @@ a:focus-visible,
   }
 }
 
+/* ── Le résumé de l'accueil : une phrase vraie, puis ce qu'il faut regarder ─────────────────
+   La phrase vient des états réels (`lib/resume.ts`) ; la couleur ne porte jamais seule le sens
+   (la phrase nomme l'app et l'état). Jamais de teinte d'app en texte. */
+.resume {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.resume__phrase {
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text);
+}
+.resume__phrase[data-ton="danger"] {
+  color: var(--danger);
+}
+.resume__phrase[data-ton="warn"] {
+  color: var(--warn);
+}
+.resume__points {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+}
+.resume__point {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.resume__pastille {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--neutral);
+}
+.resume__point[data-gravite="alert"] .resume__pastille {
+  background: var(--danger);
+}
+.resume__point[data-gravite="warn"] .resume__pastille {
+  background: var(--warn);
+}
+.resume__lien {
+  display: flex;
+  align-items: center;
+  min-height: var(--cible);
+  color: var(--text-soft, var(--text));
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.resume__lien strong {
+  margin-right: 0.35rem;
+  color: var(--text);
+}
+.resume__lien:hover {
+  text-decoration: underline;
+}
+
 /* ── « CE QUI DEMANDE MON ATTENTION » ────────────────────────────────────────────────
    Le bandeau n'apparaît que s'il y a quelque chose. Voir components/BandeauAttention.tsx :
    un bandeau permanent qui annonce « 0 problème » cesse d'être vu. */
