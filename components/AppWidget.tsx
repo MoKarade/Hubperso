@@ -18,6 +18,8 @@ import { ActionList } from "./ActionList";
 import { AlertList } from "./AlertList";
 import { Sparkline } from "./Sparkline";
 import { Icone } from "./Icone";
+import { LogoApp } from "./LogoApp";
+import { aUnLogo } from "@/lib/logos";
 import { LignesDetail } from "./LignesDetail";
 import { Recommandation } from "./Recommandation";
 
@@ -235,6 +237,13 @@ export function AppWidget({
     // couleur de l'app. Décider ici aurait dispersé la règle entre le composant et le CSS.
     <article className={`widget ${size}`} style={style} data-gravite={badge.tone}>
       <header className="widget__head">
+        {/* Le logo de la série A, décoratif (le nom suit) ; une app sans logo n'en reçoit PAS un
+            inventé (`lib/logos.ts`). */}
+        {aUnLogo(result.source.id) && (
+          <span className="widget__logo" data-etat={badge.tone}>
+            <LogoApp id={result.source.id} />
+          </span>
+        )}
         <h2 className="widget__title">
           {appUrl ? (
             // [PWA-ANDROID] PAS de `target="_blank"`, et c'est le verrou de « ouvrir depuis le

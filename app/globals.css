@@ -252,6 +252,192 @@ a:focus-visible,
   justify-content: space-between;
   gap: 0.75rem;
 }
+/* Le logo de l'app (série A) : sa couleur est celle de l'app, jamais du texte. */
+.widget__logo {
+  --logo: var(--accent, var(--marque));
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.widget__logo + .widget__title {
+  margin-right: auto;
+}
+.logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--logo);
+}
+.logo__corps {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.logo__gros {
+  stroke-width: 6.4;
+}
+.logo__masse {
+  fill: currentColor;
+  fill-opacity: 0.2;
+  stroke: none;
+}
+.logo__plein {
+  fill: currentColor;
+  stroke: none;
+}
+/* Une roue : un cercle plein de la couleur du fond, cerclé de la couleur du logo. */
+.logo__roue {
+  fill: var(--bg);
+  stroke: currentColor;
+  stroke-width: 3.2;
+}
+/* L'étincelle IA, signature commune des logos : claire, cernée du fond. */
+.logo__ia {
+  transform-box: fill-box;
+  transform-origin: center;
+  fill: var(--text);
+  stroke: var(--bg);
+  stroke-width: 2.6;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+.logo__flux {
+  stroke-dasharray: 3 5;
+}
+/* L'état se lit à la forme : hors « à jour », les aplats deviennent des contours en tirets. */
+.widget__logo:is([data-etat="danger"], [data-etat="neutral"], [data-etat="info"])
+  .logo
+  :is(.logo__masse, .logo__plein, .logo__roue, .logo__ia) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4px;
+  stroke-dasharray: 3 2.4;
+  vector-effect: non-scaling-stroke;
+}
+.widget__logo[data-etat="danger"] {
+  --logo: var(--danger);
+}
+.widget__logo[data-etat="neutral"] {
+  --logo: var(--neutral);
+}
+.logo__couvercle,
+.logo__dossier,
+.logo__strate,
+.logo__balaie {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.logo__balaie {
+  transform-box: view-box;
+  transform-origin: 55px 55px;
+}
+/* Chaque logo a son geste, SEULEMENT quand l'app est à jour (un logo qui bouge sur une app en
+   panne mentirait) ; rien ne bouge si le système demande moins de mouvement. */
+@media (prefers-reduced-motion: no-preference) {
+  .widget__logo[data-etat="ok"] .logo__ia {
+    animation: logo-eclat 7s ease-in-out infinite;
+  }
+  .widget__logo[data-etat="ok"] .logo__dollar,
+  .widget__logo[data-etat="ok"] .logo__eclair {
+    animation: logo-souffle 5s ease-in-out infinite;
+  }
+  .widget__logo[data-etat="ok"] .logo__balaie {
+    animation: logo-balance 7s ease-in-out infinite alternate;
+  }
+  .widget__logo[data-etat="ok"] .logo__couvercle {
+    animation: logo-leve 6s ease-in-out infinite;
+  }
+  .widget__logo[data-etat="ok"] .logo__vapeur {
+    animation: logo-monte 4.4s ease-out infinite;
+  }
+  .widget__logo[data-etat="ok"] .logo__dossier {
+    animation: logo-pop 7s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -1.4s);
+  }
+  .widget__logo[data-etat="ok"] .logo__strate {
+    animation: logo-strate 7s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -0.9s);
+  }
+  .widget__logo[data-etat="ok"] .logo__flux {
+    animation: logo-flux 6s linear infinite;
+  }
+}
+@keyframes logo-eclat {
+  0%,
+  100% {
+    scale: 0.82;
+    opacity: 0.7;
+  }
+  50% {
+    scale: 1.12;
+    opacity: 1;
+  }
+}
+@keyframes logo-souffle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes logo-balance {
+  from {
+    rotate: -5deg;
+  }
+  to {
+    rotate: 5deg;
+  }
+}
+@keyframes logo-leve {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -1.6px;
+  }
+}
+@keyframes logo-pop {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.05;
+  }
+}
+@keyframes logo-strate {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -1.3px;
+  }
+}
+@keyframes logo-monte {
+  0% {
+    translate: 0 4px;
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  100% {
+    translate: 0 -6px;
+    opacity: 0;
+  }
+}
+@keyframes logo-flux {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
 .widget__title {
   font-size: 1.05rem;
   font-weight: 700;
