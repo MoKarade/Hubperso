@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **Logos série A sur les cartes (refonte, tâche Hubperso#286)**
+
+Marc, 22/10/2026 : « go » pour intégrer la refonte, en PR courtes. Première pièce : le logo de chaque app (série A : pièce au dollar, voiture, loupe, marmite, arborescence, strates, étincelle IA) devant le nom sur sa carte (`components/LogoApp.tsx`, `lib/logos.ts`). Il prend la couleur de l'app ; hors « à jour » (panne, construction, non branchée) ses aplats deviennent des contours en tirets, et il ne bouge que si l'app est à jour et que le système n'a pas demandé moins de mouvement. Une app sans logo n'en reçoit pas un inventé. Le même composant servira #291 (icônes du hub). Pas encore branché : l'assistant (nom et cerveau en cours de décision) ni le reste de la maquette. Captures (données fictives) : `docs/captures/2026-10-22-logos/`.
+
 ## 🟦 Session 2026-10-22 — **Graphe de code plus rapide (MoKarade/.github#487)**
 
 `scripts/graphe.sh` : `affected` ≈ 0,3 s au lieu de 1,2 s (le test d'installation n'importe plus `mcp`), profondeur 1 par défaut (`--depth 2` à la demande), journal local `graphify-out/usage.jsonl` résumé par `scripts/graphe.sh usage`. Copie du script commun, aucun changement d'écran ni de route ; détail : `docs/reference-claude.md`, section 12.
