@@ -2978,3 +2978,159 @@ a:focus-visible,
     display: none;
   }
 }
+
+/* ── LA PAGE D'UNE APP (maquette du 22/10) ─────────────────────────────────────
+   L'essentiel d'abord : l'identité, LE chiffre, ce qui demande un geste ; le reste est replié.
+   Tout vit sous `.page--app` pour ne rien changer ailleurs. */
+.page__retour {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible);
+  margin-bottom: 0.25rem;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.page__retour:hover {
+  color: var(--text);
+}
+.page__retour:focus-visible {
+  outline: 2px solid var(--marque);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.page__identite {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.8rem, 0.5rem + 1.2vw, 1.4rem);
+  min-width: 0;
+}
+.page__logo {
+  width: clamp(3.2rem, 2.4rem + 3vw, 4.6rem);
+  height: clamp(3.2rem, 2.4rem + 3vw, 4.6rem);
+}
+/* Le héros de la page : le même chiffre que la carte, en plus grand, avec une vraie courbe. */
+.page--app .heros {
+  gap: 0.4rem;
+}
+.page--app .heros__valeur {
+  font-size: clamp(3.4rem, 2.2rem + 5vw, 5.2rem);
+}
+.page--app .heros__courbe {
+  height: clamp(84px, 60px + 8vw, 140px);
+}
+.page--app .heros__note {
+  font-size: 0.95rem;
+}
+@media (min-width: 760px) {
+  .page--app .heros {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    column-gap: 2rem;
+    align-items: end;
+  }
+  .page--app .heros__label,
+  .page--app .heros__valeur,
+  .page--app .heros__note {
+    grid-column: 1;
+  }
+  .page--app .heros__courbe {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    margin-top: 0;
+  }
+}
+
+/* Alertes et actions côte à côte quand la place le permet ; une colonne sur téléphone. */
+.detail__duo {
+  display: grid;
+  gap: var(--gap);
+}
+@media (min-width: 900px) {
+  .detail__duo:has(> :nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+.detail__duo > .detail__bloc {
+  margin-bottom: 0;
+}
+.detail__duo:empty {
+  display: none;
+}
+
+/* Les blocs repliés : <details> natif, cible ≥ 44 px, aucune animation obligatoire. */
+.detail__pli {
+  margin-bottom: var(--gap);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.detail__pli-titre {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  min-height: var(--cible);
+  padding: 0.7rem clamp(1rem, 0.8rem + 0.6vw, 1.4rem);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  list-style: none;
+}
+.detail__pli-titre::-webkit-details-marker {
+  display: none;
+}
+.detail__pli-titre::before {
+  content: "›";
+  display: inline-block;
+  transition: transform 160ms var(--ease-out);
+}
+.detail__pli[open] > .detail__pli-titre::before {
+  transform: rotate(90deg);
+}
+.detail__pli-titre:focus-visible {
+  outline: 2px solid var(--marque);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+.detail__pli-titre small {
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-soft);
+}
+.detail__pli-corps {
+  padding: 0 clamp(1rem, 0.8rem + 0.6vw, 1.4rem) clamp(1rem, 0.8rem + 0.6vw, 1.4rem);
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail__pli-titre::before {
+    transition: none;
+  }
+}
+
+/* Transition entre la carte et la page : fondu natif du navigateur (View Transitions, navigation
+   inter-documents). Les navigateurs qui ne savent pas l'ignorent ; la navigation reste la même.
+   La barre de navigation garde son nom pour ne pas clignoter pendant le fondu. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 240ms;
+}
+.nav,
+.barre {
+  view-transition-name: navigation;
+}
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+/* Le bloc du chiffre principal respire plus que les blocs de détail. */
+.page__hero {
+  padding-block: clamp(1.2rem, 1rem + 1.4vw, 2rem);
+}
