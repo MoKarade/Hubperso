@@ -128,3 +128,24 @@ describe("panneau « Coûts et quotas » (rendu)", () => {
     expect(texte(html)).toContain("Pas de coût publié : B.");
   });
 });
+
+describe("LIA dans la colonne de gauche", () => {
+  const page = readFileSync(join(__dirname, "..", "app", "page.tsx"), "utf8");
+  const composant = readFileSync(join(__dirname, "..", "components", "LiaHub.tsx"), "utf8");
+
+  it("la page passe LiaHub à la colonne réservée du résumé", () => {
+    expect(page).toContain("lia={<LiaHub />}");
+  });
+
+  it("jamais de réponse inventée : le hub ne branche aucun `ask` tant que MemoryAI n'en offre pas", () => {
+    // Sans `ask`, le paquet dit « indisponible ». Ce test casse le jour où on le branche : il faut
+    // alors le remplacer par un test de l'appel réel, pas le supprimer.
+    expect(composant).not.toMatch(/\bask=/);
+  });
+
+  it("le menu ne mène qu'à des pages du hub", async () => {
+    const { ENTREES_LIA } = await import("@/lib/lia");
+    expect(ENTREES_LIA.length).toBeGreaterThan(0);
+    for (const e of ENTREES_LIA) expect(e.href).toMatch(/^\/[a-z]/);
+  });
+});
