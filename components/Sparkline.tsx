@@ -26,6 +26,9 @@ export function Sparkline({ points, label }: { points: Point[]; label: string })
       role="img"
       aria-label={`Évolution de ${label} sur les relevés conservés`}
     >
+      {/* L'aire sous la courbe (maquette du 22/10) : la même série, fermée vers le bas. Elle ne
+          dit rien de plus que le trait — elle le rend lisible d'un coup d'œil. */}
+      <path className="sparkline__zone" d={`${d} L100,100 L0,100 Z`} />
       <path className="sparkline__trace" d={d} vectorEffect="non-scaling-stroke" />
     </svg>
   );
