@@ -21,16 +21,19 @@ import { getSources } from "@/lib/sources";
 import { maintenantMs } from "@/lib/horloge";
 import { fetchAllSummaries, fetchSummary } from "@/lib/fetchSummary";
 import { lireHistorique } from "@/lib/historiqueDb";
-import { recommandation, variablesAccent } from "@/lib/carte";
+import { etatCarte, recommandation, variablesAccent } from "@/lib/carte";
+import { aUnLogo } from "@/lib/logos";
 import { verifierConstellation } from "@/lib/constellation";
 import { statusBadge } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
 import { StatusBadge } from "@/components/StatusBadge";
+import { LogoApp } from "@/components/LogoApp";
+import { Heros } from "@/components/AppWidget";
 import { ActionList } from "@/components/ActionList";
 import { DetailMetriques } from "@/components/DetailMetriques";
 import { DetailAlertes } from "@/components/DetailAlertes";
 import { DetailCouts } from "@/components/DetailCouts";
-import { DetailRecommandation, DetailSections } from "@/components/DetailContenu";
+import { DetailPli, DetailRecommandation, DetailSections } from "@/components/DetailContenu";
 import {
   BandeauPerime,
   DetailCoherence,
@@ -74,15 +77,28 @@ export default async function DetailAppPage({
   // Le pendant de la carte : couleur de l'app et texte lisible dessus, CALCULÉ (`lib/carte.ts`).
   const accent = variablesAccent(summary?.app.color);
   const lienApp = summary ? safeHttpUrl(summary.app.url) : null;
+  // Le même état que la carte (héros désigné par l'app, sinon la première métrique) : le gros
+  // chiffre de la page est celui de la carte d'où l'on vient, jamais un autre.
+  const etat = summary ? etatCarte(summary, historique, maintenant) : null;
 
   // Chaque bloc vit dans son composant (`components/Detail*.tsx`) : cette fonction ne fait
   // que la garde, les fetchs et l'ordre des blocs.
   return (
     <main className="page page--app" style={accent as React.CSSProperties | undefined}>
+      <Link href="/" className="page__retour">
+        ‹ Accueil
+      </Link>
       <header className="page__head">
-        <div>
-          <p className="page__eyebrow">hubperso.com</p>
-          <h1 className="page__title">{nom}</h1>
+        <div className="page__identite">
+          {aUnLogo(source.id) && (
+            <span className="widget__logo page__logo" data-etat={badge.tone}>
+              <LogoApp id={source.id} />
+            </span>
+          )}
+          <div>
+            <p className="page__eyebrow">hubperso.com</p>
+            <h1 className="page__title">{nom}</h1>
+          </div>
         </div>
         <div className="page__aside">
           <StatusBadge {...badge} />
@@ -94,7 +110,6 @@ export default async function DetailAppPage({
               Ouvrir l’app ↗
             </a>
           )}
-          <Link href="/" className="btn">← Hub</Link>
         </div>
       </header>
 
@@ -103,29 +118,43 @@ export default async function DetailAppPage({
       {summary && (
         <>
           {result.state === "ok" && result.stale && <BandeauPerime />}
+          {/* L'ordre de la maquette : le chiffre qui compte, le conseil, ce qui demande un geste,
+              puis le détail ; le reste est replié. Aucune donnée de plus qu'avant. */}
+          {etat?.heros && (
+            <section className="detail__bloc page__hero" aria-label="Chiffre principal">
+              <Heros heros={etat.heros} />
+            </section>
+          )}
           {reco && <DetailRecommandation reco={reco} summary={summary} />}
+          <div className="detail__duo">
+            <DetailAlertes alerts={summary.alerts} />
+            {summary.actions.length > 0 && (
+              <section className="detail__bloc" aria-label="Actions">
+                <h2 className="detail__titre">Actions ({summary.actions.length})</h2>
+                {/* Passe par ActionList plutôt que de refaire le rendu à la main : cette page
+                    rendait TOUTE action en lien, `trigger` compris — donc un endpoint fait
+                    pour un POST ouvert en GET, qui ne déclenche rien tout en ayant l'air de
+                    marcher. Deux rendus à tenir en parallèle finissent toujours par diverger. */}
+                <ActionList actions={summary.actions} appId={source.id} />
+              </section>
+            )}
+          </div>
           <DetailMetriques
             metrics={summary.metrics}
             historique={historique}
             maintenantMs={maintenant}
           />
-          <DetailAlertes alerts={summary.alerts} />
-
-          {summary.actions.length > 0 && (
-            <section className="detail__bloc" aria-label="Actions">
-              <h2 className="detail__titre">Actions ({summary.actions.length})</h2>
-              {/* Passe par ActionList plutôt que de refaire le rendu à la main : cette page
-                  rendait TOUTE action en lien, `trigger` compris — donc un endpoint fait
-                  pour un POST ouvert en GET, qui ne déclenche rien tout en ayant l'air de
-                  marcher. Deux rendus à tenir en parallèle finissent toujours par diverger. */}
-              <ActionList actions={summary.actions} appId={source.id} />
-            </section>
-          )}
-
-          <DetailSections details={summary.details} />
           <DetailCouts usage={summary.usage} historique={historique} />
-          <DetailCoherence incoherences={incoherences} />
-          <DetailFraicheur summary={summary} summaryUrl={source.summaryUrl} />
+          {summary.details && summary.details.length > 0 && (
+            <DetailPli titre="Détail publié par l’app" note={`${summary.details.length} section(s)`}>
+              <DetailSections details={summary.details} />
+            </DetailPli>
+          )}
+          {/* Ouvert d'office s'il y a une incohérence : l'anormal ne se cache pas derrière un clic. */}
+          <DetailPli titre="Technique" note="cohérence et fraîcheur" ouvert={incoherences.length > 0}>
+            <DetailCoherence incoherences={incoherences} />
+            <DetailFraicheur summary={summary} summaryUrl={source.summaryUrl} />
+          </DetailPli>
         </>
       )}
     </main>
