@@ -14,6 +14,7 @@
   --text-soft: #94A3B8;
   --text-faint: #8896A8;
   --border: rgb(255 255 255 / 0.09);
+  --border-fort: rgb(255 255 255 / 0.16);
 
   /* ── ACCENT DE MARQUE DU HUB ─────────────────────────────────────────────────────────
      Indigo brume, source unique = §6bis de la référence. Usage DISCRET : sur-titre de
@@ -137,35 +138,12 @@ a:focus-visible,
     grid-template-columns: repeat(4, 1fr);
   }
 }
-/* Un seul « héros » (2×2). Les autres tiennent sur 1 colonne : ça pave au lieu de
-   s'empiler quand plusieurs apps sont riches. */
+/* Toutes les cartes tiennent sur UNE colonne (maquette du 22/10, choisie par Marc) : le héros
+   déclaré garde sa classe — la grille reste décidable AVANT les données — mais ne réserve plus
+   2×2 cases. Avant, la carte large répartissait son surplus de hauteur (#252) ; il n'y a plus
+   de surplus à répartir. */
 .widget--lg {
-  grid-column: span 2;
-  grid-row: span 2;
-}
-/* ── LE SURPLUS DU HÉROS SE RÉPARTIT, IL NE S'AMASSE PAS (#252, Marc 19/10 : « encore du vide »)
-   La carte large occupe deux rangées de la grille, dont la hauteur est dictée par les cartes
-   voisines (`grid-auto-rows: auto`), pas par son contenu. Quand les voisines sont hautes et
-   le contenu court, le surplus se ramassait en UN trou : `.actions` porte `margin-top: auto`
-   et absorbait tout. Les bornes de `lib/carte.ts` ne peuvent pas régler ça — elles comptent
-   des lignes, le vide se mesure en pixels et dépend de la hauteur des voisines.
-
-   Ici, sur la carte large seulement : le corps répartit le surplus ENTRE ses blocs
-   (`space-between`) au lieu de le verser au-dessus des actions, et la courbe du chiffre
-   principal est plus haute. Sans surplus, rien ne change ; la carte ne grossit jamais, elle
-   ne fait que mieux répartir la hauteur que la grille lui réserve. Aucune donnée ajoutée. */
-.widget--lg .widget__body {
-  justify-content: space-between;
-}
-.widget--lg .widget__body > .actions {
-  margin-top: 0;
-}
-.widget--lg .heros__courbe {
-  height: 96px;
-}
-/* Pas d'historique : rien à tracer, donc rien à réserver (le trou aurait juste grandi). */
-.widget--lg .heros__courbe:empty {
-  height: 0;
+  grid-column: span 1;
 }
 .widget--md {
   grid-column: span 1;
@@ -214,8 +192,13 @@ a:focus-visible,
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  padding: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
-  background: color-mix(in oklch, var(--teinte) var(--lavis), var(--surface));
+  padding: 1.15rem 1.25rem 1rem;
+  /* Maquette du 22/10 : un lavis de la couleur de l'app en haut, qui s'éteint vers le bas. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--teinte) 7%, var(--surface)),
+    var(--surface) 38%
+  );
   border: 1px solid color-mix(in oklch, var(--teinte) 18%, var(--border));
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -231,12 +214,12 @@ a:focus-visible,
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  /* 3 px → 5 px : la barre était la SEULE trace de la couleur de l'app, à 85 %
-     d'opacité, et Marc ne la voyait pas. Elle reste une barre, pas un bandeau : le lavis
-     de fond porte désormais l'identité, celle-ci ne fait que la souligner. */
-  height: 5px;
-  background: linear-gradient(90deg, var(--teinte), transparent 78%);
-  opacity: 1;
+  /* Un filet plein de 2 px (maquette du 22/10). Il avait été porté à 5 px en dégradé quand la
+     barre était la SEULE trace de la couleur de l'app ; le logo, la courbe et le lavis la
+     portent maintenant, le filet ne fait que souligner. */
+  height: 2px;
+  background: var(--teinte);
+  opacity: 0.9;
   transition: opacity 240ms ease;
 }
 .widget:hover {
@@ -439,8 +422,8 @@ a:focus-visible,
   }
 }
 .widget__title {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 .widget__title a {
@@ -459,23 +442,30 @@ a:focus-visible,
   flex: 1;
 }
 .widget__problem {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
   color: var(--text-soft);
 }
 .widget__empty {
   font-size: 0.82rem;
   color: var(--text-faint);
 }
+/* Le pied : la fraîcheur à gauche, « Détail » et « Ouvrir » à droite (maquette du 22/10). */
 .widget__foot {
   margin-top: auto;
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--border);
-  font-size: 0.72rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  font-size: 0.8rem;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+}
+.widget__foot .widget__actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-left: auto;
 }
 
 /* --- Badge --- */
@@ -483,10 +473,13 @@ a:focus-visible,
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.65rem 0.2rem 0.5rem;
   border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  /* Une puce cernée d'un filet de sa couleur (maquette du 22/10) : le mot reste écrit, la
+     forme dit « état », la couleur ne porte plus l'information seule. */
+  border: 1px solid color-mix(in oklch, currentColor 40%, transparent);
+  font-size: 0.8rem;
+  font-weight: 400;
   white-space: nowrap;
 }
 @keyframes dot-pulse {
@@ -1214,41 +1207,29 @@ a:focus-visible,
   color: var(--text-soft);
 }
 .detail__endpoint { margin: 0.6rem 0 0; font-size: 0.82rem; color: var(--text-faint); }
-/* Lien « Détail » de la carte : discret au repos, il ne doit pas concurrencer
-   les données ; net au survol. */
-/* ── LE BOUTON « DÉTAIL » ─────────────────────────────────────────────────────────────
-   AVANT le 15/09 : un texte nu de 0,78 rem en `--text-faint`, sans fond ni cadre ni
-   rembourrage — soit une cible d'environ 14 px de haut. Marc : « tous les boutons sont
-   trop petits par exemple bouton detail ». C'était le plus petit élément cliquable du
-   hub, et le plus utile.
+/* ── LES DEUX BOUTONS DU PIED : « DÉTAIL » ET « OUVRIR » ──────────────────────────────
+   Maquette validée par Marc (22/10) : deux boutons CONTOURÉS de même poids, `--cible` de haut.
+   « Détail » ouvre la page de l'app DANS le hub ; « Ouvrir » ouvre l'app elle-même.
 
-   MAINTENANT : un vrai bouton, fond plein dans la couleur de l'APP, `--cible` de haut,
-   et sa nappe rend toute la carte cliquable.
-
-   ⚠️ LE FOND SUIT `--accent`, PAS `--teinte`. Sur une carte en alerte, un bouton rempli
-   de rouge se lirait comme une action destructrice — alors qu'il ne fait qu'ouvrir une
-   page. Le FOND de la carte dit la gravité, le BOUTON dit dans quelle app on est. Le
-   choix est le mien, pas celui de Marc : à corriger d'un mot s'il le voit autrement. */
-.widget__detail {
-  align-self: flex-start;
+   AVANT : « Détail » était un bouton PLEIN dans la couleur de l'app, sous l'en-tête (15/09,
+   Marc : « tous les boutons sont trop petits » — la cible de 44 px, elle, reste). La couleur
+   de l'app vit maintenant dans le filet, le logo, la courbe : jamais en fond de bouton, donc
+   jamais de texte à recalculer dessus. Et sa nappe rend toujours toute la carte cliquable. */
+.widget__detail,
+.widget__ouvrir {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
   min-height: var(--cible);
-  padding: 0 1.1rem;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  /* ⚠️ CALCULÉ par `texteSur` côté serveur et posé sur la carte. Le repli `#fff` ne sert
-     qu'aux cartes SANS couleur d'app (non configurée, injoignable), dont l'accent est le
-     gris neutre de `.widget` — le blanc y passe. Il n'est JAMAIS utilisé pour une vraie
-     couleur d'app : voir `lib/couleur.ts` et son test. */
-  color: var(--accent-texte, #0B0D12);
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  padding: 0 0.95rem;
+  border: 1px solid var(--border-fort);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 400;
   text-decoration: none;
-  /* ⚠️ NI `position`, NI `transform`, NI `filter` SUR CE BOUTON — et ce n'est pas une
+  /* ⚠️ NI `position`, NI `transform`, NI `filter` SUR « DÉTAIL » — et ce n'est pas une
      préférence de style, c'est ce qui fait marcher la nappe ci-dessous. Les trois créent
      un BLOC CONTENEUR pour les descendants positionnés : le `::after` cesserait alors de
      se mesurer sur la carte et se replierait sur le bouton lui-même. La carte redeviendrait
@@ -1271,12 +1252,12 @@ a:focus-visible,
   z-index: 1;
 }
 .widget:hover .widget__detail,
-.widget__detail:hover {
-  /* `color-mix` vers le noir fonce n'importe quelle teinte reçue du contrat, sans avoir à
-     accorder une seconde couleur app par app — et sans `filter`, interdit ci-dessus. */
-  background: color-mix(in oklch, var(--accent) 86%, black);
+.widget__detail:hover,
+.widget__ouvrir:hover {
+  background: rgb(255 255 255 / 0.05);
 }
-.widget__detail:focus-visible {
+.widget__detail:focus-visible,
+.widget__ouvrir:focus-visible {
   outline: 3px solid var(--text);
   outline-offset: 3px;
 }
@@ -1297,7 +1278,10 @@ a:focus-visible,
   position: relative;
   z-index: 2;
 }
-.widget__foot {
+/* ⚠️ La fraîcheur passe devant la nappe pour garder son infobulle (`title`) ; le PIED lui-même
+   NE DOIT PAS être positionné — « Détail » est dedans, et sa nappe se mesure sur la carte, pas
+   sur le premier ancêtre positionné qu'elle rencontre. `.widget__actions` non plus. */
+.widget__foot > span:not(.widget__actions) {
   position: relative;
   z-index: 2;
 }
@@ -1523,16 +1507,18 @@ a:focus-visible,
   gap: 0.25rem;
 }
 .heros__label {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.12em;
   color: var(--text-faint);
 }
+/* Le gros chiffre : fin (300) et grand, jamais sous 2 rem (maquette du 22/10, « moins de texte,
+   mais plus gros »). La finesse est voulue — à cette taille, un 700 écrase la carte. */
 .heros__valeur {
-  font-weight: 700;
-  font-size: clamp(2rem, 1.4rem + 2.2vw, 3.1rem);
-  line-height: 1;
+  font-weight: 300;
+  font-size: clamp(2rem, 1.2rem + 1.6vw, 2.6rem);
+  line-height: 1.05;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
@@ -1541,8 +1527,8 @@ a:focus-visible,
    sont écrites juste en dessous. Hauteur fixe et modeste pour qu'elle accompagne le
    chiffre sans lui disputer la vedette. */
 .heros__courbe {
-  height: 34px;
-  margin: 0.15rem 0 0.1rem;
+  height: 46px;
+  margin-top: 0.35rem;
 }
 .sparkline {
   width: 100%;
@@ -1550,10 +1536,14 @@ a:focus-visible,
   display: block;
   overflow: visible;
 }
+.sparkline__zone {
+  fill: color-mix(in oklch, var(--accent) 14%, transparent);
+  stroke: none;
+}
 .sparkline__trace {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.85;
@@ -1563,11 +1553,11 @@ a:focus-visible,
   display: flex;
   flex-wrap: wrap;
   gap: 0.15rem 0.7rem;
-  font-size: 0.76rem;
+  font-size: 0.84rem;
   color: var(--text-soft);
 }
 .heros__delta {
-  font-weight: 600;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 .heros__delta[data-dir="hausse"] {
@@ -1605,6 +1595,58 @@ a:focus-visible,
   color: var(--text-faint);
   border-left: 1px solid var(--border);
   padding-left: 0.7rem;
+}
+
+/* ── LES MESURES EN LIGNES, LES ALERTES EN PASTILLES (maquette du 22/10) ───────────────
+   Sur la carte seulement (`.widget …`) : la page de détail garde sa grille. Une mesure =
+   une ligne « libellé … valeur », séparée de la suivante par un filet ; la courbe et la
+   tendance, quand l'app en publie, s'intercalent avant la valeur. */
+.widget .metrics__grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-top: 0;
+}
+.widget .metric {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.4rem;
+  border-top: 1px solid var(--border);
+}
+.widget .metric__label {
+  order: 1;
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-soft);
+}
+.widget .metric__courbe {
+  order: 2;
+  flex: none;
+  width: 56px;
+  height: 18px;
+  margin-top: 0;
+}
+.widget .metric__trend {
+  order: 3;
+}
+.widget .metric__value {
+  order: 4;
+  font-size: 0.92rem;
+  font-weight: 400;
+}
+.widget .alert {
+  padding: 0 0.7rem;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.035);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.widget .alert__dot {
+  width: 8px;
+  height: 8px;
 }
 
 /* Les alertes au-delà de la première sont COMPTÉES, jamais escamotées sans trace. */
@@ -1849,6 +1891,13 @@ a:focus-visible,
      `width: 100%` y aurait été ignoré selon le contexte. */
   .widget__detail {
     align-self: stretch;
+    flex: 1;
+  }
+  .widget__foot .widget__actions {
+    flex: 1 1 100%;
+  }
+  .widget__ouvrir {
+    flex: 1;
   }
   /* Les actions s'empilent au lieu de se partager une ligne : deux boutons côte à côte
      sur 360 px font 160 px chacun, et le doigt en attrape un au hasard. */

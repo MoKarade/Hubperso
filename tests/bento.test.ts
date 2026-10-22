@@ -22,7 +22,7 @@ describe("widgetSize", () => {
   });
 });
 
-describe("la carte large répartit son surplus de hauteur (#252)", () => {
+describe("toutes les cartes tiennent sur une colonne (maquette du 22/10)", () => {
   const css = readFileSync(join(__dirname, "../app/globals.css"), "utf8");
   const regle = (selecteur: string) => {
     // Début de ligne : `.actions {` ne doit pas se confondre avec `… > .actions {`.
@@ -30,9 +30,9 @@ describe("la carte large répartit son surplus de hauteur (#252)", () => {
     return debut === -1 ? "" : css.slice(debut, css.indexOf("}", debut));
   };
 
-  it("le corps de la carte large répartit entre ses blocs, et `.actions` ne ramasse plus tout", () => {
-    expect(regle(".widget--lg .widget__body")).toContain("justify-content: space-between");
-    expect(regle(".widget--lg .widget__body > .actions")).toContain("margin-top: 0");
+  it("le héros garde sa classe mais ne réserve plus deux colonnes ni deux rangées", () => {
+    expect(regle(".widget--lg")).toContain("grid-column: span 1");
+    expect(regle(".widget--lg")).not.toContain("grid-row");
   });
 
   it("une carte normale garde `margin-top: auto` sur `.actions` (elle ne doit pas changer)", () => {
@@ -40,7 +40,8 @@ describe("la carte large répartit son surplus de hauteur (#252)", () => {
     expect(regle(".widget__body")).not.toContain("space-between");
   });
 
-  it("sans historique, la courbe de la carte large ne réserve aucune hauteur", () => {
-    expect(regle(".widget--lg .heros__courbe:empty")).toContain("height: 0");
+  it("il ne reste aucune règle qui répartisse le surplus d'une carte large (#252 retiré)", () => {
+    expect(regle(".widget--lg .widget__body")).toBe("");
+    expect(regle(".widget--lg .heros__courbe:empty")).toBe("");
   });
 });
