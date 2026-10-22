@@ -60,6 +60,13 @@ export function isPublicPath(pathname: string): boolean {
   // le vrai garde-fou : le matcher du middleware ne gagne aucune exclusion (leçon n°4).
   if (pathname === "/api/cron/releve") return true;
 
+  // POST /api/gantt : le PC de Marc y ENVOIE le relevé du Gantt (tour.py, toutes les 10 min).
+  // Troisième route de serveur à serveur, même raisonnement : pas de cookie de session. Elle
+  // exige `Authorization: Bearer <GANTT_SECRET>`, secret DÉDIÉ comparé à temps constant, et
+  // répond 401 sans lui / 503 si le secret n'est pas configuré (app/api/gantt/route.ts).
+  // Égalité STRICTE, jamais un préfixe, et jamais le matcher du middleware (leçon n°4).
+  if (pathname === "/api/gantt") return true;
+
   // GET /api/sante : la sonde de santé de la vigie de l'Atelier (patron JobAI#49 /
   // BatchChef#154). TROISIÈME route qui traverse le garde, et la seule SANS aucune
   // authentification — délibérément : elle ne rend que `{ ok, cause }`, jamais une donnée,

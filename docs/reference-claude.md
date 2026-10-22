@@ -45,7 +45,7 @@ widgets 100 % génériques.
   Le propriétaire est vérifié **en premier et SANS réseau** : une panne de base ne doit
   jamais enfermer Marc dehors de sa propre administration, seul endroit d'où il pourrait
   se réparer.
-- **Deux routes traversent le garde, et ce n'est pas une exception au principe ci-dessus.**
+- **Trois routes serveur-à-serveur traversent le garde, et ce n'est pas une exception au principe ci-dessus.**
   Le matcher reste inchangé ; c'est `isPublicPath` (`lib/authGuard.ts`) qui les laisse
   passer. Aucune des deux n'est ouverte : elles sont authentifiées **autrement**, parce
   qu'un serveur qui appelle un serveur n'a pas de cookie de session à présenter.
@@ -53,6 +53,13 @@ widgets 100 % génériques.
     le `HUB_TOKEN` de l'app appelante. Le jeton **identifie** l'appelant, donc l'`appId`
     vient du jeton et **jamais du corps de la requête** : une app ne peut pas interroger
     les accès d'une autre.
+  - `POST /api/gantt` — le **relevé du Gantt** (« Chantier Apps »), envoyé toutes les 10 min par
+    la tâche planifiée du PC de Marc (`outils/gantt-pc/tour.py`, MoKarade/.github). Même
+    modèle que l'horloge : secret **DÉDIÉ** (`GANTT_SECRET`, `Authorization: Bearer`), 503 si
+    absent côté serveur, 401 s'il est faux, comparaison à temps constant, chemin nommé par
+    égalité stricte dans `isPublicPath`. Le Drive du PC est privé : le hub ne le lit pas, il
+    range le DERNIER envoi (table `gantt_releve`, une seule ligne) et les pages le relisent
+    derrière la connexion. Un corps invalide (400) ou trop gros (413) ne touche jamais la ligne.
   - `POST /api/cron/releve` — l'**horloge** du hub, appelée par
     `.github/workflows/releve.yml` (ADR 0003). Authentifiée par un secret **DÉDIÉ**
     (`CRON_SECRET`), pas par un `HUB_TOKEN_*` : ce qu'elle déclenche est une ÉCRITURE dans
@@ -313,7 +320,7 @@ qu'on lui a apprise**, et cette forme se périme quand le framework en ajoute un
 sont pas la même chose.** `/api/acces` et `/api/cron/releve` traversent le garde par
 `isPublicPath` ; le matcher reste inchangé. La distinction compte : ces endpoints ne sont
 pas ouverts, ils sont authentifiés autrement — par le `HUB_TOKEN` de l'app appelante pour
-le premier, par `CRON_SECRET` pour le second — parce qu'un serveur qui appelle un serveur
+le premier, par `CRON_SECRET` pour le second (et `GANTT_SECRET` pour `/api/gantt`) — parce qu'un serveur qui appelle un serveur
 n'a pas de cookie de session à présenter.
 
 **5. L'observateur était requis pour l'observation.** `enregistrerReleve` n'était appelée

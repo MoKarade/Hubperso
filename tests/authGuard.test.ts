@@ -56,6 +56,16 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api/cron/releve-tout")).toBe(false);
   });
 
+  // Une route de plus de serveur à serveur : le PC de Marc envoie le relevé du Gantt. Même forme,
+  // même raison, chemin nommé exactement. Elle exige `Authorization: Bearer <GANTT_SECRET>`
+  // (app/api/gantt/route.ts) ; `tests/gardePages.test.ts` en vérifie l'auth de remplacement.
+  it("laisse passer /api/gantt — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/gantt")).toBe(true);
+    expect(isPublicPath("/api/gantt/")).toBe(false);
+    expect(isPublicPath("/api/gantt/donnees")).toBe(false);
+    expect(isPublicPath("/api/ganttx")).toBe(false);
+  });
+
   // La TROISIÈME route qui traverse le garde, et la seule SANS aucune authentification :
   // la sonde de santé de la vigie (patron JobAI#49 / BatchChef#154). Elle ne rend que
   // `{ ok, cause }`, jamais une donnée ni un nom de variable — `tests/sante.test.ts` le

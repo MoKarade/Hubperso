@@ -92,7 +92,7 @@ un **login Google (Auth.js / NextAuth v5)**.
   matcher reste inchangé, c'est `isPublicPath` qui le laisse traverser. La distinction
   compte — l'endpoint n'est pas ouvert, il est authentifié **autrement** (par le `HUB_TOKEN`
   de l'app appelante, pas par une session de navigateur, puisque c'est un serveur qui
-  appelle un serveur). `/api/cron/releve` suit le même mécanisme (`CRON_SECRET`), et
+  appelle un serveur). `/api/cron/releve` suit le même mécanisme (`CRON_SECRET`), ainsi que `/api/gantt` (le PC de Marc y envoie le relevé du Gantt, `GANTT_SECRET`), et
   `GET /api/sante` aussi, mais **sans** authentification : c'est la sonde de la vigie, elle
   ne rend que `{ ok, cause }` — jamais une donnée ni un nom de variable
   (`docs/reference-claude.md` §1). `GET /api/cout` est la seule route publique qui rend une
