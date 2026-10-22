@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LOGOS, aUnLogo } from "@/lib/logos";
-import { LogoApp, LogoHub } from "@/components/LogoApp";
+import { LogoApp } from "@/components/LogoApp";
 import { AstreApp } from "@/components/ConstellationVivante";
 import { dispositionAstres } from "@/lib/astres";
 import type { SummaryResult } from "@/lib/fetchSummary";
@@ -15,7 +15,8 @@ const rendre = (el: ReturnType<typeof h>) => renderToStaticMarkup(el);
 
 // Les apps connues du hub (ids de `lib/sources.ts`). Un id ajouté là sans logo doit se VOIR ici.
 const APPS_DU_HUB = SOURCE_DEFS.map((d) => d.id);
-const SANS_LOGO = ["memoryai"];
+// Depuis la série A (Marc, 22/10/2026) les six apps ont un logo : la liste est vide.
+const SANS_LOGO: string[] = [];
 
 describe("logos des apps", () => {
   it("chaque app du hub a un logo, sauf celles listées ici (à dire à Marc)", () => {
@@ -25,7 +26,8 @@ describe("logos des apps", () => {
 
   it("aUnLogo reconnaît les ids dessinés et rien d'autre (pas de propriété héritée)", () => {
     expect(aUnLogo("carai")).toBe(true);
-    expect(aUnLogo("memoryai")).toBe(false);
+    expect(aUnLogo("memoryai")).toBe(true);
+    expect(aUnLogo("uneappsanslogo")).toBe(false);
     expect(aUnLogo("toString")).toBe(false);
   });
 
@@ -38,9 +40,33 @@ describe("logos des apps", () => {
     expect(html).not.toMatch(/\b(fill|stroke)="(?!none|currentColor)[^"]*"/);
   });
 
-  it("le logo du hub a quatre tuiles", () => {
-    const html = rendre(h(LogoHub));
-    expect(html.match(/logo-hub__tuile logo-hub__tuile--\d/g)).toHaveLength(4);
+  it.each(Object.keys(LOGOS))("%s : grille de 64, un contour, et l'étincelle IA", (id) => {
+    const html = rendre(h(LogoApp, { id: id as keyof typeof LOGOS }));
+    expect(html).toContain('viewBox="0 0 64 64"');
+    expect(html).toContain("logo__corps");
+    // La signature commune de la série A : une étincelle par logo.
+    expect(html.match(/logo__ia/g)).toHaveLength(1);
+  });
+
+  it("les parties qui bougent portent leur classe (la feuille de style les anime)", () => {
+    const parties: Record<string, string[]> = {
+      financeai: ["logo__dollar"],
+      carai: ["logo__eclair", "logo__roue"],
+      jobai: ["logo__balaie", "logo__gros"],
+      batchchef: ["logo__couvercle", "logo__vapeur"],
+      driveai: ["logo__flux", "logo__dossier"],
+      memoryai: ["logo__strate"],
+    };
+    for (const [id, classes] of Object.entries(parties)) {
+      const html = rendre(h(LogoApp, { id: id as keyof typeof LOGOS }));
+      for (const c of classes) expect(html, `${id} : ${c}`).toContain(c);
+    }
+  });
+
+  it("DriveAI : trois dossiers en cascade, MemoryAI : trois strates", () => {
+    expect(rendre(h(LogoApp, { id: "driveai" })).match(/logo__dossier/g)).toHaveLength(3);
+    expect(rendre(h(LogoApp, { id: "driveai" }))).toContain("--i:2");
+    expect(rendre(h(LogoApp, { id: "memoryai" })).match(/logo__strate/g)).toHaveLength(3);
   });
 });
 
@@ -78,7 +104,7 @@ describe("astre avec ou sans logo", () => {
   });
 
   it("une app sans logo : son initiale, jamais un logo inventé", () => {
-    const html = astre("memoryai");
+    const html = astre("uneappsanslogo");
     expect(html).toContain("astre__initiale");
     expect(html).not.toContain("data-logo=");
   });

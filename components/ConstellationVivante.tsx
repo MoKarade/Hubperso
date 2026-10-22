@@ -8,6 +8,9 @@
 // Détails qui disent quelque chose de vrai : un satellite par alerte publiée, un segment de
 // l'anneau du cœur par app, un paquet de lumière qui part du cœur vers chaque app à jour.
 // Le fond (étoiles, orbites) est du DÉCOR : il ne représente aucune donnée.
+// Le cœur est le VISAGE de l'assistant (22/10/2026, `components/AssistantVisage.tsx`) ; son action
+// (repos, écoute, réflexion…) viendra du chantier « Assistant du hub » (Hubperso#292) : en
+// attendant il est au repos, il ne prétend rien faire.
 //
 // La scène ne dépend QUE du nombre d'apps (`dispositionAstres`) : elle part avant la moindre
 // réponse, chaque astre remplace son attente quand SON app a répondu (rendu en flux).
@@ -26,7 +29,8 @@ import {
 } from "@/lib/astres";
 import { texteSur } from "@/lib/couleur";
 import { aUnLogo } from "@/lib/logos";
-import { LogoApp, LogoHub } from "@/components/LogoApp";
+import { LogoApp } from "@/components/LogoApp";
+import { AssistantVisage } from "@/components/AssistantVisage";
 
 const ETOILES = etoiles(84);
 /** Les plus grosses étoiles brillent en croix (décor). */
@@ -316,9 +320,7 @@ export function ConstellationVivante({ children }: { children: ReactNode }) {
         </span>
       </div>
       <span className="ciel__coeur" aria-hidden>
-        <span className="ciel__noyau">
-          <LogoHub />
-        </span>
+        <AssistantVisage />
       </span>
       <ul className="ciel__liste">{children}</ul>
     </section>

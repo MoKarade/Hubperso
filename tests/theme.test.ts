@@ -72,6 +72,10 @@ const EXCEPTIONS: Record<string, { raison: string; valeurs: string[] }> = {
     raison: "fond et thème du manifeste PWA, égaux à --bg (verrou : themeSombre.test.ts)",
     valeurs: ["#07090D"],
   },
+  "lib/visage/couleur.ts": {
+    raison: "un <canvas> ne lit pas les variables CSS : `rg` est l'UNIQUE endroit qui écrit `rgba(`, les couleurs du visage sont des triplets (verrou : visage.test.ts)",
+    valeurs: ["rgba("],
+  },
   "lib/couleur.ts": {
     raison: "noir ou blanc posé sur la couleur d'accent d'une APP (champ du contrat)",
     valeurs: ["#000000", "#ffffff"],

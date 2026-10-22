@@ -15,8 +15,8 @@ Une couleur = un sens. Quand une couleur sert à autre chose que son sens, elle 
 | **Rouge** | `--danger` | MAL : panne ou à régler | app qui ne répond pas (logo en tirets rouges, pastille !) ; alerte « à régler » | une simple information ; jamais de rouge « décoratif » |
 | **Bleu** | `--info` | EN CONSTRUCTION ou information | app `building` (contour qui se trace) ; alerte d'information | un état de santé |
 | **Gris** | `--neutral` | INCONNU : non branchée, pas encore lue | app sans jeton (« non configurée »), lecture en cours | ce qui est « éteint » volontairement mais connu |
-| **Indigo de marque** | `--marque` | LE HUB lui-même (et plus tard son assistant) | le cœur, ses orbites et son faisceau, l'action principale | l'état d'une app |
-| **Blanc cassé** | `--text`, `--text-soft` | RIEN : le décor et le texte | étoiles, filantes, noms | porter un sens d'état |
+| **Indigo de marque** | `--marque` | LE HUB lui-même et son assistant (teinte de repos) | le cœur, ses orbites et son faisceau, l'action principale, le visage au repos | l'état d'une app |
+| **Blanc cassé** | `--text`, `--text-soft` | RIEN : le décor et le texte | étoiles, filantes, noms, l'étincelle IA des logos (signature commune, 22/10/2026) | porter un sens d'état |
 
 Règles qui en découlent :
 1. **Le logo garde la couleur de l'app** à jour, en retard, en construction : l'état se lit alors à la FORME (plein et vif, plein et pâle, contour qui se trace) et à la pastille. Il ne change de couleur que pour dire « mal » (rouge, panne) ou « inconnu » (gris).
@@ -33,5 +33,5 @@ Règles qui en découlent :
 ## À trancher avec Marc (plus de détail demandé)
 
 - Faut-il une gradation de rouge (« à régler » vs « panne totale ») et d'ambre (« en retard de quelques minutes » vs « de plusieurs jours ») ? Proposition : non, une forme et un mot suffisent ; la gravité passe par le nombre de satellites.
-- Couleur de l'assistant (cœur) : l'indigo de marque, ou une couleur propre ? Décision rattachée au fil Assistant.
+- ~~Couleur de l'assistant (cœur) : l'indigo de marque, ou une couleur propre ?~~ Tranché le 22/10/2026 avec le choix du visage (ADR 0007) : l'indigo de marque au repos, une teinte PROPRE à l'assistant selon l'action (cyan pour l'écoute, violet pour la réflexion, gris pour l'indisponible…). Ces teintes disent l'humeur du visage, jamais l'état d'une app : elles vivent dans un `<canvas>` (`lib/visage/couleur.ts`) et ne touchent pas aux jetons d'état.
 - Le même tableau pour les graphiques et les coûts (aujourd'hui : ambre pour « surveillé », jamais rouge).

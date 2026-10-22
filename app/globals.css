@@ -2586,6 +2586,9 @@ a:focus-visible,
   height: 8.4rem;
   translate: -50% -50%;
   border-radius: 50%;
+  /* Au-dessus des fils : ils s'arrêtent au bord du visage au lieu de le traverser. */
+  z-index: 1;
+  pointer-events: none;
 }
 /* Une graduation fine autour du cœur, comme un cadran. */
 .ciel__coeur::before {
@@ -2598,28 +2601,6 @@ a:focus-visible,
   -webkit-mask-image: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px), #000 100%);
   opacity: 0.7;
 }
-.ciel__coeur::after {
-  content: "";
-  position: absolute;
-  inset: 1.55rem;
-  border-radius: 50%;
-  border: 1px solid color-mix(in oklch, var(--marque) 40%, transparent);
-}
-.ciel__noyau {
-  position: absolute;
-  inset: 2.5rem;
-  filter: drop-shadow(0 0 14px color-mix(in oklch, var(--marque) 55%, transparent));
-}
-.ciel__noyau::before,
-.ciel__noyau::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--marque);
-  opacity: 0;
-}
-
 /* L'anneau du cœur : un segment par app, à la teinte de son état. */
 .ciel__segment {
   position: absolute;
@@ -2833,7 +2814,7 @@ a:focus-visible,
   clip-path: none;
 }
 
-/* ── Le logo : l'animation et la couleur viennent de lui ───────────────────────────────────── */
+/* ── Le logo : la couleur et le mouvement viennent de lui (série A, grille de 64) ─────────────── */
 .logo {
   position: relative;
   width: 100%;
@@ -2842,62 +2823,72 @@ a:focus-visible,
   color: var(--logo);
   filter: drop-shadow(0 0 8px color-mix(in oklch, var(--logo) 55%, transparent));
 }
-.logo__plein {
-  fill: currentColor;
-  stroke: currentColor;
-}
-.logo__trait {
+.logo__corps {
   fill: none;
   stroke: currentColor;
+  stroke-width: 3.2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.logo__arc {
-  display: none;
+.logo__gros {
+  stroke-width: 6.4;
 }
-.logo__chevron {
+.logo__masse {
+  fill: currentColor;
+  fill-opacity: 0.2;
+  stroke: none;
+}
+.logo__plein {
+  fill: currentColor;
+  stroke: none;
+}
+/* Une roue : un cercle plein de la couleur du fond, cerclé de la couleur du logo. */
+.logo__roue {
+  fill: var(--bg);
+  stroke: currentColor;
+  stroke-width: 3.2;
+}
+/* L'étincelle IA, signature commune des logos : blanc cassé, cernée du fond. */
+.logo__ia {
+  fill: var(--text);
+  stroke: var(--bg);
+  stroke-width: 2.6;
+  paint-order: stroke;
   stroke-linejoin: round;
-}
-.logo__marmite {
   transform-box: fill-box;
-  transform-origin: 50% 100%;
+  transform-origin: center;
 }
-/* Un contour fin (en pixels d'écran) pour tout ce qui n'est pas « à jour ». */
-.astre[data-etat="panne"] .logo__plein,
-.astre[data-etat="construction"] .logo__plein,
-.astre[data-etat="attente"] .logo__plein,
-.astre[data-etat="absent"] .logo__plein {
-  fill: transparent;
+.logo__couvercle,
+.logo__dossier,
+.logo__strate,
+.logo__balaie {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.logo__balaie {
+  transform-box: view-box;
+  transform-origin: 55px 55px;
+}
+.logo__flux {
+  stroke-dasharray: 3 5;
+}
+/* Pas à jour, pas branchée ou en chantier : les aplats deviennent des contours fins en tirets
+   (en pixels d'écran), les traits des tirets ou des points. L'état se lit à la forme. */
+.astre:is([data-etat="panne"], [data-etat="construction"], [data-etat="attente"], [data-etat="absent"])
+  .logo
+  :is(.logo__masse, .logo__plein, .logo__roue, .logo__ia) {
+  fill: none;
+  stroke: currentColor;
   stroke-width: 1.4px;
+  stroke-dasharray: 3 2.4;
   vector-effect: non-scaling-stroke;
-  stroke-dasharray: 4 3;
 }
-.astre[data-etat="panne"] .logo__trait,
-.astre[data-etat="absent"] .logo__trait {
-  stroke-dasharray: 0.01 4.5;
+.astre:is([data-etat="panne"], [data-etat="construction"], [data-etat="attente"], [data-etat="absent"])
+  .logo__corps {
+  stroke-dasharray: 5 3.6;
 }
-.astre[data-etat="panne"] .logo__trait,
-.astre[data-etat="absent"] .logo__trait,
-.astre[data-etat="construction"] .logo__trait,
-.astre[data-etat="attente"] .logo__trait {
-  vector-effect: non-scaling-stroke;
-  stroke-width: 1.6px;
-}
-.astre[data-etat="construction"] .logo__trait,
-.astre[data-etat="attente"] .logo__trait {
-  stroke-dasharray: 5 4;
-}
-/* Une app à jour ou en retard montre aussi l'arc de charge de CarAI. */
-.astre[data-etat="vivant"] .logo__arc,
-.astre[data-etat="retard"] .logo__arc {
-  display: inline;
-  stroke-dasharray: 22 78;
-  stroke-opacity: 0.95;
-  transform-origin: 16px 16px;
-}
-.astre[data-etat="vivant"] .logo__cercle,
-.astre[data-etat="retard"] .logo__cercle {
-  stroke-opacity: 0.4;
+.astre:is([data-etat="panne"], [data-etat="absent"]) .logo__corps {
+  stroke-dasharray: 1.2 3.6;
 }
 
 /* La couleur de l'état : le logo lui-même la prend. */
@@ -2993,24 +2984,51 @@ a:focus-visible,
   outline-offset: 6px;
 }
 
-/* ── Le logo du hub, au cœur : quatre tuiles aux teintes du hub ────────────────────────────── */
-.logo-hub {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+/* ── Le visage de l'assistant, au cœur (`components/AssistantVisage.tsx`) ─────────────────────── */
+.visage {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
 }
-.logo-hub__tuile--1 {
-  fill: var(--info);
+/* Sans JavaScript, ou avant le premier dessin : une sphère de verre aux couleurs du hub. */
+.visage::before {
+  content: "";
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, color-mix(in oklch, var(--text) 24%, transparent), transparent 40%),
+    radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--marque) 32%, var(--bg)), var(--bg) 78%);
+  box-shadow: 0 0 2.2rem color-mix(in oklch, var(--marque) 28%, transparent);
 }
-.logo-hub__tuile--2 {
-  fill: var(--ok);
+.visage:has(.visage__toile[data-pret])::before {
+  display: none;
 }
-.logo-hub__tuile--3 {
-  fill: var(--warn);
+/* Le canvas déborde de l'élément (230 %) : halo et accessoires ne sont pas rognés. */
+.visage__toile {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 230%;
+  height: 230%;
+  translate: -50% -50%;
+  pointer-events: none;
 }
-.logo-hub__tuile--4 {
-  fill: var(--text);
+.visage__legende {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 1rem);
+  translate: -50% 0;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  text-shadow:
+    0 0 10px var(--bg),
+    0 0 10px var(--bg);
+}
+.visage[data-etat="indispo"] .visage__legende {
+  color: var(--neutral);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -3063,78 +3081,48 @@ a:focus-visible,
   .ciel__balayage {
     animation: ciel-tourne 22s linear infinite;
   }
-  .logo-hub__tuile {
-    animation: logo-tuile 4.8s ease-in-out infinite;
-  }
-  .logo-hub__tuile--2 {
-    animation-delay: -1.2s;
-  }
-  .logo-hub__tuile--3 {
-    animation-delay: -2.4s;
-  }
-  .logo-hub__tuile--4 {
-    animation-delay: -3.6s;
-  }
-  .ciel__noyau::before {
-    animation: ciel-sonar 5.2s ease-out infinite;
-  }
-  .ciel__noyau::after {
-    animation: ciel-sonar 5.2s ease-out 2.6s infinite;
-  }
-  /* Chaque logo bouge à sa façon quand l'app est à jour (et plus lentement quand elle est en retard). */
+  /* Chaque logo bouge à sa façon quand l'app est à jour, plus lentement quand elle est en retard :
+     le logo respire, l'étincelle scintille, et chaque dessin a son geste (pièce, éclair, loupe…). */
   .astre[data-etat="vivant"] .logo {
-    animation: logo-respire 4.2s ease-in-out infinite;
-    animation-delay: calc(var(--n, 0) * -0.7s);
-  }
-  .astre[data-etat="retard"] .logo {
     animation: logo-respire 9s ease-in-out infinite;
     animation-delay: calc(var(--n, 0) * -1.3s);
   }
-  .astre[data-etat="vivant"] .logo__arc,
-  .astre[data-etat="retard"] .logo__arc {
-    animation: ciel-tourne 3.2s linear infinite;
+  .astre[data-etat="retard"] .logo {
+    animation: logo-respire 14s ease-in-out infinite;
+    animation-delay: calc(var(--n, 0) * -2s);
   }
-  .astre[data-etat="retard"] .logo__arc {
-    animation-duration: 9s;
+  .astre:is([data-etat="vivant"], [data-etat="retard"]) .logo__ia {
+    animation: logo-eclat 7s ease-in-out infinite;
+    animation-delay: calc(var(--n, 0) * -1.1s);
+  }
+  .astre:is([data-etat="vivant"], [data-etat="retard"]) .logo__vapeur {
+    animation: logo-monte 4.4s ease-out infinite;
+  }
+  .astre[data-etat="vivant"] .logo__dollar {
+    animation: logo-souffle 5s ease-in-out infinite;
   }
   .astre[data-etat="vivant"] .logo__eclair {
-    animation: logo-charge 2.4s ease-in-out infinite;
+    animation: logo-souffle 4s ease-in-out infinite;
   }
-  .astre[data-etat="vivant"] .logo__curseur {
-    animation: logo-curseur 1.2s steps(1, end) infinite;
+  .astre[data-etat="vivant"] .logo__balaie {
+    animation: logo-balance 7s ease-in-out infinite alternate;
   }
-  .astre[data-etat="retard"] .logo__curseur {
-    animation: logo-curseur 3.2s steps(1, end) infinite;
+  .astre[data-etat="vivant"] .logo__couvercle {
+    animation: logo-leve 6s ease-in-out infinite;
   }
-  .astre[data-etat="vivant"] .logo__marmite {
-    animation: logo-mijote 3.4s ease-in-out infinite;
+  .astre[data-etat="vivant"] .logo__dossier {
+    animation: logo-pop 7s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -1.4s);
   }
-  .astre[data-etat="vivant"] .logo__vapeur {
-    animation: logo-vapeur 3.4s ease-in-out infinite;
-    animation-delay: calc(var(--k, 0) * -1.1s);
+  .astre[data-etat="vivant"] .logo__strate {
+    animation: logo-strate 7s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -0.9s);
   }
-  .astre[data-etat="retard"] .logo__vapeur {
-    animation: logo-vapeur 8s ease-in-out infinite;
-    animation-delay: calc(var(--k, 0) * -2.6s);
-  }
-  .astre[data-etat="vivant"] .logo__lettre {
-    animation: logo-lettre 3.2s ease-in-out infinite;
-    animation-delay: calc(var(--k, 0) * -1.6s);
-  }
-  .astre[data-etat="vivant"] .logo__barre {
-    transform-box: fill-box;
-    transform-origin: left center;
-    animation: logo-barre 3.6s ease-in-out infinite;
-    animation-delay: calc(var(--k, 0) * -0.5s);
-  }
-  .astre[data-etat="vivant"] .logo__point {
-    animation: logo-point 3.6s ease-in-out infinite;
+  .astre[data-etat="vivant"] .logo__flux {
+    animation: logo-flux 6s linear infinite;
   }
   /* En construction : le contour se trace en boucle. En panne : il clignote, irrégulièrement. */
-  .astre[data-etat="construction"] .logo__plein,
-  .astre[data-etat="construction"] .logo__trait,
-  .astre[data-etat="attente"] .logo__plein,
-  .astre[data-etat="attente"] .logo__trait {
+  .astre:is([data-etat="construction"], [data-etat="attente"]) .logo :is(.logo__masse, .logo__plein, .logo__roue, .logo__ia, .logo__corps) {
     animation: logo-trace 1.6s linear infinite;
   }
   .astre[data-etat="panne"] .logo {
@@ -3166,49 +3154,24 @@ a:focus-visible,
 @keyframes logo-respire {
   0%,
   100% {
-    opacity: 0.82;
+    opacity: 0.86;
   }
   50% {
     opacity: 1;
   }
 }
-@keyframes logo-charge {
+@keyframes logo-eclat {
   0%,
   100% {
-    opacity: 0.55;
+    scale: 0.82;
+    opacity: 0.7;
   }
-  45% {
+  50% {
+    scale: 1.12;
     opacity: 1;
   }
 }
-@keyframes logo-curseur {
-  50% {
-    opacity: 0;
-  }
-}
-@keyframes logo-vapeur {
-  0% {
-    opacity: 0;
-    translate: 0 14px;
-  }
-  35% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 0;
-    translate: 0 -22px;
-  }
-}
-@keyframes logo-mijote {
-  0%,
-  100% {
-    scale: 1 1;
-  }
-  50% {
-    scale: 1.02 0.985;
-  }
-}
-@keyframes logo-lettre {
+@keyframes logo-souffle {
   0%,
   100% {
     opacity: 0.55;
@@ -3217,22 +3180,57 @@ a:focus-visible,
     opacity: 1;
   }
 }
-@keyframes logo-barre {
-  0%,
-  100% {
-    scale: 0.78 1;
+@keyframes logo-balance {
+  from {
+    rotate: -5deg;
   }
-  50% {
-    scale: 1 1;
+  to {
+    rotate: 5deg;
   }
 }
-@keyframes logo-point {
+@keyframes logo-leve {
   0%,
   100% {
     translate: 0 0;
   }
   50% {
-    translate: 0 -1.4px;
+    translate: 0 -1.6px;
+  }
+}
+@keyframes logo-pop {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.05;
+  }
+}
+@keyframes logo-strate {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -1.3px;
+  }
+}
+@keyframes logo-monte {
+  0% {
+    translate: 0 4px;
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  100% {
+    translate: 0 -6px;
+    opacity: 0;
+  }
+}
+@keyframes logo-flux {
+  to {
+    stroke-dashoffset: -16;
   }
 }
 @keyframes logo-trace {
@@ -3256,17 +3254,6 @@ a:focus-visible,
   }
   68% {
     opacity: 1;
-  }
-}
-@keyframes logo-tuile {
-  0%,
-  100% {
-    opacity: 0.7;
-    scale: 1;
-  }
-  50% {
-    opacity: 1;
-    scale: 1.035;
   }
 }
 @keyframes ciel-coeur-entre {
@@ -3325,16 +3312,6 @@ a:focus-visible,
     scale: 1.07;
   }
 }
-@keyframes ciel-sonar {
-  0% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(3.1);
-  }
-}
 @keyframes ciel-souffle {
   0%,
   100% {
@@ -3379,12 +3356,6 @@ a:focus-visible,
   .ciel__segment {
     width: 10.4rem;
     height: 10.4rem;
-  }
-  .ciel__noyau {
-    inset: 3.1rem;
-  }
-  .ciel__coeur::after {
-    inset: 1.9rem;
   }
   .astre {
     --taille: 5.25rem;
