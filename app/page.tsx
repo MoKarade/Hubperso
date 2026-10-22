@@ -16,6 +16,8 @@ import { AppWidget } from "@/components/AppWidget";
 import { WidgetSkeleton } from "@/components/WidgetSkeleton";
 import { CostsCard } from "@/components/CostsCard";
 import { TuileGraphes } from "@/components/TuileGraphes";
+import { AstreApp, AstreAttente, ConstellationVivante } from "@/components/ConstellationVivante";
+import { dispositionAstres, type PositionAstre } from "@/lib/astres";
 import { RefreshControls } from "@/components/RefreshControls";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -71,6 +73,24 @@ async function StreamedWidget({
       featured={featured}
     />
   );
+}
+
+/** Un astre : attend SA promesse, sans bloquer les autres (même principe que `StreamedWidget`). */
+async function StreamedAstre({
+  promise,
+  position,
+  n,
+  total,
+  grand,
+}: {
+  promise: Promise<SummaryResult>;
+  position: PositionAstre;
+  n: number;
+  total: number;
+  grand: boolean;
+}) {
+  const result = await promise;
+  return <AstreApp result={result} position={position} n={n} total={total} grand={grand} />;
 }
 
 /** Compteur d'en-tête : a besoin de TOUTES les réponses, donc il arrive en dernier. */
@@ -139,6 +159,7 @@ export default async function Page() {
   // Appariées à leur source pour qu'aucun index ne puisse se désynchroniser.
   const jobs = sources.map((source) => ({ source, promise: fetchSummary(source) }));
   const promises = jobs.map((j) => j.promise);
+  const positions = dispositionAstres(jobs.length);
 
   // ── ARCHIVAGE : effet de bord, jamais un préalable à l'affichage ────────────────────
   //
@@ -182,6 +203,36 @@ export default async function Page() {
       </Suspense>
 
       {proprietaire && <TuileGraphes nombre={DEPOTS.length} />}
+
+      {/* Le ciel des apps : sa géométrie ne dépend que du NOMBRE d'apps déclarées, donc la scène
+          part tout de suite ; chaque astre remplace son attente quand son app a répondu. */}
+      <ConstellationVivante>
+        {jobs.map(({ source, promise }, index) => {
+          const position = positions[index]!;
+          return (
+            <Suspense
+              key={source.id}
+              fallback={
+                <AstreAttente
+                  source={source}
+                  position={position}
+                  n={index}
+                  total={jobs.length}
+                  grand={source.hero}
+                />
+              }
+            >
+              <StreamedAstre
+                promise={promise}
+                position={position}
+                n={index}
+                total={jobs.length}
+                grand={source.hero}
+              />
+            </Suspense>
+          );
+        })}
+      </ConstellationVivante>
 
       <Suspense fallback={<div className="costs costs--loading" aria-busy="true" />}>
         <StreamedCosts promises={promises} />

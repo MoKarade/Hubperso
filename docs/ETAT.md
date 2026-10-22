@@ -11,7 +11,8 @@ dans `HANDOVER.md`, les chantiers ouverts dans `BACKLOG.md`.
 - `lib/` : ~48 modules (accès, sources, dérivés, historique, base) ; `components/` : 17 ;
   `drizzle/` : 2 migrations ; `tests/` : ~44 fichiers.
 - CI (`.github/workflows`) : ci, auto-merge, constellation, doc-a-jour, releve (cron `*/30`).
-- ADR : `docs/adr/0001` à `0005`.
+- Cœur de l'accueil : le visage de l'assistant (`components/AssistantVisage.tsx`, moteur et dessin dans `lib/visage/`, 124 expressions, six actions) ; logos des apps en série A (`components/LogoApp.tsx`). Voir l'ADR 0007.
+- ADR : `docs/adr/0001` à `0007`.
 
 ## État
 - Fusion auto active (`auto-merge.yml`). Aucun `TODO`/`FIXME`/`eslint-disable`/`@ts-ignore`
