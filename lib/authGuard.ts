@@ -60,6 +60,12 @@ export function isPublicPath(pathname: string): boolean {
   // le vrai garde-fou : le matcher du middleware ne gagne aucune exclusion (leçon n°4).
   if (pathname === "/api/cron/releve") return true;
 
+  // POST /api/lia/ask : la question de LIA, relayée à MemoryAI. Appelée par les APPS (serveur à
+  // serveur, `x-hub-token`) et par l'accueil (session). Elle traverse le garde pour laisser passer
+  // le jeton, et se garde donc TOUTE SEULE : jeton valide ou session avec accès au hub, sinon 401
+  // (app/api/lia/ask/route.ts). Jamais dans le matcher du middleware.
+  if (pathname === "/api/lia/ask") return true;
+
   // GET /api/sante : la sonde de santé de la vigie de l'Atelier (patron JobAI#49 /
   // BatchChef#154). TROISIÈME route qui traverse le garde, et la seule SANS aucune
   // authentification — délibérément : elle ne rend que `{ ok, cause }`, jamais une donnée,

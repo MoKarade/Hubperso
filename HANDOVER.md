@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **Le hub relaie les questions de LIA à MemoryAI (Hubperso#336)**
+
+`POST /api/lia/ask` : point d'entrée unique de LIA (contrat du fil Assistant, `commun/assistant/CONTRAT-ask-lia.md`). Appelants : une app (`x-hub-token`, la source vient du jeton) ou l'accueil (session + accès au hub). Le hub relaie à MemoryAI `POST /api/ask` avec `HUB_TOKEN_MEMORYAI`, 20 s de délai, réponse validée à la main (`lib/liaAsk.ts`, `zod` n'est pas une dépendance directe). Tout échec = 503 : LIA dit « indisponible », jamais de réponse inventée. La question n'est jamais journalisée.
+- **Pas encore branché au navigateur** : `components/LiaHub.tsx` n'a toujours pas de `ask` (PR suivante, quand MemoryAI aura sa route `/api/ask` en production). Tant que MemoryAI ne répond pas, la route rend 503.
+- Route déclarée à jeton dans `tests/gardePages.test.ts` et laissée passer par `isPublicPath` (chemin exact). `docs/reference-claude.md` §1 mise à jour.
+
 ## 🟦 Session 2026-10-22 (soir) — **Cartes d'app selon la maquette (Hubperso#287)**
 
 Maquette validée par Marc (22/10/2026) : toutes les cartes sont identiques, une colonne chacune (le héros déclaré garde sa classe `widget--lg` mais ne réserve plus 2×2 cases ; les règles « surplus de la carte large » de #252 sont retirées). Une carte : logo, nom, puce d'état (mot + filet), libellé du chiffre, gros chiffre fin (300, jamais sous 2 rem), écart, courbe avec aire (`sparkline__zone`), mesures en lignes, alertes en pastilles, pied « fraîcheur · Détail · Ouvrir » (deux boutons contourés de 44 px). « Détail » reste la nappe qui rend toute la carte cliquable : le pied n'est donc PAS positionné (verrou `tests/carteMaquette.test.ts`). « Ouvrir » reprend l'URL du titre, sans `_blank` (`[PWA-ANDROID]`). Apps injoignable, en construction sans mesure ou non branchée : aucun chiffre, la phrase d'état, « Détail » seul.
