@@ -152,6 +152,8 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "serveur à serveur : une app demande si une adresse a accès chez elle, identifiée par son HUB_TOKEN",
     "api/cron/releve/route.ts":
       "l'horloge du hub, appelée par un workflow GitHub Actions et authentifiée par CRON_SECRET",
+    "api/gantt/route.ts":
+      "le PC de Marc y envoie le relevé du Gantt (tour.py), authentifié par GANTT_SECRET",
   };
 
   /**

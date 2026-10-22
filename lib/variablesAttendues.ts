@@ -69,6 +69,11 @@ const FIXES: readonly VariableAttendue[] = [
     siAbsente: "horloge désactivée : /api/cron/releve répond 503, aucun relevé écrit",
   },
   {
+    nom: "GANTT_SECRET",
+    exigence: "optionnelle",
+    siAbsente: "réception du Gantt désactivée : /api/gantt répond 503, l'onglet Chantier Apps n'a rien à montrer",
+  },
+  {
     nom: "AUTH_COOKIE_DOMAIN",
     exigence: "optionnelle",
     siAbsente: "session limitée à hubperso.com, non partagée avec les sous-domaines des apps",
