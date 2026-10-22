@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 — **Graphe de code plus rapide (MoKarade/.github#487)**
+
+`scripts/graphe.sh` : `affected` ≈ 0,3 s au lieu de 1,2 s (le test d'installation n'importe plus `mcp`), profondeur 1 par défaut (`--depth 2` à la demande), journal local `graphify-out/usage.jsonl` résumé par `scripts/graphe.sh usage`. Copie du script commun, aucun changement d'écran ni de route ; détail : `docs/reference-claude.md`, section 12.
+
 ## 🟦 Session 2026-10-21 (nuit) — **Graphes en 3D, ouverts sur place (Hubperso#280)**
 
 Marc, 21/10/2026 : « quand j'ouvre un graph je veux pas que ça ouvre une autre page », la vignette doit montrer le VRAI graphe de chaque dépôt, beaucoup plus d'animations ; la refonte complète de la page Hubperso viendra APRÈS (pas commencée).
