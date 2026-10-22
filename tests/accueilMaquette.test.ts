@@ -56,24 +56,22 @@ describe("en-tête daté de l'accueil", () => {
   });
 });
 
-describe("colonne de LIA", () => {
+describe("l'accueil ne réserve aucune place à LIA", () => {
   const resultats = [ok("a")];
-  const rendre = (lia?: string) =>
-    renderToStaticMarkup(
-      h(ResumeHub, { resume: resumeHub(resultats, []), liste: [], maintenant: NOW, lia: lia ? h("p", null, lia) : undefined }),
-    );
+  const html = renderToStaticMarkup(
+    h(ResumeHub, { resume: resumeHub(resultats, []), liste: [], maintenant: NOW }),
+  );
 
-  it("rien n'est dessiné tant que son composant n'existe pas", () => {
-    const html = rendre();
+  it("le résumé n'a plus de colonne de LIA", () => {
     expect(html).not.toContain("accueil__lia");
     expect(html).not.toContain("accueil--lia");
+    expect(texte(html)).toContain("L’app est à jour.");
   });
 
-  it("quand il arrive, il prend la colonne de gauche sans toucher au reste", () => {
-    const html = rendre("LIA");
-    expect(html).toContain("accueil__lia");
-    expect(html).toContain("accueil--lia");
-    expect(texte(html)).toContain("L’app est à jour.");
+  it("la feuille de style ne réserve plus de hauteur ni de colonne", () => {
+    const css = readFileSync(join(__dirname, "..", "app", "globals.css"), "utf8");
+    expect(css).not.toContain("lia-colonne");
+    expect(css).not.toContain("accueil--lia");
   });
 });
 
@@ -129,12 +127,19 @@ describe("panneau « Coûts et quotas » (rendu)", () => {
   });
 });
 
-describe("LIA dans la colonne de gauche", () => {
+describe("LIA dans la fenêtre", () => {
   const page = readFileSync(join(__dirname, "..", "app", "page.tsx"), "utf8");
   const composant = readFileSync(join(__dirname, "..", "components", "LiaHub.tsx"), "utf8");
 
-  it("la page passe LiaHub à la colonne réservée du résumé", () => {
-    expect(page).toContain("lia={<LiaHub />}");
+  it("la page monte LiaHub une fois, hors du résumé", () => {
+    expect(page.match(/<LiaHub \/>/g)).toHaveLength(1);
+    expect(page).not.toContain("lia={<LiaHub />}");
+  });
+
+  it("LiaHub n'a ni conteneur ni élément à lui : elle vit dans la fenêtre entière", () => {
+    expect(composant).not.toMatch(/container[=:]/);
+    expect(composant).not.toContain("lia-colonne");
+    expect(composant).not.toMatch(/<div/);
   });
 
   it("la question passe par la route du hub, jamais par une réponse écrite ici", () => {
