@@ -98,10 +98,10 @@ async function StreamedAttention({ promises }: { promises: Promise<SummaryResult
   return <ResumeHub resume={resumeHub(results, liste)} liste={liste} />;
 }
 
-/** Carte des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
+/** Panneau des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
 async function StreamedCosts({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
-  return <CostsCard digest={aggregateUsage(results)} />;
+  return <CostsCard digest={aggregateUsage(results)} maintenant={maintenantMs()} />;
 }
 
 export default async function Page() {
@@ -185,10 +185,6 @@ export default async function Page() {
 
       {proprietaire && <TuileGraphes nombre={DEPOTS.length} />}
 
-      <Suspense fallback={<div className="costs costs--loading" aria-busy="true" />}>
-        <StreamedCosts promises={promises} />
-      </Suspense>
-
       {/* Densité adaptative : aéré par défaut, la grille se resserre quand les apps
           se multiplient (indépendant du contenu des apps — purement un compte). */}
       <section
@@ -204,6 +200,11 @@ export default async function Page() {
           </Suspense>
         ))}
       </section>
+
+      {/* Sous les cartes (maquette de base) : les coûts se lisent après l'état des apps. */}
+      <Suspense fallback={<div className="couts-panneau couts-panneau--attente" aria-busy="true" />}>
+        <StreamedCosts promises={promises} />
+      </Suspense>
     </main>
   );
 }

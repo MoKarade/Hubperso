@@ -6,8 +6,13 @@ import type { SummaryResult } from "../lib/fetchSummary";
 import type { HubSource } from "../lib/sources";
 import {
   aggregateUsage,
+  appsSansCout,
+  blocsCouts,
+  jauges,
+  niveauQuota,
   pourquoiPasDeTotalUnique,
   quotaRatio,
+  remiseAZero,
   toCad,
   USD_TO_CAD,
 } from "../lib/usage";
@@ -133,5 +138,51 @@ describe("pourquoiPasDeTotalUnique — dire à l'écran ce que le code sait déj
       { period: "jour", cad: 3, appCount: 1 },
     ]);
     expect(note).toContain("aujourd\u2019hui");
+  });
+});
+
+describe("vues du panneau « Coûts et quotas »", () => {
+  const digest = aggregateUsage([
+    ok("a", { cost: { amount: 10, currency: "CAD", period: "total" } }),
+    ok("b", { cost: { amount: 2, currency: "USD", period: "total" } }),
+    ok("c", { cost: { amount: 3, currency: "CAD", period: "mois" } }),
+    ok("d"), // pas de usage
+    ok("e", { quotas: [{ label: "Gmail", used: 90, limit: 100 }, { label: "Libre", used: 7, limit: null }] }),
+  ]);
+
+  it("un bloc PAR période, titré, les apps de la période seulement, la plus chère d'abord", () => {
+    const blocs = blocsCouts(digest);
+    expect(blocs.map((b) => b.titre)).toEqual(["Depuis le début · cumul", "Ce mois-ci"]);
+    expect(blocs[0]?.lignes.map((l) => l.id)).toEqual(["a", "b"]);
+    expect(blocs[1]?.lignes.map((l) => l.id)).toEqual(["c"]);
+    expect(blocs[0]?.totalCad).toBeCloseTo(10 + 2 * USD_TO_CAD, 2);
+  });
+
+  it("une app sans coût est nommée à part, jamais comptée pour 0", () => {
+    expect(appsSansCout(digest)).toEqual(["D", "E"]);
+    expect(blocsCouts(digest).flatMap((b) => b.lignes.map((l) => l.id))).not.toContain("d");
+  });
+
+  it("niveaux de quota : 80 % surveille, 100 % dépasse, plafond inconnu ne dit rien", () => {
+    expect(niveauQuota(0.79)).toBe("ok");
+    expect(niveauQuota(0.8)).toBe("warn");
+    expect(niveauQuota(1)).toBe("alert");
+    expect(niveauQuota(null)).toBe("ok");
+  });
+
+  it("jauges : les plus pleines d'abord, sans plafond à la fin avec un ratio nul", () => {
+    const j = jauges(digest);
+    expect(j.map((q) => q.label)).toEqual(["Gmail", "Libre"]);
+    expect(j[0]?.niveau).toBe("warn");
+    expect(j[1]?.ratio).toBeNull();
+    expect(j[1]?.limit).toBeNull();
+  });
+
+  it("remise à zéro : dite si la date est future, tue si absente, passée ou illisible", () => {
+    const maintenant = Date.parse("2026-10-22T12:00:00Z");
+    expect(remiseAZero("2026-10-31T12:00:00Z", maintenant)).toBe("se remet à zéro dans 9 j");
+    expect(remiseAZero(undefined, maintenant)).toBeNull();
+    expect(remiseAZero("2026-10-01T00:00:00Z", maintenant)).toBeNull();
+    expect(remiseAZero("pas une date", maintenant)).toBeNull();
   });
 });

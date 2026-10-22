@@ -9,6 +9,13 @@ Maquette validée par Marc (22/10/2026) : toutes les cartes sont identiques, une
 - **Correction en chemin** : le bandeau rouge ne prenait que la première alerte, quelle que soit sa gravité ; une simple info s'affichait donc en rouge avec le triangle. Il est maintenant réservé à `alert` (`lib/alertes.ts`) ; les autres rejoignent la liste en pastille.
 - Tests : `tests/bento.test.ts` et `tests/themeSombre.test.ts` réécrits pour la nouvelle règle (mêmes nombres de tests) ; nouveau `tests/carteMaquette.test.ts` (12 tests). Captures avant/après : `docs/captures/2026-10-22-cartes/` (données fictives, Chromium).
 
+## 🟦 Session 2026-10-22 (soir) — **Panneau « Coûts et quotas » sous les cartes (Hubperso#324, 1/2)**
+
+Marc, 22/10/2026 : « le hub est pas comme la maquette de base ». Première moitié (la seconde, le résumé en lignes d'action, suit dans une PR à part pour rester sous 400 lignes) : ordre de la page = en-tête, résumé, (tuile des graphes, propriétaire), cartes d'apps, PUIS les coûts (avant, ils passaient devant les cartes).
+- `components/CostsCard.tsx` : une section au lieu d'une carte-lien ; un bloc PAR période (jamais fusionnées, l'explication de `pourquoiPasDeTotalUnique` reste à l'écran), barre par app, apps sans coût nommées (jamais 0), jauges de quotas (`role="progressbar"`, seuils 80 % / 100 %, remise à zéro dite seulement si la date est future, plafond non publié = pas de barre). **Aucun plafond de dépense affiché** : le contrat n'en porte pas. Seul lien : « Voir le détail » → `/couts`.
+- `lib/usage.ts` : vues pures `blocsCouts`, `appsSansCout`, `jauges`, `niveauQuota`, `remiseAZero`. CSS `.couts-panneau*` remplace `.costs*` ; l'exception `costs` de `tests/ciblesTactiles.test.ts` disparaît avec la carte-lien.
+- Tests : nouveau `tests/accueilMaquette.test.ts` (ordre + rendu du panneau), ajouts à `tests/usage.test.ts`, `tests/composantsAffichage.test.ts`. Captures (données fictives) : `docs/captures/2026-10-22-accueil/`.
+
 ## 🟦 Session 2026-10-22 (soir) — **Navigation du hub (refonte, tâche Hubperso#288)**
 
 Maquette validée par Marc (22/10/2026). Une navigation sur toutes les pages, mêmes entrées partout : **Vue** (Accueil, Attention, Coûts), **Apps** (les six, logo série A dans leur couleur déclarée), **Gérer** (Graphes de code, Administration, **propriétaire seulement**). À partir de 1024 px : barre latérale collante ; en dessous : barre du bas à quatre entrées (Accueil, Attention, Coûts, Plus) et feuille « Plus » (apps et Gérer).
