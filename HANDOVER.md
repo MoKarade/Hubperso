@@ -2,6 +2,15 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **Réception du relevé du Gantt (Hubperso#329, onglet « Chantier Apps »)**
+
+Marc, 22/10/2026 : tout le « Chantier Apps » dans un onglet du hub, mêmes données que le Gantt, sans copie à la main. Première brique : le hub **reçoit** le relevé. Le Drive où `outils/gantt-pc/tour.py` (MoKarade/.github) écrit toutes les 10 min est privé (titres de tâches de FinanceAI et DriveAI) : le hub ne le lit pas et n'expose aucune URL publique, c'est le PC qui POSTe.
+- `POST /api/gantt` (`app/api/gantt/route.ts`) : même modèle que `/api/cron/releve` (secret DÉDIÉ `GANTT_SECRET` en `Authorization: Bearer`, 503 si absent côté serveur, 401 si faux, `memeJeton`, limite 10/min, chemin nommé par égalité stricte dans `isPublicPath`). Corps vérifié par `lib/gantt.ts` (pur, sans dépendance de plus : version 1, date d'envoi, gzip en base64, quatre objets) ; 400 si invalide, 413 au-delà de 4 Mo ; **un envoi refusé ne touche jamais la ligne en base**.
+- Table `gantt_releve` (migration `drizzle/0002`, non destructive) : UNE ligne (`CHECK id = 1`), remplacée à chaque envoi valide (`lib/ganttDb.ts`, upsert). `donnees_gz_b64` est gardé tel quel : le hub ne décode ni ne reformate, donc aucun écart possible avec le Gantt. `estPerime` : plus de 30 min sans envoi = présenté comme périmé.
+- `GANTT_SECRET` n'est volontairement PAS dans `.env.example` (le Garde-fou y voit une variable secrète ajoutée et bloque la PR) : il est documenté ici, dans `README.md`, `docs/reference-claude.md` et `lib/variablesAttendues.ts`.
+- **Reste à faire hors de cette PR** : poser `GANTT_SECRET` sur Vercel ET sur le PC (même valeur, jamais dans un message), puis ajouter l'envoi à `tour.py` (fil Gantt). Tant que la variable manque, la route répond 503 : c'est voulu.
+- Tests : `gantt` (validation), `ganttRoute` (auth, tailles, 400/413/500/429), `ganttDb` (PGlite : un envoi remplace, une seule ligne), `authGuard`, `gardePages`.
+
 ## 🟦 Session 2026-10-22 (soir) — **Cartes d'app selon la maquette (Hubperso#287)**
 
 Maquette validée par Marc (22/10/2026) : toutes les cartes sont identiques, une colonne chacune (le héros déclaré garde sa classe `widget--lg` mais ne réserve plus 2×2 cases ; les règles « surplus de la carte large » de #252 sont retirées). Une carte : logo, nom, puce d'état (mot + filet), libellé du chiffre, gros chiffre fin (300, jamais sous 2 rem), écart, courbe avec aire (`sparkline__zone`), mesures en lignes, alertes en pastilles, pied « fraîcheur · Détail · Ouvrir » (deux boutons contourés de 44 px). « Détail » reste la nappe qui rend toute la carte cliquable : le pied n'est donc PAS positionné (verrou `tests/carteMaquette.test.ts`). « Ouvrir » reprend l'URL du titre, sans `_blank` (`[PWA-ANDROID]`). Apps injoignable, en construction sans mesure ou non branchée : aucun chiffre, la phrase d'état, « Détail » seul.
