@@ -104,3 +104,24 @@ export function formatDuree(ms: number): string {
   if (heures < 24) return `${heures} h`;
   return `${Math.round(ms / 86_400_000)} j`;
 }
+
+/**
+ * L'en-tête de l'accueil : « jeudi 22 octobre · 20 h 27 », à l'heure du Québec (`FUSEAU`, jamais
+ * celui de la machine : Vercel tourne en UTC). Passé `maintenant` par l'appelant pour rester pur.
+ */
+export function formatEnteteAccueil(maintenant: number): string {
+  const date = new Date(maintenant);
+  const jour = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: FUSEAU,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(date);
+  const heure = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: FUSEAU,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+  return `${jour} · ${heure}`;
+}

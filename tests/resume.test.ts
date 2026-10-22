@@ -114,12 +114,13 @@ describe("points à regarder", () => {
 describe("ResumeHub (rendu)", () => {
   const rendre = (resultats: SummaryResult[]) => {
     const liste: Attention[] = attentions(resultats, NOW);
-    return renderToStaticMarkup(h(ResumeHub, { resume: resumeHub(resultats, liste), liste }));
+    return renderToStaticMarkup(h(ResumeHub, { resume: resumeHub(resultats, liste), liste, maintenant: NOW }));
   };
 
   it("tout va bien : la phrase seule, pas de liste vide", () => {
     const html = rendre([ok("a", "Alpha")]);
-    expect(texte(html)).toBe("L’app est à jour.");
+    // La date (heure du Québec) précède la phrase : « mercredi 15 juillet · 8 h 00 ».
+    expect(texte(html)).toBe("mercredi 15 juillet · 8 h 00 L’app est à jour.");
     expect(html).not.toContain("resume__points");
   });
 
@@ -127,6 +128,9 @@ describe("ResumeHub (rendu)", () => {
     const html = rendre([etat("unreachable", "b", "Bravo", { detail: "délai" })]);
     expect(html).toContain('href="/app/b"');
     expect(texte(html)).toContain("Bravo Injoignable — délai");
+    // Le bouton porte le nom de l'app pour les lecteurs d'écran.
+    expect(texte(html)).toContain("Voir Bravo");
+    expect(html).toContain("resume__voir");
     expect(html).toContain('data-ton="danger"');
   });
 

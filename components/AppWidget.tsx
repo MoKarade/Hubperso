@@ -99,7 +99,9 @@ function CorpsOk({
     <>
       {etat.heros && <Heros heros={etat.heros} />}
       {bandeau && <AlertBanner alert={bandeau} />}
-      {/* Les suivantes sont LISTÉES quand la carte a la place, au lieu d'être réduites à un
+      <MetricList metrics={etat.secondaires} />
+      {/* Les mesures d'abord, puis les alertes en pastilles (maquette de base, 22/10). Les
+          suivantes sont LISTÉES quand la carte a la place, au lieu d'être réduites à un
           compteur. Voir `EtatCarte.alertesSecondaires` : sur la capture du 23/09, une alerte
           était résumée à « + 1 autre alerte » avec 420 px de vide juste en dessous. */}
       <AlertList alerts={liste} />
@@ -110,7 +112,6 @@ function CorpsOk({
           {etat.autresAlertes > 1 ? "s" : ""}
         </p>
       )}
-      <MetricList metrics={etat.secondaires} />
       {/* ⚠️ LA RECOMMANDATION EST REVENUE — et l'arbitrage de Marc du 15/09 (« faut aussi
           moins de texte ») n'est pas contredit : elle est rendue en `compact`, donc le
           `pourquoi` reste dans `/app/[id]`. Ce qui revient est UNE ligne avec son icône, pas
