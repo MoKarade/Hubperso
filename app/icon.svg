@@ -1,13 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hub">
-  <defs>
-    <linearGradient id="hubbg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#334155"/>
-      <stop offset="1" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="116" fill="url(#hubbg)"/>
-  <rect x="104" y="104" width="176" height="176" rx="30" fill="#60a5fa"/>
-  <rect x="300" y="104" width="108" height="80" rx="24" fill="#34d399"/>
-  <rect x="300" y="200" width="108" height="80" rx="24" fill="#fb923c"/>
-  <rect x="104" y="300" width="304" height="104" rx="30" fill="#e2e8f0"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="hubperso"><style>.corps{fill:none;stroke:#93a0ff;stroke-width:4.4;stroke-linecap:round;stroke-linejoin:round}.corps.fin{stroke-width:2.6}.corps.big{stroke-width:7.4}.masse{fill:#93a0ff;fill-opacity:.2;stroke:none}.plein{fill:#93a0ff;stroke:none}.roue{fill:#0B0D12;stroke:#93a0ff;stroke-width:4.4}.ia{fill:#E6EAF2;stroke:#0B0D12;stroke-width:3.4;paint-order:stroke;stroke-linejoin:round}.n1{fill:#2dd4bf}.n2{fill:#a3e635}.n3{fill:#f472b6}.n4{fill:#fb923c}.n5{fill:#60a5fa}.n6{fill:#a78bfa}</style><rect width="512" height="512" rx="112" fill="#0B0D12"/><g transform="translate(64 64) scale(6)"><g class=""><circle class="corps fin" style="opacity:.3" cx="32" cy="32" r="23"/><path class="corps fin" style="opacity:.55" d="M32 32L32.0 9.0"/><path class="corps fin" style="opacity:.55" d="M32 32L51.9 20.5"/><path class="corps fin" style="opacity:.55" d="M32 32L51.9 43.5"/><path class="corps fin" style="opacity:.55" d="M32 32L32.0 55.0"/><path class="corps fin" style="opacity:.55" d="M32 32L12.1 43.5"/><path class="corps fin" style="opacity:.55" d="M32 32L12.1 20.5"/><circle class="plein n1" cx="32.0" cy="9.0" r="4.6"/><circle class="plein n2" cx="51.9" cy="20.5" r="4.6"/><circle class="plein n3" cx="51.9" cy="43.5" r="4.6"/><circle class="plein n4" cx="32.0" cy="55.0" r="4.6"/><circle class="plein n5" cx="12.1" cy="43.5" r="4.6"/><circle class="plein n6" cx="12.1" cy="20.5" r="4.6"/></g><circle class="masse" cx="32" cy="32" r="13"/><circle class="corps" cx="32" cy="32" r="13"/><path class="ia" d="M32 23.5Q33.36 30.64 40.5 32Q33.36 33.36 32 40.5Q30.64 33.36 23.5 32Q30.64 30.64 32 23.5Z"/></g></svg>
