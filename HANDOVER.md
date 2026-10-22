@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **LIA dans la colonne de gauche de l'accueil (refonte)**
+
+Marc, 22/10/2026 : LIA publiée partout, en autonome. Le hub installe `@mokarade/lia-ui` par tag épinglé (`github:MoKarade/lia-ui#v0.1.0`, comme `hub-contract`) et `app/page.tsx` passe `<LiaHub />` à la colonne réservée de `ResumeHub` (`components/LiaHub.tsx`, client ; `lib/lia.ts`, pur : les entrées du menu).
+- **Pas de `ask` pour l'instant** : MemoryAI (sa maison) n'expose pas encore de point d'entrée pour le hub. Sans `ask`, le paquet dit « Je ne suis pas disponible pour le moment » : échec fermé, aucune réponse inventée (vérifié dans Chromium : le chat s'ouvre, la question reçoit cette phrase). Le brancher = passer `ask` à `<Lia>` ; `tests/accueilMaquette.test.ts` casse alors exprès (remplacer par un test de l'appel réel).
+- Menu (clic droit, appui long, touche Menu) : « attention » et « coûts », deux navigations vers des pages qui se gardent toutes seules. Aucune action n'exécute rien d'elle-même.
+- Une seule LIA par page ; clé de mémorisation locale `lia-hub`. CSP inchangée (le paquet injecte un `<style>`, déjà permis par `style-src 'unsafe-inline'`).
+- Captures (données fictives, Chromium) : `docs/captures/2026-10-22-lia/`. Non vérifié : sur un vrai téléphone, lecteur d'écran.
+
 ## 🟦 Session 2026-10-22 (soir) — **Cartes d'app selon la maquette (Hubperso#287)**
 
 Maquette validée par Marc (22/10/2026) : toutes les cartes sont identiques, une colonne chacune (le héros déclaré garde sa classe `widget--lg` mais ne réserve plus 2×2 cases ; les règles « surplus de la carte large » de #252 sont retirées). Une carte : logo, nom, puce d'état (mot + filet), libellé du chiffre, gros chiffre fin (300, jamais sous 2 rem), écart, courbe avec aire (`sparkline__zone`), mesures en lignes, alertes en pastilles, pied « fraîcheur · Détail · Ouvrir » (deux boutons contourés de 44 px). « Détail » reste la nappe qui rend toute la carte cliquable : le pied n'est donc PAS positionné (verrou `tests/carteMaquette.test.ts`). « Ouvrir » reprend l'URL du titre, sans `_blank` (`[PWA-ANDROID]`). Apps injoignable, en construction sans mesure ou non branchée : aucun chiffre, la phrase d'état, « Détail » seul.

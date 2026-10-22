@@ -6,6 +6,7 @@ import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
 import { enregistrerReleve, lireHistoriqueTous } from "@/lib/historiqueDb";
 import { attentions } from "@/lib/attention";
 import { maintenantMs } from "@/lib/horloge";
+import { LiaHub } from "@/components/LiaHub";
 import { ResumeHub } from "@/components/ResumeHub";
 import { resumeHub } from "@/lib/resume";
 import type { Releve } from "@/lib/historique";
@@ -92,7 +93,14 @@ async function OnlineCount({ promises }: { promises: Promise<SummaryResult>[] })
 async function StreamedAttention({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
   const liste = attentions(results, maintenantMs());
-  return <ResumeHub resume={resumeHub(results, liste)} liste={liste} maintenant={maintenantMs()} />;
+  return (
+    <ResumeHub
+      resume={resumeHub(results, liste)}
+      liste={liste}
+      maintenant={maintenantMs()}
+      lia={<LiaHub />}
+    />
+  );
 }
 
 /** Panneau des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */

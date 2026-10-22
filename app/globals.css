@@ -1710,6 +1710,17 @@ a:focus-visible,
   .accueil--lia { grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); align-items: start; }
 }
 .accueil__lia { min-width: 0; }
+/* La colonne où vit LIA : le paquet y pose sa couche (`position: relative` ajouté par lui). Hauteur
+   réservée pour que son corps ait la place de vivre ; sur téléphone elle reste basse. */
+.lia-colonne {
+  min-height: 14rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+@media (min-width: 1024px) {
+  .lia-colonne { min-height: 22rem; }
+}
 .resume {
   display: grid;
   gap: 0.9rem;
