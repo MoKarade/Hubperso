@@ -2728,3 +2728,244 @@ a:focus-visible,
     --angle: 360deg;
   }
 }
+
+/* ── NAVIGATION (Marc, 22/10/2026, maquette validée) ─────────────────────────────────────────
+   Barre latérale à partir de 1024 px, barre du bas + feuille « Plus » en dessous. Les deux sont
+   dans le DOM ; une seule est affichée (`display: none` la retire aussi des lecteurs d'écran).
+   Page active = indigo de marque (`--marque`), jamais la teinte d'une app : la teinte de l'app ne
+   sert qu'à son logo. Cibles de 44 px partout (`tests/ciblesTactiles.test.ts`). */
+.cadre {
+  min-height: 100dvh;
+}
+.cadre__contenu {
+  min-width: 0;
+  /* La barre du bas est fixe : le contenu garde sa place libre au-dessus. */
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+.cadre__contenu:focus {
+  outline: none;
+}
+/* Lien d'évitement : invisible tant qu'on ne tabule pas dessus. */
+.cadre__saut {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cible);
+  padding: 0 1rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.cadre__saut:focus {
+  transform: none;
+}
+
+.nav {
+  display: none;
+}
+.nav__marque {
+  padding: 0.2rem 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.nav__marque::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 0.55rem;
+  border-radius: 50%;
+  background: var(--marque);
+}
+.nav__groupe {
+  display: grid;
+  gap: 0.15rem;
+}
+.nav__titre {
+  padding: 0 0.75rem 0.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.nav__lien {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: var(--cible);
+  padding: 0 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text-soft);
+  text-decoration: none;
+  border-radius: 12px;
+}
+.nav__lien:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.nav__lien[aria-current="page"] {
+  color: var(--text);
+  background: color-mix(in srgb, var(--marque) 12%, transparent);
+}
+.nav__lien[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--marque);
+}
+.nav__ico {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav__logo {
+  --logo: var(--accent, var(--marque));
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+.nav__initiale {
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--bg);
+  background: var(--logo);
+  border-radius: 50%;
+}
+
+.barre {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 0.3rem max(0.4rem, env(safe-area-inset-right, 0px)) calc(0.3rem + env(safe-area-inset-bottom, 0px))
+    max(0.4rem, env(safe-area-inset-left, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.barre__item {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.1rem;
+  min-height: 56px;
+  min-width: var(--cible);
+  padding: 0.2rem;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.barre__item:hover {
+  color: var(--text);
+}
+.barre__item[aria-current="page"] {
+  color: var(--marque);
+}
+.barre__item:focus-visible,
+.feuille__fermer:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.feuille__fond {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.55);
+}
+.feuille {
+  display: grid;
+  gap: 0.8rem;
+  width: min(560px, 100%);
+  max-height: 78dvh;
+  overflow-y: auto;
+  padding: 1rem max(1rem, env(safe-area-inset-right, 0px)) calc(1.2rem + env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left, 0px));
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+}
+.feuille__fermer {
+  min-height: var(--cible);
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.feuille__fermer:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feuille__fond {
+    animation: nav-fond 0.2s var(--ease-out);
+  }
+  .feuille {
+    animation: nav-monte 0.26s var(--ease-out);
+  }
+}
+@keyframes nav-fond {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes nav-monte {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cadre {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+  }
+  .cadre__contenu {
+    padding-bottom: 0;
+  }
+  .nav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 1.2rem 0.9rem 1.2rem max(0.9rem, env(safe-area-inset-left, 0px));
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+  }
+  .barre,
+  .feuille__fond {
+    display: none;
+  }
+}
