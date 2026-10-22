@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 // Outfit (police commune de la refonte, référence §2) auto-hébergée via @fontsource : aucune requête externe.
 import "@fontsource-variable/outfit";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { NavigationMontee } from "@/components/NavigationMontee";
 import { PaletteMontee } from "@/components/PaletteMontee";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr-CA">
       <body>
-        {children}
+        {/* La navigation (barre latérale ou barre du bas) : gardée côté serveur comme la palette, elle
+            liste les apps. Sans accès au hub, les pages sont rendues telles quelles. */}
+        <NavigationMontee>{children}</NavigationMontee>
         {/* Gardée côté serveur : elle liste les apps, donc elle exige l'accès au hub — pas
             seulement une session. Voir components/PaletteMontee.tsx. */}
         <PaletteMontee />
