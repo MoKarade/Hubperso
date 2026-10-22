@@ -1,56 +1,153 @@
-// Carte « Coûts & quotas » : synthèse cross-app en tête du dashboard, cliquable vers le
-// détail (/couts). Générique — agrège le bloc `usage` publié par les apps, rien de spécifique.
+// Panneau « Coûts et quotas » de l'accueil, sous les cartes d'apps (maquette de base, 22/10/2026).
+// Générique : il peint l'agrégat des blocs `usage` publiés par les apps (`lib/usage.ts`), rien
+// de spécifique à une app.
+//
+// HONNÊTETÉ, dans l'ordre où la maquette la met en danger :
+//  - un bloc PAR période, jamais fusionnés (`pourquoiPasDeTotalUnique` le dit à l'écran) ;
+//  - aucun plafond de dépense : le contrat n'en porte pas, on n'en invente pas ;
+//  - un quota sans plafond publié n'a pas de jauge (« plafond non publié ») ;
+//  - une app sans coût est nommée, jamais comptée pour 0.
 
 import Link from "next/link";
 import { formatCad } from "@/lib/format";
-import { PERIOD_LABEL, type UsageDigest } from "@/lib/usage";
+import {
+  appsSansCout,
+  blocsCouts,
+  jauges,
+  pourquoiPasDeTotalUnique,
+  remiseAZero,
+  type BlocCout,
+  type Jauge,
+  type UsageDigest,
+} from "@/lib/usage";
 
-export function CostsCard({ digest }: { digest: UsageDigest }) {
-  const { totalsByPeriod, trackedCount, quotaWarnings, apps } = digest;
-  const tracked = apps.filter((a) => a.tracked && a.costCad !== null);
+const NOTE_DEVISE =
+  "Montants en dollars canadiens ; les coûts en USD sont convertis à un taux fixe (environ 1,38).";
+
+function Bloc({ bloc }: { bloc: BlocCout }) {
+  return (
+    <section className="couts-panneau__bloc" aria-label={bloc.titre}>
+      <h3 className="couts-panneau__titre">{bloc.titre}</h3>
+      <p className="couts-panneau__montant">≈ {formatCad(bloc.totalCad)}</p>
+      {/* La barre découpe le total par app : la part de chacune vient de son propre montant. */}
+      <div className="couts-panneau__barre" aria-hidden="true">
+        {bloc.lignes.map((l) => (
+          <span
+            key={l.id}
+            className="couts-panneau__part"
+            style={{ flexGrow: Math.max(l.cad, 0.01), background: l.couleur ?? undefined }}
+          />
+        ))}
+      </div>
+      <ul className="couts-panneau__lignes">
+        {bloc.lignes.map((l) => (
+          <li key={l.id}>
+            <span
+              className="couts-panneau__pastille"
+              style={l.couleur ? { background: l.couleur } : undefined}
+              aria-hidden="true"
+            />
+            <span className="couts-panneau__nom">{l.nom}</span>
+            <span className="couts-panneau__cad">{formatCad(l.cad)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function JaugeQuota({ jauge, maintenant }: { jauge: Jauge; maintenant: number }) {
+  const reset = remiseAZero(jauge.resetAt, maintenant);
+  const unite = jauge.unit ? ` ${jauge.unit}` : "";
+  const pct = jauge.ratio === null ? null : Math.round(jauge.ratio * 100);
+  return (
+    <li className="couts-panneau__quota" data-niveau={jauge.niveau}>
+      <div className="couts-panneau__quota-tete">
+        <span>
+          <strong>{jauge.appNom}</strong> {jauge.label}
+        </span>
+        <span className="couts-panneau__cad">
+          {jauge.limit === null
+            ? `${jauge.used}${unite}`
+            : `${jauge.used} / ${jauge.limit}${unite}`}
+        </span>
+      </div>
+      {pct !== null ? (
+        <div
+          className="couts-panneau__jauge"
+          role="progressbar"
+          aria-label={`${jauge.appNom} : ${jauge.label}`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.min(pct, 100)}
+          aria-valuetext={`${pct} %`}
+        >
+          <span style={{ width: `${Math.min(pct, 100)}%` }} />
+        </div>
+      ) : null}
+      <p className="couts-panneau__note">
+        {pct === null ? "plafond non publié" : `${pct} %`}
+        {reset ? ` · ${reset}` : ""}
+      </p>
+    </li>
+  );
+}
+
+export function CostsCard({ digest, maintenant }: { digest: UsageDigest; maintenant: number }) {
+  const blocs = blocsCouts(digest);
+  const sansCout = appsSansCout(digest);
+  const quotas = jauges(digest);
+  const note = pourquoiPasDeTotalUnique(digest.totalsByPeriod) ?? NOTE_DEVISE;
 
   return (
-    <Link href="/couts" className="costs" aria-label="Voir le détail des coûts et quotas">
-      <div className="costs__head">
-        <p className="costs__eyebrow">Coûts &amp; quotas</p>
-        {quotaWarnings > 0 && (
-          <span className="costs__warn">
-            {quotaWarnings} quota{quotaWarnings > 1 ? "s" : ""} à surveiller
-          </span>
-        )}
-      </div>
+    <section className="couts-panneau" aria-label="Coûts et quotas">
+      <header className="couts-panneau__tete">
+        <div>
+          <h2 className="couts-panneau__eyebrow">Coûts et quotas</h2>
+          {digest.quotaWarnings > 0 && (
+            <p className="couts-panneau__alerte">
+              {digest.quotaWarnings} quota{digest.quotaWarnings > 1 ? "s" : ""} à surveiller
+            </p>
+          )}
+        </div>
+        <Link className="btn couts-panneau__detail" href="/couts">
+          Voir le détail
+        </Link>
+      </header>
 
-      {trackedCount === 0 ? (
-        <p className="costs__empty">
+      {digest.trackedCount === 0 ? (
+        <p className="couts-panneau__vide">
           Aucune app ne publie encore ses coûts. Rien inventé.
         </p>
       ) : (
         <>
-          {/* Un total PAR période : les apps ne déclarent pas la même (cf. lib/usage.ts).
-              Les fusionner donnerait un montant qui n'existe pas. */}
-          {totalsByPeriod.map((t) => (
-            <p key={t.period} className="costs__total">
-              ≈ {formatCad(t.cad)}
-              <span className="costs__period"> · {PERIOD_LABEL[t.period]}</span>
+          {blocs.length > 0 && (
+            <>
+              <p className="couts-panneau__explication">{note}</p>
+              <div className="couts-panneau__blocs">
+                {blocs.map((b) => (
+                  <Bloc key={b.period} bloc={b} />
+                ))}
+              </div>
+            </>
+          )}
+          {sansCout.length > 0 && (
+            <p className="couts-panneau__explication">
+              Pas de coût publié : {sansCout.join(", ")}.
             </p>
-          ))}
-          <ul className="costs__apps">
-            {tracked.map((a) => (
-              <li key={a.id}>
-                <span className="costs__dot" style={a.color ? { background: a.color } : undefined} aria-hidden />
-                <span className="costs__name">{a.name}</span>
-                <span className="costs__amount">
-                  {formatCad(a.costCad ?? 0)}
-                  {a.cost && (
-                    <span className="costs__period"> · {PERIOD_LABEL[a.cost.period]}</span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+          )}
+          {quotas.length > 0 && (
+            <section className="couts-panneau__quotas" aria-label="Quotas">
+              <h3 className="couts-panneau__titre">Quotas</h3>
+              <ul className="couts-panneau__liste-quotas">
+                {quotas.map((j) => (
+                  <JaugeQuota key={j.cle} jauge={j} maintenant={maintenant} />
+                ))}
+              </ul>
+            </section>
+          )}
         </>
       )}
-      <span className="costs__more">Voir le détail →</span>
-    </Link>
+    </section>
   );
 }

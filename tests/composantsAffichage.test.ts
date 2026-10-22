@@ -268,21 +268,26 @@ describe("PagePublique", () => {
 
 describe("CostsCard", () => {
   const vide: UsageDigest = { apps: [], totalsByPeriod: [], trackedCount: 0, quotaWarnings: 0 };
+  const MAINTENANT = Date.parse("2026-10-22T20:00:00Z");
 
   it("aucune app ne publie ses coûts : le dit, sans montant inventé", () => {
-    const html = rendre(h(CostsCard, { digest: vide }));
+    const html = rendre(h(CostsCard, { digest: vide, maintenant: MAINTENANT }));
     expect(texte(html)).toContain("Aucune app ne publie encore ses coûts. Rien inventé.");
-    expect(html).not.toContain("costs__total");
-    expect(html).not.toContain("costs__warn");
+    expect(html).not.toContain("couts-panneau__montant");
+    expect(html).not.toContain("couts-panneau__alerte");
+  });
+
+  it("le seul lien est « Voir le détail » vers /couts (le panneau n'est plus une carte-lien)", () => {
+    const html = rendre(h(CostsCard, { digest: vide, maintenant: MAINTENANT }));
+    expect(html.match(/<a\b/g)).toHaveLength(1);
     expect(html).toContain('href="/couts"');
+    expect(texte(html)).toContain("Voir le détail");
   });
 
   it("quotas à surveiller : singulier et pluriel", () => {
-    expect(texte(rendre(h(CostsCard, { digest: { ...vide, quotaWarnings: 1 } })))).toContain(
-      "1 quota à surveiller",
-    );
-    expect(texte(rendre(h(CostsCard, { digest: { ...vide, quotaWarnings: 2 } })))).toContain(
-      "2 quotas à surveiller",
-    );
+    const un = rendre(h(CostsCard, { digest: { ...vide, quotaWarnings: 1 }, maintenant: MAINTENANT }));
+    const deux = rendre(h(CostsCard, { digest: { ...vide, quotaWarnings: 2 }, maintenant: MAINTENANT }));
+    expect(texte(un)).toContain("1 quota à surveiller");
+    expect(texte(deux)).toContain("2 quotas à surveiller");
   });
 });

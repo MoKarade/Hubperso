@@ -11,6 +11,7 @@
 
 import type { HubUsage } from "@mokarade/hub-contract";
 import type { SummaryResult } from "@/lib/fetchSummary";
+import { formatDuree } from "@/lib/format";
 
 /** Taux de conversion approximatif : les coûts d'API LLM sont facturés en USD, Marc raisonne en CAD. */
 export const USD_TO_CAD = 1.38;
@@ -139,4 +140,104 @@ export function pourquoiPasDeTotalUnique(totaux: PeriodTotal[]): string | null {
     `Pas de total unique : ces montants couvrent des périodes différentes (${periodes}). ` +
     `Les additionner donnerait un nombre qui n'existe pas.`
   );
+}
+
+// ── Le panneau « Coûts et quotas » de l'accueil ─────────────────────────────────────────────
+// Vues PURES de l'agrégat : le composant ne calcule rien, il peint. Même règle que le reste du
+// fichier : un bloc PAR période, jamais fusionnés ; une app sans coût publié n'a pas de ligne
+// (elle est nommée à part), jamais un 0.
+
+/** Le titre de chaque bloc, dans les mots de la maquette de base (22/10/2026). */
+const TITRE_BLOC: Record<UsagePeriod, string> = {
+  total: "Depuis le début · cumul",
+  mois: "Ce mois-ci",
+  jour: "Aujourd’hui",
+};
+
+interface LigneCout {
+  id: string;
+  nom: string;
+  couleur?: string;
+  cad: number;
+}
+
+export interface BlocCout {
+  period: UsagePeriod;
+  titre: string;
+  totalCad: number;
+  /** Les apps qui déclarent CETTE période, la plus chère d'abord. */
+  lignes: LigneCout[];
+}
+
+export function blocsCouts(digest: UsageDigest): BlocCout[] {
+  return digest.totalsByPeriod.map((t) => ({
+    period: t.period,
+    titre: TITRE_BLOC[t.period],
+    totalCad: t.cad,
+    lignes: digest.apps
+      .filter((a) => a.cost?.period === t.period && a.costCad !== null)
+      .map((a) => ({ id: a.id, nom: a.name, couleur: a.color, cad: a.costCad as number }))
+      .sort((a, b) => b.cad - a.cad),
+  }));
+}
+
+/** Les apps qui ne publient aucun coût : nommées, jamais comptées pour 0. */
+export function appsSansCout(digest: UsageDigest): string[] {
+  return digest.apps.filter((a) => a.cost === undefined).map((a) => a.name);
+}
+
+export type NiveauQuota = "ok" | "warn" | "alert";
+
+/** ≥ 80 % : à surveiller (même seuil que `quotaWarnings`) ; ≥ 100 % : dépassé. */
+export function niveauQuota(ratio: number | null): NiveauQuota {
+  if (ratio === null) return "ok";
+  if (ratio >= 1) return "alert";
+  return ratio >= 0.8 ? "warn" : "ok";
+}
+
+export interface Jauge {
+  cle: string;
+  appNom: string;
+  label: string;
+  used: number;
+  /** `null` : plafond non publié, donc pas de jauge (jamais un plafond deviné). */
+  limit: number | null;
+  unit?: string;
+  ratio: number | null;
+  niveau: NiveauQuota;
+  resetAt?: string;
+}
+
+/** Tous les quotas publiés, les plus pleins d'abord ; ceux sans plafond connu à la fin. */
+export function jauges(digest: UsageDigest): Jauge[] {
+  return digest.apps
+    .flatMap((a) =>
+      a.quotas.map((q, i): Jauge => {
+        const ratio = quotaRatio(q.used, q.limit);
+        return {
+          cle: `${a.id}-${i}`,
+          appNom: a.name,
+          label: q.label,
+          used: q.used,
+          limit: q.limit,
+          unit: q.unit,
+          ratio,
+          niveau: niveauQuota(ratio),
+          resetAt: q.resetAt,
+        };
+      }),
+    )
+    .sort((x, y) => (y.ratio ?? -1) - (x.ratio ?? -1));
+}
+
+/**
+ * « se remet à zéro dans 9 j », ou `null` quand l'app ne dit pas quand (ou que la date est
+ * passée : une remise à zéro déjà due n'est pas une information, c'est une donnée à rafraîchir).
+ * `maintenant` est passé par l'appelant (`lib/horloge.ts`) : la fonction reste pure.
+ */
+export function remiseAZero(resetAt: string | undefined, maintenant: number): string | null {
+  if (!resetAt) return null;
+  const t = new Date(resetAt).getTime();
+  if (Number.isNaN(t) || t <= maintenant) return null;
+  return `se remet à zéro dans ${formatDuree(t - maintenant)}`;
 }
