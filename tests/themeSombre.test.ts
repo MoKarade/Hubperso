@@ -98,12 +98,13 @@ describe("contrastes MESURÉS (texte ≥ 4,5:1 sur fond ET surface)", () => {
 });
 
 describe("repli neutre d'une carte sans couleur d'app", () => {
-  it("le texte du bouton « Détail » contraste ≥ 4,5:1 avec le fond de repli", () => {
-    // Une app « non configurée » n'a pas de couleur publiée : le repli #fff sur gris
-    // moyen faisait ~3,6:1. Repli = fond clair + texte sombre (texteSur du repli).
-    const fond = /\.widget\s*\{[\s\S]*?--accent:\s*(#[0-9A-Fa-f]{6})/.exec(CSS)![1]!;
-    const texte = /color:\s*var\(--accent-texte,\s*(#[0-9A-Fa-f]{6})\)/.exec(CSS)![1]!;
-    expect(contraste(fond, texte)).toBeGreaterThanOrEqual(4.5);
+  it("le texte des boutons « Détail » et « Ouvrir » contraste ≥ 4,5:1 avec le fond de la carte", () => {
+    // Depuis la maquette du 22/10 ces boutons sont contourés : le texte est `--text` sur le
+    // fond de la carte (`--surface`), jamais posé sur la couleur de l'app — donc plus de repli
+    // à calculer pour une app sans couleur (« non configurée »).
+    expect(contraste(jeton("text"), jeton("surface"))).toBeGreaterThanOrEqual(4.5);
+    expect(CSS).toMatch(/\.widget__detail,\s*\.widget__ouvrir\s*\{[^}]*color:\s*var\(--text\)/);
+    expect(CSS).toMatch(/\.widget__detail,\s*\.widget__ouvrir\s*\{[^}]*background:\s*transparent/);
   });
 });
 

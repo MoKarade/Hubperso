@@ -20,7 +20,6 @@ import { Sparkline } from "./Sparkline";
 import { Icone } from "./Icone";
 import { LogoApp } from "./LogoApp";
 import { aUnLogo } from "@/lib/logos";
-import { LignesDetail } from "./LignesDetail";
 import { Recommandation } from "./Recommandation";
 
 /**
@@ -41,10 +40,6 @@ function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["her
       <span className="heros__label">{metrique.label}</span>
       <span className="heros__valeur">{formatMetricValue(metrique)}</span>
 
-      <div className="heros__courbe">
-        <Sparkline points={serie} label={metrique.label} />
-      </div>
-
       <p className="heros__note">
         {lisible ? (
           // ⚠️ LA DURÉE VIENT DES DEUX POINTS COMPARÉS, PAS DE LA FENÊTRE DE RECHERCHE.
@@ -63,6 +58,10 @@ function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["her
           <span className="heros__fige">inchangé depuis {formatDuree(inchangeDepuisMs)}</span>
         )}
       </p>
+
+      <div className="heros__courbe">
+        <Sparkline points={serie} label={metrique.label} />
+      </div>
     </div>
   );
 }
@@ -88,14 +87,22 @@ function CorpsOk({
     etat.recommandation === null &&
     etat.actions.length === 0;
 
+  // ⚠️ LE BANDEAU ROUGE EST RÉSERVÉ À LA SÉVÉRITÉ `alert` (`lib/alertes.ts`). Il prenait la
+  // première alerte quelle que soit sa gravité : une simple info (« un relevé à classer »)
+  // s'affichait donc en rouge avec le triangle d'alerte. Une alerte moins grave rejoint la
+  // liste en pastille, à sa couleur.
+  const principale = etat.alertePrincipale;
+  const bandeau = principale?.severity === "alert" ? principale : null;
+  const liste = principale && !bandeau ? [principale, ...etat.alertesSecondaires] : etat.alertesSecondaires;
+
   return (
     <>
       {etat.heros && <Heros heros={etat.heros} />}
-      {etat.alertePrincipale && <AlertBanner alert={etat.alertePrincipale} />}
+      {bandeau && <AlertBanner alert={bandeau} />}
       {/* Les suivantes sont LISTÉES quand la carte a la place, au lieu d'être réduites à un
           compteur. Voir `EtatCarte.alertesSecondaires` : sur la capture du 23/09, une alerte
           était résumée à « + 1 autre alerte » avec 420 px de vide juste en dessous. */}
-      <AlertList alerts={etat.alertesSecondaires} />
+      <AlertList alerts={liste} />
       {etat.autresAlertes > 0 && (
         // Compté, jamais escamoté : une alerte cachée sans trace est une alerte perdue.
         <p className="widget__reste">
@@ -110,17 +117,6 @@ function CorpsOk({
           le bloc de deux paragraphes qui avait été retiré. Marc, 23/09 : « le conseil est
           parti » + « chiffres et icônes, peu de texte ». */}
       {etat.recommandation && <Recommandation reco={etat.recommandation} compact />}
-      {/* Les sections `details` de l'app, bornées par `etatCarte`. Vides sur une carte d'une
-          colonne : elles existent pour occuper la place RÉSERVÉE du héros. */}
-      {etat.details.map((section, s) => (
-        <section className="widget__details" aria-label={section.title} key={`${section.title}-${s}`}>
-          <h3 className="widget__details-titre">
-            <Icone nom="section" />
-            {section.title}
-          </h3>
-          <LignesDetail items={section.items} />
-        </section>
-      ))}
       <ActionList actions={etat.actions} appId={summary.app.id} />
       {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
@@ -152,14 +148,14 @@ function CorpsProbleme({ result }: { result: SummaryResult }) {
 }
 
 /**
- * Le pied : la fraîcheur, qui n'est plus une mention discrète.
+ * La fraîcheur, à gauche du pied de la carte : elle n'est plus une mention discrète.
  *
  * `dataAsOf` PASSE DEVANT `generatedAt` quand l'app le publie. Le second dit seulement quand
  * la réponse a été fabriquée — c'est toujours « à l'instant », donc ça ne renseigne sur rien.
  * Le premier dit quand la DONNÉE a bougé pour la dernière fois, et c'est la différence entre
  * « à jour » et « figé depuis trois jours ».
  */
-function Pied({
+function Fraicheur({
   summary,
   cachedAgeMs,
   maintenantMs,
@@ -173,7 +169,7 @@ function Pied({
     : null;
 
   return (
-    <footer className="widget__foot">
+    <>
       {cachedAgeMs !== undefined && (
         <span className="widget__cache" title="L’app n’a pas répondu à temps : dernier résumé connu.">
           En cache · {formatDuree(cachedAgeMs)}
@@ -193,7 +189,7 @@ function Pied({
           Généré {formatDateTime(summary.generatedAt)}
         </span>
       )}
-    </footer>
+    </>
   );
 }
 
@@ -264,43 +260,58 @@ export function AppWidget({
         </h2>
         <StatusBadge {...badge} />
       </header>
-      {/* Le titre ouvre l'APP elle-même (lien externe) ; ce lien-ci ouvre le DÉTAIL dans le
-          hub. Deux destinations différentes, donc deux liens distincts plutôt qu'un seul
-          ambigu. Il vaut aussi pour une app en erreur : c'est là qu'on voit l'endpoint
-          interrogé et le message complet. */}
-      {/* ⚠️ CE LIEN REND TOUTE LA CARTE CLIQUABLE, par un `::after` qui la recouvre
-          (`app/globals.css`). C'est la seule façon d'y arriver sans imbriquer un `<a>` dans
-          un `<a>` — du HTML invalide, que les navigateurs « réparent » en cassant la
-          navigation au clavier. Le titre et les boutons d'action remontent au-dessus de la
-          nappe par un `z-index`, donc ils restent atteignables.
-          Contrepartie assumée (Marc, 15/09) : on ne peut plus sélectionner le texte de la
-          carte à la souris. */}
-      <Link className="widget__detail" href={`/app/${result.source.id}`}>
-        <span>Détail</span>
-        <span aria-hidden="true">→</span>
-      </Link>
       <div className="widget__body">
         {result.state === "ok" ? (
           <CorpsOk
             summary={result.summary}
             historique={historique}
             maintenantMs={maintenantMs}
-            // La GÉOMÉTRIE décide du contenu, pas l'identité de l'app : `widget--lg` est
-            // réservé sur 2×2 cases, donc c'est la seule carte qui a la place d'en montrer
-            // plus. Dérivé de `size` et non de `featured` pour qu'un seul endroit décide.
-            place={size === "widget--lg" ? "large" : "normale"}
+            // Depuis la maquette du 22/10 toutes les cartes sont identiques : une colonne, un
+            // chiffre, des mesures en lignes, les alertes en pastilles. C'est le contenu de la
+            // place « large » (alertes listées, courbes des mesures) — sans les sections
+            // `details`, qui vivent sur la page de détail (« Détail ») et la rendent en entier.
+            place="large"
           />
         ) : (
           <CorpsProbleme result={result} />
         )}
       </div>
-      {result.state === "ok" && (
-        <Pied
-          summary={result.summary}
-          cachedAgeMs={result.stale ? result.cachedAgeMs : undefined}
-          maintenantMs={maintenantMs}
-        />
-      )}
+      <footer className="widget__foot">
+        {result.state === "ok" && (
+          <Fraicheur
+            summary={result.summary}
+            cachedAgeMs={result.stale ? result.cachedAgeMs : undefined}
+            maintenantMs={maintenantMs}
+          />
+        )}
+        <span className="widget__actions">
+          {/* Le titre ouvre l'APP elle-même (lien externe) ; ce lien-ci ouvre le DÉTAIL dans
+              le hub. Deux destinations différentes, donc deux liens distincts plutôt qu'un
+              seul ambigu. Il vaut aussi pour une app en erreur : c'est là qu'on voit
+              l'endpoint interrogé et le message complet. */}
+          {/* ⚠️ CE LIEN REND TOUTE LA CARTE CLIQUABLE, par un `::after` qui la recouvre
+              (`app/globals.css`). C'est la seule façon d'y arriver sans imbriquer un `<a>`
+              dans un `<a>` — du HTML invalide, que les navigateurs « réparent » en cassant
+              la navigation au clavier. Le titre, « Ouvrir » et les boutons d'action
+              remontent au-dessus de la nappe par un `z-index`, donc ils restent atteignables.
+              Contrepartie assumée (Marc, 15/09) : on ne peut plus sélectionner le texte de
+              la carte à la souris. Depuis la maquette du 22/10, il est dans le pied, à côté
+              d'« Ouvrir » : deux boutons de même poids, l'un dans le hub, l'autre dans l'app. */}
+          <Link
+            className="widget__detail"
+            href={`/app/${result.source.id}`}
+            aria-label={`Détail de ${name}`}
+          >
+            Détail
+          </Link>
+          {appUrl && (
+            // Même règle que le titre : PAS de `target="_blank"` (`[PWA-ANDROID]` ci-dessus).
+            <a className="widget__ouvrir" href={appUrl} rel="noreferrer" aria-label={`Ouvrir ${name}`}>
+              Ouvrir
+            </a>
+          )}
+        </span>
+      </footer>
     </article>
   );
 }
