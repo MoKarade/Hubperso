@@ -15,8 +15,8 @@ export const PUCES_MAX = 6;
 export const BLOCS_MAX = 20;
 /** Corps d'une demande : au-delà, 413 (contrat). */
 export const CORPS_MAX_OCTETS = 8 * 1024;
-/** Délai du saut hub → MemoryAI (contrat : 20 s). */
-export const DELAI_MEMORYAI_MS = 20_000;
+/** Délai du saut hub → MemoryAI (contrat : 30 s ; l'app attend 35 s). */
+export const DELAI_MEMORYAI_MS = 30_000;
 
 /** Les douze humeurs de lia-ui (`HUMEURS_LIA`, contrat du fil Assistant). */
 const HUMEURS = [

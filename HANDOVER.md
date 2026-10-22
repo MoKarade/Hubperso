@@ -5,7 +5,7 @@
 ## 🟦 Session 2026-10-22 (soir) — **Le hub relaie les questions de LIA à MemoryAI (Hubperso#336)**
 
 `POST /api/lia/ask` : point d'entrée unique de LIA (contrat du fil Assistant, `commun/assistant/CONTRAT-ask-lia.md`). Appelants : une app (`x-hub-token`, la source vient du jeton) ou l'accueil (session + accès au hub). Le hub relaie à MemoryAI `POST /api/ask` avec `HUB_TOKEN_MEMORYAI`, 20 s de délai, réponse validée à la main (`lib/liaAsk.ts`, `zod` n'est pas une dépendance directe). Tout échec = 503 : LIA dit « indisponible », jamais de réponse inventée. La question n'est jamais journalisée.
-- **Propriétaire seul** (demande du fil MemoryAI) : le corps relayé porte `proprietaire` (MemoryAI répond 403 sans lui). Accueil : vrai si la session est `AUTHORIZED_EMAIL`, sinon 403 au hub (un invité n'atteint jamais la mémoire de Marc) ; apps : la valeur qu'elles déclarent, booléen strict, faux par défaut.
+- **Propriétaire seul** (demande du fil MemoryAI) : le corps relayé porte `proprietaire` (MemoryAI répond 403 sans lui). Accueil : vrai si la session est `AUTHORIZED_EMAIL`, sinon 403 au hub (un invité n'atteint jamais la mémoire de Marc) ; apps : `proprietaire` strict `true` exigé dans le corps (calculé par l'app), faux ou absent = 403 sans appel. Délai hub → MemoryAI 30 s (`maxDuration` 40 s).
 - **Pas encore branché au navigateur** : `components/LiaHub.tsx` n'a toujours pas de `ask` (PR suivante, quand MemoryAI aura sa route `/api/ask` en production). Tant que MemoryAI ne répond pas, la route rend 503.
 - Route déclarée à jeton dans `tests/gardePages.test.ts` et laissée passer par `isPublicPath` (chemin exact). `docs/reference-claude.md` §1 mise à jour.
 

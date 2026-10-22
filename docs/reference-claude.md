@@ -69,7 +69,7 @@ widgets 100 % génériques.
 - **`POST /api/lia/ask` traverse aussi le garde, et se garde toute seule** (22/10/2026, #336) :
   la question de LIA. Une app s'identifie par son `HUB_TOKEN` (`appDuJeton`, la source vient du
   jeton, jamais du corps) ; l'accueil, par la session + `aAcces(…, APP_HUB)` lus dans la route.
-  Un `x-hub-token` présent mais faux = 401, sans repli sur la session ; un invité du hub (session sans `AUTHORIZED_EMAIL`) = 403, jamais relayé. Le relais porte `proprietaire` (obligatoire côté MemoryAI) : vrai pour le propriétaire de l'accueil, déclaré par l'app pour les apps. Elle relaie à MemoryAI
+  Un `x-hub-token` présent mais faux = 401, sans repli sur la session ; un invité du hub (session sans `AUTHORIZED_EMAIL`) = 403, jamais relayé. Le relais porte `proprietaire` (obligatoire côté MemoryAI) : vrai pour le propriétaire de l'accueil ; pour une app, `proprietaire: true` est exigé dans son corps (faux ou absent = 403 sans appel). Elle relaie à MemoryAI
   `POST /api/ask` avec le jeton que le hub détient pour elle ; tout échec = 503, la question
   n'est jamais journalisée. Contrat : `commun/assistant/CONTRAT-ask-lia.md` ; forme : `lib/liaAsk.ts`.
 - **Une troisième route traverse le garde SANS aucune authentification : `GET /api/sante`**

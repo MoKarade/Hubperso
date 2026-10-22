@@ -132,21 +132,24 @@ describe("POST /api/lia/ask", () => {
   });
 
   it("jeton d'app valide : relaie à MemoryAI avec le jeton du hub et la source tirée du jeton", async () => {
-    const r = await POST(requete({ question: "Où en est le budget ?", source: "financeai" }, { "x-hub-token": JETON_APP }));
+    const r = await POST(
+      requete({ question: "Où en est le budget ?", source: "financeai", proprietaire: true }, { "x-hub-token": JETON_APP }),
+    );
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ text: "Bonjour", mood: "calme" });
     const [url, init] = moq.fetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://memoryai.hubperso.com/api/ask");
     expect(new Headers(init.headers).get("x-hub-token")).toBe(JETON_MEMOIRE);
     // La source vient du JETON, jamais du corps envoyé par l'app.
-    // `proprietaire` : ce que l'app déclare (ici rien → false) ; un booléen « truthy » n'existe pas.
-    expect(JSON.parse(String(init.body))).toEqual({ question: "Où en est le budget ?", source: "jobai", proprietaire: false });
+    // La source vient du jeton, `proprietaire` est celui que le hub a validé (true ici).
+    expect(JSON.parse(String(init.body))).toEqual({ question: "Où en est le budget ?", source: "jobai", proprietaire: true });
   });
 
-  it("une app qui déclare le propriétaire : relayé tel quel", async () => {
-    await POST(requete({ question: "q", proprietaire: true }, { "x-hub-token": JETON_APP }));
-    const [, init] = moq.fetch.mock.calls[0] as [string, RequestInit];
-    expect(JSON.parse(String(init.body)).proprietaire).toBe(true);
+  it("une app dont la personne n'est pas le propriétaire (faux ou absent) : 403, MemoryAI n'est jamais appelée", async () => {
+    const h = { "x-hub-token": JETON_APP };
+    expect((await POST(requete({ question: "q", proprietaire: false }, h))).status).toBe(403);
+    expect((await POST(requete({ question: "q" }, h))).status).toBe(403);
+    expect(moq.fetch).not.toHaveBeenCalled();
   });
 
   it("session du propriétaire avec accès au hub : source « hub », propriétaire", async () => {
@@ -182,7 +185,7 @@ describe("POST /api/lia/ask", () => {
 
   it("MemoryAI non configurée : 503, aucun appel réseau", async () => {
     vi.stubEnv("HUB_TOKEN_MEMORYAI", "");
-    const r = await POST(requete({ question: "q" }, { "x-hub-token": JETON_APP }));
+    const r = await POST(requete({ question: "q", proprietaire: true }, { "x-hub-token": JETON_APP }));
     expect(r.status).toBe(503);
     expect(moq.fetch).not.toHaveBeenCalled();
   });
@@ -190,18 +193,18 @@ describe("POST /api/lia/ask", () => {
   it("MemoryAI en erreur, injoignable ou hors contrat : toujours 503, jamais une réponse inventée", async () => {
     const h = { "x-hub-token": JETON_APP };
     reponseMemoire({ error: "x" }, 500);
-    expect((await POST(requete({ question: "q" }, h))).status).toBe(503);
+    expect((await POST(requete({ question: "q", proprietaire: true }, h))).status).toBe(503);
     reponseMemoire({ text: "" });
-    expect((await POST(requete({ question: "q" }, h))).status).toBe(503);
+    expect((await POST(requete({ question: "q", proprietaire: true }, h))).status).toBe(503);
     moq.fetch.mockRejectedValue(new Error("réseau"));
     vi.spyOn(console, "error").mockImplementation(() => {});
-    expect((await POST(requete({ question: "q" }, h))).status).toBe(503);
+    expect((await POST(requete({ question: "q", proprietaire: true }, h))).status).toBe(503);
   });
 
   it("n'écrit jamais la question dans les journaux d'erreur", async () => {
     const journal = vi.spyOn(console, "error").mockImplementation(() => {});
     moq.fetch.mockRejectedValue(new Error("échec avec la question secrète"));
-    await POST(requete({ question: "question secrète" }, { "x-hub-token": JETON_APP }));
+    await POST(requete({ question: "question secrète", proprietaire: true }, { "x-hub-token": JETON_APP }));
     expect(JSON.stringify(journal.mock.calls)).not.toContain("secrète");
   });
 });

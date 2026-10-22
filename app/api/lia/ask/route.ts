@@ -32,6 +32,8 @@ import {
 } from "@/lib/liaAsk";
 
 export const dynamic = "force-dynamic";
+/** Le saut vers MemoryAI peut durer 30 s (contrat) : la fonction doit survivre à l'attente. */
+export const maxDuration = 40;
 
 const limiteur = creerLimiteur({ max: 30, fenetreMs: 60_000 });
 const ENTETES = { "cache-control": "no-store" } as const;
@@ -84,6 +86,10 @@ export async function POST(req: Request): Promise<Response> {
   const demande = validerDemande(corps);
   if (!demande.ok) return erreur(400, "bad_request", demande.raison);
 
+  // Une app a des invités, MemoryAI jamais : `proprietaire` absent ou faux = 403, sans appel (contrat).
+  const proprietaire = qui.proprietaire ?? demande.valeur.proprietaire === true;
+  if (!proprietaire) return erreur(403, "forbidden", "LIA est réservée au propriétaire.");
+
   const memoire = SOURCE_DEFS.find((d) => d.id === "memoryai");
   const jetonMemoire = memoire ? process.env[memoire.tokenEnv]?.trim() : undefined;
   if (!memoire || !jetonMemoire) {
@@ -94,7 +100,7 @@ export async function POST(req: Request): Promise<Response> {
     const r = await fetch(`${memoire.accueilUrl}/api/ask`, {
       method: "POST",
       headers: { "content-type": "application/json", [HUB_TOKEN_HEADER]: jetonMemoire },
-      body: corpsPourMemoryAi(demande.valeur, qui.source, qui.proprietaire ?? demande.valeur.proprietaire === true),
+      body: corpsPourMemoryAi(demande.valeur, qui.source, true),
       signal: AbortSignal.timeout(DELAI_MEMORYAI_MS),
       cache: "no-store",
     });
