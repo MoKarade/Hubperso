@@ -25,7 +25,7 @@ const HUMEURS = [
 ] as const;
 type Humeur = (typeof HUMEURS)[number];
 
-export type DemandeAsk = { question: string; page?: string };
+export type DemandeAsk = { question: string; page?: string; proprietaire?: boolean };
 type PuceAsk = { id: string; label: string };
 export type ReponseAsk = { text: string; chips?: PuceAsk[]; mood?: Humeur; blocks?: unknown[] };
 
@@ -49,12 +49,22 @@ export function validerDemande(corps: unknown): Resultat<DemandeAsk> {
     }
     demande.page = corps.page;
   }
+  if (corps.proprietaire !== undefined) {
+    // Dit par l'APP appelante (elle seule connaît la session) ; strictement booléen, jamais « truthy ».
+    if (typeof corps.proprietaire !== "boolean") return { ok: false, raison: "`proprietaire` : un booléen." };
+    demande.proprietaire = corps.proprietaire;
+  }
   return { ok: true, valeur: demande };
 }
 
-/** Ce que le hub envoie à MemoryAI : la demande, plus QUI parle (jamais lu du corps d'une app). */
-export function corpsPourMemoryAi(demande: DemandeAsk, source: string): string {
-  return JSON.stringify({ ...demande, source });
+/**
+ * Ce que le hub envoie à MemoryAI : question, page, QUI parle et si c'est le PROPRIÉTAIRE. Les deux
+ * derniers sont décidés par le hub (jeton ou session), jamais copiés tels quels du corps d'une app.
+ * `proprietaire` est obligatoire côté MemoryAI (403 sans lui) : un invité n'atteint jamais la mémoire.
+ */
+export function corpsPourMemoryAi(demande: DemandeAsk, source: string, proprietaire: boolean): string {
+  const { question, page } = demande;
+  return JSON.stringify({ question, ...(page !== undefined && { page }), source, proprietaire });
 }
 
 /** La réponse de MemoryAI, validée. Clés inconnues retirées, rien n'est complété. */

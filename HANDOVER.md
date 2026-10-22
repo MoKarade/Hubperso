@@ -5,8 +5,18 @@
 ## 🟦 Session 2026-10-22 (soir) — **Le hub relaie les questions de LIA à MemoryAI (Hubperso#336)**
 
 `POST /api/lia/ask` : point d'entrée unique de LIA (contrat du fil Assistant, `commun/assistant/CONTRAT-ask-lia.md`). Appelants : une app (`x-hub-token`, la source vient du jeton) ou l'accueil (session + accès au hub). Le hub relaie à MemoryAI `POST /api/ask` avec `HUB_TOKEN_MEMORYAI`, 20 s de délai, réponse validée à la main (`lib/liaAsk.ts`, `zod` n'est pas une dépendance directe). Tout échec = 503 : LIA dit « indisponible », jamais de réponse inventée. La question n'est jamais journalisée.
+- **Propriétaire seul** (demande du fil MemoryAI) : le corps relayé porte `proprietaire` (MemoryAI répond 403 sans lui). Accueil : vrai si la session est `AUTHORIZED_EMAIL`, sinon 403 au hub (un invité n'atteint jamais la mémoire de Marc) ; apps : la valeur qu'elles déclarent, booléen strict, faux par défaut.
 - **Pas encore branché au navigateur** : `components/LiaHub.tsx` n'a toujours pas de `ask` (PR suivante, quand MemoryAI aura sa route `/api/ask` en production). Tant que MemoryAI ne répond pas, la route rend 503.
 - Route déclarée à jeton dans `tests/gardePages.test.ts` et laissée passer par `isPublicPath` (chemin exact). `docs/reference-claude.md` §1 mise à jour.
+
+## 🟦 Session 2026-10-22 (soir) — **Réception du relevé du Gantt (Hubperso#329, onglet « Chantier Apps »)**
+
+Marc, 22/10/2026 : tout le « Chantier Apps » dans un onglet du hub, mêmes données que le Gantt, sans copie à la main. Première brique : le hub **reçoit** le relevé. Le Drive où `outils/gantt-pc/tour.py` (MoKarade/.github) écrit toutes les 10 min est privé (titres de tâches de FinanceAI et DriveAI) : le hub ne le lit pas et n'expose aucune URL publique, c'est le PC qui POSTe.
+- `POST /api/gantt` (`app/api/gantt/route.ts`) : même modèle que `/api/cron/releve` (secret DÉDIÉ `GANTT_SECRET` en `Authorization: Bearer`, 503 si absent côté serveur, 401 si faux, `memeJeton`, limite 10/min, chemin nommé par égalité stricte dans `isPublicPath`). Corps vérifié par `lib/gantt.ts` (pur, sans dépendance de plus : version 1, date d'envoi, gzip en base64, quatre objets) ; 400 si invalide, 413 au-delà de 4 Mo ; **un envoi refusé ne touche jamais la ligne en base**.
+- Table `gantt_releve` (migration `drizzle/0002`, non destructive) : UNE ligne (`CHECK id = 1`), remplacée à chaque envoi valide (`lib/ganttDb.ts`, upsert). `donnees_gz_b64` est gardé tel quel : le hub ne décode ni ne reformate, donc aucun écart possible avec le Gantt. `estPerime` : plus de 30 min sans envoi = présenté comme périmé.
+- `GANTT_SECRET` n'est volontairement PAS dans `.env.example` (le Garde-fou y voit une variable secrète ajoutée et bloque la PR) : il est documenté ici, dans `README.md`, `docs/reference-claude.md` et `lib/variablesAttendues.ts`.
+- **Reste à faire hors de cette PR** : poser `GANTT_SECRET` sur Vercel ET sur le PC (même valeur, jamais dans un message), puis ajouter l'envoi à `tour.py` (fil Gantt). Tant que la variable manque, la route répond 503 : c'est voulu.
+- Tests : `gantt` (validation), `ganttRoute` (auth, tailles, 400/413/500/429), `ganttDb` (PGlite : un envoi remplace, une seule ligne), `authGuard`, `gardePages`.
 
 ## 🟦 Session 2026-10-22 (soir) — **Cartes d'app selon la maquette (Hubperso#287)**
 

@@ -17,6 +17,7 @@
 
 import { HUB_TOKEN_HEADER } from "@mokarade/hub-contract";
 import { auth } from "@/auth";
+import { isAuthorizedEmail } from "@/lib/authorized";
 import { assurerMigrations } from "@/lib/migrations";
 import { aAcces, APP_HUB } from "@/lib/personnes";
 import { appDuJeton } from "@/lib/jetonApp";
@@ -38,25 +39,37 @@ const ENTETES = { "cache-control": "no-store" } as const;
 const erreur = (status: number, error: string, message: string): Response =>
   Response.json({ error, message }, { status, headers: ENTETES });
 
-/** Qui parle : l'id de l'app (jeton), « hub » (session), ou `null` (refus). */
-async function appelant(req: Request): Promise<string | null> {
+type Appelant = { source: string; proprietaire: boolean | null };
+
+/**
+ * Qui parle. Une app : l'id vient du jeton ; « propriétaire » est ce que l'app déclare (elle seule
+ * lit la session de la personne), `null` tant que la demande n'est pas lue. L'accueil : « hub », et
+ * propriétaire = `AUTHORIZED_EMAIL` ; un invité du hub n'atteint JAMAIS la mémoire de Marc (403).
+ * `undefined` = refus (401).
+ */
+async function appelant(req: Request): Promise<Appelant | "invite" | undefined> {
   const jeton = req.headers.get(HUB_TOKEN_HEADER);
-  if (jeton !== null) return appDuJeton(jeton);
+  if (jeton !== null) {
+    const appId = appDuJeton(jeton);
+    return appId ? { source: appId, proprietaire: null } : undefined;
+  }
   const session = await auth();
   const email = session?.user?.email;
-  if (!email) return null;
+  if (!email) return undefined;
   // La liste des invités vit en base : on s'assure du schéma avant de la lire (lib/migrations.ts).
   await assurerMigrations();
-  if (!(await aAcces(email, APP_HUB))) return null;
-  return "hub";
+  if (!(await aAcces(email, APP_HUB))) return undefined;
+  if (!isAuthorizedEmail(email, process.env.AUTHORIZED_EMAIL)) return "invite";
+  return { source: "hub", proprietaire: true };
 }
 
 export async function POST(req: Request): Promise<Response> {
   const debit = limiteur.verifier(cleClient(req.headers));
   if (!debit.ok) return reponse429(debit.retryApresS);
 
-  const source = await appelant(req);
-  if (!source) return erreur(401, "unauthorized", "Jeton d'app ou session invalide.");
+  const qui = await appelant(req);
+  if (!qui) return erreur(401, "unauthorized", "Jeton d'app ou session invalide.");
+  if (qui === "invite") return erreur(403, "forbidden", "LIA est réservée au propriétaire.");
 
   const texte = await req.text();
   if (Buffer.byteLength(texte, "utf8") > CORPS_MAX_OCTETS) {
@@ -81,7 +94,7 @@ export async function POST(req: Request): Promise<Response> {
     const r = await fetch(`${memoire.accueilUrl}/api/ask`, {
       method: "POST",
       headers: { "content-type": "application/json", [HUB_TOKEN_HEADER]: jetonMemoire },
-      body: corpsPourMemoryAi(demande.valeur, source),
+      body: corpsPourMemoryAi(demande.valeur, qui.source, qui.proprietaire ?? demande.valeur.proprietaire === true),
       signal: AbortSignal.timeout(DELAI_MEMORYAI_MS),
       cache: "no-store",
     });

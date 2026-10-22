@@ -27,6 +27,14 @@ describe("validerDemande", () => {
     });
   });
 
+  it("`proprietaire` doit être un booléen, jamais « truthy »", () => {
+    expect(validerDemande({ question: "q", proprietaire: true })).toEqual({
+      ok: true,
+      valeur: { question: "q", proprietaire: true },
+    });
+    for (const v of ["true", 1, null]) expect(validerDemande({ question: "q", proprietaire: v }).ok).toBe(false);
+  });
+
   it("refuse tout ce qui sort de la forme", () => {
     const mauvais: unknown[] = [
       null, [], "texte", {}, { question: 3 }, { question: "   " },
@@ -37,10 +45,8 @@ describe("validerDemande", () => {
   });
 
   it("n'envoie à MemoryAI que question, page et la source déterminée par le hub", () => {
-    const corps = JSON.parse(
-      corpsPourMemoryAi({ question: "q", page: "/a" }, "jobai"),
-    );
-    expect(corps).toEqual({ question: "q", page: "/a", source: "jobai" });
+    const corps = JSON.parse(corpsPourMemoryAi({ question: "q", page: "/a" }, "jobai", false));
+    expect(corps).toEqual({ question: "q", page: "/a", source: "jobai", proprietaire: false });
   });
 });
 
@@ -95,6 +101,7 @@ describe("POST /api/lia/ask", () => {
   beforeEach(() => {
     vi.stubEnv("HUB_TOKEN_JOBAI", JETON_APP);
     vi.stubEnv("HUB_TOKEN_MEMORYAI", JETON_MEMOIRE);
+    vi.stubEnv("AUTHORIZED_EMAIL", "marc@exemple.invalid");
     vi.stubGlobal("fetch", moq.fetch);
     moq.auth.mockResolvedValue(null);
     moq.aAcces.mockResolvedValue(false);
@@ -132,16 +139,31 @@ describe("POST /api/lia/ask", () => {
     expect(url).toBe("https://memoryai.hubperso.com/api/ask");
     expect(new Headers(init.headers).get("x-hub-token")).toBe(JETON_MEMOIRE);
     // La source vient du JETON, jamais du corps envoyé par l'app.
-    expect(JSON.parse(String(init.body))).toEqual({ question: "Où en est le budget ?", source: "jobai" });
+    // `proprietaire` : ce que l'app déclare (ici rien → false) ; un booléen « truthy » n'existe pas.
+    expect(JSON.parse(String(init.body))).toEqual({ question: "Où en est le budget ?", source: "jobai", proprietaire: false });
   });
 
-  it("session avec accès au hub : source « hub »", async () => {
+  it("une app qui déclare le propriétaire : relayé tel quel", async () => {
+    await POST(requete({ question: "q", proprietaire: true }, { "x-hub-token": JETON_APP }));
+    const [, init] = moq.fetch.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body)).proprietaire).toBe(true);
+  });
+
+  it("session du propriétaire avec accès au hub : source « hub », propriétaire", async () => {
     moq.auth.mockResolvedValue({ user: { email: "marc@exemple.invalid" } });
     moq.aAcces.mockResolvedValue(true);
     const r = await POST(requete({ question: "q", page: "/" }));
     expect(r.status).toBe(200);
     const [, init] = moq.fetch.mock.calls[0] as [string, RequestInit];
-    expect(JSON.parse(String(init.body)).source).toBe("hub");
+    expect(JSON.parse(String(init.body))).toMatchObject({ source: "hub", proprietaire: true });
+  });
+
+  it("session d'un invité du hub : 403, MemoryAI n'est jamais appelée", async () => {
+    moq.auth.mockResolvedValue({ user: { email: "invite@exemple.invalid" } });
+    moq.aAcces.mockResolvedValue(true);
+    const r = await POST(requete({ question: "q" }));
+    expect(r.status).toBe(403);
+    expect(moq.fetch).not.toHaveBeenCalled();
   });
 
   it("session sans accès au hub : 401", async () => {

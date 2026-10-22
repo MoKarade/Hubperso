@@ -154,6 +154,8 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "la question de LIA : une app (x-hub-token) ou l'accueil (session lue dans la route), relayée à MemoryAI",
     "api/cron/releve/route.ts":
       "l'horloge du hub, appelée par un workflow GitHub Actions et authentifiée par CRON_SECRET",
+    "api/gantt/route.ts":
+      "le PC de Marc y envoie le relevé du Gantt (tour.py), authentifié par GANTT_SECRET",
   };
 
   /**
