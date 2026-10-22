@@ -9,12 +9,14 @@ Maquette validée par Marc (22/10/2026) : toutes les cartes sont identiques, une
 - **Correction en chemin** : le bandeau rouge ne prenait que la première alerte, quelle que soit sa gravité ; une simple info s'affichait donc en rouge avec le triangle. Il est maintenant réservé à `alert` (`lib/alertes.ts`) ; les autres rejoignent la liste en pastille.
 - Tests : `tests/bento.test.ts` et `tests/themeSombre.test.ts` réécrits pour la nouvelle règle (mêmes nombres de tests) ; nouveau `tests/carteMaquette.test.ts` (12 tests). Captures avant/après : `docs/captures/2026-10-22-cartes/` (données fictives, Chromium).
 
-## 🟦 Session 2026-10-22 (soir) — **Panneau « Coûts et quotas » sous les cartes (Hubperso#324, 1/2)**
+## 🟦 Session 2026-10-22 (soir) — **Résumé de l'accueil comme la maquette de base (Hubperso#324, 2/2)**
 
-Marc, 22/10/2026 : « le hub est pas comme la maquette de base ». Première moitié (la seconde, le résumé en lignes d'action, suit dans une PR à part pour rester sous 400 lignes) : ordre de la page = en-tête, résumé, (tuile des graphes, propriétaire), cartes d'apps, PUIS les coûts (avant, ils passaient devant les cartes).
-- `components/CostsCard.tsx` : une section au lieu d'une carte-lien ; un bloc PAR période (jamais fusionnées, l'explication de `pourquoiPasDeTotalUnique` reste à l'écran), barre par app, apps sans coût nommées (jamais 0), jauges de quotas (`role="progressbar"`, seuils 80 % / 100 %, remise à zéro dite seulement si la date est future, plafond non publié = pas de barre). **Aucun plafond de dépense affiché** : le contrat n'en porte pas. Seul lien : « Voir le détail » → `/couts`.
-- `lib/usage.ts` : vues pures `blocsCouts`, `appsSansCout`, `jauges`, `niveauQuota`, `remiseAZero`. CSS `.couts-panneau*` remplace `.costs*` ; l'exception `costs` de `tests/ciblesTactiles.test.ts` disparaît avec la carte-lien.
-- Tests : nouveau `tests/accueilMaquette.test.ts` (ordre + rendu du panneau), ajouts à `tests/usage.test.ts`, `tests/composantsAffichage.test.ts`. Captures (données fictives) : `docs/captures/2026-10-22-accueil/`.
+Seconde moitié (la première, le panneau « Coûts et quotas », est fusionnée avant) : le résumé sous l'en-tête.
+- `components/ResumeHub.tsx` : date et heure du Québec en surtitre (`formatEnteteAccueil`, `lib/format.ts`), phrase en police fine et NEUTRE (plus de rouge/ambre sur la phrase : la gravité se lit sur les pastilles et dans les mots), points en lignes-pastilles avec un bouton « Voir » vers `/app/[id]` (le nom de l'app est lu par les lecteurs d'écran). La maquette dit « Analyser » : ce bouton attend LIA, on n'a pas écrit un faux bouton.
+- **Colonne de LIA** : `ResumeHub` accepte `lia?: ReactNode`. Sans elle, RIEN n'est dessiné (ni cadre vide ni faux agent) ; avec elle, la grille s'ouvre sur deux colonnes (`.accueil--lia`, ≥ 1024 px). Point d'accroche du composant partagé `@mokarade/lia-ui`.
+- **Cartes** : les mesures passent avant les pastilles d'alerte (`components/AppWidget.tsx`).
+- **Tuile « Graphes de code » retirée de l'accueil** (Marc, 22/10 : « enlève tout ça, on a déjà ») : l'entrée vit dans la navigation (`Gérer`, propriétaire seulement) ; `components/TuileGraphes.tsx`, `tests/tuileGraphes.test.ts` et ses règles CSS disparaissent, la page `/graphes` reste gardée par `exigerProprietaire`.
+- Tests : `tests/accueilMaquette.test.ts` (en-tête daté, colonne de LIA), `tests/resume.test.ts` adapté (date, bouton « Voir »).
 
 ## 🟦 Session 2026-10-22 (soir) — **Navigation du hub (refonte, tâche Hubperso#288)**
 

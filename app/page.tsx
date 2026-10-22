@@ -1,7 +1,5 @@
 import { Suspense } from "react";
 import { exigerAccesHub } from "@/lib/gardeHub";
-import { estProprietaire } from "@/lib/personnes";
-import { DEPOTS } from "@/lib/graphes";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
@@ -16,7 +14,6 @@ import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
 import { WidgetSkeleton } from "@/components/WidgetSkeleton";
 import { CostsCard } from "@/components/CostsCard";
-import { TuileGraphes } from "@/components/TuileGraphes";
 import { RefreshControls } from "@/components/RefreshControls";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -95,7 +92,7 @@ async function OnlineCount({ promises }: { promises: Promise<SummaryResult>[] })
 async function StreamedAttention({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
   const liste = attentions(results, maintenantMs());
-  return <ResumeHub resume={resumeHub(results, liste)} liste={liste} />;
+  return <ResumeHub resume={resumeHub(results, liste)} liste={liste} maintenant={maintenantMs()} />;
 }
 
 /** Panneau des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
@@ -131,10 +128,7 @@ export default async function Page() {
   // Et pas seulement la session : l'ACCÈS AU HUB. Une personne invitée sur une seule app a
   // une session valide (la connexion est unique) — cette page-ci affiche les données des
   // cinq apps, elle exige donc `aAcces(…, APP_HUB)`. Voir lib/gardeHub.ts.
-  const session = await exigerAccesHub();
-  // Les graphes de code décrivent des dépôts privés : l'entrée n'existe que pour le propriétaire
-  // (la page, elle, se garde toute seule avec `exigerProprietaire`).
-  const proprietaire = estProprietaire(session.user?.email);
+  await exigerAccesHub();
 
   const sources: HubSource[] = getSources();
   // Lancées tout de suite et toutes ensemble : le parallélisme vient d'ici, pas de Suspense.
@@ -182,8 +176,6 @@ export default async function Page() {
       <Suspense fallback={null}>
         <StreamedAttention promises={promises} />
       </Suspense>
-
-      {proprietaire && <TuileGraphes nombre={DEPOTS.length} />}
 
       {/* Densité adaptative : aéré par défaut, la grille se resserre quand les apps
           se multiplient (indépendant du contenu des apps — purement un compte). */}
