@@ -2,11 +2,18 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **LIA de l'accueil pose ses questions à MemoryAI (Hubperso#341)**
+
+`components/LiaHub.tsx` passe `ask` à `<Lia>` : `lib/liaClient.ts` (`poserQuestion`) appelle `POST /api/lia/ask` (même origine, cookie de session), joint la page courante (`usePathname`, seulement si elle a la forme du contrat) et ne rend qu'une réponse conforme (`validerReponse`). Statut ≠ 200, JSON illisible, réponse hors contrat ou panne réseau : l'appel lève et LIA dit « Je ne suis pas disponible pour le moment » (échec fermé du paquet), jamais une réponse inventée ; la question ne figure dans aucune erreur.
+- Les `blocks` éventuels sont ignorés (pas de `renderBlocks` côté hub en v1) ; le texte, les puces et l'humeur passent.
+- Le test qui interdisait `ask=` (`tests/accueilMaquette.test.ts`) est remplacé par un test de l'appel réel ; `tests/liaClient.test.ts` couvre les statuts, la page, la validation et l'absence de la question dans les erreurs.
+- Preuve de #336 (200 / 403 / 503 en production) : première question réelle posée depuis l'accueil connecté en propriétaire.
+
 ## 🟦 Session 2026-10-22 (soir) — **Le hub relaie les questions de LIA à MemoryAI (Hubperso#336)**
 
-`POST /api/lia/ask` : point d'entrée unique de LIA (contrat du fil Assistant, `commun/assistant/CONTRAT-ask-lia.md`). Appelants : une app (`x-hub-token`, la source vient du jeton) ou l'accueil (session + accès au hub). Le hub relaie à MemoryAI `POST /api/ask` avec `HUB_TOKEN_MEMORYAI`, 20 s de délai, réponse validée à la main (`lib/liaAsk.ts`, `zod` n'est pas une dépendance directe). Tout échec = 503 : LIA dit « indisponible », jamais de réponse inventée. La question n'est jamais journalisée.
+`POST /api/lia/ask` : point d'entrée unique de LIA (contrat du fil Assistant, `commun/assistant/CONTRAT-ask-lia.md`). Appelants : une app (`x-hub-token`, la source vient du jeton) ou l'accueil (session + accès au hub). Le hub relaie à MemoryAI `POST /api/ask` avec `HUB_TOKEN_MEMORYAI`, 30 s de délai, réponse validée à la main (`lib/liaAsk.ts`, `zod` n'est pas une dépendance directe). Tout échec = 503 : LIA dit « indisponible », jamais de réponse inventée. La question n'est jamais journalisée.
 - **Propriétaire seul** (demande du fil MemoryAI) : le corps relayé porte `proprietaire` (MemoryAI répond 403 sans lui). Accueil : vrai si la session est `AUTHORIZED_EMAIL`, sinon 403 au hub (un invité n'atteint jamais la mémoire de Marc) ; apps : `proprietaire` strict `true` exigé dans le corps (calculé par l'app), faux ou absent = 403 sans appel. Délai hub → MemoryAI 30 s (`maxDuration` 40 s).
-- **Pas encore branché au navigateur** : `components/LiaHub.tsx` n'a toujours pas de `ask` (PR suivante, quand MemoryAI aura sa route `/api/ask` en production). Tant que MemoryAI ne répond pas, la route rend 503.
+- **Branché à l'accueil** par Hubperso#341 (voir l'entrée au-dessus). Tant que MemoryAI ne répond pas, la route rend 503.
 - Route déclarée à jeton dans `tests/gardePages.test.ts` et laissée passer par `isPublicPath` (chemin exact). `docs/reference-claude.md` §1 mise à jour.
 
 ## 🟦 Session 2026-10-22 (soir) — **LIA dans la colonne de gauche de l'accueil (refonte)**

@@ -137,10 +137,11 @@ describe("LIA dans la colonne de gauche", () => {
     expect(page).toContain("lia={<LiaHub />}");
   });
 
-  it("jamais de réponse inventée : le hub ne branche aucun `ask` tant que MemoryAI n'en offre pas", () => {
-    // Sans `ask`, le paquet dit « indisponible ». Ce test casse le jour où on le branche : il faut
-    // alors le remplacer par un test de l'appel réel, pas le supprimer.
-    expect(composant).not.toMatch(/\bask=/);
+  it("la question passe par la route du hub, jamais par une réponse écrite ici", () => {
+    expect(composant).toContain("ask={ask}");
+    expect(composant).toContain("poserQuestion(");
+    // Aucun texte de réponse inventé dans le composant : tout vient de `/api/lia/ask`.
+    expect(composant).not.toMatch(/text:\s*["'`]/);
   });
 
   it("le menu ne mène qu'à des pages du hub", async () => {
