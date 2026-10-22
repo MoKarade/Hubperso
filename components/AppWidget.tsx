@@ -32,7 +32,7 @@ import { Recommandation } from "./Recommandation";
  * mesure — la connaissance app par app que le hub s'interdit. On montre le fait, le jugement
  * reste humain. Voir l'en-tête de `lib/carte.ts`.
  */
-function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["heros"]> }) {
+export function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCarte>["heros"]> }) {
   const { metrique, serie, variation, inchangeDepuisMs } = heros;
   const lisible = variationLisible(metrique, variation);
   return (

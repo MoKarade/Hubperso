@@ -2,6 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **Page d'une app selon la maquette (Hubperso#289)**
+
+`/app/[id]` suit la maquette validée : lien « ‹ Accueil », identité (logo série A, nom, état, « Ouvrir l'app »), gros chiffre de la carte d'où l'on vient (`etatCarte(...).heros`, composant `Heros` partagé avec `AppWidget`), recommandation, alertes et actions côte à côte (≥ 900 px), métriques, coûts, puis deux blocs repliés (`DetailPli`, `<details>` natif) : « Détail publié par l'app » et « Technique » (ouvert d'office s'il y a une incohérence : l'anormal ne se cache pas).
+- Aucune donnée de plus qu'avant, mêmes gardes (`exigerAccesHub`, 404 si l'id est inconnu, états honnêtes inchangés).
+- Transition carte → page : `@view-transition { navigation: auto }` (fondu, seulement si le navigateur sait, coupée si mouvement réduit) ; barre latérale et barre du bas gardent leur `view-transition-name` pour ne pas clignoter.
+- Test : `tests/pageAppMaquette.test.ts`. Captures en données fictives : `docs/captures/2026-10-22-page-app/` (390 et 1440 px).
+
 ## 🟦 Session 2026-10-22 (soir) — **LIA de l'accueil pose ses questions à MemoryAI (Hubperso#341)**
 
 `components/LiaHub.tsx` passe `ask` à `<Lia>` : `lib/liaClient.ts` (`poserQuestion`) appelle `POST /api/lia/ask` (même origine, cookie de session), joint la page courante (`usePathname`, seulement si elle a la forme du contrat) et ne rend qu'une réponse conforme (`validerReponse`). Statut ≠ 200, JSON illisible, réponse hors contrat ou panne réseau : l'appel lève et LIA dit « Je ne suis pas disponible pour le moment » (échec fermé du paquet), jamais une réponse inventée ; la question ne figure dans aucune erreur.

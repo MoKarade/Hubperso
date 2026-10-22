@@ -3,6 +3,7 @@
 //
 // Sorti de `app/app/[id]/page.tsx` (refactor sans changement de rendu).
 
+import type { ReactNode } from "react";
 import type { HubSummary } from "@mokarade/hub-contract";
 import { lienRecoRefuse, type Recommandation as Reco, type SectionDetail } from "@/lib/carte";
 import { Recommandation } from "./Recommandation";
@@ -72,5 +73,32 @@ export function DetailSections({ details }: { details: SectionDetail[] | undefin
         </section>
       ))}
     </>
+  );
+}
+
+/**
+ * Un bloc REPLIÉ de la page de détail (maquette du 22/10 : l'essentiel d'abord, le reste à un clic).
+ * Natif (`<details>`) : aucun JavaScript, clavier et lecteur d'écran gratuits. `ouvert` sert à ne
+ * jamais cacher derrière un clic ce qui est anormal (une incohérence de déclaration, par exemple).
+ */
+export function DetailPli({
+  titre,
+  note,
+  ouvert = false,
+  children,
+}: {
+  titre: string;
+  note?: string;
+  ouvert?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details className="detail__pli" open={ouvert}>
+      <summary className="detail__pli-titre">
+        {titre}
+        {note && <small>{note}</small>}
+      </summary>
+      <div className="detail__pli-corps">{children}</div>
+    </details>
   );
 }
