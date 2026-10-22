@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **LIA dans la colonne de gauche de l'accueil (refonte)**
+
+Marc, 22/10/2026 : LIA publiée partout, en autonome. Le hub installe `@mokarade/lia-ui` par tag épinglé (`github:MoKarade/lia-ui#v0.1.0`, comme `hub-contract`) et `app/page.tsx` passe `<LiaHub />` à la colonne réservée de `ResumeHub` (`components/LiaHub.tsx`, client ; `lib/lia.ts`, pur : les entrées du menu).
+- **Pas de `ask` pour l'instant** : MemoryAI (sa maison) n'expose pas encore de point d'entrée pour le hub. Sans `ask`, le paquet dit « Je ne suis pas disponible pour le moment » : échec fermé, aucune réponse inventée (vérifié dans Chromium : le chat s'ouvre, la question reçoit cette phrase). Le brancher = passer `ask` à `<Lia>` ; `tests/accueilMaquette.test.ts` casse alors exprès (remplacer par un test de l'appel réel).
+- Menu (clic droit, appui long, touche Menu) : « attention » et « coûts », deux navigations vers des pages qui se gardent toutes seules. Aucune action n'exécute rien d'elle-même.
+- Une seule LIA par page ; clé de mémorisation locale `lia-hub`. CSP inchangée (le paquet injecte un `<style>`, déjà permis par `style-src 'unsafe-inline'`).
+- Captures (données fictives, Chromium) : `docs/captures/2026-10-22-lia/`. Non vérifié : sur un vrai téléphone, lecteur d'écran.
+
 ## 🟦 Session 2026-10-22 (soir) — **Réception du relevé du Gantt (Hubperso#329, onglet « Chantier Apps »)**
 
 Marc, 22/10/2026 : tout le « Chantier Apps » dans un onglet du hub, mêmes données que le Gantt, sans copie à la main. Première brique : le hub **reçoit** le relevé. Le Drive où `outils/gantt-pc/tour.py` (MoKarade/.github) écrit toutes les 10 min est privé (titres de tâches de FinanceAI et DriveAI) : le hub ne le lit pas et n'expose aucune URL publique, c'est le PC qui POSTe.

@@ -11,10 +11,9 @@ import { BandeauAttention } from "./BandeauAttention";
 // que s'il y en a. Au-delà de `MAX_POINTS`, le compte restant passe par le bandeau d'attention,
 // qui mène à /attention : rien n'est escamoté.
 //
-// COLONNE DE LIA. La maquette réserve la colonne de gauche à l'assistant (une seule, partout).
-// Tant que son composant partagé n'existe pas, `lia` est absent et RIEN n'est dessiné : ni
-// cadre vide, ni faux agent. Quand il arrive, il se passe ici et la grille s'ouvre sur deux
-// colonnes sans toucher au reste.
+// COLONNE DE LIA. La maquette réserve la colonne de gauche à l'assistante (une seule, partout).
+// La page y passe `LiaHub` (composant partagé `@mokarade/lia-ui`). Sans `lia`, RIEN n'est dessiné :
+// ni cadre vide, ni faux agent ; avec, la grille s'ouvre sur deux colonnes sans toucher au reste.
 
 function Point({ point }: { point: Attention }) {
   return (
