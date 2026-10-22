@@ -60,6 +60,12 @@ export function isPublicPath(pathname: string): boolean {
   // le vrai garde-fou : le matcher du middleware ne gagne aucune exclusion (leçon n°4).
   if (pathname === "/api/cron/releve") return true;
 
+  // POST /api/lia/ask : la question de LIA, relayée à MemoryAI. Appelée par les APPS (serveur à
+  // serveur, `x-hub-token`) et par l'accueil (session). Elle traverse le garde pour laisser passer
+  // le jeton, et se garde donc TOUTE SEULE : jeton valide ou session avec accès au hub, sinon 401
+  // (app/api/lia/ask/route.ts). Jamais dans le matcher du middleware.
+  if (pathname === "/api/lia/ask") return true;
+
   // POST /api/gantt : le PC de Marc y ENVOIE le relevé du Gantt (tour.py, toutes les 10 min).
   // Troisième route de serveur à serveur, même raisonnement : pas de cookie de session. Elle
   // exige `Authorization: Bearer <GANTT_SECRET>`, secret DÉDIÉ comparé à temps constant, et

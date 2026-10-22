@@ -48,6 +48,13 @@ describe("isPublicPath", () => {
   // comparé à temps constant (lib/cronAuth.ts, app/api/cron/releve/route.ts). Ce test
   // vérifie le chemin ; `tests/gardePages.test.ts` vérifie que l'auth de remplacement
   // existe vraiment, et que ces deux listes ne divergent pas.
+  it("laisse passer /api/lia/ask — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/lia/ask")).toBe(true);
+    expect(isPublicPath("/api/lia/ask/")).toBe(false);
+    expect(isPublicPath("/api/lia")).toBe(false);
+    expect(isPublicPath("/api/lia/autre")).toBe(false);
+  });
+
   it("laisse passer /api/cron/releve — et exactement ce chemin", () => {
     expect(isPublicPath("/api/cron/releve")).toBe(true);
     expect(isPublicPath("/api/cron/releve/")).toBe(false);
