@@ -4,7 +4,7 @@ import type { MetadataRoute } from "next";
  * Manifeste d'application web — c'est lui qui rend le hub INSTALLABLE (téléphone et PC).
  *
  * Servi par Next sur `/manifest.webmanifest`. Aucune requête externe : les icônes sont
- * dans `public/`, générées depuis `app/icon.svg` (le motif bento du hub).
+ * dans `public/`, générées depuis `app/icon.svg` (logo série A du hub : la constellation et l'étincelle IA).
  *
  * ⚠️ CSP : le hub applique une CSP ENFORCÉE (`next.config.mjs`). `manifest-src` n'y est pas
  * déclaré, il retombe donc sur `default-src 'self'` — le manifeste et les icônes sont
@@ -46,8 +46,8 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       // Variante MASKABLE : Android rogne l'icône selon la forme du lanceur (cercle,
-      // goutte…). Sans elle, les coins du motif bento sont mangés. Celle-ci garde le
-      // motif dans la zone sûre centrale, sur fond plein.
+      // goutte…). Sans elle, les bords du logo sont mangés. Celle-ci garde le
+      // dessin dans la zone sûre centrale, sur fond plein.
       {
         src: "/icon-maskable-512.png",
         sizes: "512x512",
