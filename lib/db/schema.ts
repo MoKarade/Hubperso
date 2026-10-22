@@ -21,7 +21,17 @@
 // une garantie qui n'existe pas.
 
 import { sql } from "drizzle-orm";
-import { boolean, jsonb, numeric, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 /**
  * Les personnes admises dans l'écosystème.
@@ -131,4 +141,30 @@ export const releves = pgTable(
     coutPeriode: text("cout_periode"),
   },
   (t) => [primaryKey({ columns: [t.appId, t.releveLe] })],
+);
+
+/**
+ * Le DERNIER relevé du Gantt envoyé par le PC de Marc (`POST /api/gantt`, lib/gantt.ts).
+ *
+ * Une seule ligne, jamais un historique : la contrainte `id = 1` rend impossible d'en écrire
+ * deux, et l'envoi suivant REMPLACE le précédent. Le Drive de Marc garde la copie de secours.
+ * `donnees_gz_b64` est stocké tel quel (gzip puis base64) : le hub ne le décode pas.
+ */
+export const ganttReleve = pgTable(
+  "gantt_releve",
+  {
+    id: integer("id").primaryKey().default(1),
+    /** L'heure de RÉCEPTION, celle du hub : c'est elle qui dit « périmé ». */
+    recuLe: timestamp("recu_le", { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+    /** L'heure d'envoi déclarée par le PC. */
+    envoyeLe: timestamp("envoye_le", { withTimezone: true }).notNull(),
+    donneesGzB64: text("donnees_gz_b64").notNull(),
+    etat: jsonb("etat").notNull(),
+    fiabilite: jsonb("fiabilite").notNull(),
+    prochaines: jsonb("prochaines").notNull(),
+    quota: jsonb("quota").notNull(),
+  },
+  (t) => [check("gantt_releve_une_ligne", sql`${t.id} = 1`)],
 );
