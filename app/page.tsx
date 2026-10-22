@@ -98,7 +98,6 @@ async function StreamedAttention({ promises }: { promises: Promise<SummaryResult
       resume={resumeHub(results, liste)}
       liste={liste}
       maintenant={maintenantMs()}
-      lia={<LiaHub />}
     />
   );
 }
@@ -163,6 +162,8 @@ export default async function Page() {
 
   return (
     <main className="page">
+      {/* LIA : une seule, dans la fenêtre entière, sans espace réservé sur la page. */}
+      <LiaHub />
       <header className="page__head">
         <div>
           <p className="page__eyebrow">hubperso.com</p>
