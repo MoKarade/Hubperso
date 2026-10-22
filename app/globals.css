@@ -1699,27 +1699,11 @@ a:focus-visible,
 /* ── Le résumé de l'accueil : une phrase vraie, puis ce qu'il faut regarder ─────────────────
    La phrase vient des états réels (`lib/resume.ts`) ; elle reste NEUTRE (maquette de base) : la
    gravité se lit sur les pastilles et dans les mots, jamais sur la couleur seule. Jamais de
-   teinte d'app en texte. `.accueil--lia` ouvre la colonne de gauche réservée à LIA (une seule
-   assistante, partout) : tant qu'elle n'existe pas, la grille n'a qu'une colonne. */
+   teinte d'app en texte. LIA ne réserve aucune colonne : elle vit dans la fenêtre entière. */
 .accueil {
   display: grid;
   gap: 1.5rem;
   margin-bottom: 1.75rem;
-}
-@media (min-width: 1024px) {
-  .accueil--lia { grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); align-items: start; }
-}
-.accueil__lia { min-width: 0; }
-/* La colonne où vit LIA : le paquet y pose sa couche (`position: relative` ajouté par lui). Hauteur
-   réservée pour que son corps ait la place de vivre ; sur téléphone elle reste basse. */
-.lia-colonne {
-  min-height: 14rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-@media (min-width: 1024px) {
-  .lia-colonne { min-height: 22rem; }
 }
 .resume {
   display: grid;

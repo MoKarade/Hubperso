@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **LIA de l'accueil dans la fenêtre entière, sans colonne (Hubperso#346)**
+
+Retour de Marc (via le fil MemoryAI) : sur téléphone la « maison » de LIA prenait trop de place et elle ne le suivait pas au défilement. `LiaHub` monte maintenant `<Lia />` SANS `container` (fenêtre entière, comme les apps), n'a plus de `div` à lui, et la page le monte une fois, hors du résumé (`app/page.tsx`). `ResumeHub` perd sa prop `lia` et sa colonne ; `.lia-colonne`, `.accueil--lia` et `.accueil__lia` disparaissent de `app/globals.css` : aucun espace réservé sur la page.
+- Le suivi du défilement et du curseur vient avec lia-ui v0.2.0 (lia-ui#7) : bump de l'épingle (`github:MoKarade/lia-ui#v0.2.0`) à faire quand le tag existe, tâche séparée.
+- Tests : `tests/accueilMaquette.test.ts` (plus de colonne dans le résumé ni dans la feuille de style, LiaHub sans conteneur ni `div`, montée une fois). Captures en données fictives : `docs/captures/2026-10-22-lia-fenetre/` (390 et 1280 px, dont une après défilement).
+
 ## 🟦 Session 2026-10-22 (soir) — **Page d'une app selon la maquette (Hubperso#289)**
 
 `/app/[id]` suit la maquette validée : lien « ‹ Accueil », identité (logo série A, nom, état, « Ouvrir l'app »), gros chiffre de la carte d'où l'on vient (`etatCarte(...).heros`, composant `Heros` partagé avec `AppWidget`), recommandation, alertes et actions côte à côte (≥ 900 px), métriques, coûts, puis deux blocs repliés (`DetailPli`, `<details>` natif) : « Détail publié par l'app » et « Technique » (ouvert d'office s'il y a une incohérence : l'anormal ne se cache pas).

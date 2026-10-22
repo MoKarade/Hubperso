@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import type { Attention } from "@/lib/attention";
 import { formatEnteteAccueil } from "@/lib/format";
 import type { Resume } from "@/lib/resume";
@@ -11,9 +10,8 @@ import { BandeauAttention } from "./BandeauAttention";
 // que s'il y en a. Au-delà de `MAX_POINTS`, le compte restant passe par le bandeau d'attention,
 // qui mène à /attention : rien n'est escamoté.
 //
-// COLONNE DE LIA. La maquette réserve la colonne de gauche à l'assistante (une seule, partout).
-// La page y passe `LiaHub` (composant partagé `@mokarade/lia-ui`). Sans `lia`, RIEN n'est dessiné :
-// ni cadre vide, ni faux agent ; avec, la grille s'ouvre sur deux colonnes sans toucher au reste.
+// LIA n'a PLUS de colonne ici (Marc, 22/10/2026) : elle vit dans la fenêtre entière, comme dans les
+// apps (`components/LiaHub.tsx`), et ne réserve aucun espace sur cette page.
 
 function Point({ point }: { point: Attention }) {
   return (
@@ -33,17 +31,14 @@ export function ResumeHub({
   resume,
   liste,
   maintenant,
-  lia,
 }: {
   resume: Resume;
   liste: Attention[];
   /** L'instant de la requête, lu par la page (`lib/horloge.ts`) : le composant reste pur. */
   maintenant: number;
-  lia?: ReactNode;
 }) {
   return (
-    <section className={`accueil${lia ? " accueil--lia" : ""}`} aria-label="État du hub">
-      {lia && <div className="accueil__lia">{lia}</div>}
+    <section className="accueil" aria-label="État du hub">
       <div className="resume">
         <p className="resume__date">{formatEnteteAccueil(maintenant)}</p>
         <h2 className="resume__phrase" data-ton={resume.ton}>
