@@ -75,12 +75,6 @@ function classesCliquables(): Set<string> {
  */
 const EXCEPTIONS: ReadonlyMap<string, string> = new Map([
   [
-    "costs",
-    "C'est une CARTE entière cliquable (la tuile « Coûts & quotas »), pas un bouton : " +
-      "`min-height: 84px` et un rembourrage de 1,1 rem la rendent bien plus grande que " +
-      "n'importe quelle cible tactile.",
-  ],
-  [
     "admin__btn-danger",
     "Posée EN PLUS de `btn` dans le JSX (`className=\"btn admin__btn-danger\"`) : elle ne " +
       "fait que teinter le survol en rouge, la hauteur vient de `.btn`.",
