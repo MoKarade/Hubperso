@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-22 (soir) — **Phrase d'état de l'accueil (Hubperso#315)**
+
+Maquette validée par Marc (22/10/2026) : sous l'en-tête, une phrase vraie sur l'état du hub, puis au plus trois points « à regarder ». `lib/resume.ts` (pur) calcule la phrase des MÊMES états que les badges des cartes (`lib/status.ts`) : « Tout est à jour. » seulement si chaque app branchée est à jour ; une app en panne ou en retard est nommée (« DriveAI : injoignable. ») ; plusieurs : un compte (« 2 apps à régler. ») ; en construction ou non branchée : jamais présentée comme à jour. Les points sont les entrées de `lib/attention.ts` (alertes, apps muettes, données figées ; les infos n'y sont pas), chacun mène à la page de l'app ; au-delà de trois, le bandeau d'attention existant mène à `/attention`. `components/ResumeHub.tsx` remplace l'usage direct de `BandeauAttention` dans `app/page.tsx` ; rien ne s'affiche tant que les réponses n'arrivent pas (le compteur d'en-tête reste). Captures (données fictives) : `docs/captures/2026-10-22-resume/`.
+
 ## 🟦 Session 2026-10-22 (soir) — **Icône du hub = logo série A (Hubperso#291, mission .github#467)**
 
 `app/icon.svg` (onglet, traits épais) et les PNG `public/icon-192`, `icon-512`, `icon-maskable-512` (plein cadre) et `apple-touch-icon` (180 px) sont le logo série A du hub : la constellation `#93A0FF`, étincelle IA argent, sur tuile `#0B0D12`. Avant : l'ancien motif bento. Noms de fichiers, `layout.tsx` et manifeste inchangés ; le service worker ne met aucune icône en cache, rien à purger. PWA déjà installée : Android et PC se rafraîchissent seuls en quelques jours ; iPhone : retirer l'icône de l'écran d'accueil puis la rajouter. Le logo des cartes (`LogoApp`) est une autre pièce, déjà fusionnée (#314).
