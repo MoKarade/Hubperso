@@ -1697,36 +1697,57 @@ a:focus-visible,
 }
 
 /* ── Le résumé de l'accueil : une phrase vraie, puis ce qu'il faut regarder ─────────────────
-   La phrase vient des états réels (`lib/resume.ts`) ; la couleur ne porte jamais seule le sens
-   (la phrase nomme l'app et l'état). Jamais de teinte d'app en texte. */
+   La phrase vient des états réels (`lib/resume.ts`) ; elle reste NEUTRE (maquette de base) : la
+   gravité se lit sur les pastilles et dans les mots, jamais sur la couleur seule. Jamais de
+   teinte d'app en texte. `.accueil--lia` ouvre la colonne de gauche réservée à LIA (une seule
+   assistante, partout) : tant qu'elle n'existe pas, la grille n'a qu'une colonne. */
+.accueil {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+@media (min-width: 1024px) {
+  .accueil--lia { grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); align-items: start; }
+}
+.accueil__lia { min-width: 0; }
 .resume {
   display: grid;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.9rem;
+  min-width: 0;
+}
+.resume__date {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 .resume__phrase {
-  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  margin: 0;
+  max-width: 28ch;
+  font-size: clamp(1.9rem, 1.2rem + 3.4vw, 3.2rem);
   font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
   color: var(--text);
-}
-.resume__phrase[data-ton="danger"] {
-  color: var(--danger);
-}
-.resume__phrase[data-ton="warn"] {
-  color: var(--warn);
 }
 .resume__points {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.5rem;
   list-style: none;
+  margin: 0;
   padding: 0;
 }
 .resume__point {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.7rem;
+  padding: 0.3rem 0.4rem 0.3rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
 }
 .resume__pastille {
   width: 9px;
@@ -1741,20 +1762,21 @@ a:focus-visible,
 .resume__point[data-gravite="warn"] .resume__pastille {
   background: var(--warn);
 }
-.resume__lien {
-  display: flex;
-  align-items: center;
-  min-height: var(--cible);
-  color: var(--text-soft, var(--text));
+.resume__texte {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-soft);
   font-size: 0.95rem;
-  text-decoration: none;
+  line-height: 1.35;
 }
-.resume__lien strong {
-  margin-right: 0.35rem;
+.resume__texte strong {
+  margin-right: 0.2rem;
   color: var(--text);
 }
-.resume__lien:hover {
-  text-decoration: underline;
+.resume__voir {
+  min-height: var(--cible);
+  flex: none;
+  border-radius: 999px;
 }
 
 /* ── « CE QUI DEMANDE MON ATTENTION » ────────────────────────────────────────────────
@@ -2377,7 +2399,7 @@ a:focus-visible,
   gap: 0.3rem;
 }
 
-/* ── GRAPHES DE CODE (/graphes et tuile d'accueil) ───────────────────────────────────
+/* ── GRAPHES DE CODE (/graphes ; l'entrée est dans la navigation) ───────────────────────────────────
    Marc, 21/10/2026 : « moins de texte, mais plus gros, et pleeeein d'animation ». Chaque dépôt a
    sa petite constellation (lib/dessinDepot.ts) : un DESSIN décoratif, pas le graphe. Les couleurs
    viennent des seules variables du thème ; les mouvements sont coupés par
@@ -2402,43 +2424,6 @@ a:focus-visible,
   filter: drop-shadow(0 0 5px currentColor);
   transform-box: fill-box;
   transform-origin: center;
-}
-
-.tuile-graphes {
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  min-height: max(var(--cible), 6rem);
-  margin-bottom: var(--gap);
-  padding: 0.9rem 1.4rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
-}
-.tuile-graphes .constellation {
-  width: 10rem;
-  flex: 0 0 auto;
-}
-.tuile-graphes__texte {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-.tuile-graphes__titre {
-  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.tuile-graphes__meta {
-  font-size: 1.05rem;
-  color: var(--text-soft);
-}
-.tuile-graphes:hover {
-  border-color: var(--marque);
-  background: var(--surface-2);
 }
 
 .graphes__grille {
@@ -2559,31 +2544,23 @@ a:focus-visible,
   .carte-graphe--ok:hover {
     transform: translateY(-4px);
   }
-  .carte-graphe--ok .constellation,
-  .tuile-graphes .constellation {
+  .carte-graphe--ok .constellation {
     animation: constellation-flotte 7s ease-in-out infinite;
   }
-  .carte-graphe--ok .constellation__lien,
-  .tuile-graphes .constellation__lien {
+  .carte-graphe--ok .constellation__lien {
     animation: constellation-flux 2.6s linear infinite;
     animation-delay: calc(var(--n, 0) * -0.35s);
   }
-  .carte-graphe--ok .constellation__point,
-  .tuile-graphes .constellation__point {
+  .carte-graphe--ok .constellation__point {
     animation: constellation-pulse 3.2s ease-in-out infinite;
     animation-delay: calc(var(--n, 0) * -0.45s);
   }
-  .carte-graphe--ok:hover .constellation__lien,
-  .tuile-graphes:hover .constellation__lien {
+  .carte-graphe--ok:hover .constellation__lien {
     animation-duration: 1.1s;
     opacity: 0.8;
   }
-  .carte-graphe--ok:hover .constellation__point,
-  .tuile-graphes:hover .constellation__point {
+  .carte-graphe--ok:hover .constellation__point {
     animation-duration: 1.6s;
-  }
-  .tuile-graphes {
-    animation: rise-in 520ms var(--ease-out) backwards;
   }
 }
 @keyframes constellation-flux {

@@ -1,6 +1,7 @@
 // tests/accueilMaquette.test.ts — l'accueil selon la maquette de base (Marc, 22/10/2026) :
-// résumé, cartes, PUIS coûts et quotas. Ce qui compte ici n'est pas le détail du style (verrouillé
-// ailleurs) mais ce que la maquette ne doit pas laisser dériver : l'ordre et l'honnêteté du panneau.
+// résumé en lignes d'action, cartes, PUIS coûts et quotas. Ce qui compte ici n'est pas le détail
+// du style (verrouillé ailleurs) mais ce que la maquette ne doit pas laisser dériver : l'ordre,
+// la colonne de LIA qui reste vide tant qu'elle n'existe pas, et l'honnêteté du panneau.
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -9,7 +10,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { HubSummary } from "@mokarade/hub-contract";
 import { CostsCard } from "@/components/CostsCard";
+import { ResumeHub } from "@/components/ResumeHub";
 import type { SummaryResult } from "@/lib/fetchSummary";
+import { formatEnteteAccueil } from "@/lib/format";
+import { resumeHub } from "@/lib/resume";
 import { aggregateUsage } from "@/lib/usage";
 import { hubSource, validSummary } from "./helpers";
 
@@ -41,6 +45,35 @@ describe("ordre de la page d'accueil", () => {
     expect(couts).toBeGreaterThan(cartes);
     // Le panneau est servi par son propre Suspense, jamais devant les cartes.
     expect(dans("couts-panneau--attente")).toBeGreaterThan(cartes);
+  });
+});
+
+describe("en-tête daté de l'accueil", () => {
+  it("jour et heure du Québec, pas ceux du serveur", () => {
+    expect(formatEnteteAccueil(NOW)).toBe("jeudi 22 octobre · 16 h 27");
+    // Minuit passé au Québec = déjà le lendemain en UTC… et pas l'inverse.
+    expect(formatEnteteAccueil(Date.parse("2026-10-23T03:30:00Z"))).toBe("jeudi 22 octobre · 23 h 30");
+  });
+});
+
+describe("colonne de LIA", () => {
+  const resultats = [ok("a")];
+  const rendre = (lia?: string) =>
+    renderToStaticMarkup(
+      h(ResumeHub, { resume: resumeHub(resultats, []), liste: [], maintenant: NOW, lia: lia ? h("p", null, lia) : undefined }),
+    );
+
+  it("rien n'est dessiné tant que son composant n'existe pas", () => {
+    const html = rendre();
+    expect(html).not.toContain("accueil__lia");
+    expect(html).not.toContain("accueil--lia");
+  });
+
+  it("quand il arrive, il prend la colonne de gauche sans toucher au reste", () => {
+    const html = rendre("LIA");
+    expect(html).toContain("accueil__lia");
+    expect(html).toContain("accueil--lia");
+    expect(texte(html)).toContain("L’app est à jour.");
   });
 });
 
