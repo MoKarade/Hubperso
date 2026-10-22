@@ -3044,6 +3044,7 @@ a:focus-visible,
 .detail__duo {
   display: grid;
   gap: var(--gap);
+  margin-bottom: var(--gap);
 }
 @media (min-width: 900px) {
   .detail__duo:has(> :nth-child(2)) {
