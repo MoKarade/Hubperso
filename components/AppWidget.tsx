@@ -8,7 +8,7 @@ import type { Releve } from "@/lib/historique";
 import { etatCarte, variationLisible, type PlaceCarte } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
-import { ditCarte, graviteLia } from "@/lib/liaParole";
+import { ditCarte, graviteCarte } from "@/lib/liaParole";
 import { safeHttpUrl } from "@/lib/url";
 import { texteSur } from "@/lib/couleur";
 import { formatDateTime, formatDuree, formatMetricValue } from "@/lib/format";
@@ -241,7 +241,7 @@ export function AppWidget({
       data-lia-cible=""
       data-lia-app={result.source.id}
       data-lia-nom={name}
-      data-lia-gravite={graviteLia(badge.tone)}
+      data-lia-gravite={graviteCarte(result, badge.tone)}
       data-lia-dit={ditCarte(result)}
     >
       <header className="widget__head">

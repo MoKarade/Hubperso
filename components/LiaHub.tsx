@@ -33,6 +33,20 @@ function lireFaits(): FaitLia[] {
   return faits;
 }
 
+/**
+ * L'état de LIA, en LECTURE SEULE, sous `window.__liaEtat()` : ce qu'elle a fait (`journal`), ce qu'elle
+ * ressent, ses envies, et les faits qu'elle lit sur les cartes. Sans lui, personne ne pouvait dire en
+ * production pourquoi elle se taisait (le PC ne trouvait aucun `window.lia`, 23/10/2026). Ce n'est pas la
+ * poignée : on ne peut ni la faire parler ni la déplacer d'ici.
+ */
+function exposerEtat(h: LiaHandle): () => void {
+  const w = window as unknown as { __liaEtat?: () => unknown };
+  w.__liaEtat = () => ({ journal: h.journal(), ressent: h.ressent(), envies: h.envies(), faits: lireFaits() });
+  return () => {
+    delete w.__liaEtat;
+  };
+}
+
 /** Montre la carte à Marc s'il l'a demandé (geste explicite) : seul LIA ne fait jamais défiler. */
 function carteVisible(el: HTMLElement): boolean {
   const r = el.getBoundingClientRect();
@@ -43,6 +57,8 @@ export function LiaHub() {
   const router = useRouter();
   const page = usePathname();
   const lia = useRef<LiaHandle | null>(null);
+  const retirerEtat = useRef<(() => void) | null>(null);
+  useEffect(() => () => retirerEtat.current?.(), []);
   const actions = useMemo(
     () => ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => router.push(e.href) })),
     [router],
@@ -116,6 +132,8 @@ export function LiaHub() {
       monde={monde}
       onPret={(h) => {
         lia.current = h;
+        retirerEtat.current?.();
+        retirerEtat.current = h ? exposerEtat(h) : null;
       }}
     />
   );
