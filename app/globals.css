@@ -91,6 +91,15 @@ a:focus-visible,
   margin: 0 auto;
   padding: clamp(1.5rem, 1rem + 3vw, 4rem) clamp(1rem, 0.5rem + 2vw, 2.5rem);
 }
+/* L'accueil prend la largeur de la maquette (Marc, 23/10/2026 : « la page est pas assez large »).
+   Le plafond de 1200 px comptait le padding ET la barre latérale de 15 rem restait à côté : à
+   1456 px d'écran les cartes ne mesuraient que ~1116 px. L'accueil (cartes, coûts) monte à
+   1520 px, la barre latérale passe à 14 rem et les marges se resserrent ; les pages de texte
+   gardent 1200 px. */
+.page--large {
+  max-width: 1520px;
+  padding-inline: clamp(1rem, 0.2rem + 1.6vw, 1.75rem);
+}
 .page__head {
   display: flex;
   justify-content: space-between;
@@ -2954,7 +2963,7 @@ a:focus-visible,
 @media (min-width: 1024px) {
   .cadre {
     display: grid;
-    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-columns: 14rem minmax(0, 1fr);
   }
   .cadre__contenu {
     padding-bottom: 0;

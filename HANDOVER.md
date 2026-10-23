@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **L'accueil prend la largeur de la maquette (Hubperso#379)**
+
+Marc, 23/10/2026 : « la page est pas assez large sur le hub, sur la maquette ça prenait plus l'espace ». Mesure (harness, données fictives) : à 1440 px d'écran, barre latérale de 15 rem comprise, les cartes ne mesuraient que 1126 px ; à 1920 px, 1120 px (le plafond de 1200 px comptait le padding). Nouvelle classe `.page--large` sur l'accueil seul (`app/page.tsx`) : plafond 1520 px, marges `clamp(1rem, 0.2rem + 1.6vw, 1.75rem)` ; la barre latérale passe de 15 à 14 rem. Résultat mesuré : cartes de 1164 px à 1440 px, 1464 px à 1920 px, 358 px à 390 px sans débordement horizontal. Les pages de texte (conditions, confidentialité, page d'app, coûts) gardent 1200 px. `tests/bento.test.ts` verrouille le plafond, les marges et l'usage unique de la classe. Reste ouvert : le haut de page (phrase, pastilles, LIA) garde sa forme actuelle, c'est Hubperso#358.
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.9.0 : LIA dit un problème et accompagne le regard de Marc (Hubperso#356)**
 
 `@mokarade/lia-ui` v0.9.0 (4203b3c, reprend 0.8) donne à LIA `monde(motif, element?)` et pose `data-regard` sur ce qu'elle regarde. `LiaHub` branche `monde` sur `parleMonde` (`lib/liaParole.ts`) : `appeler` dit le problème affiché le plus grave (une fois par 30 min, d'après le journal de LIA) ; `accompagner` dit le constat de la carte que Marc fixe ; `resumer`, `feliciter`, `rappeler` et `souvenir` renvoient `null` (aucun texte vrai à dire). Tout le texte vient de `data-lia-dit`, rien n'est écrit d'avance. Liseré `[data-lia-cible][data-regard]` dans `app/globals.css` (variables seulement, sans animation).
