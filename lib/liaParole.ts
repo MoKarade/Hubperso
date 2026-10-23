@@ -173,7 +173,9 @@ export function parleSeule(motif: MotifLia, faits: readonly FaitLia[], heure: nu
  * Ce que le hub sait du monde, en nombres de 0 à 1, pour le réseau d'humeurs de LIA (`entrees()` de
  * `@mokarade/lia-ui`, lu chaque seconde). Calculé des seules cartes AFFICHÉES : aucune carte, aucune
  * entrée (`{}` : un monde calme, jamais une inquiétude inventée).
- *   - `alerte` : 1 si une carte est en alerte grave, 0,6 si le pire est un avertissement, sinon 0 ;
+ *   - `alerte` : proportionnelle aux cartes en cause (alerte grave = poids 1, avertissement = 0,6, rapporté
+ *     au nombre de cartes affichées, plafonné à 1) : 0 sans problème, 1 seulement si TOUTES sont en alerte grave.
+ *     Collée à 1 dès UNE alerte, elle figeait LIA en « Inquiétude » (constat du fil Assistant, 23/10/2026) ;
  *   - `nbAlertes` : la part des cartes affichées qui posent problème (alerte ou avertissement) ;
  *   - `toutVert` : 1 seulement si TOUTES les cartes affichées sont à jour, comme la phrase de LIA.
  */
@@ -182,7 +184,7 @@ export function entreesMonde(faits: readonly FaitLia[]): Record<string, number> 
   const graves = faits.filter((f) => f.gravite === "alert").length;
   const avertis = faits.filter((f) => f.gravite === "warn").length;
   return {
-    alerte: graves > 0 ? 1 : avertis > 0 ? 0.6 : 0,
+    alerte: Math.min(1, (graves + 0.6 * avertis) / faits.length),
     nbAlertes: (graves + avertis) / faits.length,
     toutVert: faits.every((f) => f.gravite === "ok") ? 1 : 0,
   };
