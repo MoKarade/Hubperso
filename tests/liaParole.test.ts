@@ -39,11 +39,22 @@ describe("ditCarte : la phrase d'une carte vient de son état", () => {
     expect(ditCarte(ok())).toBe("DriveAI est à jour, rien à signaler.");
   });
 
-  it("à jour avec une alerte : elle est dite, ponctuée une seule fois", () => {
-    const r = ok({ alerts: [{ label: "Deux offres expirent bientôt", severity: "warn" }] });
-    expect(ditCarte(r)).toBe("DriveAI est à jour. Deux offres expirent bientôt.");
+  it("à jour avec une info : dite, ponctuée une seule fois", () => {
     const q = ok({ alerts: [{ label: "Tout va bien ?", severity: "info" }] });
     expect(ditCarte(q)).toBe("DriveAI est à jour. Tout va bien ?");
+  });
+
+  it("à jour avec un avertissement ou une alerte : jamais dite sous « à jour »", () => {
+    const w = ok({ alerts: [{ label: "Deux offres expirent bientôt", severity: "warn" }] });
+    expect(ditCarte(w)).toBe("DriveAI a un point à regarder. Deux offres expirent bientôt.");
+    const a = ok({
+      alerts: [
+        { label: "Une info", severity: "info" },
+        { label: "Dépassement de km projeté", severity: "alert" },
+      ],
+    });
+    expect(ditCarte(a)).toBe("DriveAI a un point à regarder. Dépassement de km projeté.");
+    expect(ditCarte(a)).not.toContain("à jour");
   });
 
   it("injoignable, invalide, refusée, non branchée : dites telles quelles, sans détail technique", () => {
