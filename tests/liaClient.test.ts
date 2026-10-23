@@ -20,6 +20,18 @@ describe("poserQuestion", () => {
     expect(init.signal).toBe(signal);
   });
 
+  it("joint l'état de LIA seulement s'il est conforme ; sinon la question part quand même", async () => {
+    const appeler = vi.fn().mockImplementation(async () => reponse({ text: "ok" }));
+    const etat = { humeur: "calme", silhouette: "repos", regard: null };
+    await poserQuestion("q", signal, "/", appeler, etat);
+    await poserQuestion("q", signal, "/", appeler, { humeur: "<b>", silhouette: "repos", regard: null });
+    await poserQuestion("q", signal, "/", appeler, undefined);
+    const corps = appeler.mock.calls.map((c) => JSON.parse((c as [string, RequestInit])[1].body as string));
+    expect(corps[0]).toEqual({ question: "q", page: "/", etat_lia: etat });
+    expect(corps[1]).toEqual({ question: "q", page: "/" });
+    expect(corps[2]).toEqual({ question: "q", page: "/" });
+  });
+
   it("une page qui n'a pas la forme du contrat n'est pas envoyée", async () => {
     // Une réponse neuve à chaque appel : un corps ne se lit qu'une fois.
     const appeler = vi.fn().mockImplementation(async () => reponse({ text: "ok" }));

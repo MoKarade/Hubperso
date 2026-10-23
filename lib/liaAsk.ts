@@ -8,6 +8,8 @@
 // hub. Tout ce qui sort de la forme est REFUSÉ — jamais réparé, jamais complété : LIA dit alors
 // « indisponible » au lieu d'inventer.
 
+import { HUMEURS_DETAILLEES, SILHOUETTES_LIA } from "@mokarade/lia-ui";
+
 export const QUESTION_MAX = 2000;
 const PAGE_MAX = 200;
 export const TEXTE_MAX = 8000;
@@ -25,7 +27,30 @@ export const HUMEURS = [
 ] as const;
 type Humeur = (typeof HUMEURS)[number];
 
-export type DemandeAsk = { question: string; page?: string; proprietaire?: boolean };
+/**
+ * L'état du corps de LIA à l'écran (lia-ui ≥ v0.15.0, 3e argument de `ask`) : une DONNÉE sur elle, pas sur Marc.
+ * Listes fermées, jamais de texte libre : ces valeurs finissent dans le message que MemoryAI envoie au modèle.
+ * `humeur` et `silhouette` viennent des listes exportées par le paquet épinglé (elles bougent avec le re-pin,
+ * jamais seules) ; `regard` a la forme de `data-lia-cible`.
+ */
+export type EtatLia = { humeur: string; silhouette: string; regard: string | null };
+const REGARD = /^[a-z0-9-]{1,40}$/;
+const HUMEURS_LIA_40: ReadonlySet<string> = new Set(HUMEURS_DETAILLEES);
+const SILHOUETTES: ReadonlySet<string> = new Set(SILHOUETTES_LIA);
+
+/** L'état conforme, ou `undefined` : une clé en trop, un texte hors liste ou un `regard` mal formé le refusent. */
+export function lireEtatLia(v: unknown): EtatLia | undefined {
+  if (!estObjet(v)) return undefined;
+  const cles = Object.keys(v);
+  if (cles.length !== 3 || !["humeur", "silhouette", "regard"].every((c) => cles.includes(c))) return undefined;
+  const { humeur, silhouette, regard } = v;
+  if (typeof humeur !== "string" || !HUMEURS_LIA_40.has(humeur)) return undefined;
+  if (typeof silhouette !== "string" || !SILHOUETTES.has(silhouette)) return undefined;
+  if (regard !== null && (typeof regard !== "string" || !REGARD.test(regard))) return undefined;
+  return { humeur, silhouette, regard };
+}
+
+export type DemandeAsk = { question: string; page?: string; proprietaire?: boolean; etat_lia?: EtatLia };
 type PuceAsk = { id: string; label: string };
 export type ReponseAsk = { text: string; chips?: PuceAsk[]; mood?: Humeur; blocks?: unknown[] };
 
@@ -54,6 +79,12 @@ export function validerDemande(corps: unknown): Resultat<DemandeAsk> {
     if (typeof corps.proprietaire !== "boolean") return { ok: false, raison: "`proprietaire` : un booléen." };
     demande.proprietaire = corps.proprietaire;
   }
+  if (corps.etat_lia !== undefined) {
+    // Refusé s'il sort de la forme, jamais réparé : MemoryAI ne reçoit que ce que ce hub a validé.
+    const etat = lireEtatLia(corps.etat_lia);
+    if (!etat) return { ok: false, raison: "`etat_lia` : { humeur, silhouette, regard } dans les listes de LIA." };
+    demande.etat_lia = etat;
+  }
   return { ok: true, valeur: demande };
 }
 
@@ -66,10 +97,11 @@ export function validerDemande(corps: unknown): Resultat<DemandeAsk> {
  * jamais un champ copié d'une app ni du navigateur. Absent = rien n'est joint.
  */
 export function corpsPourMemoryAi(demande: DemandeAsk, source: string, proprietaire: boolean, contexte?: string): string {
-  const { question, page } = demande;
+  const { question, page, etat_lia } = demande;
   return JSON.stringify({
     question,
     ...(page !== undefined && { page }),
+    ...(etat_lia !== undefined && { etat_lia }),
     source,
     proprietaire,
     ...(contexte !== undefined && contexte !== "" && { contexte }),

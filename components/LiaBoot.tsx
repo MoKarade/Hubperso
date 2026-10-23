@@ -90,7 +90,7 @@ function voir(e: Event): void {
 const demarrage = demarrerLia({
   cle: CLE_LIA_HUB,
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
-  ask: (question, signal) => poserQuestion(question, signal, window.location.pathname),
+  ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
   // Le réseau d'humeurs de LIA se nourrit de l'état réel des cartes affichées (lib/liaParole.ts).
   entrees: () => entreesMonde(lireFaits()),
