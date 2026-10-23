@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.19.0 : « Comment elle va », ses onze jauges dans son menu (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.18.0 à v0.19.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 7d968c5). Le changement est dans le paquet : le menu de son corps gagne *Comment elle va*, une phrase de tête et onze jauges `role="meter"` (énergie, curiosité, envie de compagnie, joie, ennui, inquiétude, douleur et sa cause, plaisir, confiance, sensibilité, usure) relues chaque seconde, avec la mention « Simulation ». Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : clic droit sur LIA, *Comment elle va* se déplie sans fermer le menu, onze jauges et la phrase de tête, valeurs qui bougent après des appuis rapides.
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.18.0 : le monde intérieur de LIA, douleur, plaisir, confiance (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.17.5 à v0.18.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 66db805). Le changement est dans le paquet : un calcul local sans réseau ni coût (`lia.interieur()` : douleur, plaisir, sensibilité, confiance, usure, cause) prolonge son réseau d'humeurs ; c'est une simulation, et elle le dit si on le lui demande. Le hub ne change pas de code et ne passe toujours aucune option ; l'état relayé à MemoryAI (`etat_lia`) garde la même forme. À lire par le PC : quatre appuis rapides sur son corps font apparaître « Aïe… » et `data-douleur`, puis « Ça va mieux » ; un message gentil monte la confiance ; « Tu as mal ? » donne son niveau avec la mention d'un calcul.
