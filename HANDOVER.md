@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **L'humeur de LIA suit la part réelle d'alertes (Hubperso#397)**
+
+`entreesMonde` mettait `alerte` à 1 dès UNE carte en alerte grave : LIA restait figée en « Inquiétude » (constat du fil Assistant). `alerte` est maintenant proportionnelle : (alertes graves + 0,6 × avertissements) / cartes affichées, plafonnée à 1 ; 0 sans problème. `nbAlertes` et `toutVert` ne changent pas. À lire en production par le PC : la pastille d'humeur varie avec l'état réel des cartes.
+
 ## 🟦 Session 2026-10-23 — **Rotation des secrets : un build neuf après chaque jeton posé (Hubperso#392)**
 
 Marc fait tourner les secrets un par un (fil Secrets). Un jeton posé dans Vercel n'atteint le hub qu'avec un déploiement construit APRÈS la pose (variables figées par déploiement, Hubperso#389). Cette PR ne change aucun comportement : elle ajoute au module `lib/variablesAttendues.ts` le rappel de la règle, et sert de push réel pour le build qui recharge `GITHUB_GRAPHES_TOKEN` (si `/graphes` répond encore « non branché » après #393, build lancé 1 s après la pose) et `HUB_TOKEN_BATCHCHEF`.

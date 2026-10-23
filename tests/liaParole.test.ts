@@ -240,16 +240,24 @@ describe("entreesMonde : le monde de LIA vient des cartes affichées", () => {
     expect(entreesMonde([f("ok"), f("ok", "b")])).toEqual({ alerte: 0, nbAlertes: 0, toutVert: 1 });
   });
 
-  it("une alerte grave : alerte à 1, la part des cartes en cause, plus de toutVert", () => {
-    expect(entreesMonde([f("alert"), f("ok", "b"), f("ok", "c"), f("warn", "d")])).toEqual({
-      alerte: 1,
-      nbAlertes: 0.5,
-      toutVert: 0,
-    });
+  it("l'alerte suit la part réelle des cartes en cause : une sur six ne vaut pas une inquiétude totale", () => {
+    const six = [f("alert"), ...["b", "c", "d", "e", "f"].map((id) => f("ok", id))];
+    const e = entreesMonde(six);
+    expect(e.alerte).toBeCloseTo(1 / 6, 5);
+    expect(e.nbAlertes).toBeCloseTo(1 / 6, 5);
+    expect(e.toutVert).toBe(0);
   });
 
-  it("un simple avertissement pèse moins qu'une alerte ; une info n'est pas un problème", () => {
-    expect(entreesMonde([f("warn"), f("info", "b")])).toEqual({ alerte: 0.6, nbAlertes: 0.5, toutVert: 0 });
+  it("une alerte grave pèse plus qu'un avertissement, et toutes en alerte grave : 1", () => {
+    const e = entreesMonde([f("alert"), f("ok", "b"), f("ok", "c"), f("warn", "d")]);
+    expect(e.alerte).toBeCloseTo((1 + 0.6) / 4, 5);
+    expect(e.nbAlertes).toBe(0.5);
+    expect(entreesMonde([f("alert"), f("alert", "b")]).alerte).toBe(1);
+    expect(entreesMonde([f("warn")]).alerte).toBeCloseTo(0.6, 5);
+  });
+
+  it("une info n'est pas un problème", () => {
+    expect(entreesMonde([f("warn"), f("info", "b")])).toEqual({ alerte: 0.3, nbAlertes: 0.5, toutVert: 0 });
     expect(entreesMonde([f("info")]).alerte).toBe(0);
   });
 });
