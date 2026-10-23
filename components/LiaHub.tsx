@@ -7,7 +7,7 @@ import { Lia } from "@mokarade/lia-ui/react";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
 import { visiterCarte } from "@/lib/liaVisite";
-import { faitDepuisDataset, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
+import { entreesMonde, faitDepuisDataset, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
 
 // LIA sur l'accueil (Marc, 22/10/2026) : une seule, dans la FENÊTRE ENTIÈRE, comme dans les apps.
 // Aucun `container` : elle ne réserve aucun espace sur la page (sur téléphone, une colonne lui
@@ -56,6 +56,9 @@ export function LiaHub() {
     [],
   );
 
+  // Le réseau d'humeurs de LIA se nourrit de l'état réel des cartes affichées (lib/liaParole.ts).
+  const entrees = useCallback(() => entreesMonde(lireFaits()), []);
+
   // « Analyser » (résumé) : LIA va se coller à la carte de l'app et en dit l'état.
   useEffect(() => {
     const minuteries: number[] = [];
@@ -96,6 +99,7 @@ export function LiaHub() {
       actions={actions}
       ask={ask}
       onSpontane={onSpontane}
+      entrees={entrees}
       onPret={(h) => {
         lia.current = h;
       }}

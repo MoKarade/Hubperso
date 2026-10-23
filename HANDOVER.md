@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui passe à v0.7.0 : bulle bien placée, LIA vivante sous mouvement réduit (Hubperso#356)**
+
+Constat de production du PC (23/10/2026) : la bulle de LIA s'affichait en haut à gauche chez Marc, dont Chrome a `prefers-reduced-motion: reduce`. `@mokarade/lia-ui` v0.5.1 (tag sur e6840b9, lia-ui#16) place la bulle de `dire()` sans la boucle d'animation et rend un mode « doux » par défaut sous mouvement réduit (LIA vit sur place, ne traverse plus l'écran). La v0.6.0 (3b26a1d) y ajoute les envies : LIA choisit seule parmi 9 comportements (suivre, voir, promener, causer, jouer, rentrer, dormir…). La v0.7.0 (46bf393), reprise ici, y ajoute son réseau d'humeurs : `LiaHub` lui passe `entrees()` (`entreesMonde`, `lib/liaParole.ts` : `alerte`, `nbAlertes`, `toutVert`, calculés des seules cartes affichées, rien sans carte). `g_<app>` et `v_<app>` ne sont pas passés : leur sens n'est pas documenté et aucun profil du paquet ne s'en sert. Seuls `package.json` et `package-lock.json` changent ; l'option `quandMouvementReduit: "complet"` n'est pas posée (en attente du choix de Marc, carte du fil Assistant).
+
 ## 🟦 Session 2026-10-23 — **LIA parle quand on touche « Analyser », même sans pouvoir bouger (Hubperso#356)**
 
 Constat de production du PC le 23/10/2026 (capture et DOM, après lia-ui v0.4.0) : « Analyser » sur CarAI fait défiler la page jusqu'à la carte, mais LIA ne bouge pas et sa bulle reste vide. Cause probable [Probable] : `allerVoir` rend `false` quand LIA ne peut pas bouger (mouvement réduit, chat ou menu ouvert, on la tient) et `LiaHub` s'arrêtait là sans rien dire. Correctif : `lib/liaVisite.ts` (`visiterCarte`, pur, testé) : elle va près de la carte si elle le peut, puis parle toujours ; sans mouvement possible elle parle aussitôt. Le déplacement lui-même reste à vérifier en production sur un navigateur sans mouvement réduit.
