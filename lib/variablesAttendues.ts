@@ -20,6 +20,12 @@
 // app au hub les ajoute ici sans y penser, et `tests/variablesAttendues.test.ts` vérifie en
 // plus que chaque variable lue via `process.env` par le code figure dans la liste.
 //
+// ── ROTATION D'UN SECRET : UN BUILD NEUF EST REQUIS ───────────────────────────────────
+// Les variables Vercel sont figées PAR DÉPLOIEMENT (Hubperso#389) : poser un nouveau jeton
+// (`GITHUB_GRAPHES_TOKEN`, `HUB_TOKEN_<APP>`, `GOOGLE_CLIENT_SECRET`…) ne change rien tant
+// qu'un push de code sur `main` n'a pas construit un déploiement qui le contient. Jamais
+// « Redeploy » ni de commit vide. Un jeton posé APRÈS le démarrage d'un build n'y est pas.
+//
 // ⚠️ `HUB_SESSION_PRIVATE_JWK` n'y est PAS : elle appartient à la phase 2 de la session
 // asymétrique, pas encore fusionnée. Elle entrera avec la branche qui la lit.
 
