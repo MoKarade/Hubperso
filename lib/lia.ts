@@ -18,6 +18,6 @@ export const CLE_LIA_HUB = "lia-hub";
 /**
  * Événement navigateur par lequel un bouton de la page demande à LIA d'aller voir la carte d'une app
  * (`detail: { appId }`). Un bouton serveur ne tient pas la poignée de LIA : il passe par la fenêtre,
- * et `LiaHub` écoute. Aucune donnée ne transite, seulement l'identifiant d'une app déclarée.
+ * et `LiaBoot` écoute. Aucune donnée ne transite, seulement l'identifiant d'une app déclarée.
  */
 export const EVENEMENT_LIA_VOIR = "hub:lia-voir";
