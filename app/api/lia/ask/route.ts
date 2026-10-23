@@ -14,6 +14,9 @@
 // le jeton qu'il détient déjà pour elle. Tout échec (MemoryAI absente, lente, en erreur, réponse
 // hors contrat) = 503 : LIA dit « indisponible », jamais une réponse inventée. La QUESTION n'est
 // jamais journalisée (ni ici ni dans les erreurs).
+//
+// Le hub JOINT à chaque question du propriétaire un bilan d'état des apps (`contexte`, hub → MemoryAI
+// seulement, `lib/liaContexte.ts`) : une donnée datée écrite ici, jamais copiée du corps reçu.
 
 import { HUB_TOKEN_HEADER } from "@mokarade/hub-contract";
 import { auth } from "@/auth";
@@ -22,6 +25,7 @@ import { assurerMigrations } from "@/lib/migrations";
 import { aAcces, APP_HUB } from "@/lib/personnes";
 import { appDuJeton } from "@/lib/jetonApp";
 import { SOURCE_DEFS } from "@/lib/sources";
+import { contexteEtatApps } from "@/lib/liaContexte";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import {
   CORPS_MAX_OCTETS,
@@ -100,7 +104,7 @@ export async function POST(req: Request): Promise<Response> {
     const r = await fetch(`${memoire.accueilUrl}/api/ask`, {
       method: "POST",
       headers: { "content-type": "application/json", [HUB_TOKEN_HEADER]: jetonMemoire },
-      body: corpsPourMemoryAi(demande.valeur, qui.source, true),
+      body: corpsPourMemoryAi(demande.valeur, qui.source, true, await contexteEtatApps()),
       signal: AbortSignal.timeout(DELAI_MEMORYAI_MS),
       cache: "no-store",
     });
