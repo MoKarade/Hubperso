@@ -2,9 +2,9 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
-## 🟦 Session 2026-10-23 — **lia-ui passe à v0.5.1 : bulle bien placée, LIA vivante sous mouvement réduit (Hubperso#356)**
+## 🟦 Session 2026-10-23 — **lia-ui passe à v0.6.0 : bulle bien placée, LIA vivante sous mouvement réduit (Hubperso#356)**
 
-Constat de production du PC (23/10/2026) : la bulle de LIA s'affichait en haut à gauche chez Marc, dont Chrome a `prefers-reduced-motion: reduce`. `@mokarade/lia-ui` v0.5.1 (tag sur e6840b9, lia-ui#16) place la bulle de `dire()` sans la boucle d'animation et rend un mode « doux » par défaut sous mouvement réduit (LIA vit sur place, ne traverse plus l'écran). Seuls `package.json` et `package-lock.json` changent ; l'option `quandMouvementReduit: "complet"` n'est pas posée (en attente du choix de Marc, carte du fil Assistant).
+Constat de production du PC (23/10/2026) : la bulle de LIA s'affichait en haut à gauche chez Marc, dont Chrome a `prefers-reduced-motion: reduce`. `@mokarade/lia-ui` v0.5.1 (tag sur e6840b9, lia-ui#16) place la bulle de `dire()` sans la boucle d'animation et rend un mode « doux » par défaut sous mouvement réduit (LIA vit sur place, ne traverse plus l'écran). La v0.6.0 (3b26a1d), reprise ici, y ajoute les envies : LIA choisit seule parmi 9 comportements (suivre, voir, promener, causer, jouer, rentrer, dormir…). Seuls `package.json` et `package-lock.json` changent ; l'option `quandMouvementReduit: "complet"` n'est pas posée (en attente du choix de Marc, carte du fil Assistant).
 
 ## 🟦 Session 2026-10-23 — **LIA parle quand on touche « Analyser », même sans pouvoir bouger (Hubperso#356)**
 
