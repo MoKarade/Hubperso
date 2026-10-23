@@ -1,6 +1,6 @@
 // app/api/lia/ask/route.ts — la question de LIA, relayée à MemoryAI.
 //
-//   POST /api/lia/ask   corps : { "question": "…", "page"?: "/…" }
+//   POST /api/lia/ask   corps : { "question": "…", "page"?: "/…", "etat_lia"?: { humeur, silhouette, regard } }
 //   → 200 { text, chips?, mood?, blocks? }   (contrat : commun/assistant/CONTRAT-ask-lia.md)
 //
 // DEUX appelants, un seul point d'entrée :
@@ -14,6 +14,10 @@
 // le jeton qu'il détient déjà pour elle. Tout échec (MemoryAI absente, lente, en erreur, réponse
 // hors contrat) = 503 : LIA dit « indisponible », jamais une réponse inventée. La QUESTION n'est
 // jamais journalisée (ni ici ni dans les erreurs).
+//
+// `etat_lia` (lia-ui ≥ v0.15.0, 3e argument de `ask`) : l'état du corps de LIA à l'écran, validé en listes
+// fermées (`lireEtatLia`, `lib/liaAsk.ts`) puis relayé tel quel à MemoryAI, qui le balise comme une donnée sur
+// elle pour qu'elle ne nie plus son humeur. Hors forme : 400, jamais réparé.
 //
 // Le hub JOINT à chaque question du propriétaire un bilan d'état des apps (`contexte`, hub → MemoryAI
 // seulement, `lib/liaContexte.ts`) : une donnée datée écrite ici, jamais copiée du corps reçu.
