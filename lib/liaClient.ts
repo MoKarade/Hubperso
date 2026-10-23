@@ -5,7 +5,7 @@
 // lève : `<Lia>` dit alors « Je ne suis pas disponible pour le moment », jamais une réponse inventée.
 // La question n'est ni journalisée ni placée dans une erreur.
 
-import { validerReponse, type ReponseAsk } from "@/lib/liaAsk";
+import { lireEtatLia, validerReponse, type ReponseAsk } from "@/lib/liaAsk";
 
 export const ROUTE_ASK = "/api/lia/ask";
 
@@ -21,12 +21,16 @@ export async function poserQuestion(
   signal: AbortSignal,
   page?: string,
   appeler: Fetch = (entree, init) => fetch(entree, init),
+  etat?: unknown,
 ): Promise<ReponseAsk> {
   const p = pageValide(page);
+  // L'état de LIA (3e argument de `ask`) n'est joint que s'il est conforme : sinon la question part sans lui,
+  // plutôt que d'être refusée (400) et de rendre LIA muette.
+  const etat_lia = lireEtatLia(etat);
   const r = await appeler(ROUTE_ASK, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ question, ...(p !== undefined && { page: p }) }),
+    body: JSON.stringify({ question, ...(p !== undefined && { page: p }), ...(etat_lia !== undefined && { etat_lia }) }),
     signal,
     cache: "no-store",
   });

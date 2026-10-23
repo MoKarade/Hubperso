@@ -145,7 +145,7 @@ describe("LIA dans la fenêtre", () => {
   });
 
   it("la question passe par la route du hub, jamais par une réponse écrite ici", () => {
-    expect(composant).toContain("ask: (question, signal)");
+    expect(composant).toContain("ask: (question, signal, etat)");
     expect(composant).toContain("poserQuestion(");
     // Aucun texte de réponse inventé dans le composant : tout vient de `/api/lia/ask`.
     expect(composant).not.toMatch(/text:\s*["'`]/);
