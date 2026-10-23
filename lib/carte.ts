@@ -105,6 +105,12 @@ export interface SecondaireCarte {
  */
 const ALERTES_SECONDAIRES_LARGE = 3;
 const DETAILS_SECTIONS_LARGE = 2;
+/**
+ * Mesures secondaires montrées sur la carte (maquette validée par Marc, 22/10, « exactement comme
+ * la maquette » le 23/10) : le chiffre clé et deux autres. Les suivantes ne sont pas escamotées,
+ * elles sont comptées (`autresMesures`) et toutes lisibles dans la page de détail.
+ */
+const SECONDAIRES_MAX = 2;
 const DETAIL_LIGNES_MAX = 4;
 
 /** Une section `details` déjà bornée pour la carte. Le type vient du contrat. */
@@ -115,6 +121,8 @@ export interface EtatCarte {
   heros: Heros | null;
   /** Les métriques secondaires AVEC leur courbe : la série se décide ici, pas au rendu. */
   secondaires: SecondaireCarte[];
+  /** Combien de mesures secondaires de plus que celles montrées : comptées, jamais escamotées. */
+  autresMesures: number;
   /** L'alerte la plus grave, sortie de la liste pour être vue. */
   alertePrincipale: HubAlert | null;
   /**
@@ -204,10 +212,11 @@ export function etatCarte(
     // ⚠️ La série est cherchée par le LIBELLÉ de la métrique, qui est sa clé d'historique
     // (`[HUB-METRIQUE-LIBELLE-EST-UNE-CLE]`). Un libellé qui change de jour en jour rend une
     // série vide sous une valeur pourtant publiée — le défaut que FinanceAI a payé le 17/09.
-    secondaires: reste.map((metrique) => ({
+    secondaires: reste.slice(0, SECONDAIRES_MAX).map((metrique) => ({
       metrique,
       serie: large ? serieMetrique(historique, metrique.label) : [],
     })),
+    autresMesures: Math.max(0, reste.length - SECONDAIRES_MAX),
     alertePrincipale: triees[0] ?? null,
     alertesSecondaires,
     autresAlertes: Math.max(0, triees.length - montrees),
