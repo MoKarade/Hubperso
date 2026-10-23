@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **Reconstruire le hub après le changement du secret client Google (Hubperso#389)**
+
+La connexion Google échouait (`invalid_client` sur le callback) : le secret client Google avait changé. Marc a posé le nouveau `GOOGLE_CLIENT_SECRET` dans Vercel (Production) le 23/10 à 18 h 12 UTC ; les variables Vercel sont figées par déploiement, donc il fallait un nouveau build. Un commentaire dans `auth.ts` le rappelle. Preuve à lire par le PC : déploiement READY sur le commit fusionné, puis login Google du propriétaire qui aboutit.
+
 ## 🟦 Session 2026-10-23 — **LIA du hub joue toutes ses animations (Hubperso#386)**
 
 Marc, 23/10/2026 : « Mon assistant manque toutes ses animations […] je veux tout ». Son navigateur annonce `prefers-reduced-motion`, donc lia-ui restait en mode « doux » (défaut) : LIA ne traversait jamais l'écran, ne suivait pas le curseur, ne glissait pas. `LiaHub` passe maintenant `quandMouvementReduit="complet"` à `<Lia>` (app personnelle dont Marc est le seul utilisateur ; l'option est lue une seule fois au montage). Verrou : `tests/liaHubMouvement.test.ts`. Preuve de production à lire par le PC avec `prefers-reduced-motion: reduce` actif : LIA se déplace et va se coller à une carte. Le réglage mémorisé dans le menu de LIA viendra de lia-ui, pas d'ici.
