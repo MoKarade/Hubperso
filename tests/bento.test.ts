@@ -50,7 +50,7 @@ describe("l'accueil prend la largeur de la maquette (Marc, 23/10/2026)", () => {
   const css = readFileSync(join(__dirname, "../app/globals.css"), "utf8");
   const accueil = readFileSync(join(__dirname, "../app/page.tsx"), "utf8");
   const bloc = (selecteur: string) => {
-    const debut = css.search(new RegExp(`^${selecteur.replace(/[.>:]/g, "\\$&")} \\{`, "m"));
+    const debut = css.indexOf(`\n${selecteur} {`);
     return debut === -1 ? "" : css.slice(debut, css.indexOf("}", debut));
   };
 
