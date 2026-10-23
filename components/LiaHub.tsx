@@ -7,7 +7,7 @@ import { Lia } from "@mokarade/lia-ui/react";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
 import { visiterCarte } from "@/lib/liaVisite";
-import { entreesMonde, faitDepuisDataset, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
+import { entreesMonde, faitDepuisDataset, instantDernierAppel, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
 
 // LIA sur l'accueil (Marc, 22/10/2026) : une seule, dans la FENÊTRE ENTIÈRE, comme dans les apps.
 // Aucun `container` : elle ne réserve aucun espace sur la page (sur téléphone, une colonne lui
@@ -64,11 +64,7 @@ export function LiaHub() {
   const monde = useCallback((motif: MotifMonde, element?: Element) => {
     const carte =
       element instanceof HTMLElement ? faitDepuisDataset(element.dataset) : null;
-    const dernierAppel =
-      lia.current
-        ?.journal()
-        .filter((f) => f.quoi === "appeler")
-        .reduce<number | null>((t, f) => (t === null || f.t > t ? f.t : t), null) ?? null;
+    const dernierAppel = instantDernierAppel(lia.current?.journal() ?? []);
     const parole = parleMonde(motif, lireFaits(), carte, dernierAppel, Date.now());
     if (!parole) return null;
     const cible =

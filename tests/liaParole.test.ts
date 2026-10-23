@@ -15,6 +15,7 @@ import {
   ditCarte,
   ditCouts,
   entreesMonde,
+  instantDernierAppel,
   parleMonde,
   faitDepuisDataset,
   graviteLia,
@@ -242,6 +243,22 @@ describe("parleMonde : ce que LIA dit du monde vient des cartes", () => {
     const faits = [f("alert")];
     expect(parleMonde("appeler", faits, null, T - 29 * 60_000, T)).toBeNull();
     expect(parleMonde("appeler", faits, null, T - 31 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+  });
+
+  it("appeler : à la borne exacte des 30 minutes, elle peut de nouveau appeler", () => {
+    expect(parleMonde("appeler", [f("alert")], null, T - 30 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+  });
+
+  it("le dernier appel du journal : le plus récent, quel que soit l'ordre, les autres comportements ignorés", () => {
+    expect(instantDernierAppel([])).toBeNull();
+    expect(instantDernierAppel([{ t: 5, quoi: "jouer" }])).toBeNull();
+    expect(
+      instantDernierAppel([
+        { t: 7, quoi: "appeler" },
+        { t: 9, quoi: "jouer" },
+        { t: 3, quoi: "appeler" },
+      ]),
+    ).toBe(7);
   });
 
   it("accompagner : le constat de la carte que Marc fixe, rien sans carte", () => {

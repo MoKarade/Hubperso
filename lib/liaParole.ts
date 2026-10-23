@@ -172,6 +172,11 @@ export function entreesMonde(faits: readonly FaitLia[]): Record<string, number> 
 /** Après avoir appelé Marc pour un problème, LIA n'en reparle pas avant ce délai (elle ne sait pas ce qu'elle a déjà dit). */
 const DELAI_ENTRE_APPELS_MS = 30 * 60 * 1000;
 
+/** L'instant (ms) du dernier `appeler` du journal de LIA, ou `null` s'il n'y en a pas : l'ordre du journal n'est pas supposé. */
+export function instantDernierAppel(journal: readonly { t: number; quoi: string }[]): number | null {
+  return journal.reduce<number | null>((t, f) => (f.quoi === "appeler" && (t === null || f.t > t) ? f.t : t), null);
+}
+
 /** Ce que le hub propose à LIA de dire sur le monde (`monde()` de `@mokarade/lia-ui`) : `appId` désigne la carte à rejoindre. */
 export interface ParoleMonde {
   text: string;
