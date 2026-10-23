@@ -179,6 +179,12 @@ a:focus-visible,
     transform: none;
   }
 }
+/* LIA pose `data-regard` sur l'élément qu'elle regarde (visite ou accompagnement) : un liseré à la
+   teinte de l'app, sans animation, qui disparaît quand elle part. Couleurs en variables seulement. */
+[data-lia-cible][data-regard] {
+  outline: 2px solid var(--teinte, var(--accent));
+  outline-offset: 3px;
+}
 .widget {
   --accent: #A5B0C2;
   /* ── LA TEINTE DE LA CARTE = TOUJOURS LA COULEUR DE L'APP ────────────────────────
