@@ -8,6 +8,7 @@ import type { Releve } from "@/lib/historique";
 import { etatCarte, variationLisible, type PlaceCarte } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
 import { statusBadge } from "@/lib/status";
+import { ditCarte, graviteLia } from "@/lib/liaParole";
 import { safeHttpUrl } from "@/lib/url";
 import { texteSur } from "@/lib/couleur";
 import { formatDateTime, formatDuree, formatMetricValue } from "@/lib/format";
@@ -232,7 +233,17 @@ export function AppWidget({
     // `data-gravite` porte le TON du badge, et c'est la feuille de style qui en tire la
     // teinte de la carte — arbitrage de Marc, 15/09 : le rouge ET l'orange effacent la
     // couleur de l'app. Décider ici aurait dispersé la règle entre le composant et le CSS.
-    <article className={`widget ${size}`} style={style} data-gravite={badge.tone}>
+    <article
+      className={`widget ${size}`}
+      style={style}
+      data-gravite={badge.tone}
+      // Ce que LIA peut aller voir sur cette carte, et ce qu'elle en dit : l'état réel, rien de plus.
+      data-lia-cible=""
+      data-lia-app={result.source.id}
+      data-lia-nom={name}
+      data-lia-gravite={graviteLia(badge.tone)}
+      data-lia-dit={ditCarte(result)}
+    >
       <header className="widget__head">
         {/* Le logo de la série A, décoratif (le nom suit) ; une app sans logo n'en reçoit PAS un
             inventé (`lib/logos.ts`). */}

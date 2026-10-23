@@ -5,6 +5,13 @@
 ## 🟦 Session 2026-10-23 — **La phrase de l'accueil ne dit plus « tout est à jour » au-dessus d'une alerte (Hubperso#362)**
 
 `lib/resume.ts` : quand aucun badge n'est en panne ni en retard mais qu'une app qui répond « ok » publie une alerte ou un avertissement (ou que le hub en relève un, donnée figée), la phrase nomme l'app et compte les points à regarder (« Bravo : 1 point à regarder. » ; plusieurs apps : « 2 points à regarder dans 2 apps. »), au ton rouge si une alerte grave, jaune sinon. « Tout est à jour. » reste dit seulement sans aucun point à regarder. Constaté en production le 23/10/2026 (8 h 24 Québec) : la phrase disait « Tout est à jour. » au-dessus d'une pastille rouge. Tests : `tests/resume.test.ts` (cinq cas de plus).
+## 🟦 Session 2026-10-23 — **LIA vit sur l'accueil : elle va voir les cartes et parle d'après les vrais états (Hubperso#356)**
+
+Marc, 23/10/2026 : le hub n'est pas comme la maquette, LIA ne parle ni ne bouge (écart : `hubperso/design/ECART-MAQUETTE-HUB.md`, A2 A3 A9). `lib/liaParole.ts` (pur) calcule la phrase de chaque carte depuis son `SummaryResult` (`ditCarte` : à jour, en retard, en construction, en cache, injoignable, refusée… jamais un chiffre, jamais le détail technique d'une panne, libellé d'alerte borné à 120 caractères) et ce que LIA dit seule (`parleSeule` : salut, remarque, relance). Les cartes, le résumé et le panneau des coûts portent `data-lia-cible` et `data-lia-dit` ; les cartes aussi `data-lia-app`, `data-lia-nom`, `data-lia-gravite`.
+- `LiaHub` passe `onSpontane` : elle ne parle que d'après les cartes AFFICHÉES (aucune carte lue = silence ; « Tout est à jour » seulement si toutes les cartes le disent ; jamais une panne inventée) ; le silence de 22 h à 7 h et le plafond de relances restent ceux du paquet.
+- Les points « à regarder » du résumé ont un bouton « Analyser » (`components/BoutonAnalyser.tsx`) à côté de « Voir » : il prévient la fenêtre (`EVENEMENT_LIA_VOIR`), `LiaHub` envoie LIA se coller à la carte puis lui fait dire son état. Seul ce geste de Marc fait défiler la page pour montrer la carte ; LIA seule ne défile jamais.
+- Aucun appel au modèle, aucun coût, aucun secret. Tests : `tests/liaParole.test.ts`.
+- Non vérifié en production : le mouvement réel de LIA vers une carte (lu après déploiement par un navigateur connecté). Suite : #359 (clic droit, attend lia-ui v0.4.0), #357 (frise 24 h), #358 (visuel), #360 (blocs).
 
 ## 🟦 Session 2026-10-23 — **Bilan d'état des apps joint aux questions de LIA (Hubperso#312)**
 

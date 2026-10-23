@@ -10,6 +10,7 @@
 
 import Link from "next/link";
 import { formatCad } from "@/lib/format";
+import { ditCouts } from "@/lib/liaParole";
 import {
   appsSansCout,
   blocsCouts,
@@ -100,7 +101,12 @@ export function CostsCard({ digest, maintenant }: { digest: UsageDigest; mainten
   const note = pourquoiPasDeTotalUnique(digest.totalsByPeriod) ?? NOTE_DEVISE;
 
   return (
-    <section className="couts-panneau" aria-label="Coûts et quotas">
+    <section
+      className="couts-panneau"
+      aria-label="Coûts et quotas"
+      data-lia-cible=""
+      data-lia-dit={ditCouts(digest.quotaWarnings, quotas.length)}
+    >
       <header className="couts-panneau__tete">
         <div>
           <h2 className="couts-panneau__eyebrow">Coûts et quotas</h2>

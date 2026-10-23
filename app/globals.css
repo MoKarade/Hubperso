@@ -1737,6 +1737,7 @@ a:focus-visible,
 }
 .resume__point {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.7rem;
   padding: 0.3rem 0.4rem 0.3rem 1rem;
@@ -1768,7 +1769,14 @@ a:focus-visible,
   margin-right: 0.2rem;
   color: var(--text);
 }
-.resume__voir {
+.resume__actions {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+.resume__voir,
+.resume__analyser {
   min-height: var(--cible);
   flex: none;
   border-radius: 999px;
