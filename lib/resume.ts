@@ -62,7 +62,21 @@ export function resumeHub(resultats: SummaryResult[], attentionsListe: Attention
   if (warn.length > 1) {
     return { ...base, ton: "warn", phrase: `${APPS(warn.length)} à surveiller.` };
   }
-  // Ni panne ni retard : seules restent des apps à jour, en construction ou non branchées.
+  // Aucun badge en panne ni en retard, mais des points à regarder : des alertes publiées par des
+  // apps qui répondent « ok ». Jamais « tout est à jour » au-dessus d'une pastille rouge.
+  if (graves.length > 0) {
+    const noms = new Set(graves.map((a) => a.appNom));
+    const ton = graves.some((a) => (a.gravite as Gravite) === "alert") ? "danger" : "warn";
+    const n = graves.length;
+    const points_ = `${n} point${n > 1 ? "s" : ""} à regarder`;
+    const [seule] = noms;
+    return {
+      ...base,
+      ton,
+      phrase: noms.size === 1 && seule !== undefined ? `${seule} : ${points_}.` : `${points_} dans ${APPS(noms.size)}.`,
+    };
+  }
+  // Ni panne ni retard ni point à regarder : seules restent des apps à jour, en construction ou non branchées.
   if (ok === total) {
     return { ...base, ton: "ok", phrase: total === 1 ? "L’app est à jour." : "Tout est à jour." };
   }
