@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.9.0 : LIA dit un problème et accompagne le regard de Marc (Hubperso#356)**
+
+`@mokarade/lia-ui` v0.9.0 (4203b3c, reprend 0.8) donne à LIA `monde(motif, element?)` et pose `data-regard` sur ce qu'elle regarde. `LiaHub` branche `monde` sur `parleMonde` (`lib/liaParole.ts`) : `appeler` dit le problème affiché le plus grave (une fois par 30 min, d'après le journal de LIA) ; `accompagner` dit le constat de la carte que Marc fixe ; `resumer`, `feliciter`, `rappeler` et `souvenir` renvoient `null` (aucun texte vrai à dire). Tout le texte vient de `data-lia-dit`, rien n'est écrit d'avance. Liseré `[data-lia-cible][data-regard]` dans `app/globals.css` (variables seulement, sans animation).
+
 ## 🟦 Session 2026-10-23 — **LIA ne dit plus « à jour » au-dessus d'une alerte (Hubperso#356)**
 
 Constat de production du PC (23/10/2026) : sur CarAI, le point rouge de dépassement de km était dit « CarAI est à jour. 88 888 km sur… ». `ditCarte` (`lib/liaParole.ts`) dit maintenant « X a un point à regarder. <libellé> » dès que l'alerte est un avertissement ou une alerte ; « est à jour. » ne précède qu'une simple info. Test dans `tests/liaParole.test.ts`. Reste hors de ce dépôt : la bulle de `dire()` s'affiche en haut à gauche quand le mouvement est réduit (bug lia-ui v0.4.0 : `dire` ne repositionne pas la bulle sans la boucle d'animation), demandé au fil Assistant pour une v0.4.1.

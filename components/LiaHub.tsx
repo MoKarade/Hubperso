@@ -2,12 +2,12 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { LiaHandle } from "@mokarade/lia-ui";
+import type { LiaHandle, MotifMonde } from "@mokarade/lia-ui";
 import { Lia } from "@mokarade/lia-ui/react";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
 import { visiterCarte } from "@/lib/liaVisite";
-import { entreesMonde, faitDepuisDataset, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
+import { entreesMonde, faitDepuisDataset, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
 
 // LIA sur l'accueil (Marc, 22/10/2026) : une seule, dans la FENÊTRE ENTIÈRE, comme dans les apps.
 // Aucun `container` : elle ne réserve aucun espace sur la page (sur téléphone, une colonne lui
@@ -59,6 +59,23 @@ export function LiaHub() {
   // Le réseau d'humeurs de LIA se nourrit de l'état réel des cartes affichées (lib/liaParole.ts).
   const entrees = useCallback(() => entreesMonde(lireFaits()), []);
 
+  // Ce que le hub a de vrai à lui faire dire sur le monde : un problème affiché, ou le constat de la
+  // carte que Marc fixe. Le texte vient des cartes (lib/liaParole.ts), jamais d'une liste écrite d'avance.
+  const monde = useCallback((motif: MotifMonde, element?: Element) => {
+    const carte =
+      element instanceof HTMLElement ? faitDepuisDataset(element.dataset) : null;
+    const dernierAppel =
+      lia.current
+        ?.journal()
+        .filter((f) => f.quoi === "appeler")
+        .reduce<number | null>((t, f) => (t === null || f.t > t ? f.t : t), null) ?? null;
+    const parole = parleMonde(motif, lireFaits(), carte, dernierAppel, Date.now());
+    if (!parole) return null;
+    const cible =
+      element ?? (parole.appId ? document.querySelector(`[data-lia-app="${CSS.escape(parole.appId)}"]`) : null);
+    return { text: parole.text, element: cible };
+  }, []);
+
   // « Analyser » (résumé) : LIA va se coller à la carte de l'app et en dit l'état.
   useEffect(() => {
     const minuteries: number[] = [];
@@ -100,6 +117,7 @@ export function LiaHub() {
       ask={ask}
       onSpontane={onSpontane}
       entrees={entrees}
+      monde={monde}
       onPret={(h) => {
         lia.current = h;
       }}

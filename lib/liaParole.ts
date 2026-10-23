@@ -168,3 +168,40 @@ export function entreesMonde(faits: readonly FaitLia[]): Record<string, number> 
     toutVert: faits.every((f) => f.gravite === "ok") ? 1 : 0,
   };
 }
+
+/** Après avoir appelé Marc pour un problème, LIA n'en reparle pas avant ce délai (elle ne sait pas ce qu'elle a déjà dit). */
+const DELAI_ENTRE_APPELS_MS = 30 * 60 * 1000;
+
+/** Ce que le hub propose à LIA de dire sur le monde (`monde()` de `@mokarade/lia-ui`) : `appId` désigne la carte à rejoindre. */
+export interface ParoleMonde {
+  text: string;
+  appId?: string;
+}
+
+/**
+ * Le texte vrai que le hub a pour un motif, ou `null`. Il vient des cartes AFFICHÉES, comme tout le
+ * reste (`data-lia-dit`) : aucune phrase écrite d'avance, aucun chiffre inventé.
+ *   - `appeler` : le problème le plus grave, une fois par tranche de 30 min (`dernierAppel` : l'instant
+ *     du dernier `appeler` du journal de LIA, en millisecondes, ou `null`) ;
+ *   - `accompagner` : Marc fixe une carte, LIA en dit le constat (`carte`, lue de ses `data-lia-*`) ;
+ *   - `resumer`, `feliciter`, `rappeler`, `souvenir` : rien de vrai à dire pour l'instant, `null`.
+ */
+export function parleMonde(
+  motif: string,
+  faits: readonly FaitLia[],
+  carte: FaitLia | null,
+  dernierAppel: number | null,
+  maintenant: number,
+): ParoleMonde | null {
+  switch (motif) {
+    case "appeler": {
+      if (dernierAppel !== null && maintenant - dernierAppel < DELAI_ENTRE_APPELS_MS) return null;
+      const pire = problemes(faits)[0];
+      return pire ? { text: pire.dit, appId: pire.appId } : null;
+    }
+    case "accompagner":
+      return carte ? { text: carte.dit, appId: carte.appId } : null;
+    default:
+      return null;
+  }
+}
