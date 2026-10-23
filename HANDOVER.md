@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **Le hub passe à lia-ui v0.12.0 et laisse le paquet régler le mouvement (Hubperso#392)**
+
+Marc veut une seule LIA, identique dans toutes les apps, gérée par le fil Assistant. `@mokarade/lia-ui` passe de v0.9.0 à v0.12.0 (141914f, `package.json` et lock ensemble ; v0.12.0 ajoute l'option `etat`, inutilisée ici pour l'instant). `LiaHub` ne passe plus `quandMouvementReduit` (ajouté en #387) : « complet » est le défaut du paquet depuis v0.10.0, et le menu de LIA gagne « Animations complètes » (choix mémorisé). La pastille d'humeur est dessinée par le paquet (v0.11.0) : le hub n'en a aucune. Le marquage `data-regard` du hub reste : `allerVoir` ne le pose pas quand LIA ne peut pas bouger (chat ou menu ouvert, glissement), décision du fil Assistant. Verrou : `tests/liaHubMouvement.test.ts` (aucun réglage de mouvement ni d'humeur dans `LiaHub`, paquet ≥ v0.11.1). Preuve à lire par le PC : pastille d'humeur qui change ; « Regarde ça avec moi » sur l'en-tête amène LIA à moins de 150 px en 3 s ; au moins un déplacement par minute sur 5 min.
+
 ## 🟦 Session 2026-10-23 — **Reconstruire le hub après le changement du secret client Google (Hubperso#389)**
 
 La connexion Google échouait (`invalid_client` sur le callback) : le secret client Google avait changé. Marc a posé le nouveau `GOOGLE_CLIENT_SECRET` dans Vercel (Production) le 23/10 à 18 h 12 UTC ; les variables Vercel sont figées par déploiement, donc il fallait un nouveau build. Un commentaire dans `auth.ts` le rappelle. Preuve à lire par le PC : déploiement READY sur le commit fusionné, puis login Google du propriétaire qui aboutit.
