@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **Où vit l'assistant : ADR 0006 (Hubperso#297)**
+
+Décision de Marc du 22/10/2026 (19 h 30 Z) consignée dans `docs/adr/0006-lia-vit-dans-memoryai.md` : LIA est unique, son cerveau, sa mémoire et ses outils vivent dans MemoryAI (ADR 0016 et 0017 de ce dépôt-là) ; Hubperso reste l'interface commune, le seul détenteur des jetons vers les apps et l'exécutant des actions (N1 direct, N2 aperçu puis jeton, N3 lecture seule). MemoryAI ne détient aucun jeton ; LIA ne répond qu'au propriétaire. Aucun code ni règle d'un autre dépôt n'a changé. Conséquence : Hubperso#298 n'appelle pas de modèle dans le hub, la route est le relais `POST /api/lia/ask` déjà livré.
+
 ## 🟦 Session 2026-10-22 (soir) — **lia-ui passe à v0.2.1 (Hubperso#348)**
 
 L'épingle `@mokarade/lia-ui` passe de `github:MoKarade/lia-ui#v0.1.0` à `#v0.2.1` (tag dac20b7 : suivi du défilement et du curseur, tirette et parole de la maquette). `package.json` et `package-lock.json` seuls changent : `LiaHub` n'a aucune option renommée. `npm audit --omit=dev` rend 0. L'export `@mokarade/lia-ui/blocs` (`rendreBlocs`, `renderBlocks`) viendra avec v0.3.0, dans une tâche séparée.
