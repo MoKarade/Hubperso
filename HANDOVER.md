@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **Rotation de HUB_TOKEN_CARAI et HUB_TOKEN_DRIVEAI : build neuf, lia-ui v0.12.2 (Hubperso#392)**
+
+Marc a fait tourner `HUB_TOKEN_CARAI` (19 h 25 UT) puis `HUB_TOKEN_DRIVEAI` (19 h 27 UT) dans Vercel hubperso. `@mokarade/lia-ui` passe aussi à v0.12.2 (`package.json` et lock ensemble). Rien d'autre ne change : une ligne de commentaire dans `lib/variablesAttendues.ts` (liste des jetons rechargés par push) fournit le vrai diff de source qui déclenche un build construit APRÈS la pose. À lire par le PC : les cartes CarAI et DriveAI répondent avec leur nouveau jeton, puis LIA (humeur, mouvement).
+
 ## 🟦 Session 2026-10-23 — **L'humeur de LIA suit la part réelle d'alertes (Hubperso#397)**
 
 `entreesMonde` mettait `alerte` à 1 dès UNE carte en alerte grave : LIA restait figée en « Inquiétude » (constat du fil Assistant). `alerte` est maintenant proportionnelle : (alertes graves + 0,6 × avertissements) / cartes affichées, plafonnée à 1 ; 0 sans problème. `nbAlertes` et `toutVert` ne changent pas. `@mokarade/lia-ui` passe aussi à v0.12.1 (7f06735, `package.json` et lock ensemble : humeur et regard corrigés dans le paquet). À lire en production par le PC : la pastille d'humeur varie avec l'état réel des cartes, le regard amène LIA à moins de 150 px en 3 s, au moins un déplacement par minute.
