@@ -110,7 +110,7 @@ const DETAILS_SECTIONS_LARGE = 2;
  * la maquette » le 23/10) : le chiffre clé et deux autres. Les suivantes ne sont pas escamotées,
  * elles sont comptées (`autresMesures`) et toutes lisibles dans la page de détail.
  */
-export const SECONDAIRES_MAX = 2;
+const SECONDAIRES_MAX = 2;
 const DETAIL_LIGNES_MAX = 4;
 
 /** Une section `details` déjà bornée pour la carte. Le type vient du contrat. */
