@@ -6,6 +6,7 @@ import type { LiaHandle } from "@mokarade/lia-ui";
 import { Lia } from "@mokarade/lia-ui/react";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
+import { visiterCarte } from "@/lib/liaVisite";
 import { faitDepuisDataset, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
 
 // LIA sur l'accueil (Marc, 22/10/2026) : une seule, dans la FENÊTRE ENTIÈRE, comme dans les apps.
@@ -75,8 +76,10 @@ export function LiaHub() {
       }
       minuteries.push(
         window.setTimeout(() => {
-          if (!handle.allerVoir(carte, 14)) return;
-          minuteries.push(window.setTimeout(() => handle.dire(fait.dit), 1500));
+          // Elle parle même si elle ne peut pas bouger (`lib/liaVisite.ts`).
+          visiterCarte(handle, carte, fait.dit, (action, delai) => {
+            minuteries.push(window.setTimeout(action, delai));
+          });
         }, attente),
       );
     };
