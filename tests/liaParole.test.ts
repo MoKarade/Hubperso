@@ -15,6 +15,8 @@ import {
   ditCarte,
   ditCouts,
   entreesMonde,
+  instantDernierAppel,
+  parleMonde,
   faitDepuisDataset,
   graviteLia,
   parleSeule,
@@ -218,5 +220,58 @@ describe("entreesMonde : le monde de LIA vient des cartes affichées", () => {
   it("un simple avertissement pèse moins qu'une alerte ; une info n'est pas un problème", () => {
     expect(entreesMonde([f("warn"), f("info", "b")])).toEqual({ alerte: 0.6, nbAlertes: 0.5, toutVert: 0 });
     expect(entreesMonde([f("info")]).alerte).toBe(0);
+  });
+});
+
+describe("parleMonde : ce que LIA dit du monde vient des cartes", () => {
+  const f = (gravite: FaitLia["gravite"], appId = "a", dit = `${appId} dit`): FaitLia => ({
+    appId,
+    appNom: appId,
+    gravite,
+    dit,
+  });
+  const T = 10_000_000;
+
+  it("appeler : le problème le plus grave, jamais une panne inventée", () => {
+    const faits = [f("warn", "b", "B a un point à regarder."), f("alert", "c", "C signale une erreur."), f("ok", "d")];
+    expect(parleMonde("appeler", faits, null, null, T)).toEqual({ text: "C signale une erreur.", appId: "c" });
+    expect(parleMonde("appeler", [f("ok"), f("info", "b")], null, null, T)).toBeNull();
+    expect(parleMonde("appeler", [], null, null, T)).toBeNull();
+  });
+
+  it("appeler : pas deux fois dans les 30 minutes, puis de nouveau", () => {
+    const faits = [f("alert")];
+    expect(parleMonde("appeler", faits, null, T - 29 * 60_000, T)).toBeNull();
+    expect(parleMonde("appeler", faits, null, T - 31 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+  });
+
+  it("appeler : à la borne exacte des 30 minutes, elle peut de nouveau appeler", () => {
+    expect(parleMonde("appeler", [f("alert")], null, T - 30 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+  });
+
+  it("le dernier appel du journal : le plus récent, quel que soit l'ordre, les autres comportements ignorés", () => {
+    expect(instantDernierAppel([])).toBeNull();
+    expect(instantDernierAppel([{ t: 5, quoi: "jouer" }])).toBeNull();
+    expect(
+      instantDernierAppel([
+        { t: 7, quoi: "appeler" },
+        { t: 9, quoi: "jouer" },
+        { t: 3, quoi: "appeler" },
+      ]),
+    ).toBe(7);
+  });
+
+  it("accompagner : le constat de la carte que Marc fixe, rien sans carte", () => {
+    expect(parleMonde("accompagner", [], f("ok", "x", "X est à jour, rien à signaler."), null, T)).toEqual({
+      text: "X est à jour, rien à signaler.",
+      appId: "x",
+    });
+    expect(parleMonde("accompagner", [f("alert")], null, null, T)).toBeNull();
+  });
+
+  it("résumer, féliciter, rappeler, souvenir : rien de vrai à dire, donc rien", () => {
+    for (const motif of ["resumer", "feliciter", "rappeler", "souvenir"]) {
+      expect(parleMonde(motif, [f("alert")], f("alert"), null, T)).toBeNull();
+    }
   });
 });
