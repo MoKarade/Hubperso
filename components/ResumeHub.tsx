@@ -3,6 +3,7 @@ import type { Attention } from "@/lib/attention";
 import { formatEnteteAccueil } from "@/lib/format";
 import type { Resume } from "@/lib/resume";
 import { BandeauAttention } from "./BandeauAttention";
+import { BoutonAnalyser } from "./BoutonAnalyser";
 
 // Sous l'en-tête : la date, une phrase vraie sur l'état du hub, puis ce qu'il faut regarder.
 //
@@ -20,9 +21,12 @@ function Point({ point }: { point: Attention }) {
       <span className="resume__texte">
         <strong>{point.appNom}</strong> {point.libelle}
       </span>
-      <Link className="btn resume__voir" href={`/app/${encodeURIComponent(point.appId)}`}>
-        Voir<span className="sr-only"> {point.appNom}</span>
-      </Link>
+      <span className="resume__actions">
+        <BoutonAnalyser appId={point.appId} appNom={point.appNom} />
+        <Link className="btn resume__voir" href={`/app/${encodeURIComponent(point.appId)}`}>
+          Voir<span className="sr-only"> {point.appNom}</span>
+        </Link>
+      </span>
     </li>
   );
 }
@@ -38,7 +42,7 @@ export function ResumeHub({
   maintenant: number;
 }) {
   return (
-    <section className="accueil" aria-label="État du hub">
+    <section className="accueil" aria-label="État du hub" data-lia-cible="" data-lia-dit={resume.phrase}>
       <div className="resume">
         <p className="resume__date">{formatEnteteAccueil(maintenant)}</p>
         <h2 className="resume__phrase" data-ton={resume.ton}>

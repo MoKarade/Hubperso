@@ -1,10 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import type { LiaHandle } from "@mokarade/lia-ui";
 import { Lia } from "@mokarade/lia-ui/react";
-import { CLE_LIA_HUB, ENTREES_LIA } from "@/lib/lia";
+import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
+import { faitDepuisDataset, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
 
 // LIA sur l'accueil (Marc, 22/10/2026) : une seule, dans la FENÊTRE ENTIÈRE, comme dans les apps.
 // Aucun `container` : elle ne réserve aucun espace sur la page (sur téléphone, une colonne lui
@@ -14,9 +16,32 @@ import { poserQuestion } from "@/lib/liaClient";
 // dans MemoryAI. `ask` appelle `POST /api/lia/ask` (le hub relaie à MemoryAI, `lib/liaClient.ts`) ;
 // tout échec fait dire à LIA qu'elle est indisponible, jamais une réponse inventée. Le menu ne mène
 // qu'à des pages du hub, qui se gardent toutes seules.
+//
+// Elle VIT sur la page (Marc, 23/10/2026, « manque sa parole, ses mouvements ») : les cartes portent
+// `data-lia-cible` et `data-lia-dit` (leur état réel, `lib/liaParole.ts`), elle va s'y coller d'elle-même
+// ou quand Marc touche « Analyser », et ne parle seule que d'après ces mêmes cartes : une page pas
+// encore chargée, ou sans rien à signaler, la laisse muette. Aucun appel au modèle, aucun coût.
+
+/** Ce que les cartes affichées disent de leur app, lu à l'instant où LIA veut parler. */
+function lireFaits(): FaitLia[] {
+  const faits: FaitLia[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>("[data-lia-app]")) {
+    const fait = faitDepuisDataset(el.dataset);
+    if (fait) faits.push(fait);
+  }
+  return faits;
+}
+
+/** Montre la carte à Marc s'il l'a demandé (geste explicite) : seul LIA ne fait jamais défiler. */
+function carteVisible(el: HTMLElement): boolean {
+  const r = el.getBoundingClientRect();
+  return r.bottom > 0 && r.top < window.innerHeight;
+}
+
 export function LiaHub() {
   const router = useRouter();
   const page = usePathname();
+  const lia = useRef<LiaHandle | null>(null);
   const actions = useMemo(
     () => ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => router.push(e.href) })),
     [router],
@@ -25,5 +50,52 @@ export function LiaHub() {
     (question: string, signal: AbortSignal) => poserQuestion(question, signal, page),
     [page],
   );
-  return <Lia cle={CLE_LIA_HUB} actions={actions} ask={ask} />;
+  const onSpontane = useCallback(
+    (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
+    [],
+  );
+
+  // « Analyser » (résumé) : LIA va se coller à la carte de l'app et en dit l'état.
+  useEffect(() => {
+    const minuteries: number[] = [];
+    const voir = (e: Event) => {
+      const appId = (e as CustomEvent<{ appId?: unknown }>).detail?.appId;
+      const handle = lia.current;
+      if (typeof appId !== "string" || !handle) return;
+      const carte = [...document.querySelectorAll<HTMLElement>("[data-lia-app]")].find(
+        (el) => el.dataset.liaApp === appId,
+      );
+      const fait = carte ? faitDepuisDataset(carte.dataset) : null;
+      if (!carte || !fait) return;
+      const reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let attente = 0;
+      if (!carteVisible(carte)) {
+        carte.scrollIntoView({ behavior: reduit ? "auto" : "smooth", block: "center" });
+        attente = reduit ? 0 : 700;
+      }
+      minuteries.push(
+        window.setTimeout(() => {
+          if (!handle.allerVoir(carte, 14)) return;
+          minuteries.push(window.setTimeout(() => handle.dire(fait.dit), 1500));
+        }, attente),
+      );
+    };
+    window.addEventListener(EVENEMENT_LIA_VOIR, voir);
+    return () => {
+      window.removeEventListener(EVENEMENT_LIA_VOIR, voir);
+      minuteries.forEach((m) => window.clearTimeout(m));
+    };
+  }, []);
+
+  return (
+    <Lia
+      cle={CLE_LIA_HUB}
+      actions={actions}
+      ask={ask}
+      onSpontane={onSpontane}
+      onPret={(h) => {
+        lia.current = h;
+      }}
+    />
+  );
 }
