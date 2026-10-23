@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.15.0 : humeur au chat, appui long sur un élément, chat visible sur téléphone (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.14.1 à v0.15.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé cff62b5). Les changements sont dans le paquet : l'humeur passe au chat, un appui long (0,6 s au tactile) ou un clic droit sur un élément ouvre le menu « Explique-moi ça / Que peut-on changer ici ? / Regarde ça avec moi / Poser une question… », et le chat ne cache plus LIA sur téléphone. Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : le chat à côté de LIA sur téléphone, et l'appui long sur un élément.
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.14.1 : LIA ne parle plus que des projets, corrigé dans le paquet (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.14.0 à v0.14.1 (`package.json` et lock ensemble, `resolved` sur le commit pelé 6ca503d). Le correctif est dans le paquet (relevé de Marc : LIA ne parlait toujours que des projets avec v0.14.0) ; le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : LIA dit autre chose que l'état des apps, jamais entre 22 h et 7 h.
