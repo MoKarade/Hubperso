@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.14.0 : LIA parle d'elle-même, pas seulement des projets (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.13.0 à v0.14.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé dbe3160). Demande de Marc (23/10, 20 h 41 UT) : LIA ne faisait que parler des projets. L'option `parolePropre` est vraie par défaut : sans rien à dire, l'hôte laisse le paquet parler de son humeur, de ses envies, de son journal et de l'heure. Le hub ne passe aucune option et ne change pas : `onSpontane` garde la priorité pour ses constats d'après les vrais états des cartes, et la parole propre du paquet ne dit rien sur Marc, ses apps ni ses chiffres (verrou `tests/paroles.test.ts` côté paquet). À lire par le PC : LIA dit autre chose que l'état des apps, jamais entre 22 h et 7 h.
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.13.0 : LIA joue ses 39 actions (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.12.2 à v0.13.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 4ccdb41). Le hub ne règle toujours ni mouvement ni humeur (`LiaHub` sans option) ; les actions viennent du paquet et sa doc décrit ce que l'hôte peut dicter (`data-lia-activite`, `etat` de `ask`). Aucune option à retirer côté hub. À lire par le PC : LIA joue des silhouettes variées en prod, `data-etat` sur `.lia-ui__corps`.
