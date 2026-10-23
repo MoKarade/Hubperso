@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **La carte d'app maigre comme la maquette, actions et conseil dans Détail (Hubperso#363)**
+
+Marc, 23/10/2026 : « exactement comme la maquette », barre latérale gardée. `components/AppWidget.tsx` ne rend plus ni les boutons d'action (`ActionList`) ni la recommandation : ils restent entiers sur la page de détail (`app/app/[id]/page.tsx`, rien n'est retiré du hub, aucun droit de plus). `lib/carte.ts` : au plus `SECONDAIRES_MAX` = 2 mesures secondaires sur la carte, les suivantes sont comptées (« + N autres mesures dans le détail »), jamais escamotées. Une app qui ne publie que des actions ou un conseil le dit et renvoie au détail au lieu d'écrire « aucune donnée ». Le bandeau rouge d'une alerte grave reste (sécurité avant fidélité à la maquette). Tests : `tests/carteMaquette.test.ts`.
+
 ## 🟦 Session 2026-10-23 — **lia-ui passe à v0.4.0 : LIA parle seule sur l'accueil (Hubperso#356)**
 
 Le composant React de `@mokarade/lia-ui` ne transmettait NI `onSpontane`, NI `cibles`, NI `silence`, NI `relancesParJour` jusqu'à la v0.3.0 (correctif en v0.4.0, commit 8ad3d03) : sans cette montée, la livraison de #356 (LIA va voir les cartes, parle d'après les vrais états) ne faisait rien à l'écran. `package.json` et `package-lock.json` pointent sur `#v0.4.0` ; même forme de dépendances (peer `react` optionnel). Gate et portes verts, `npm audit --omit=dev` à 0. Suite : le menu du clic droit par élément (option `elements` de v0.4.0) vient avec Hubperso#359.
