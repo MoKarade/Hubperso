@@ -93,6 +93,44 @@ describe("phrase d'état", () => {
   });
 });
 
+describe("phrase d'état avec des alertes publiées par des apps « ok »", () => {
+  it("une alerte grave sur une app à jour : jamais « tout est à jour », l'app est nommée, ton rouge", () => {
+    const r = resume([ok("a", "Alpha"), ok("b", "Bravo", { alerts: [{ severity: "alert", label: "Dépassement projeté" }] })]);
+    expect(r.phrase).toBe("Bravo : 1 point à regarder.");
+    expect(r.phrase).not.toMatch(/tout est à jour/i);
+    expect(r.ton).toBe("danger");
+  });
+
+  it("un avertissement seul : ton warn, compte au pluriel", () => {
+    const r = resume([
+      ok("a", "Alpha", { alerts: [{ severity: "warn", label: "un" }, { severity: "warn", label: "deux" }] }),
+    ]);
+    expect(r.phrase).toBe("Alpha : 2 points à regarder.");
+    expect(r.ton).toBe("warn");
+  });
+
+  it("plusieurs apps concernées : un compte, sans liste dans la phrase", () => {
+    const r = resume([
+      ok("a", "Alpha", { alerts: [{ severity: "warn", label: "un" }] }),
+      ok("b", "Bravo", { alerts: [{ severity: "alert", label: "deux" }] }),
+    ]);
+    expect(r.phrase).toBe("2 points à regarder dans 2 apps.");
+    expect(r.ton).toBe("danger");
+  });
+
+  it("une app en construction qui publie une alerte n'est pas présentée comme « à jour »", () => {
+    const r = resume([
+      ok("a", "Alpha"),
+      ok("b", "Bravo", { status: "building", alerts: [{ severity: "warn", label: "x" }] }),
+    ]);
+    expect(r.phrase).toBe("Bravo : 1 point à regarder.");
+  });
+
+  it("sans aucune alerte la phrase reste « Tout est à jour. »", () => {
+    expect(resume([ok("a", "Alpha"), ok("b", "Bravo")]).phrase).toBe("Tout est à jour.");
+  });
+});
+
 describe("points à regarder", () => {
   const alerte = (label: string) => ({ severity: "alert" as const, label });
 
