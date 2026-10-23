@@ -61,10 +61,19 @@ export function validerDemande(corps: unknown): Resultat<DemandeAsk> {
  * Ce que le hub envoie à MemoryAI : question, page, QUI parle et si c'est le PROPRIÉTAIRE. Les deux
  * derniers sont décidés par le hub (jeton ou session), jamais copiés tels quels du corps d'une app.
  * `proprietaire` est obligatoire côté MemoryAI (403 sans lui) : un invité n'atteint jamais la mémoire.
+ *
+ * `contexte` : le bilan d'état des apps (`lib/liaContexte.ts`), une DONNÉE datée écrite par le hub,
+ * jamais un champ copié d'une app ni du navigateur. Absent = rien n'est joint.
  */
-export function corpsPourMemoryAi(demande: DemandeAsk, source: string, proprietaire: boolean): string {
+export function corpsPourMemoryAi(demande: DemandeAsk, source: string, proprietaire: boolean, contexte?: string): string {
   const { question, page } = demande;
-  return JSON.stringify({ question, ...(page !== undefined && { page }), source, proprietaire });
+  return JSON.stringify({
+    question,
+    ...(page !== undefined && { page }),
+    source,
+    proprietaire,
+    ...(contexte !== undefined && contexte !== "" && { contexte }),
+  });
 }
 
 /** La réponse de MemoryAI, validée. Clés inconnues retirées, rien n'est complété. */

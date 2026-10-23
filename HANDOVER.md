@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **Bilan d'état des apps joint aux questions de LIA (Hubperso#312)**
+
+`lib/bilanEtat.ts` (pur) tire des relevés du hub (un par app et par quart d'heure, `releves.etat`) un bilan sur 7 jours : coupures (début, durée AU MOINS, retour observé ou non, en cours), part de relevés en ligne, heure habituelle (Québec, deux coupures à la même heure au moins). Règles : sans relevé = « sans historique (aucun relevé lu) », jamais « aucune coupure » ; un trou de plus de 45 min entre relevés coupe une panne en deux ; `unauthorized` et `unconfigured` ne sont pas des coupures (comptés à part) ; « en construction » n'est PAS enregistré à part aujourd'hui, donc absent du bilan (le dire plutôt que le deviner ; l'enregistrer demanderait une colonne, tâche à part). `lib/liaContexte.ts` lit les relevés et produit le texte daté (≤ 1 500 caractères, tronqué en le disant). `POST /api/lia/ask` le joint au corps hub → MemoryAI dans le champ optionnel `contexte`, SEULEMENT après le contrôle du propriétaire ; un `contexte` envoyé par un appelant n'est jamais relayé (`tests/liaAsk.test.ts`). Côté MemoryAI le schéma actuel ignore le champ : il reste à le lire et à la baliser comme DONNÉE (fil MemoryAI, ligne à ajouter dans `CONTRAT-ask-lia.md` par le fil Assistant). Tant que MemoryAI ne le lit pas, LIA ne peut pas répondre « DriveAI a été coupé deux fois cette semaine ».
+
 ## 🟦 Session 2026-10-23 — **Où vit l'assistant : ADR 0006 (Hubperso#297)**
 
 Décision de Marc du 22/10/2026 (19 h 30 Z) consignée dans `docs/adr/0006-lia-vit-dans-memoryai.md` : LIA est unique, son cerveau, sa mémoire et ses outils vivent dans MemoryAI (ADR 0016 et 0017 de ce dépôt-là) ; Hubperso reste l'interface commune, le seul détenteur des jetons vers les apps et l'exécutant des actions (N1 direct, N2 aperçu puis jeton, N3 lecture seule). MemoryAI ne détient aucun jeton ; LIA ne répond qu'au propriétaire. Aucun code ni règle d'un autre dépôt n'a changé. Conséquence : Hubperso#298 n'appelle pas de modèle dans le hub, la route est le relais `POST /api/lia/ask` déjà livré.
