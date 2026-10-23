@@ -18,6 +18,7 @@ import {
   instantDernierAppel,
   parleMonde,
   faitDepuisDataset,
+  graviteCarte,
   graviteLia,
   parleSeule,
   type FaitLia,
@@ -170,6 +171,36 @@ describe("graviteLia suit le ton du badge", () => {
   });
 });
 
+describe("graviteCarte : la carte vaut son pire signal, pas seulement son badge", () => {
+  const avec = (severity: "info" | "warn" | "alert", status: HubSummary["status"] = "ok") =>
+    ok({ status, alerts: [{ label: "x", severity }] });
+
+  it("« À jour » avec une alerte rouge (CarAI) vaut alert, avec un avertissement (DriveAI) warn", () => {
+    expect(graviteCarte(avec("alert"), "ok")).toBe("alert");
+    expect(graviteCarte(avec("warn"), "ok")).toBe("warn");
+  });
+
+  it("une alerte info ne change rien, et sans alerte la carte garde le ton de son badge", () => {
+    expect(graviteCarte(avec("info"), "ok")).toBe("ok");
+    expect(graviteCarte(ok(), "ok")).toBe("ok");
+    expect(graviteCarte(ok(), "warn")).toBe("warn");
+  });
+
+  it("jamais plus douce que le badge : un badge rouge reste alert même avec un simple avertissement", () => {
+    expect(graviteCarte(avec("warn", "error"), "danger")).toBe("alert");
+  });
+
+  it("une app qui ne répond pas n'a pas d'alertes à lire : le badge décide", () => {
+    const muette: SummaryResult = { state: "unreachable", source, detail: "délai dépassé" };
+    expect(graviteCarte(muette, "danger")).toBe("alert");
+  });
+
+  it("la carte rendue porte cette gravité, et LIA compte alors les trois problèmes affichés", () => {
+    const html = renderToStaticMarkup(h(AppWidget, { result: avec("alert"), maintenantMs: NOW }));
+    expect(html).toContain('data-lia-gravite="alert"');
+  });
+});
+
 describe("la page porte ce que LIA lit", () => {
   it("la carte est une cible de LIA avec sa phrase et sa gravité", () => {
     const html = renderToStaticMarkup(h(AppWidget, { result: ok({ status: "degraded" }), maintenantMs: NOW }));
@@ -239,14 +270,14 @@ describe("parleMonde : ce que LIA dit du monde vient des cartes", () => {
     expect(parleMonde("appeler", [], null, null, T)).toBeNull();
   });
 
-  it("appeler : pas deux fois dans les 30 minutes, puis de nouveau", () => {
+  it("appeler : pas deux fois dans les 10 minutes, puis de nouveau", () => {
     const faits = [f("alert")];
-    expect(parleMonde("appeler", faits, null, T - 29 * 60_000, T)).toBeNull();
-    expect(parleMonde("appeler", faits, null, T - 31 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+    expect(parleMonde("appeler", faits, null, T - 9 * 60_000, T)).toBeNull();
+    expect(parleMonde("appeler", faits, null, T - 11 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
   });
 
-  it("appeler : à la borne exacte des 30 minutes, elle peut de nouveau appeler", () => {
-    expect(parleMonde("appeler", [f("alert")], null, T - 30 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+  it("appeler : à la borne exacte des 10 minutes, elle peut de nouveau appeler", () => {
+    expect(parleMonde("appeler", [f("alert")], null, T - 10 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
   });
 
   it("le dernier appel du journal : le plus récent, quel que soit l'ordre, les autres comportements ignorés", () => {

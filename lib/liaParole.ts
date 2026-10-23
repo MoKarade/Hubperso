@@ -63,6 +63,27 @@ export function graviteLia(ton: Tone): GraviteLia {
   }
 }
 
+const RANG: Record<GraviteLia, number> = { alert: 0, warn: 1, info: 2, ok: 3 };
+
+/**
+ * La gravité d'une carte pour LIA : la plus grave entre le TON du badge et les alertes que la carte affiche.
+ * ⚠️ Le badge seul mentait : une app « À jour » dont l'alerte est rouge (CarAI, dépassement de km projeté)
+ * ou orange (DriveAI, erreurs de traitement) valait « ok », donc LIA ne voyait qu'un seul problème sur trois
+ * et la carte restait hors de `problemes()` (constat de production du PC, 23/10/2026). Une alerte `info`
+ * n'est pas un problème : elle ne change rien.
+ */
+export function graviteCarte(resultat: SummaryResult, ton: Tone): GraviteLia {
+  const base = graviteLia(ton);
+  if (resultat.state !== "ok") return base;
+  const alertes = resultat.summary.alerts;
+  const pire: GraviteLia = alertes.some((a) => a.severity === "alert")
+    ? "alert"
+    : alertes.some((a) => a.severity === "warn")
+      ? "warn"
+      : "ok";
+  return RANG[pire] < RANG[base] ? pire : base;
+}
+
 function borne(texte: string): string {
   const net = texte.replace(/\s+/g, " ").trim();
   return net.length <= LIBELLE_MAX ? net : `${net.slice(0, LIBELLE_MAX - 1).trimEnd()}…`;
@@ -118,8 +139,6 @@ export function ditCouts(quotasASurveiller: number, nbQuotas: number): string {
 
 export type MotifLia = "salut" | "rien" | "relance";
 
-const RANG: Record<GraviteLia, number> = { alert: 0, warn: 1, info: 2, ok: 3 };
-
 /** Les faits qui posent problème, le plus grave d'abord (ordre des cartes conservé à gravité égale). */
 function problemes(faits: readonly FaitLia[]): FaitLia[] {
   return faits
@@ -169,8 +188,8 @@ export function entreesMonde(faits: readonly FaitLia[]): Record<string, number> 
   };
 }
 
-/** Après avoir appelé Marc pour un problème, LIA n'en reparle pas avant ce délai (elle ne sait pas ce qu'elle a déjà dit). */
-const DELAI_ENTRE_APPELS_MS = 30 * 60 * 1000;
+/** Après avoir appelé Marc pour un problème, LIA n'en reparle pas avant ce délai (elle ne sait pas ce qu'elle a déjà dit ; 10 min et non 30 : le journal survit au rechargement, et à 30 min un hub rouvert après un test restait muet, constat du PC le 23/10/2026). */
+const DELAI_ENTRE_APPELS_MS = 10 * 60 * 1000;
 
 /** L'instant (ms) du dernier `appeler` du journal de LIA, ou `null` s'il n'y en a pas : l'ordre du journal n'est pas supposé. */
 export function instantDernierAppel(journal: readonly { t: number; quoi: string }[]): number | null {
@@ -186,7 +205,7 @@ export interface ParoleMonde {
 /**
  * Le texte vrai que le hub a pour un motif, ou `null`. Il vient des cartes AFFICHÉES, comme tout le
  * reste (`data-lia-dit`) : aucune phrase écrite d'avance, aucun chiffre inventé.
- *   - `appeler` : le problème le plus grave, une fois par tranche de 30 min (`dernierAppel` : l'instant
+ *   - `appeler` : le problème le plus grave, une fois par tranche de 10 min (`dernierAppel` : l'instant
  *     du dernier `appeler` du journal de LIA, en millisecondes, ou `null`) ;
  *   - `accompagner` : Marc fixe une carte, LIA en dit le constat (`carte`, lue de ses `data-lia-*`) ;
  *   - `resumer`, `feliciter`, `rappeler`, `souvenir` : rien de vrai à dire pour l'instant, `null`.

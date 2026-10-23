@@ -4,7 +4,20 @@
 import { describe, expect, it, vi } from "vitest";
 import { DELAI_ARRIVEE_MS, SECONDES_PRES_DE_LA_CARTE, visiterCarte, type Planifier } from "@/lib/liaVisite";
 
-const carte = {} as Element;
+/** Une carte factice : seulement ce que `visiterCarte` touche (l'attribut et le document). */
+function uneCarte() {
+  const attrs = new Set<string>();
+  const autre = { removeAttribute: vi.fn((n: string) => void attrs.delete(`autre:${n}`)) };
+  const el = {
+    attrs,
+    ownerDocument: { querySelectorAll: vi.fn(() => [autre]) },
+    setAttribute: vi.fn((n: string) => void attrs.add(n)),
+    removeAttribute: vi.fn((n: string) => void attrs.delete(n)),
+    autre,
+  };
+  return el;
+}
+const carte = uneCarte() as unknown as Element;
 
 function lia(peutBouger: boolean) {
   return {
@@ -29,7 +42,7 @@ describe("visiterCarte", () => {
     const m = minuterie();
     expect(visiterCarte(l, carte, "CarAI signale une alerte.", m.planifier)).toBe(true);
     expect(l.allerVoir).toHaveBeenCalledWith(carte, SECONDES_PRES_DE_LA_CARTE);
-    expect(m.delais).toEqual([DELAI_ARRIVEE_MS]);
+    expect(m.delais).toEqual([DELAI_ARRIVEE_MS, SECONDES_PRES_DE_LA_CARTE * 1000]);
     expect(l.dire).toHaveBeenCalledWith("CarAI signale une alerte.");
   });
 
@@ -37,7 +50,7 @@ describe("visiterCarte", () => {
     const l = lia(false);
     const m = minuterie();
     expect(visiterCarte(l, carte, "CarAI signale une alerte.", m.planifier)).toBe(false);
-    expect(m.delais).toEqual([0]);
+    expect(m.delais).toEqual([0, SECONDES_PRES_DE_LA_CARTE * 1000]);
     expect(l.dire).toHaveBeenCalledTimes(1);
     expect(l.dire).toHaveBeenCalledWith("CarAI signale une alerte.");
   });
@@ -47,5 +60,24 @@ describe("visiterCarte", () => {
     visiterCarte(l, carte, "x", () => {});
     expect(l.allerVoir).toHaveBeenCalledTimes(1);
     expect(l.dire).not.toHaveBeenCalled();
+  });
+
+  it("le liseré : posé quand elle parle (l'ancien retiré), enlevé après son séjour près de la carte", () => {
+    const c = uneCarte();
+    const planifies: [() => void, number][] = [];
+    visiterCarte(lia(true), c as unknown as Element, "x", (action, delai) => planifies.push([action, delai]));
+    expect(c.setAttribute).not.toHaveBeenCalled();
+    planifies[0]![0]();
+    expect(c.autre.removeAttribute).toHaveBeenCalledWith("data-regard");
+    expect(c.attrs.has("data-regard")).toBe(true);
+    expect(planifies.map(([, d]) => d)).toEqual([DELAI_ARRIVEE_MS, SECONDES_PRES_DE_LA_CARTE * 1000]);
+    planifies[1]![0]();
+    expect(c.attrs.has("data-regard")).toBe(false);
+  });
+
+  it("le liseré se pose aussi quand elle ne peut pas bouger : elle parle de CETTE carte", () => {
+    const c = uneCarte();
+    visiterCarte(lia(false), c as unknown as Element, "x", (action) => action());
+    expect(c.setAttribute).toHaveBeenCalledWith("data-regard", "");
   });
 });
