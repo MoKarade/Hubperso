@@ -6,6 +6,10 @@
 
 Marc, 23/10/2026 : « exactement comme la maquette », barre latérale gardée. `components/AppWidget.tsx` ne rend plus ni les boutons d'action (`ActionList`) ni la recommandation : ils restent entiers sur la page de détail (`app/app/[id]/page.tsx`, rien n'est retiré du hub, aucun droit de plus). `lib/carte.ts` : au plus `SECONDAIRES_MAX` = 2 mesures secondaires sur la carte, les suivantes sont comptées (« + N autres mesures dans le détail »), jamais escamotées. Une app qui ne publie que des actions ou un conseil le dit et renvoie au détail au lieu d'écrire « aucune donnée ». Le bandeau rouge d'une alerte grave reste (sécurité avant fidélité à la maquette). Tests : `tests/carteMaquette.test.ts`.
 
+## 🟦 Session 2026-10-23 — **LIA parle quand on touche « Analyser », même sans pouvoir bouger (Hubperso#356)**
+
+Constat de production du PC le 23/10/2026 (capture et DOM, après lia-ui v0.4.0) : « Analyser » sur CarAI fait défiler la page jusqu'à la carte, mais LIA ne bouge pas et sa bulle reste vide. Cause probable [Probable] : `allerVoir` rend `false` quand LIA ne peut pas bouger (mouvement réduit, chat ou menu ouvert, on la tient) et `LiaHub` s'arrêtait là sans rien dire. Correctif : `lib/liaVisite.ts` (`visiterCarte`, pur, testé) : elle va près de la carte si elle le peut, puis parle toujours ; sans mouvement possible elle parle aussitôt. Le déplacement lui-même reste à vérifier en production sur un navigateur sans mouvement réduit.
+
 ## 🟦 Session 2026-10-23 — **lia-ui passe à v0.4.0 : LIA parle seule sur l'accueil (Hubperso#356)**
 
 Le composant React de `@mokarade/lia-ui` ne transmettait NI `onSpontane`, NI `cibles`, NI `silence`, NI `relancesParJour` jusqu'à la v0.3.0 (correctif en v0.4.0, commit 8ad3d03) : sans cette montée, la livraison de #356 (LIA va voir les cartes, parle d'après les vrais états) ne faisait rien à l'écran. `package.json` et `package-lock.json` pointent sur `#v0.4.0` ; même forme de dépendances (peer `react` optionnel). Gate et portes verts, `npm audit --omit=dev` à 0. Suite : le menu du clic droit par élément (option `elements` de v0.4.0) vient avec Hubperso#359.
