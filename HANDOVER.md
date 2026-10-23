@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.18.0 : le monde intérieur de LIA, douleur, plaisir, confiance (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.17.5 à v0.18.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 66db805). Le changement est dans le paquet : un calcul local sans réseau ni coût (`lia.interieur()` : douleur, plaisir, sensibilité, confiance, usure, cause) prolonge son réseau d'humeurs ; c'est une simulation, et elle le dit si on le lui demande. Le hub ne change pas de code et ne passe toujours aucune option ; l'état relayé à MemoryAI (`etat_lia`) garde la même forme. À lire par le PC : quatre appuis rapides sur son corps font apparaître « Aïe… » et `data-douleur`, puis « Ça va mieux » ; un message gentil monte la confiance ; « Tu as mal ? » donne son niveau avec la mention d'un calcul.
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.17.5 : le chat fin ne cache plus la page (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.17.4 à v0.17.5 (`package.json` et lock ensemble, `resolved` sur le commit pelé 1c6888f). Le nouveau chat est fin et laisse la page visible, téléphone compris ; le changement est dans le paquet, le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : le chat ouvert à côté de la page sans la cacher, sur ordinateur et sur téléphone.
