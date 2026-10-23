@@ -11,8 +11,18 @@ function uneCarte() {
   const el = {
     attrs,
     ownerDocument: { querySelectorAll: vi.fn(() => [autre]) },
-    setAttribute: vi.fn((n: string) => void attrs.add(n)),
-    removeAttribute: vi.fn((n: string) => void attrs.delete(n)),
+    valeurs: new Map<string, string>(),
+    setAttribute(n: string, v: string) {
+      attrs.add(n);
+      this.valeurs.set(n, v);
+    },
+    getAttribute(n: string) {
+      return this.valeurs.get(n) ?? null;
+    },
+    removeAttribute(n: string) {
+      attrs.delete(n);
+      this.valeurs.delete(n);
+    },
     autre,
   };
   return el;
@@ -66,7 +76,7 @@ describe("visiterCarte", () => {
     const c = uneCarte();
     const planifies: [() => void, number][] = [];
     visiterCarte(lia(true), c as unknown as Element, "x", (action, delai) => planifies.push([action, delai]));
-    expect(c.setAttribute).not.toHaveBeenCalled();
+    expect(c.attrs.has("data-regard")).toBe(false);
     planifies[0]![0]();
     expect(c.autre.removeAttribute).toHaveBeenCalledWith("data-regard");
     expect(c.attrs.has("data-regard")).toBe(true);
@@ -77,7 +87,23 @@ describe("visiterCarte", () => {
 
   it("le liseré se pose aussi quand elle ne peut pas bouger : elle parle de CETTE carte", () => {
     const c = uneCarte();
-    visiterCarte(lia(false), c as unknown as Element, "x", (action) => action());
-    expect(c.setAttribute).toHaveBeenCalledWith("data-regard", "");
+    visiterCarte(lia(false), c as unknown as Element, "x", (action, delai) => {
+      if (delai < SECONDES_PRES_DE_LA_CARTE * 1000) action(); // le retrait à 14 s n'a pas encore sonné
+    });
+    expect(c.attrs.has("data-regard")).toBe(true);
+  });
+
+  it("une revisite avant la fin de la première garde son liseré : la minuterie de l'ancienne visite ne le retire pas", () => {
+    const c = uneCarte();
+    const planifies: [() => void, number][] = [];
+    const planifier: Planifier = (action, delai) => planifies.push([action, delai]);
+    visiterCarte(lia(true), c as unknown as Element, "x", planifier);
+    planifies[0]![0](); // première visite : liseré posé, retrait prévu à 14 s
+    visiterCarte(lia(true), c as unknown as Element, "x", planifier);
+    planifies[2]![0](); // seconde visite : liseré reposé
+    planifies[1]![0](); // l'ancienne minuterie arrive
+    expect(c.attrs.has("data-regard")).toBe(true);
+    planifies[3]![0](); // celle de la seconde visite
+    expect(c.attrs.has("data-regard")).toBe(false);
   });
 });
