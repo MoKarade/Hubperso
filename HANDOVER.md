@@ -2,9 +2,9 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
-## 🟦 Session 2026-10-23 — **Rotation de HUB_TOKEN_FINANCEAI : build neuf (Hubperso#392)**
+## 🟦 Session 2026-10-23 — **Rotation de HUB_TOKEN_FINANCEAI et GANTT_SECRET : build neuf (Hubperso#392)**
 
-Marc a fait tourner `HUB_TOKEN_FINANCEAI` (Vercel hubperso et secret GitHub, 19 h 55 UT). Aucun changement de comportement : le nom s'ajoute à la ligne de commentaire de `lib/variablesAttendues.ts` (jetons rechargés par push), seul vrai diff de source qui déclenche un build construit APRÈS la pose. À lire par le PC : la carte FinanceAI répond avec le nouveau jeton.
+Marc a fait tourner `HUB_TOKEN_FINANCEAI` (Vercel hubperso et secret GitHub, 19 h 55 UT) puis `GANTT_SECRET` (Vercel hubperso, 19 h 58 UT). Aucun changement de comportement : les deux noms s'ajoutent à la ligne de commentaire de `lib/variablesAttendues.ts` (jetons rechargés par push), seul vrai diff de source qui déclenche un build construit APRÈS la pose. À lire par le PC : la carte FinanceAI répond avec le nouveau jeton.
 
 ## 🟦 Session 2026-10-23 — **Rotation de HUB_TOKEN_CARAI et HUB_TOKEN_DRIVEAI : build neuf, lia-ui v0.12.2 (Hubperso#392)**
 
