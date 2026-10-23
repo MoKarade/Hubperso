@@ -24,6 +24,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
+      // ⚠️ Les variables Vercel sont figées PAR DÉPLOIEMENT : changer GOOGLE_CLIENT_ID / _SECRET
+      // dans Vercel ne suffit pas. Tant qu'un nouveau déploiement n'a pas été construit, le callback
+      // rend `invalid_client` (constaté le 23/10/2026). Il faut un commit de code (Hubperso#389).
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       // ── PORTÉES IDENTIQUES DANS LES QUATRE APPS ────────────────────────────────
       // Le hub n'appelle AUCUNE API Google. Il demande quand même la portée Tasks
