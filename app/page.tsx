@@ -161,7 +161,7 @@ export default async function Page() {
   }
 
   return (
-    <main className="page">
+    <main className="page page--large">
       {/* LIA : une seule, dans la fenêtre entière, sans espace réservé sur la page. */}
       <LiaHub />
       <header className="page__head">

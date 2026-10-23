@@ -45,3 +45,25 @@ describe("toutes les cartes tiennent sur une colonne (maquette du 22/10)", () =>
     expect(regle(".widget--lg .heros__courbe:empty")).toBe("");
   });
 });
+
+describe("l'accueil prend la largeur de la maquette (Marc, 23/10/2026)", () => {
+  const css = readFileSync(join(__dirname, "../app/globals.css"), "utf8");
+  const accueil = readFileSync(join(__dirname, "../app/page.tsx"), "utf8");
+  const bloc = (selecteur: string) => {
+    const debut = css.search(new RegExp(`^${selecteur.replace(/[.>:]/g, "\\$&")} \\{`, "m"));
+    return debut === -1 ? "" : css.slice(debut, css.indexOf("}", debut));
+  };
+
+  it("`.page--large` monte au-dessus des 1200 px des pages de texte et prend les marges de la maquette", () => {
+    const largeur = Number(/max-width:\s*(\d+)px/.exec(bloc(".page--large"))?.[1]);
+    expect(largeur).toBeGreaterThanOrEqual(1440);
+    expect(bloc(".page--large")).toContain("padding-inline: clamp(1rem");
+    // Les pages de texte ne bougent pas.
+    expect(bloc(".page")).toContain("max-width: 1200px");
+  });
+
+  it("seul l'accueil porte `page--large`", () => {
+    expect(accueil).toContain('<main className="page page--large">');
+    expect(accueil.match(/page--large/g)).toHaveLength(1);
+  });
+});
