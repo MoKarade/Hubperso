@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui passe à v0.4.0 : LIA parle seule sur l'accueil (Hubperso#356)**
+
+Le composant React de `@mokarade/lia-ui` ne transmettait NI `onSpontane`, NI `cibles`, NI `silence`, NI `relancesParJour` jusqu'à la v0.3.0 (correctif en v0.4.0, commit 8ad3d03) : sans cette montée, la livraison de #356 (LIA va voir les cartes, parle d'après les vrais états) ne faisait rien à l'écran. `package.json` et `package-lock.json` pointent sur `#v0.4.0` ; même forme de dépendances (peer `react` optionnel). Gate et portes verts, `npm audit --omit=dev` à 0. Suite : le menu du clic droit par élément (option `elements` de v0.4.0) vient avec Hubperso#359.
+
 ## 🟦 Session 2026-10-23 — **LIA vit sur l'accueil : elle va voir les cartes et parle d'après les vrais états (Hubperso#356)**
 
 Marc, 23/10/2026 : le hub n'est pas comme la maquette, LIA ne parle ni ne bouge (écart : `hubperso/design/ECART-MAQUETTE-HUB.md`, A2 A3 A9). `lib/liaParole.ts` (pur) calcule la phrase de chaque carte depuis son `SummaryResult` (`ditCarte` : à jour, en retard, en construction, en cache, injoignable, refusée… jamais un chiffre, jamais le détail technique d'une panne, libellé d'alerte borné à 120 caractères) et ce que LIA dit seule (`parleSeule` : salut, remarque, relance). Les cartes, le résumé et le panneau des coûts portent `data-lia-cible` et `data-lia-dit` ; les cartes aussi `data-lia-app`, `data-lia-nom`, `data-lia-gravite`.
