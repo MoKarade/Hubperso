@@ -18,7 +18,7 @@ describe("LiaHub : réglages communs", () => {
   it("utilise lia-ui v0.11.1 ou plus récent (mouvement complet par défaut, pastille d'humeur)", () => {
     const m = /"@mokarade\/lia-ui": "github:MoKarade\/lia-ui#v(\d+)\.(\d+)\.(\d+)"/.exec(paquet);
     expect(m).not.toBeNull();
-    const [, major, minor, patch] = (m ?? []).map(Number);
-    expect([major, minor, patch]).toSatisfy((v: number[]) => v[0] > 0 || v[1] > 11 || (v[1] === 11 && v[2] >= 1));
+    const [major = 0, minor = 0, patch = 0] = (m ?? []).slice(1).map(Number);
+    expect(major > 0 || minor > 11 || (minor === 11 && patch >= 1)).toBe(true);
   });
 });
