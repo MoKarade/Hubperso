@@ -14,6 +14,7 @@ import { attentions } from "@/lib/attention";
 import {
   ditCarte,
   ditCouts,
+  entreesMonde,
   faitDepuisDataset,
   graviteLia,
   parleSeule,
@@ -181,5 +182,30 @@ describe("la page porte ce que LIA lit", () => {
     expect(src).toContain("EVENEMENT_LIA_VOIR");
     // Une seule occurrence de défilement, dans le gestionnaire du bouton.
     expect(src.match(/scrollIntoView/g)).toHaveLength(1);
+  });
+});
+
+describe("entreesMonde : le monde de LIA vient des cartes affichées", () => {
+  const f = (gravite: FaitLia["gravite"], appId = "a"): FaitLia => ({ appId, appNom: appId, gravite, dit: "x" });
+
+  it("aucune carte : aucune entrée, un monde calme", () => {
+    expect(entreesMonde([])).toEqual({});
+  });
+
+  it("tout est à jour : toutVert, rien d'inquiétant", () => {
+    expect(entreesMonde([f("ok"), f("ok", "b")])).toEqual({ alerte: 0, nbAlertes: 0, toutVert: 1 });
+  });
+
+  it("une alerte grave : alerte à 1, la part des cartes en cause, plus de toutVert", () => {
+    expect(entreesMonde([f("alert"), f("ok", "b"), f("ok", "c"), f("warn", "d")])).toEqual({
+      alerte: 1,
+      nbAlertes: 0.5,
+      toutVert: 0,
+    });
+  });
+
+  it("un simple avertissement pèse moins qu'une alerte ; une info n'est pas un problème", () => {
+    expect(entreesMonde([f("warn"), f("info", "b")])).toEqual({ alerte: 0.6, nbAlertes: 0.5, toutVert: 0 });
+    expect(entreesMonde([f("info")]).alerte).toBe(0);
   });
 });
