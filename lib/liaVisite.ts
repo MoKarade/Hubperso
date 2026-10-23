@@ -15,11 +15,20 @@ export const DELAI_ARRIVEE_MS = 1500;
 /** Combien de secondes elle reste collée à la carte. */
 export const SECONDES_PRES_DE_LA_CARTE = 14;
 
-/** Le liseré de la carte dont elle parle (`data-regard`, `app/globals.css`) : posé quand elle parle, retiré quand elle s'en va. */
+let numeroVisite = 0;
+
+/**
+ * Le liseré de la carte dont elle parle (`data-regard`, `app/globals.css`) : posé quand elle parle, retiré quand
+ * elle s'en va. Chaque visite signe son liseré : une revisite avant la fin de la première ne se le fait pas
+ * retirer par la minuterie de l'ancienne.
+ */
 function regarder(carte: Element, planifier: Planifier): void {
   carte.ownerDocument?.querySelectorAll("[data-regard]").forEach((e) => e.removeAttribute("data-regard"));
-  carte.setAttribute("data-regard", "");
-  planifier(() => carte.removeAttribute("data-regard"), SECONDES_PRES_DE_LA_CARTE * 1000);
+  const signature = String(++numeroVisite);
+  carte.setAttribute("data-regard", signature);
+  planifier(() => {
+    if (carte.getAttribute("data-regard") === signature) carte.removeAttribute("data-regard");
+  }, SECONDES_PRES_DE_LA_CARTE * 1000);
 }
 
 export type Planifier = (action: () => void, delaiMs: number) => void;
