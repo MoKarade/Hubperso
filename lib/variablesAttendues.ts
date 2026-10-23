@@ -25,7 +25,7 @@
 // (`GITHUB_GRAPHES_TOKEN`, `HUB_TOKEN_<APP>`, `GOOGLE_CLIENT_SECRET`…) ne change rien tant
 // qu'un push de code sur `main` n'a pas construit un déploiement qui le contient. Jamais
 // « Redeploy » ni de commit vide. Un jeton posé APRÈS le démarrage d'un build n'y est pas.
-// Rechargés ainsi le 23/10/2026 (Hubperso#392) : GITHUB_GRAPHES_TOKEN, HUB_TOKEN_BATCHCHEF, HUB_TOKEN_CARAI, HUB_TOKEN_DRIVEAI.
+// Rechargés ainsi le 23/10/2026 (Hubperso#392) : GITHUB_GRAPHES_TOKEN, HUB_TOKEN_BATCHCHEF, HUB_TOKEN_CARAI, HUB_TOKEN_DRIVEAI, HUB_TOKEN_FINANCEAI.
 //
 // ⚠️ `HUB_SESSION_PRIVATE_JWK` n'y est PAS : elle appartient à la phase 2 de la session
 // asymétrique, pas encore fusionnée. Elle entrera avec la branche qui la lit.
