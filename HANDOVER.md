@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.13.0 : LIA joue ses 39 actions (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.12.2 à v0.13.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 4ccdb41). Le hub ne règle toujours ni mouvement ni humeur (`LiaHub` sans option) ; les actions viennent du paquet et sa doc décrit ce que l'hôte peut dicter (`data-lia-activite`, `etat` de `ask`). Aucune option à retirer côté hub. À lire par le PC : LIA joue des silhouettes variées en prod, `data-etat` sur `.lia-ui__corps`.
+
 ## 🟦 Session 2026-10-23 — **Rotation de HUB_TOKEN_FINANCEAI et GANTT_SECRET : build neuf (Hubperso#392)**
 
 Marc a fait tourner `HUB_TOKEN_FINANCEAI` (Vercel hubperso et secret GitHub, 19 h 55 UT) puis `GANTT_SECRET` (Vercel hubperso, 19 h 58 UT). Aucun changement de comportement : les deux noms s'ajoutent à la ligne de commentaire de `lib/variablesAttendues.ts` (jetons rechargés par push), seul vrai diff de source qui déclenche un build construit APRÈS la pose. À lire par le PC : la carte FinanceAI répond avec le nouveau jeton.
