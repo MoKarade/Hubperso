@@ -22,6 +22,7 @@ import { assurerMigrations } from "@/lib/migrations";
 import { aAcces, APP_HUB } from "@/lib/personnes";
 import { appDuJeton } from "@/lib/jetonApp";
 import { SOURCE_DEFS } from "@/lib/sources";
+import { contexteEtatApps } from "@/lib/liaContexte";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import {
   CORPS_MAX_OCTETS,
@@ -100,7 +101,7 @@ export async function POST(req: Request): Promise<Response> {
     const r = await fetch(`${memoire.accueilUrl}/api/ask`, {
       method: "POST",
       headers: { "content-type": "application/json", [HUB_TOKEN_HEADER]: jetonMemoire },
-      body: corpsPourMemoryAi(demande.valeur, qui.source, true),
+      body: corpsPourMemoryAi(demande.valeur, qui.source, true, await contexteEtatApps()),
       signal: AbortSignal.timeout(DELAI_MEMORYAI_MS),
       cache: "no-store",
     });
