@@ -129,21 +129,23 @@ describe("panneau « Coûts et quotas » (rendu)", () => {
 
 describe("LIA dans la fenêtre", () => {
   const page = readFileSync(join(__dirname, "..", "app", "page.tsx"), "utf8");
-  const composant = readFileSync(join(__dirname, "..", "components", "LiaHub.tsx"), "utf8");
+  const layout = readFileSync(join(__dirname, "..", "app", "layout.tsx"), "utf8");
+  const composant = readFileSync(join(__dirname, "..", "components", "LiaBoot.tsx"), "utf8");
 
-  it("la page monte LiaHub une fois, hors du résumé", () => {
-    expect(page.match(/<LiaHub \/>/g)).toHaveLength(1);
-    expect(page).not.toContain("lia={<LiaHub />}");
+  it("le layout racine la monte une fois ; la page d'accueil n'en monte aucune", () => {
+    expect(layout.match(/<LiaBoot \/>/g)).toHaveLength(1);
+    expect(page).not.toContain("LiaBoot");
+    expect(page).not.toContain("<Lia");
   });
 
-  it("LiaHub n'a ni conteneur ni élément à lui : elle vit dans la fenêtre entière", () => {
+  it("LiaBoot n'a ni conteneur ni élément à lui : elle vit dans la fenêtre entière", () => {
     expect(composant).not.toMatch(/container[=:]/);
     expect(composant).not.toContain("lia-colonne");
     expect(composant).not.toMatch(/<div/);
   });
 
   it("la question passe par la route du hub, jamais par une réponse écrite ici", () => {
-    expect(composant).toContain("ask={ask}");
+    expect(composant).toContain("ask: (question, signal)");
     expect(composant).toContain("poserQuestion(");
     // Aucun texte de réponse inventé dans le composant : tout vient de `/api/lia/ask`.
     expect(composant).not.toMatch(/text:\s*["'`]/);

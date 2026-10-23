@@ -6,13 +6,40 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const source = readFileSync(join(__dirname, "..", "components", "LiaHub.tsx"), "utf8");
+const source = readFileSync(join(__dirname, "..", "components", "LiaBoot.tsx"), "utf8");
 const paquet = readFileSync(join(__dirname, "..", "package.json"), "utf8");
 
-describe("LiaHub : réglages communs", () => {
+describe("LiaBoot : réglages communs", () => {
   it("ne règle ni le mouvement réduit ni la pastille d'humeur (défauts du paquet)", () => {
     expect(source).not.toContain("quandMouvementReduit");
     expect(source).not.toContain("humeurVisible");
+  });
+
+  it("monte LIA au chargement du module par demarrerLia, jamais dans un effet ni par <Lia />", () => {
+    // Marc, 23/10/2026 : « présente tout le temps, même si quelque chose charge, même si une page bug ».
+    expect(source).toContain('from "@mokarade/lia-ui/boot"');
+    expect(source).toMatch(/^const demarrage = demarrerLia\(/m);
+    expect(source).not.toContain("@mokarade/lia-ui/react");
+    expect(source).not.toMatch(/<Lia[\s/>]/);
+    const effets = [...source.matchAll(/useEffect\(\(\) => \{([\s\S]*?)\n  \}, \[/g)].map((m) => m[1] ?? "");
+    for (const corps of effets) expect(corps).not.toContain("demarrerLia");
+  });
+
+  it("le layout racine charge ce module, donc LIA existe aussi sur loading, error et not-found", () => {
+    const layout = readFileSync(join(__dirname, "..", "app", "layout.tsx"), "utf8");
+    expect(layout).toContain('import { LiaBoot } from "@/components/LiaBoot"');
+    // Aucune de ces pages ne la remonte ni ne la retire : elle vit dans le body, hors de React.
+    for (const f of ["app/error.tsx", "app/not-found.tsx", "app/attention/loading.tsx", "app/couts/loading.tsx"]) {
+      const src = readFileSync(join(__dirname, "..", f), "utf8");
+      expect(src).not.toMatch(/lia-ui|LiaBoot|<Lia[\s/>]/);
+    }
+  });
+
+  it("utilise lia-ui v0.16.0 ou plus récent (demarrerLia, présence tout le temps)", () => {
+    const m = /"@mokarade\/lia-ui": "github:MoKarade\/lia-ui#v(\d+)\.(\d+)\.(\d+)"/.exec(paquet);
+    expect(m).not.toBeNull();
+    const [major = 0, minor = 0] = (m ?? []).slice(1).map(Number);
+    expect(major > 0 || minor >= 16).toBe(true);
   });
 
   it("utilise lia-ui v0.11.1 ou plus récent (mouvement complet par défaut, pastille d'humeur)", () => {

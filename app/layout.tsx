@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 // Outfit (police commune de la refonte, référence §2) auto-hébergée via @fontsource : aucune requête externe.
 import "@fontsource-variable/outfit";
+import { LiaBoot } from "@/components/LiaBoot";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { NavigationMontee } from "@/components/NavigationMontee";
 import { PaletteMontee } from "@/components/PaletteMontee";
@@ -46,6 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Gardée côté serveur : elle liste les apps, donc elle exige l'accès au hub — pas
             seulement une session. Voir components/PaletteMontee.tsx. */}
         <PaletteMontee />
+        {/* LIA : montée au chargement de ce module (components/LiaBoot.tsx), dans le body, hors des écrans de
+            chargement et d'erreur. Ce composant ne fait que lui confier le routeur. */}
+        <LiaBoot />
         <ServiceWorker />
         <Analytics />
       </body>

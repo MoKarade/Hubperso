@@ -12,7 +12,7 @@ import { BoutonAnalyser } from "./BoutonAnalyser";
 // qui mène à /attention : rien n'est escamoté.
 //
 // LIA n'a PLUS de colonne ici (Marc, 22/10/2026) : elle vit dans la fenêtre entière, comme dans les
-// apps (`components/LiaHub.tsx`), et ne réserve aucun espace sur cette page.
+// apps (`components/LiaBoot.tsx`), et ne réserve aucun espace sur cette page.
 
 function Point({ point }: { point: Attention }) {
   return (
