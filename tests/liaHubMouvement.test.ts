@@ -1,19 +1,24 @@
-// tests/liaHubMouvement.test.ts — LIA du hub joue toutes ses animations, même quand le navigateur de
-// Marc annonce `prefers-reduced-motion` (décision de Marc, 23/10/2026 : « je veux tout »).
-// Verrou de source : l'option est lue une seule fois au montage par lia-ui, un test de rendu ne la verrait pas.
+// tests/liaHubMouvement.test.ts — LIA est UNE seule, identique dans toutes les apps (Marc, 23/10/2026) :
+// le mouvement et la pastille d'humeur viennent de lia-ui, le hub n'en règle aucun.
+// Verrou de source : ces options ne sont lues qu'au montage par lia-ui, un test de rendu ne les verrait pas.
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync(join(__dirname, "..", "components", "LiaHub.tsx"), "utf8");
+const paquet = readFileSync(join(__dirname, "..", "package.json"), "utf8");
 
-describe("LiaHub : mouvement", () => {
-  it("passe quandMouvementReduit=\"complet\" à <Lia>", () => {
-    expect(source).toContain('quandMouvementReduit="complet"');
+describe("LiaHub : réglages communs", () => {
+  it("ne règle ni le mouvement réduit ni la pastille d'humeur (défauts du paquet)", () => {
+    expect(source).not.toContain("quandMouvementReduit");
+    expect(source).not.toContain("humeurVisible");
   });
 
-  it("n'a qu'un seul réglage de mouvement (pas de valeur contradictoire)", () => {
-    expect(source.match(/quandMouvementReduit/g)).toHaveLength(1);
+  it("utilise lia-ui v0.11.1 ou plus récent (mouvement complet par défaut, pastille d'humeur)", () => {
+    const m = /"@mokarade\/lia-ui": "github:MoKarade\/lia-ui#v(\d+)\.(\d+)\.(\d+)"/.exec(paquet);
+    expect(m).not.toBeNull();
+    const [major = 0, minor = 0, patch = 0] = (m ?? []).slice(1).map(Number);
+    expect(major > 0 || minor > 11 || (minor === 11 && patch >= 1)).toBe(true);
   });
 });

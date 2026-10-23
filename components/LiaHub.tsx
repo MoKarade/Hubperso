@@ -130,10 +130,6 @@ export function LiaHub() {
       onSpontane={onSpontane}
       entrees={entrees}
       monde={monde}
-      // Le hub est une app personnelle dont Marc est le seul utilisateur, et son navigateur annonce
-      // `prefers-reduced-motion` : en « doux » (défaut de lia-ui) LIA ne traverse jamais l'écran et
-      // il lui manque ses animations de la maquette. Marc (23/10/2026) : « je veux tout ».
-      quandMouvementReduit="complet"
       onPret={(h) => {
         lia.current = h;
         retirerEtat.current?.();
