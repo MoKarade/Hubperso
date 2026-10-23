@@ -100,7 +100,10 @@ export function ditCarte(resultat: SummaryResult): string {
         case "degraded":
           return `${nom} a des données en retard.${alerte}`;
         case "ok":
-          return premiere ? `${nom} est à jour.${alerte}` : `${nom} est à jour, rien à signaler.`;
+          if (!premiere) return `${nom} est à jour, rien à signaler.`;
+          // Des données fraîches ne veulent pas dire « tout va bien » : une alerte grave ou un
+          // avertissement n'est jamais dit sous un « à jour » (la carte, elle, l'affiche en rouge).
+          return premiere.severity === "info" ? `${nom} est à jour.${alerte}` : `${nom} a un point à regarder.${alerte}`;
       }
     }
   }

@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **LIA ne dit plus « à jour » au-dessus d'une alerte (Hubperso#356)**
+
+Constat de production du PC (23/10/2026) : sur CarAI, le point rouge de dépassement de km était dit « CarAI est à jour. 88 888 km sur… ». `ditCarte` (`lib/liaParole.ts`) dit maintenant « X a un point à regarder. <libellé> » dès que l'alerte est un avertissement ou une alerte ; « est à jour. » ne précède qu'une simple info. Test dans `tests/liaParole.test.ts`. Reste hors de ce dépôt : la bulle de `dire()` s'affiche en haut à gauche quand le mouvement est réduit (bug lia-ui v0.4.0 : `dire` ne repositionne pas la bulle sans la boucle d'animation), demandé au fil Assistant pour une v0.4.1.
+
 ## 🟦 Session 2026-10-23 — **LIA parle quand on touche « Analyser », même sans pouvoir bouger (Hubperso#356)**
 
 Constat de production du PC le 23/10/2026 (capture et DOM, après lia-ui v0.4.0) : « Analyser » sur CarAI fait défiler la page jusqu'à la carte, mais LIA ne bouge pas et sa bulle reste vide. Cause probable [Probable] : `allerVoir` rend `false` quand LIA ne peut pas bouger (mouvement réduit, chat ou menu ouvert, on la tient) et `LiaHub` s'arrêtait là sans rien dire. Correctif : `lib/liaVisite.ts` (`visiterCarte`, pur, testé) : elle va près de la carte si elle le peut, puis parle toujours ; sans mouvement possible elle parle aussitôt. Le déplacement lui-même reste à vérifier en production sur un navigateur sans mouvement réduit.
