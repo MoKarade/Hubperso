@@ -15,6 +15,13 @@ export const DELAI_ARRIVEE_MS = 1500;
 /** Combien de secondes elle reste collée à la carte. */
 export const SECONDES_PRES_DE_LA_CARTE = 14;
 
+/** Le liseré de la carte dont elle parle (`data-regard`, `app/globals.css`) : posé quand elle parle, retiré quand elle s'en va. */
+function regarder(carte: Element, planifier: Planifier): void {
+  carte.ownerDocument?.querySelectorAll("[data-regard]").forEach((e) => e.removeAttribute("data-regard"));
+  carte.setAttribute("data-regard", "");
+  planifier(() => carte.removeAttribute("data-regard"), SECONDES_PRES_DE_LA_CARTE * 1000);
+}
+
 export type Planifier = (action: () => void, delaiMs: number) => void;
 
 /**
@@ -29,6 +36,9 @@ export function visiterCarte(
 ): boolean {
   const deplacee = lia.allerVoir(carte, SECONDES_PRES_DE_LA_CARTE);
   planifier(() => {
+    // ⚠️ `allerVoir` ne pose JAMAIS `data-regard` (seul le « voir » spontané de lia-ui le fait) : sans ce
+    // liseré, Marc ne voyait pas de quelle carte elle parlait (constat du PC, 23/10/2026).
+    regarder(carte, planifier);
     lia.dire(phrase);
   }, deplacee ? DELAI_ARRIVEE_MS : 0);
   return deplacee;
