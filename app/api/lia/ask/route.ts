@@ -14,6 +14,9 @@
 // le jeton qu'il détient déjà pour elle. Tout échec (MemoryAI absente, lente, en erreur, réponse
 // hors contrat) = 503 : LIA dit « indisponible », jamais une réponse inventée. La QUESTION n'est
 // jamais journalisée (ni ici ni dans les erreurs).
+//
+// Le hub JOINT à chaque question du propriétaire un bilan d'état des apps (`contexte`, hub → MemoryAI
+// seulement, `lib/liaContexte.ts`) : une donnée datée écrite ici, jamais copiée du corps reçu.
 
 import { HUB_TOKEN_HEADER } from "@mokarade/hub-contract";
 import { auth } from "@/auth";
