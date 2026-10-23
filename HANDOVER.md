@@ -2,9 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui passe à v0.4.0 : LIA parle seule sur l'accueil (Hubperso#356)**
+
+Le composant React de `@mokarade/lia-ui` ne transmettait NI `onSpontane`, NI `cibles`, NI `silence`, NI `relancesParJour` jusqu'à la v0.3.0 (correctif en v0.4.0, commit 8ad3d03) : sans cette montée, la livraison de #356 (LIA va voir les cartes, parle d'après les vrais états) ne faisait rien à l'écran. `package.json` et `package-lock.json` pointent sur `#v0.4.0` ; même forme de dépendances (peer `react` optionnel). Gate et portes verts, `npm audit --omit=dev` à 0. Suite : le menu du clic droit par élément (option `elements` de v0.4.0) vient avec Hubperso#359.
+
 ## 🟦 Session 2026-10-23 — **La phrase de l'accueil ne dit plus « tout est à jour » au-dessus d'une alerte (Hubperso#362)**
 
 `lib/resume.ts` : quand aucun badge n'est en panne ni en retard mais qu'une app qui répond « ok » publie une alerte ou un avertissement (ou que le hub en relève un, donnée figée), la phrase nomme l'app et compte les points à regarder (« Bravo : 1 point à regarder. » ; plusieurs apps : « 2 points à regarder dans 2 apps. »), au ton rouge si une alerte grave, jaune sinon. « Tout est à jour. » reste dit seulement sans aucun point à regarder. Constaté en production le 23/10/2026 (8 h 24 Québec) : la phrase disait « Tout est à jour. » au-dessus d'une pastille rouge. Tests : `tests/resume.test.ts` (cinq cas de plus).
+
 
 ## 🟦 Session 2026-10-23 — **LIA vit sur l'accueil : elle va voir les cartes et parle d'après les vrais états (Hubperso#356)**
 
