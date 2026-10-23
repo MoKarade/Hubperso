@@ -66,6 +66,46 @@ describe("carte d'une app à jour", () => {
   });
 });
 
+describe("carte maigre : ni action ni recommandation, deux mesures au plus (Hubperso#363)", () => {
+  const complete = ok({
+    metrics: [
+      { label: "Valeur nette", value: 42, format: "number", primary: true },
+      { label: "Comptes", value: 6, format: "number" },
+      { label: "Dettes", value: 2, format: "number" },
+      { label: "Placements", value: 9, format: "number" },
+      { label: "Budgets", value: 4, format: "number" },
+    ],
+    actions: [{ label: "Lancer la synchro", href: "https://finance.hubperso.com/sync", kind: "trigger" }],
+    recommendation: { label: "Rééquilibrer", why: "Le REER dépasse la cible.", href: "https://finance.hubperso.com/reer" },
+  });
+  const html = rendre(complete);
+
+  it("deux mesures secondaires, les autres sont comptées vers le détail", () => {
+    expect(html).toContain("Comptes");
+    expect(html).toContain("Dettes");
+    expect(html).not.toContain("Placements");
+    expect(html).not.toContain("Budgets");
+    expect(html).toContain("+ 2 autres mesures dans le détail");
+  });
+
+  it("aucun bouton d'action ni bloc de recommandation sur la carte", () => {
+    expect(html).not.toContain("Lancer la synchro");
+    expect(html).not.toContain("Rééquilibrer");
+    expect(html).not.toContain('class="actions"');
+  });
+
+  it("une app qui ne publie que des actions ou un conseil renvoie au détail, sans « aucune donnée »", () => {
+    const seul = rendre(
+      ok({
+        metrics: [],
+        actions: [{ label: "Lancer la synchro", href: "https://finance.hubperso.com/sync", kind: "link" }],
+      }),
+    );
+    expect(seul).toContain("t’attendent dans le détail");
+    expect(seul).not.toContain("Aucune donnée à afficher");
+  });
+});
+
 describe("alertes : le bandeau rouge est réservé à la sévérité `alert`", () => {
   it("une simple info rejoint la liste en pastille, sans bandeau", () => {
     const html = rendre(ok({ alerts: [{ label: "Un relevé à classer", severity: "info" }] }));

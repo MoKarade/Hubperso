@@ -15,13 +15,11 @@ import { formatDateTime, formatDuree, formatMetricValue } from "@/lib/format";
 import { StatusBadge } from "./StatusBadge";
 import { MetricList } from "./MetricList";
 import { AlertBanner } from "./AlertBanner";
-import { ActionList } from "./ActionList";
 import { AlertList } from "./AlertList";
 import { Sparkline } from "./Sparkline";
 import { Icone } from "./Icone";
 import { LogoApp } from "./LogoApp";
 import { aUnLogo } from "@/lib/logos";
-import { Recommandation } from "./Recommandation";
 
 /**
  * Le bloc dominant de la carte : la métrique que l'app a choisi de publier en premier, sa
@@ -79,14 +77,13 @@ function CorpsOk({
   place: PlaceCarte;
 }) {
   const etat = etatCarte(summary, historique, maintenantMs, place);
-  // ⚠️ La recommandation compte de nouveau dans « vide » depuis qu'elle est revenue sur la
-  // carte (23/09) : une app qui ne publierait QU'un conseil a désormais quelque chose à
-  // montrer ici, donc écrire « aucune donnée » serait faux.
-  const vide =
-    etat.heros === null &&
-    etat.alertePrincipale === null &&
-    etat.recommandation === null &&
-    etat.actions.length === 0;
+  // La carte est maigre (maquette validée, Marc 23/10 : « exactement comme la maquette ») : le chiffre
+  // clé, deux mesures, les alertes. La recommandation et les actions de l'app vivent dans « Détail »
+  // (`app/app/[id]/page.tsx`), rien n'est retiré du hub. Une app qui ne publierait QUE cela a donc
+  // quelque chose à montrer : la carte le dit et renvoie au détail, au lieu d'écrire « aucune donnée ».
+  const sansRien =
+    etat.heros === null && etat.alertePrincipale === null && etat.secondaires.length === 0;
+  const dansDetail = etat.recommandation !== null || etat.actions.length > 0;
 
   // ⚠️ LE BANDEAU ROUGE EST RÉSERVÉ À LA SÉVÉRITÉ `alert` (`lib/alertes.ts`). Il prenait la
   // première alerte quelle que soit sa gravité : une simple info (« un relevé à classer »)
@@ -113,14 +110,17 @@ function CorpsOk({
           {etat.autresAlertes > 1 ? "s" : ""}
         </p>
       )}
-      {/* ⚠️ LA RECOMMANDATION EST REVENUE — et l'arbitrage de Marc du 15/09 (« faut aussi
-          moins de texte ») n'est pas contredit : elle est rendue en `compact`, donc le
-          `pourquoi` reste dans `/app/[id]`. Ce qui revient est UNE ligne avec son icône, pas
-          le bloc de deux paragraphes qui avait été retiré. Marc, 23/09 : « le conseil est
-          parti » + « chiffres et icônes, peu de texte ». */}
-      {etat.recommandation && <Recommandation reco={etat.recommandation} compact />}
-      <ActionList actions={etat.actions} appId={summary.app.id} />
-      {vide && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
+      {etat.autresMesures > 0 && (
+        // Comptées, jamais escamotées : elles sont toutes dans « Détail ».
+        <p className="widget__reste">
+          + {etat.autresMesures} autre{etat.autresMesures > 1 ? "s" : ""} mesure
+          {etat.autresMesures > 1 ? "s" : ""} dans le détail
+        </p>
+      )}
+      {sansRien && dansDetail && (
+        <p className="widget__empty">Une recommandation ou des actions t’attendent dans le détail.</p>
+      )}
+      {sansRien && !dansDetail && <p className="widget__empty">Aucune donnée à afficher pour l’instant.</p>}
     </>
   );
 }
