@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-23 — **lia-ui v0.17.5 : le chat fin ne cache plus la page (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.17.4 à v0.17.5 (`package.json` et lock ensemble, `resolved` sur le commit pelé 1c6888f). Le nouveau chat est fin et laisse la page visible, téléphone compris ; le changement est dans le paquet, le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : le chat ouvert à côté de la page sans la cacher, sur ordinateur et sur téléphone.
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.17.4 : humeurs visibles, regard qui suit le curseur, cadre d'analyse (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.16.0 à v0.17.4 (`package.json` et lock ensemble, `resolved` sur le commit pelé a93a141). Les changements sont dans le paquet : les 40 humeurs jouent leur lot et la pastille prend la couleur de l'humeur (v0.17.2), le regard suit le curseur au bon moment et, au téléphone, l'élément au centre de l'écran vaut regard (v0.17.3), un cadre à quatre coins entoure ce qu'elle analyse (v0.17.4), parole plus variée et honnête (v0.17.1), `setRayon` (v0.17.0, inutilisé ici). Le hub ne change pas de code et ne passe toujours aucune option ; son liseré `data-regard` sur la carte reste, le cadre du paquet s'y ajoute pendant la silhouette `analyse`. À lire par le PC : les quatre coins autour de la carte quand Marc touche « Analyser », la pastille colorée, le regard qui suit le curseur après un long moment sur la page.
