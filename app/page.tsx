@@ -6,7 +6,6 @@ import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
 import { enregistrerReleve, lireHistoriqueTous } from "@/lib/historiqueDb";
 import { attentions } from "@/lib/attention";
 import { maintenantMs } from "@/lib/horloge";
-import { LiaHub } from "@/components/LiaHub";
 import { ResumeHub } from "@/components/ResumeHub";
 import { resumeHub } from "@/lib/resume";
 import type { Releve } from "@/lib/historique";
@@ -162,8 +161,6 @@ export default async function Page() {
 
   return (
     <main className="page page--large">
-      {/* LIA : une seule, dans la fenêtre entière, sans espace réservé sur la page. */}
-      <LiaHub />
       <header className="page__head">
         <div>
           <p className="page__eyebrow">hubperso.com</p>

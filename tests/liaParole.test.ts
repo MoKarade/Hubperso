@@ -220,9 +220,9 @@ describe("la page porte ce que LIA lit", () => {
     expect(html).toContain("Voir");
   });
 
-  it("LiaHub passe onSpontane et écoute « Analyser » ; il ne fait défiler que sur geste explicite", () => {
-    const src = readFileSync(join(__dirname, "..", "components", "LiaHub.tsx"), "utf8");
-    expect(src).toContain("onSpontane={onSpontane}");
+  it("LiaBoot passe onSpontane et écoute « Analyser » ; il ne fait défiler que sur geste explicite", () => {
+    const src = readFileSync(join(__dirname, "..", "components", "LiaBoot.tsx"), "utf8");
+    expect(src).toContain("onSpontane: (motif");
     expect(src).toContain("EVENEMENT_LIA_VOIR");
     // Une seule occurrence de défilement, dans le gestionnaire du bouton.
     expect(src.match(/scrollIntoView/g)).toHaveLength(1);
