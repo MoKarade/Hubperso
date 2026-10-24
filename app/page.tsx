@@ -14,6 +14,8 @@ import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
 import { WidgetSkeleton } from "@/components/WidgetSkeleton";
 import { CostsCard } from "@/components/CostsCard";
+import { FriseEtat } from "@/components/FriseEtat";
+import { friseApp } from "@/lib/friseEtat";
 import { RefreshControls } from "@/components/RefreshControls";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -99,6 +101,23 @@ async function StreamedAttention({ promises }: { promises: Promise<SummaryResult
       maintenant={maintenantMs()}
     />
   );
+}
+
+/**
+ * La frise des dernières 24 h (`lib/friseEtat.ts`) : une ligne par app, tirée des relevés. Elle n'attend que la lecture de
+ * l'historique, pas les réponses des apps : une app lente ne la retient pas. Sans base, les relevés sont vides et chaque app
+ * dit « aucun relevé », jamais une frise verte.
+ */
+async function StreamedFrise({
+  sources,
+  historiques,
+}: {
+  sources: HubSource[];
+  historiques: Promise<Map<string, Releve[]>>;
+}) {
+  const memoire = await historiques;
+  const maintenant = maintenantMs();
+  return <FriseEtat frises={sources.map((s) => friseApp(s.id, s.name, memoire.get(s.id) ?? [], maintenant))} />;
 }
 
 /** Panneau des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
@@ -198,6 +217,11 @@ export default async function Page() {
           </Suspense>
         ))}
       </section>
+
+      {/* Sous les cartes : ce que le hub a vu sur 24 h, avant les coûts (l'état avant la dépense). */}
+      <Suspense fallback={null}>
+        <StreamedFrise sources={sources} historiques={historiques} />
+      </Suspense>
 
       {/* Sous les cartes (maquette de base) : les coûts se lisent après l'état des apps. */}
       <Suspense fallback={<div className="couts-panneau couts-panneau--attente" aria-busy="true" />}>
