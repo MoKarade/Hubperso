@@ -42,8 +42,12 @@ interface AppUsage {
 /** Période déclarée par une app pour son coût (valeurs du contrat v1.1). */
 export type UsagePeriod = NonNullable<HubUsage["cost"]>["period"];
 
-/** Ordre d'affichage stable, du plus large au plus étroit. */
-const PERIOD_ORDER: readonly UsagePeriod[] = ["total", "mois", "jour"];
+/**
+ * Ordre d'affichage stable : « ce mois-ci » d'abord, puis le cumul, puis aujourd'hui (maquette validée, 22/10/2026 :
+ * ce qui se dépense maintenant avant ce qui s'est dépensé depuis le début). L'ordre ne fusionne rien : chaque
+ * période garde son propre total.
+ */
+const PERIOD_ORDER: readonly UsagePeriod[] = ["mois", "total", "jour"];
 
 export interface PeriodTotal {
   period: UsagePeriod;

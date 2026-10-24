@@ -7,6 +7,7 @@ import { demarrerLia } from "@mokarade/lia-ui/boot";
 import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
+import { poserConstat } from "@/lib/constat";
 import { visiterCarte } from "@/lib/liaVisite";
 import { entreesMonde, faitDepuisDataset, instantDernierAppel, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
 
@@ -63,6 +64,8 @@ function monde(motif: MotifMonde, element?: Element) {
   if (!parole) return null;
   const cible =
     element ?? (parole.appId ? document.querySelector(`[data-lia-app="${CSS.escape(parole.appId)}"]`) : null);
+  // Elle va à une carte et en dit le constat : la carte le garde, daté.
+  if (carte && cible instanceof HTMLElement) poserConstat(cible, carte.dit, Date.now());
   return { text: parole.text, element: cible };
 }
 
@@ -82,9 +85,16 @@ function voir(e: Event): void {
   }
   window.setTimeout(() => {
     // Elle parle même si elle ne peut pas bouger (`lib/liaVisite.ts`).
-    visiterCarte(handle, carte, fait.dit, (action, delai) => {
-      window.setTimeout(action, delai);
-    });
+    visiterCarte(
+      handle,
+      carte,
+      fait.dit,
+      (action, delai) => {
+        window.setTimeout(action, delai);
+      },
+      // Elle s'est rendue à la carte et a dit son constat : la carte le garde, daté (`lib/constat.ts`).
+      () => poserConstat(carte, fait.dit, Date.now()),
+    );
   }, attente);
 }
 

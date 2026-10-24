@@ -42,6 +42,8 @@ export function visiterCarte(
   carte: Element,
   phrase: string,
   planifier: Planifier,
+  /** Appelée juste après qu'elle a parlé : la carte garde alors son constat (`lib/constat.ts`). */
+  apresDire?: () => void,
 ): boolean {
   const deplacee = lia.allerVoir(carte, SECONDES_PRES_DE_LA_CARTE);
   planifier(() => {
@@ -49,6 +51,7 @@ export function visiterCarte(
     // liseré, Marc ne voyait pas de quelle carte elle parlait (constat du PC, 23/10/2026).
     regarder(carte, planifier);
     lia.dire(phrase);
+    apresDire?.();
   }, deplacee ? DELAI_ARRIVEE_MS : 0);
   return deplacee;
 }
