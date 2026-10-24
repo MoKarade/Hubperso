@@ -92,8 +92,9 @@ const demarrage = demarrerLia({
   cle: CLE_LIA_HUB,
   // UNE seule LIA : son état (envies, journal, humeur, monde intérieur) est celui de MemoryAI, lu et écrit par la
   // route du hub (`app/api/lia/etat/route.ts`, session du hub, jeton jamais côté client). Si la route échoue, LIA
-  // garde son état local et vit quand même.
-  etat: etatHttp("/api/lia/etat"),
+  // garde son état local et vit quand même. ⚠️ `etatHttp` lit `window.location` dès sa création : sur le serveur (rendu de
+  // chaque page) ce module est aussi évalué, donc seulement dans le navigateur (production, 24/10/2026 : 500 partout).
+  etat: typeof window === "undefined" ? undefined : etatHttp("/api/lia/etat"),
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
   ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
