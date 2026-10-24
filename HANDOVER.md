@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.26.0 : elle analyse l'élément cliqué, se pose sur les cartes, a des souvenirs (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.23.1 à v0.26.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 129bb79, vérifié par `git ls-remote`), v0.24.0 et v0.25.0 comprises. Les changements sont dans le paquet : elle se pose sur les cartes (v0.24.0), garde des souvenirs sur plusieurs jours dans le navigateur (v0.25.0), analyse l'élément exact sur lequel Marc a fait un clic droit, et lancée elle file sans gravité (v0.26.0). Le hub ne change pas de code. Vérifié avant de pousser : `tests/liaBootServeur.test.ts` (le module `LiaBoot` se charge sans `window`, comme le serveur) reste vert avec ce paquet, et le serveur de production local rend `/login` en 200. À lire par le PC : le clic droit sur un élément précis, et la LIA qui se pose sur une carte.
+
 ## 🟦 Session 2026-10-24 — **Correctif : le rendu serveur retombait en 500 depuis l'état partagé (Hubperso#433)**
 
 Cause : `etatHttp()` (lia-ui) lit `window.location` dès sa création, et `components/LiaBoot.tsx` l'appelait au chargement du module, qui est aussi évalué sur le serveur (layout racine). Depuis le déploiement de #437, `/login`, `/`, `/conditions` rendaient 500 (« ReferenceError: window is not defined », lu dans les journaux d'exécution et par `curl`). Correctif : `etat: typeof window === "undefined" ? undefined : etatHttp("/api/lia/etat")`. Nouveau verrou `tests/liaBootServeur.test.ts` : le module se charge sans `window`, comme le serveur (il échoue sur l'ancien code). Leçon : une option du paquet évaluée au chargement du module doit être sûre côté serveur ; la CI ne le voyait pas, aucune page n'est prérendue.
