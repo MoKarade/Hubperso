@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.30.0 (Hubperso#455)**
+
+`@mokarade/lia-ui` passe de v0.29.0 à v0.30.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 26d9af2, vérifié par `git ls-remote` : `v0.30.0^{}`). Le changement est dans le paquet ; son README n'a pas de section v0.30.0 (le détail n'est donc pas lu ici). Le hub ne change pas de code. Vérifié avant de pousser : gate complet vert (typecheck, lint, 0 avertissement, tests, build, `npm run portes`) et `next start` : `/login` 200 sans « window is not defined ». Preuve en production : déploiement READY sur le SHA fusionné, puis `/login` 200.
+
 ## 🟦 Session 2026-10-24 — **Accueil : la frise des dernières 24 h par app (Hubperso#357)**
 
 Nouvelle section sous les cartes, avant les coûts : par app, 48 plages de 30 minutes sur les 24 dernières heures, tirées des relevés du hub (un par app et par quart d'heure, `lib/historiqueDb.ts`). Module pur `lib/friseEtat.ts` (`friseApp`, `resumeFrise`, `libellePlage`), composant `components/FriseEtat.tsx`, branché dans `app/page.tsx` (`StreamedFrise`, qui n'attend que la lecture de l'historique, pas les réponses des apps). Quatre états : à jour, panne vue (injoignable, réponse invalide, contrat trop récent, comme `lib/bilanEtat.ts`), accès refusé (le hub n'est pas entré : à part), sans relevé. Rien n'est inventé : une plage sans relevé n'est jamais « à jour », une app sans historique le dit en toutes lettres, une plage dit « panne vue » (jamais une durée plus précise que la mesure), et « en retard » n'est PAS dessiné, parce que la table ne garde que l'état vu par le hub, pas le statut déclaré par l'app (le déduire de `dataAsOf` serait inventer un seuil). La couleur ne porte jamais seule : chaque état a sa forme (plein, hachuré, demi-hauteur, pointillé) et son mot (légende, résumé, survol, `aria-label`). Couleurs en variables du socle seulement. Captures 1440 et 390 px (données fictives, pas de débordement horizontal) : `/mnt/project-files/hubperso-357/`. Tests : `tests/friseEtat.test.ts` (17).
