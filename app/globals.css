@@ -1074,6 +1074,51 @@ a:focus-visible,
 .couts-panneau__quota[data-niveau="alert"] .couts-panneau__jauge span { background: var(--danger); }
 .couts-panneau__note { margin: 0; font-size: 0.78rem; color: var(--text-faint); }
 
+/* ── La frise des 24 dernières heures (lib/friseEtat.ts, components/FriseEtat.tsx) ──────────────
+   Couleurs = variables du socle seulement. La couleur ne porte jamais seule l'état : plein (à jour), hachuré (panne vue),
+   demi-hauteur (accès refusé), pointillé (sans relevé) ; chaque forme a aussi son mot dans la légende et le résumé. */
+.frise {
+  display: grid;
+  gap: 1rem;
+  margin-top: var(--gap);
+  padding: clamp(1rem, 0.7rem + 1.2vw, 1.6rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.frise__tete { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1.2rem; flex-wrap: wrap; }
+.frise__eyebrow {
+  margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.frise__legende { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.82rem; color: var(--text-soft); }
+.frise__legende-item { display: flex; align-items: center; gap: 0.4rem; }
+.frise__lignes { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.frise__ligne { display: grid; gap: 0.35rem 1rem; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.frise__nom { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.frise__resume { margin: 0; font-size: 0.85rem; color: var(--text-soft); overflow-wrap: anywhere; }
+.frise__barre { display: flex; align-items: flex-end; gap: 2px; height: 1.5rem; min-width: 0; }
+.frise__plage {
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ok);
+}
+.frise__legende .frise__plage { flex: none; width: 1rem; height: 0.9rem; }
+.frise__plage[data-etat="panne"] {
+  background: repeating-linear-gradient(135deg, var(--danger) 0 3px, color-mix(in oklch, var(--danger) 45%, var(--surface)) 3px 6px);
+}
+.frise__plage[data-etat="refus"] { height: 55%; background: var(--warn); }
+.frise__plage[data-etat="vide"] { background: transparent; box-shadow: inset 0 0 0 1px var(--border-fort); border-radius: 2px; }
+.frise__note { margin: 0; font-size: 0.78rem; color: var(--text-faint); }
+@media (min-width: 720px) {
+  .frise__ligne { grid-template-columns: 9rem minmax(0, 1fr); align-items: center; }
+  .frise__resume { grid-column: 2; grid-row: 1; }
+  .frise__nom { grid-column: 1; grid-row: 1 / span 2; }
+  .frise__barre { grid-column: 2; grid-row: 2; }
+}
+
 /* --- Détail /couts --- */
 .couts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--gap); }
 /* La fiche prend la couleur de son app (`--accent` posé par la page). Repli sur
