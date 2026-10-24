@@ -8,7 +8,7 @@
 // réparée, la route est réservée au propriétaire et ne devient jamais publique, la page dit « indisponible » au lieu
 // d'inventer une liste.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,6 +38,7 @@ import {
   nomValable,
   relayerDepot,
 } from "../lib/demandes";
+import { ROUTE_DEMANDES, deposerDemande } from "../lib/demandesClient";
 import { GENRES_HUB, cibleDemandeHub, type LecteurElement } from "../lib/liaElement";
 import { SOURCE_DEFS } from "../lib/sources";
 
@@ -320,5 +321,42 @@ describe("la page /demandes", () => {
     const css = lire("app/globals.css");
     const bloc = css.slice(css.indexOf("/* --- Demandes"));
     expect(bloc).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(/);
+  });
+});
+
+describe("deposerDemande : le geste de Marc, côté navigateur", () => {
+  const depot = DEPOT as never;
+
+  it("envoie app, genre et nom à la route du hub, rien d'autre, et rend true quand c'est gardé", async () => {
+    const f = vi.fn(async () => new Response("{}", { status: 201 }));
+    expect(await deposerDemande(depot, f)).toBe(true);
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe(ROUTE_DEMANDES);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual(DEPOT);
+    expect(init.cache).toBe("no-store");
+  });
+
+  it("ne lève jamais : un statut d'échec ou un réseau en panne rend false, journalisé sans la demande", async () => {
+    const journal = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(await deposerDemande(depot, async () => new Response("{}", { status: 503 }))).toBe(false);
+    expect(await deposerDemande(depot, async () => { throw new TypeError(`réseau ${DEPOT.nom}`); })).toBe(false);
+    expect(JSON.stringify(journal.mock.calls)).not.toContain(DEPOT.nom);
+    journal.mockRestore();
+  });
+});
+
+describe("LiaBoot : câblage de la demande", () => {
+  const source = lire("components/LiaBoot.tsx");
+
+  it("dépose la demande au choix de « Que peut-on changer ici ? », jamais pour une autre entrée, jamais en pause", () => {
+    expect(source).toContain('import { deposerDemande } from "@/lib/demandesClient";');
+    expect(source).toMatch(/surMode: \(mode, el\) => \{\s*if \(mode === "changer" && !suiviPause\.enPause\(\)\) void deposerDemande\(cibleDemandeHub\(el\)\);/);
+  });
+
+  it("le paquet installé sait signaler l'entrée choisie (v0.35.0 : `elements.surMode`)", () => {
+    const dist = join(racine, "node_modules/@mokarade/lia-ui/dist");
+    const types = readdirSync(dist).filter((f) => f.endsWith(".d.ts")).map((f) => readFileSync(join(dist, f), "utf8")).join("\n");
+    expect(types).toContain("surMode?: (mode: ModeElement, element: Element, description: DescriptionElement)");
   });
 });

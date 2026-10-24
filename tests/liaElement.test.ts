@@ -214,7 +214,7 @@ describe("verrous sur les sources", () => {
 
   it("LiaBoot branche la description du hub, avec le repli de lia-ui", () => {
     const src = lire("components/LiaBoot.tsx");
-    expect(src).toMatch(/elements:\s*\{\s*decrire:\s*\(el\)\s*=>\s*decrireElementHub\(el,\s*decrireParDefaut\)\s*\}/);
+    expect(src).toMatch(/elements:\s*\{\s*decrire:\s*\(el\)\s*=>\s*decrireElementHub\(el,\s*decrireParDefaut\)\s*,/);
   });
 
   it("la route ask ne journalise jamais la question ni la description, et ne les met pas en cache", () => {
