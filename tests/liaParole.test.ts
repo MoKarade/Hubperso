@@ -17,6 +17,8 @@ import {
   entreesMonde,
   instantDernierAppel,
   parleMonde,
+  RAISON_RAPPEL,
+  RAISON_SIGNALEMENT,
   faitDepuisDataset,
   graviteCarte,
   graviteLia,
@@ -133,8 +135,8 @@ describe("parleSeule : elle ne dit que le vrai, sinon elle se tait", () => {
 
   it("une panne : le plus grave d'abord, à gravité égale l'ordre des cartes", () => {
     const faits = [fait("a", "warn", "A en retard."), fait("b", "alert", "B injoignable."), fait("c", "alert", "C refusée.")];
-    expect(parleSeule("rien", faits, 9)).toBe("B injoignable.");
-    expect(parleSeule("relance", faits, 9)).toBe("B injoignable.");
+    expect(parleSeule("rien", faits, 9)).toBe("Je te signale : B injoignable.");
+    expect(parleSeule("relance", faits, 9)).toBe("Je te le rappelle : B injoignable.");
     expect(parleSeule("salut", faits, 9)).toBe("Bonjour Marc. B injoignable.");
   });
 
@@ -262,6 +264,31 @@ describe("entreesMonde : le monde de LIA vient des cartes affichées", () => {
   });
 });
 
+describe("elle dit pourquoi elle écrit (Hubperso#313)", () => {
+  const faits = [fait("a", "ok"), fait("b", "alert", "B ne répond plus.")];
+
+  it("un signalement, un rappel et un appel se disent comme tels, sur le texte réel de la carte", () => {
+    expect(RAISON_SIGNALEMENT).toBe("Je te signale : ");
+    expect(RAISON_RAPPEL).toBe("Je te le rappelle : ");
+    expect(parleSeule("rien", faits, 9)).toBe(`${RAISON_SIGNALEMENT}B ne répond plus.`);
+    expect(parleSeule("relance", faits, 9)).toBe(`${RAISON_RAPPEL}B ne répond plus.`);
+    expect(parleMonde("appeler", faits, null, null, 10_000_000)?.text).toBe(`${RAISON_SIGNALEMENT}B ne répond plus.`);
+  });
+
+  it("jamais de raison sans problème : sans rien de vrai à dire, elle se tait", () => {
+    const calmes = [fait("a", "ok"), fait("b", "info")];
+    expect(parleSeule("rien", calmes, 9)).toBeNull();
+    expect(parleSeule("relance", calmes, 9)).toBeNull();
+    expect(parleMonde("appeler", calmes, null, null, 10_000_000)).toBeNull();
+  });
+
+  it("le salut et le constat demandé gardent leur forme : la raison y est déjà", () => {
+    expect(parleSeule("salut", faits, 9)).toBe("Bonjour Marc. B ne répond plus.");
+    const carte = fait("b", "alert", "B ne répond plus.");
+    expect(parleMonde("accompagner", [], carte, null, 10_000_000)).toEqual({ text: "B ne répond plus.", appId: "b" });
+  });
+});
+
 describe("parleMonde : ce que LIA dit du monde vient des cartes", () => {
   const f = (gravite: FaitLia["gravite"], appId = "a", dit = `${appId} dit`): FaitLia => ({
     appId,
@@ -273,7 +300,7 @@ describe("parleMonde : ce que LIA dit du monde vient des cartes", () => {
 
   it("appeler : le problème le plus grave, jamais une panne inventée", () => {
     const faits = [f("warn", "b", "B a un point à regarder."), f("alert", "c", "C signale une erreur."), f("ok", "d")];
-    expect(parleMonde("appeler", faits, null, null, T)).toEqual({ text: "C signale une erreur.", appId: "c" });
+    expect(parleMonde("appeler", faits, null, null, T)).toEqual({ text: "Je te signale : C signale une erreur.", appId: "c" });
     expect(parleMonde("appeler", [f("ok"), f("info", "b")], null, null, T)).toBeNull();
     expect(parleMonde("appeler", [], null, null, T)).toBeNull();
   });
@@ -281,11 +308,11 @@ describe("parleMonde : ce que LIA dit du monde vient des cartes", () => {
   it("appeler : pas deux fois dans les 10 minutes, puis de nouveau", () => {
     const faits = [f("alert")];
     expect(parleMonde("appeler", faits, null, T - 9 * 60_000, T)).toBeNull();
-    expect(parleMonde("appeler", faits, null, T - 11 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+    expect(parleMonde("appeler", faits, null, T - 11 * 60_000, T)).toEqual({ text: "Je te signale : a dit", appId: "a" });
   });
 
   it("appeler : à la borne exacte des 10 minutes, elle peut de nouveau appeler", () => {
-    expect(parleMonde("appeler", [f("alert")], null, T - 10 * 60_000, T)).toEqual({ text: "a dit", appId: "a" });
+    expect(parleMonde("appeler", [f("alert")], null, T - 10 * 60_000, T)).toEqual({ text: "Je te signale : a dit", appId: "a" });
   });
 
   it("le dernier appel du journal : le plus récent, quel que soit l'ordre, les autres comportements ignorés", () => {
