@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **Accueil : la phrase d'ensemble, le logo gris sans lecture, « Dernière analyse », « ce mois-ci » d'abord (Hubperso#358)**
+
+Quatre écarts avec la maquette validée, tous calculés des états réels. (1) `lib/resume.ts` : la phrase dit combien d'apps vont bien puis nomme ce qui ne va pas, chacune avec son état (« Trois apps sont à jour. DriveAI ne répond plus et JobAI a du retard. ») ; une app « à jour » qui affiche une alerte grave n'est pas comptée ; au-delà de trois problèmes, un compte. (2) `sansLecture` (`lib/status.ts`) : injoignable, refusée, invalide, contrat trop récent, non branchée ou en construction = logo en pointillés gris (`data-lecture="aucune"`), même si le badge est rouge ; une app qui répond garde sa teinte. (3) `lib/constat.ts` : chaque carte porte un emplacement VIDE et caché ; seul le navigateur le remplit (`poserConstat`, `textContent`, jamais du HTML) quand LIA s'est rendue à la carte (« Analyser » ou carte regardée), avec l'heure du Québec ; sans visite, aucun cadre. (4) `lib/usage.ts` : « Ce mois-ci » avant le cumul, puis aujourd'hui, toujours un total par période (la page /couts suit le même ordre). Aucun plafond ni quota inventé. À lire par le PC : la phrase d'ensemble sur la prod, le cadre après un clic sur « Analyser », le logo d'une app injoignable.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.29.0 : sa façon de penser (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.28.0 à v0.29.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé bc47819, vérifié par `git ls-remote`), v0.28.1 comprise. Le changement est dans le paquet : sa façon de penser. Le hub ne change pas de code. Vérifié avant de pousser : `tests/liaBootServeur.test.ts` (le module `LiaBoot` se charge sans `window`, comme le serveur) reste vert avec ce paquet, et le serveur de production local rend `/login` en 200. À lire par le PC : la façon de penser de LIA pendant une analyse.

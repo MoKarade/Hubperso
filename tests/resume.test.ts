@@ -39,35 +39,35 @@ describe("phrase d'état", () => {
 
   it("une app injoignable : elle est nommée, la phrase est rouge, jamais « tout est à jour »", () => {
     const r = resume([ok("a", "Alpha"), etat("unreachable", "b", "Bravo", { detail: "délai" })]);
-    expect(r.phrase).toBe("Bravo : injoignable.");
+    expect(r.phrase).toBe("Une app est à jour. Bravo ne répond plus.");
     expect(r.ton).toBe("danger");
     expect(r.points.map((p) => p.appNom)).toEqual(["Bravo"]);
   });
 
-  it("plusieurs apps en panne : un compte, pas une liste dans la phrase", () => {
+  it("plusieurs apps en panne : chacune est nommée avec son propre état", () => {
     const r = resume([
       etat("unreachable", "a", "Alpha", { detail: "x" }),
       etat("unauthorized", "b", "Bravo"),
       ok("c", "Charlie"),
     ]);
-    expect(r.phrase).toBe("2 apps à régler.");
+    expect(r.phrase).toBe("Une app est à jour. Alpha ne répond plus et Bravo refuse l’accès du hub.");
     expect(r.ton).toBe("danger");
   });
 
   it("données en retard : à surveiller, ton warn", () => {
     const r = resume([ok("a", "Alpha", { status: "degraded" }), ok("b", "Bravo")]);
-    expect(r.phrase).toBe("Alpha : données en retard.");
+    expect(r.phrase).toBe("Une app est à jour. Alpha a du retard.");
     expect(r.ton).toBe("warn");
   });
 
-  it("deux apps à surveiller : un compte", () => {
+  it("deux apps à surveiller : « A a du retard et B a du retard »", () => {
     const r = resume([ok("a", "Alpha", { status: "degraded" }), ok("b", "Bravo", { status: "degraded" })]);
-    expect(r.phrase).toBe("2 apps à surveiller.");
+    expect(r.phrase).toBe("Alpha a du retard et Bravo a du retard.");
   });
 
   it("la panne passe avant l'avertissement", () => {
     const r = resume([ok("a", "Alpha", { status: "degraded" }), etat("invalid", "b", "Bravo", { detail: "x" })]);
-    expect(r.phrase).toBe("Bravo : réponse invalide.");
+    expect(r.phrase).toBe("Bravo a une réponse invalide et Alpha a du retard.");
     expect(r.ton).toBe("danger");
   });
 
@@ -89,14 +89,71 @@ describe("phrase d'état", () => {
 
   it("une réponse servie depuis le cache n'est jamais « à jour »", () => {
     const enCache = { ...ok("a", "Alpha"), stale: true, cachedAgeMs: 600_000 } as SummaryResult;
-    expect(resume([enCache]).phrase).toBe("Alpha : en cache.");
+    expect(resume([enCache]).phrase).toBe("Alpha n’a pas répondu à temps.");
+  });
+});
+
+describe("phrase d'état : l'état d'ensemble, puis ce qui compte (maquette validée)", () => {
+  it("la phrase de la maquette : « Deux apps sont à jour. JobAI a du retard et DriveAI ne répond plus. »", () => {
+    const r = resume([
+      ok("a", "FinanceAI"),
+      ok("b", "BatchChef"),
+      ok("c", "JobAI", { status: "degraded" }),
+      etat("unreachable", "d", "DriveAI", { detail: "délai" }),
+    ]);
+    // Les pannes d'abord : l'ordre vient de la gravité, pas de l'ordre des apps.
+    expect(r.phrase).toBe("Deux apps sont à jour. DriveAI ne répond plus et JobAI a du retard.");
+    expect(r.ton).toBe("danger");
+  });
+
+  it("trois problèmes : une liste « A, B et C »", () => {
+    const r = resume([
+      ok("a", "Alpha", { status: "degraded" }),
+      ok("b", "Bravo", { status: "error" }),
+      etat("unauthorized", "c", "Charlie"),
+    ]);
+    expect(r.phrase).toBe("Bravo est en erreur, Charlie refuse l’accès du hub et Alpha a du retard.");
+  });
+
+  it("plus de trois problèmes : un compte, pas une liste", () => {
+    const r = resume([
+      ok("a", "Alpha", { status: "degraded" }),
+      ok("b", "Bravo", { status: "degraded" }),
+      ok("c", "Charlie", { status: "degraded" }),
+      ok("d", "Delta", { status: "degraded" }),
+      ok("e", "Écho"),
+    ]);
+    expect(r.phrase).toBe("Une app est à jour. 4 apps à régler ou à surveiller.");
+    expect(r.ton).toBe("warn");
+  });
+
+  it("une app à jour qui affiche une alerte grave n'est pas comptée « à jour »", () => {
+    const r = resume([ok("a", "Alpha"), ok("b", "Bravo", { alerts: [{ severity: "warn", label: "x" }] })]);
+    expect(r.phrase).toBe("Une app est à jour. Bravo a 1 point à regarder.");
+  });
+
+  it("une app en panne ET avec des alertes n'est dite qu'une fois", () => {
+    const r = resume([etat("unreachable", "a", "Alpha", { detail: "délai" })]);
+    expect(r.phrase).toBe("Alpha ne répond plus.");
+  });
+
+  it("aucune app à jour : la phrase ne commence pas par « Aucune app est à jour »", () => {
+    const r = resume([etat("unreachable", "a", "Alpha", { detail: "x" }), etat("unreachable", "b", "Bravo", { detail: "x" })]);
+    expect(r.phrase).toBe("Alpha ne répond plus et Bravo ne répond plus.");
+    expect(r.phrase).not.toMatch(/aucune app/i);
+  });
+
+  it("toutes les formes de phrase restent calculées : un nombre d'apps à jour au-delà de dix est écrit en chiffres", () => {
+    const apps = Array.from({ length: 12 }, (_, i) => ok(`a${i}`, `App${i}`));
+    const r = resume([...apps, etat("unreachable", "z", "Zèbre", { detail: "x" })]);
+    expect(r.phrase).toBe("12 apps sont à jour. Zèbre ne répond plus.");
   });
 });
 
 describe("phrase d'état avec des alertes publiées par des apps « ok »", () => {
   it("une alerte grave sur une app à jour : jamais « tout est à jour », l'app est nommée, ton rouge", () => {
     const r = resume([ok("a", "Alpha"), ok("b", "Bravo", { alerts: [{ severity: "alert", label: "Dépassement projeté" }] })]);
-    expect(r.phrase).toBe("Bravo : 1 point à regarder.");
+    expect(r.phrase).toBe("Une app est à jour. Bravo a 1 point à regarder.");
     expect(r.phrase).not.toMatch(/tout est à jour/i);
     expect(r.ton).toBe("danger");
   });
@@ -105,16 +162,17 @@ describe("phrase d'état avec des alertes publiées par des apps « ok »", () =
     const r = resume([
       ok("a", "Alpha", { alerts: [{ severity: "warn", label: "un" }, { severity: "warn", label: "deux" }] }),
     ]);
-    expect(r.phrase).toBe("Alpha : 2 points à regarder.");
+    expect(r.phrase).toBe("Alpha a 2 points à regarder.");
     expect(r.ton).toBe("warn");
   });
 
-  it("plusieurs apps concernées : un compte, sans liste dans la phrase", () => {
+  it("plusieurs apps concernées : chacune dit son compte de points", () => {
     const r = resume([
       ok("a", "Alpha", { alerts: [{ severity: "warn", label: "un" }] }),
       ok("b", "Bravo", { alerts: [{ severity: "alert", label: "deux" }] }),
     ]);
-    expect(r.phrase).toBe("2 points à regarder dans 2 apps.");
+    // Le plus grave d'abord : l'alerte de Bravo avant l'avertissement d'Alpha.
+    expect(r.phrase).toBe("Bravo a 1 point à regarder et Alpha a 1 point à regarder.");
     expect(r.ton).toBe("danger");
   });
 
@@ -123,7 +181,7 @@ describe("phrase d'état avec des alertes publiées par des apps « ok »", () =
       ok("a", "Alpha"),
       ok("b", "Bravo", { status: "building", alerts: [{ severity: "warn", label: "x" }] }),
     ]);
-    expect(r.phrase).toBe("Bravo : 1 point à regarder.");
+    expect(r.phrase).toBe("Une app est à jour. Bravo a 1 point à regarder.");
   });
 
   it("sans aucune alerte la phrase reste « Tout est à jour. »", () => {

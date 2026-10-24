@@ -77,9 +77,10 @@ describe("aggregateUsage", () => {
       ok("mensuel", { cost: { amount: 3, currency: "CAD", period: "mois" } }),
       ok("quotidien", { cost: { amount: 1, currency: "CAD", period: "jour" } }),
     ]);
+    // « Ce mois-ci » d'abord, puis le cumul, puis aujourd'hui (maquette validée) : chaque période garde son total.
     expect(d.totalsByPeriod).toEqual([
-      { period: "total", cad: 10, appCount: 1 },
       { period: "mois", cad: 3, appCount: 1 },
+      { period: "total", cad: 10, appCount: 1 },
       { period: "jour", cad: 1, appCount: 1 },
     ]);
     // Aucune somme globale ne doit exister : elle ne pourrait pas être honnête.
@@ -152,10 +153,10 @@ describe("vues du panneau « Coûts et quotas »", () => {
 
   it("un bloc PAR période, titré, les apps de la période seulement, la plus chère d'abord", () => {
     const blocs = blocsCouts(digest);
-    expect(blocs.map((b) => b.titre)).toEqual(["Depuis le début · cumul", "Ce mois-ci"]);
-    expect(blocs[0]?.lignes.map((l) => l.id)).toEqual(["a", "b"]);
-    expect(blocs[1]?.lignes.map((l) => l.id)).toEqual(["c"]);
-    expect(blocs[0]?.totalCad).toBeCloseTo(10 + 2 * USD_TO_CAD, 2);
+    expect(blocs.map((b) => b.titre)).toEqual(["Ce mois-ci", "Depuis le début · cumul"]);
+    expect(blocs[0]?.lignes.map((l) => l.id)).toEqual(["c"]);
+    expect(blocs[1]?.lignes.map((l) => l.id)).toEqual(["a", "b"]);
+    expect(blocs[1]?.totalCad).toBeCloseTo(10 + 2 * USD_TO_CAD, 2);
   });
 
   it("une app sans coût est nommée à part, jamais comptée pour 0", () => {
