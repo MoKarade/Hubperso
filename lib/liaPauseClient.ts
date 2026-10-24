@@ -19,6 +19,13 @@ export const INTERVALLE_PAUSE_MS = 30_000;
 export const VALIDITE_PAUSE_MS = 3 * INTERVALLE_PAUSE_MS;
 
 /**
+ * Plafond de paroles spontanées par jour local (`plafondSpontaneesParJour` de lia-ui, compté dans le navigateur). Elle parle à peu
+ * près toutes les 27 s : 60 la couperait au bout d'une demi-heure, 120 est un garde-fou contre l'emballement, pas un rythme.
+ * Valeur proposée par le fil Assistant (24/10/2026) ; Marc peut la descendre (80 si elle est trop présente).
+ */
+export const PLAFOND_SPONTANEES_PAR_JOUR = 120;
+
+/**
  * Juge la réponse de `GET /api/lia/pause`. `true` / `false` : la pause lue ; `null` : illisible (statut autre que 200, JSON
  * absent, forme hors contrat). Jamais réparé : `{ "pause": "non" }` n'est pas « pas en pause ».
  */

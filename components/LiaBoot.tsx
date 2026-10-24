@@ -8,7 +8,7 @@ import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { decrireElementHub } from "@/lib/liaElement";
 import { poserQuestion } from "@/lib/liaClient";
-import { creerSuiviPause, INTERVALLE_PAUSE_MS, lirePauseServeur } from "@/lib/liaPauseClient";
+import { creerSuiviPause, INTERVALLE_PAUSE_MS, lirePauseServeur, PLAFOND_SPONTANEES_PAR_JOUR } from "@/lib/liaPauseClient";
 import { poserConstat } from "@/lib/constat";
 import { visiterCarte } from "@/lib/liaVisite";
 import { entreesMonde, faitDepuisDataset, instantDernierAppel, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
@@ -116,6 +116,7 @@ const demarrage = demarrerLia({
   elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
   // lia-ui ≥ v0.31.0 : en pause, elle ne parle plus seule et n'appelle plus `ask` ; une pause qui lève vaut pause.
   pause: () => suiviPause.enPause(),
+  plafondSpontaneesParJour: PLAFOND_SPONTANEES_PAR_JOUR,
   ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
   // Le réseau d'humeurs de LIA se nourrit de l'état réel des cartes affichées (lib/liaParole.ts).

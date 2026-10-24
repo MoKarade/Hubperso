@@ -11,6 +11,7 @@ import {
   INTERVALLE_PAUSE_MS,
   lirePauseServeur,
   lireReponsePause,
+  PLAFOND_SPONTANEES_PAR_JOUR,
   VALIDITE_PAUSE_MS,
 } from "../lib/liaPauseClient";
 
@@ -111,12 +112,19 @@ describe("lirePauseServeur", () => {
   });
 });
 
+describe("plafond de paroles spontanées", () => {
+  it("vaut 120 par jour (proposition du fil Assistant, 24/10/2026) : un garde-fou, pas un rythme", () => {
+    expect(PLAFOND_SPONTANEES_PAR_JOUR).toBe(120);
+  });
+});
+
 describe("câblage dans LiaBoot", () => {
   const src = readFileSync(resolve(process.cwd(), "components/LiaBoot.tsx"), "utf8");
 
   it("passe l'option pause de lia-ui au suivi, et le relit dans le navigateur seulement", () => {
     expect(src).toMatch(/creerSuiviPause\(lirePauseServeur, Date\.now\)/);
     expect(src).toMatch(/pause: \(\) => suiviPause\.enPause\(\)/);
+    expect(src).toMatch(/plafondSpontaneesParJour: PLAFOND_SPONTANEES_PAR_JOUR/);
     // Les minuteurs ne partent que dans le navigateur : le module est aussi évalué au rendu serveur.
     const bloc = src.slice(src.indexOf('if (typeof window !== "undefined")'));
     expect(bloc).toMatch(/suiviPause\.rafraichir\(\)/);
