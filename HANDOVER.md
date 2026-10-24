@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **L'accueil à 1440 px passe le seuil de 1150 px (Hubperso#379)**
+
+Lecture du PC en production (DOM rendu avec ses feuilles de style, barres de défilement de 15 px) : `.bento` = 1148,5 px à 1440 px, 1,5 px sous le seuil de 1150 ; 1464 px à 1920 px et pas de débordement à 390 px étaient bons. Les marges de `.page--large` passent de `0.2rem + 1.6vw` à `0.1rem + 1.4vw` (`app/globals.css`) : ≈ 1157 px à 1440 px, inchangé à 1920 px (marge plafonnée à 28 px) et à 390 px (plancher de 1 rem). `tests/bento.test.ts` calcule la largeur de la zone des cartes (barre de défilement de 15 px, barre latérale de 14 rem, plafond de 1520 px) et échoue sur l'ancien CSS (1148,52 px). À lire par le PC : `.bento` ≥ 1150 px à 1440 px, > 1450 px à 1920 px, scrollWidth = clientWidth à 390 px.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.22.1 : le cri « Aïe » corrigé (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.21.0 à v0.22.1 (`package.json` et lock ensemble, `resolved` sur le commit pelé 58bf2d2, vérifié par `git ls-remote`), v0.22.0 comprise. Le correctif du cri « Aïe » est dans le paquet ; v0.22.0 exporte aussi `validerEtat`, `COMPORTEMENTS`, `CAUSES` et les types `Cause` et `Interieur`, que le hub n'utilise pas (il ne garde pas l'état partagé, qui vit dans MemoryAI). Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : après un impact fort ou des appuis brusques, le cri « Aïe… » apparaît puis « Ça va mieux ».

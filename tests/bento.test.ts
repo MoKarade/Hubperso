@@ -62,6 +62,19 @@ describe("l'accueil prend la largeur de la maquette (Marc, 23/10/2026)", () => {
     expect(bloc(".page")).toContain("max-width: 1200px");
   });
 
+  it("à 1440 px, barre de défilement de 15 px comprise, la zone des cartes mesure au moins 1150 px", () => {
+    const m = /clamp\(([\d.]+)rem,\s*([\d.]+)rem \+ ([\d.]+)vw,\s*([\d.]+)rem\)/.exec(bloc(".page--large"));
+    expect(m).not.toBeNull();
+    const [min, base, vw, max] = [Number(m![1]) * 16, Number(m![2]) * 16, Number(m![3]), Number(m![4]) * 16];
+    const marge = (largeurFenetre: number) => Math.min(max, Math.max(min, base + (vw * largeurFenetre) / 100));
+    const barre = 15;
+    const barreLaterale = 14 * 16; // `.cadre` : 14rem dès 1024 px
+    const cartes = (largeurFenetre: number) =>
+      Math.min(1520, largeurFenetre - barre - barreLaterale) - 2 * marge(largeurFenetre);
+    expect(cartes(1440)).toBeGreaterThanOrEqual(1150);
+    expect(cartes(1920)).toBeGreaterThan(1450);
+  });
+
   it("seul l'accueil porte `page--large`", () => {
     expect(accueil).toContain('<main className="page page--large">');
     expect(accueil.match(/page--large/g)).toHaveLength(1);

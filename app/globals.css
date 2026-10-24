@@ -95,10 +95,12 @@ a:focus-visible,
    Le plafond de 1200 px comptait le padding ET la barre latérale de 15 rem restait à côté : à
    1456 px d'écran les cartes ne mesuraient que ~1116 px. L'accueil (cartes, coûts) monte à
    1520 px, la barre latérale passe à 14 rem et les marges se resserrent ; les pages de texte
-   gardent 1200 px. */
+   gardent 1200 px. Mesuré en production (PC, 24/10/2026) à 1440 px avec une barre de défilement
+   de 15 px : 1148,5 px, 1,5 px sous le seuil de 1150 ; les marges passent à 0,1 rem + 1,4 vw
+   (≈ 1157 px à 1440 px, inchangé à 1920 px où le plafond de 28 px s'applique). */
 .page--large {
   max-width: 1520px;
-  padding-inline: clamp(1rem, 0.2rem + 1.6vw, 1.75rem);
+  padding-inline: clamp(1rem, 0.1rem + 1.4vw, 1.75rem);
 }
 .page__head {
   display: flex;
