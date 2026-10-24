@@ -8,6 +8,7 @@ import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { decrireElementHub } from "@/lib/liaElement";
 import { poserQuestion } from "@/lib/liaClient";
+import { creerSuiviPause, INTERVALLE_PAUSE_MS, lirePauseServeur, PLAFOND_SPONTANEES_PAR_JOUR } from "@/lib/liaPauseClient";
 import { poserConstat } from "@/lib/constat";
 import { visiterCarte } from "@/lib/liaVisite";
 import { entreesMonde, faitDepuisDataset, instantDernierAppel, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
@@ -99,6 +100,10 @@ function voir(e: Event): void {
   }, attente);
 }
 
+// La pause de LIA, relue du serveur (`GET /api/lia/pause`) : illisible = en pause (lib/liaPauseClient.ts). Le vrai refus est
+// côté serveur, dans `/api/lia/ask` (423) ; ici LIA se tait à l'écran sans attendre ce refus.
+const suiviPause = creerSuiviPause(lirePauseServeur, Date.now);
+
 const demarrage = demarrerLia({
   cle: CLE_LIA_HUB,
   // UNE seule LIA : son état (envies, journal, humeur, monde intérieur) est celui de MemoryAI, lu et écrit par la
@@ -109,6 +114,9 @@ const demarrage = demarrerLia({
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
   // Clic droit sur n'importe quel élément (lia-ui ≥ v0.26.0) : le hub nomme ses blocs (`lib/liaElement.ts`), lia-ui décrit le reste.
   elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
+  // lia-ui ≥ v0.31.0 : en pause, elle ne parle plus seule et n'appelle plus `ask` ; une pause qui lève vaut pause.
+  pause: () => suiviPause.enPause(),
+  plafondSpontaneesParJour: PLAFOND_SPONTANEES_PAR_JOUR,
   ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
   // Le réseau d'humeurs de LIA se nourrit de l'état réel des cartes affichées (lib/liaParole.ts).
@@ -117,6 +125,13 @@ const demarrage = demarrerLia({
 });
 
 if (typeof window !== "undefined") {
+  // Relecture de la pause : tout de suite, toutes les 30 s, et au retour sur l'onglet. Seulement dans le navigateur
+  // (ce module est aussi évalué au rendu serveur).
+  void suiviPause.rafraichir();
+  window.setInterval(() => void suiviPause.rafraichir(), INTERVALLE_PAUSE_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void suiviPause.rafraichir();
+  });
   /**
    * L'état de LIA, en LECTURE SEULE, sous `window.__liaEtat()` : ce qu'elle a fait (`journal`), ce qu'elle
    * ressent, ses envies, et les faits qu'elle lit sur les cartes. Sans lui, personne ne pouvait dire en
