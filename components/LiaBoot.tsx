@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import type { MotifMonde } from "@mokarade/lia-ui";
+import { decrireParDefaut, type MotifMonde } from "@mokarade/lia-ui";
 import { demarrerLia } from "@mokarade/lia-ui/boot";
 import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
+import { decrireElementHub } from "@/lib/liaElement";
 import { poserQuestion } from "@/lib/liaClient";
 import { poserConstat } from "@/lib/constat";
 import { visiterCarte } from "@/lib/liaVisite";
@@ -106,6 +107,8 @@ const demarrage = demarrerLia({
   // chaque page) ce module est aussi évalué, donc seulement dans le navigateur (production, 24/10/2026 : 500 partout).
   etat: typeof window === "undefined" ? undefined : etatHttp("/api/lia/etat"),
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
+  // Clic droit sur n'importe quel élément (lia-ui ≥ v0.26.0) : le hub nomme ses blocs (`lib/liaElement.ts`), lia-ui décrit le reste.
+  elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
   ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
   // Le réseau d'humeurs de LIA se nourrit de l'état réel des cartes affichées (lib/liaParole.ts).
