@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.23.1 : LIA bondit, son ombre suit, l'analyse s'affiche tout de suite (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.22.1 à v0.23.1 (`package.json` et lock ensemble, `resolved` sur le commit pelé 23dbd4f, vérifié par `git ls-remote`), v0.23.0 comprise. Les changements sont dans le paquet : dans 3 promenades sur 10, LIA s'accroupit 0,18 s puis bondit en arc vers son but (0,6 à 1 s) avec une ombre au sol qui rapetisse et pâlit avec la hauteur (v0.23.0, `--lia-ombre`), et le cadre d'analyse apparaît dès la première image (v0.23.1). Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : un bond avec son ombre sur l'accueil, et le cadre d'analyse visible dès qu'elle analyse un bloc.
+
 ## 🟦 Session 2026-10-24 — **L'accueil à 1440 px passe le seuil de 1150 px (Hubperso#379)**
 
 Lecture du PC en production (DOM rendu avec ses feuilles de style, barres de défilement de 15 px) : `.bento` = 1148,5 px à 1440 px, 1,5 px sous le seuil de 1150 ; 1464 px à 1920 px et pas de débordement à 390 px étaient bons. Les marges de `.page--large` passent de `0.2rem + 1.6vw` à `0.1rem + 1.4vw` (`app/globals.css`) : ≈ 1157 px à 1440 px, inchangé à 1920 px (marge plafonnée à 28 px) et à 390 px (plancher de 1 rem). `tests/bento.test.ts` calcule la largeur de la zone des cartes (barre de défilement de 15 px, barre latérale de 14 rem, plafond de 1520 px) et échoue sur l'ancien CSS (1148,52 px). À lire par le PC : `.bento` ≥ 1150 px à 1440 px, > 1450 px à 1920 px, scrollWidth = clientWidth à 390 px.
