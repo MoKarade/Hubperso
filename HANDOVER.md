@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.37.2 : nanobots seuls (Hubperso#493)**
+
+Pin de `@mokarade/lia-ui` de v0.37.1 à v0.37.2 (sha pelé `5ab9a089`), seul changement (`package.json`, lock). Correctif « nanobots seuls » demandé par Marc. Gate local et portes verts, `/login` 200 en `next start`. Preuve en production : déploiement `READY` sur le commit fusionné, puis lecture du PC à l'écran ; la tâche reste ouverte jusque-là.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.37.1 : la nouvelle LIA sur le hub (Hubperso#490)**
 
 Pin de `@mokarade/lia-ui` de v0.34.0 à v0.37.1 (sha pelé `e3304e5d`), seul changement (`package.json`, lock). v0.37.1 : l'analyse ne répète plus l'écran, plus de cadre, popup hors de l'élément, chat plus grand, cadre subtil. Le déclencheur des demandes (`surMode`, #450, PR #479) reste dans sa PR. Gate local et portes verts, `/login` 200 en `next start`. Preuve en production : déploiement `READY` sur le commit fusionné, puis lecture du PC à l'écran ; la tâche reste ouverte jusque-là.
