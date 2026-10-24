@@ -1811,17 +1811,20 @@ a:focus-visible,
 }
 .resume__phrase {
   margin: 0;
-  max-width: 28ch;
-  font-size: clamp(1.9rem, 1.2rem + 3.4vw, 3.2rem);
+  /* Taille et largeur de la maquette validée (`.resume h2`) : peu de texte, mais pas plus grand qu'elle. */
+  max-width: 26ch;
+  font-size: clamp(1.5rem, 2.8vw, 2.3rem);
   font-weight: 300;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   text-wrap: balance;
   color: var(--text);
 }
 .resume__points {
   display: grid;
   gap: 0.5rem;
+  /* Les pastilles de la maquette (`.regard`) s'arrêtent à 620 px : au-delà, un texte et ses boutons se perdent. */
+  max-width: 620px;
   list-style: none;
   margin: 0;
   padding: 0;
