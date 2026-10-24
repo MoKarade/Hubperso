@@ -217,11 +217,26 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       const gardee =
         route.source.includes("exigerAccesHub()") ||
         route.source.includes("exigerProprietaire()") ||
-        route.source.includes("auth()");
+        route.source.includes("auth()") ||
+        // `appelantLia()` (lib/liaAppelant.ts) : session, accès au hub, propriétaire ; son corps est vérifié plus bas.
+        route.source.includes("appelantLia()");
       expect(
         gardee,
         `${route.relatif} n'est ni gardé ni déclaré comme route à jeton (voir ROUTES_A_JETON)`,
       ).toBe(true);
+    }
+  });
+
+  it("`appelantLia()` lit la session ET l'accès au hub avant de dire qui appelle", () => {
+    const source = readFileSync(resolve(process.cwd(), "lib/liaAppelant.ts"), "utf8");
+    expect(source).toContain("await auth()");
+    expect(source).toContain("aAcces(email, APP_HUB)");
+    expect(source).toContain("isAuthorizedEmail(");
+    // Les routes de LIA qui parlent à MemoryAI s'en servent, et ne font pas leur propre vérification à moitié.
+    for (const relatif of ["api/lia/etat/route.ts", "api/lia/demandes/route.ts"]) {
+      const route = routes.find((r) => r.relatif === relatif);
+      expect(route, relatif).toBeDefined();
+      expect(route!.source, relatif).toContain("appelantLia()");
     }
   });
 

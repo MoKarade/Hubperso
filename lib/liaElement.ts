@@ -13,6 +13,7 @@
 // la question dans un journal).
 
 import type { DescriptionElement } from "@mokarade/lia-ui";
+import { APPS_DEMANDE, NOM_PAR_DEFAUT, type AppDemande, type DepotDemande, type GenreDemande } from "@/lib/demandes";
 
 /** Longueur maximale du texte lu (lia-ui coupe aussi à 300 : on borne avant, pour ne rien dépendre de lui). */
 export const TEXTE_ELEMENT_MAX = 300;
@@ -21,6 +22,8 @@ export const TEXTE_ELEMENT_MAX = 300;
 export interface LecteurElement {
   matches(selecteur: string): boolean;
   closest(selecteur: string): LecteurElement | null;
+  /** Facultatif : seul `cibleDemandeHub` lit `data-lia-app` (l'identifiant de l'app de la carte). */
+  getAttribute?(nom: string): string | null;
   querySelector(selecteur: string): { textContent: string | null } | null;
   /** Le texte VISIBLE quand le navigateur le sait (`innerText` ignore ce qui est caché) ; sinon `textContent`. */
   readonly innerText?: string;
@@ -33,21 +36,22 @@ export interface LecteurElement {
  * Les sélecteurs sont les classes réelles des composants (`components/*.tsx`) : si l'une est renommée, le test de
  * `tests/liaElement.test.ts` qui les lit dans les sources le dit.
  */
-export const GENRES_HUB: ReadonlyArray<{ selecteur: string; genre: string }> = [
-  { selecteur: ".constat", genre: "le constat de LIA sur une carte" },
-  { selecteur: ".heros__courbe, .metric__courbe, .sparkline", genre: "une courbe d’évolution" },
-  { selecteur: ".heros", genre: "le chiffre principal d’une carte" },
-  { selecteur: ".metric", genre: "une mesure d’une app" },
-  { selecteur: ".alert, .bandeau", genre: "une alerte" },
-  { selecteur: ".badge", genre: "l’état d’une app" },
-  { selecteur: ".widget__logo", genre: "le logo d’une app" },
-  { selecteur: ".resume__point", genre: "un point à regarder" },
-  { selecteur: ".resume__phrase", genre: "la phrase d’état du hub" },
-  { selecteur: ".bandeau-attention", genre: "le bandeau d’attention" },
-  { selecteur: ".couts-panneau__quota, .couts-panneau__jauge", genre: "une jauge de quota" },
-  { selecteur: ".couts-panneau__bloc", genre: "un bloc de coûts" },
-  { selecteur: ".widget", genre: "la carte d’une app" },
-  { selecteur: ".nav, .barre", genre: "la navigation" },
+export const GENRES_HUB: ReadonlyArray<{ selecteur: string; genre: string; categorie: GenreDemande }> = [
+  // `categorie` : le genre que MemoryAI accepte pour une demande « Que peut-on changer ici ? » (`lib/demandes.ts`).
+  { selecteur: ".constat", genre: "le constat de LIA sur une carte", categorie: "texte" },
+  { selecteur: ".heros__courbe, .metric__courbe, .sparkline", genre: "une courbe d’évolution", categorie: "graphique" },
+  { selecteur: ".heros", genre: "le chiffre principal d’une carte", categorie: "tuile" },
+  { selecteur: ".metric", genre: "une mesure d’une app", categorie: "tuile" },
+  { selecteur: ".alert, .bandeau", genre: "une alerte", categorie: "texte" },
+  { selecteur: ".badge", genre: "l’état d’une app", categorie: "autre" },
+  { selecteur: ".widget__logo", genre: "le logo d’une app", categorie: "autre" },
+  { selecteur: ".resume__point", genre: "un point à regarder", categorie: "texte" },
+  { selecteur: ".resume__phrase", genre: "la phrase d’état du hub", categorie: "texte" },
+  { selecteur: ".bandeau-attention", genre: "le bandeau d’attention", categorie: "texte" },
+  { selecteur: ".couts-panneau__quota, .couts-panneau__jauge", genre: "une jauge de quota", categorie: "graphique" },
+  { selecteur: ".couts-panneau__bloc", genre: "un bloc de coûts", categorie: "tuile" },
+  { selecteur: ".widget", genre: "la carte d’une app", categorie: "tuile" },
+  { selecteur: ".nav, .barre", genre: "la navigation", categorie: "page" },
 ];
 
 const TOUS = GENRES_HUB.map((g) => g.selecteur).join(", ");
@@ -109,4 +113,19 @@ export function decrireElementHub<E extends LecteurElement>(
   const texte = nettoyerTexte(proche.innerText ?? proche.textContent);
   const nom = nomDeLApp(proche);
   return { genre, ...(nom !== undefined && { nom }), ...(texte !== "" && { texte }) };
+}
+
+/**
+ * Ce qu'on GARDE quand Marc demande « Que peut-on changer ici ? » sur `el` (`lib/demandes.ts`, MemoryAI). Jamais le texte
+ * de l'élément : `nom` est la phrase du hub qui le décrit (`GENRES_HUB`), `app` l'identifiant de la carte qui le contient
+ * (`hub` hors d'une carte d'app ou si l'identifiant n'est pas celui d'une app du parc), `genre` la catégorie de MemoryAI.
+ * Un élément que le hub ne sait pas nommer reste une demande honnête : « un élément de la page », genre « autre ».
+ * Même résolution que `decrireElementHub` : « Détail » (la nappe) vaut la carte ; un détail dans une carte vaut la carte.
+ */
+export function cibleDemandeHub(el: LecteurElement): DepotDemande {
+  const id = el.closest("[data-lia-app]")?.getAttribute?.("data-lia-app") ?? "";
+  const app: AppDemande = (APPS_DEMANDE as readonly string[]).includes(id) && id !== "hub" ? (id as AppDemande) : "hub";
+  const proche = pointe(el).closest(TOUS);
+  const entree = proche ? GENRES_HUB.find((g) => proche.matches(g.selecteur)) : undefined;
+  return entree ? { app, genre: entree.categorie, nom: entree.genre } : { app, genre: "autre", nom: NOM_PAR_DEFAUT };
 }

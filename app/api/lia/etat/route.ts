@@ -17,12 +17,9 @@
 // jamais réparé, jamais inventé.
 
 import { HUB_TOKEN_HEADER } from "@mokarade/hub-contract";
-import { auth } from "@/auth";
-import { isAuthorizedEmail } from "@/lib/authorized";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import { DELAI_ETAT_MS, EN_TETE_PROPRIETAIRE, lireCorpsEtat, relayerReponse, type Relais } from "@/lib/liaEtatPartage";
-import { assurerMigrations } from "@/lib/migrations";
-import { aAcces, APP_HUB } from "@/lib/personnes";
+import { appelantLia } from "@/lib/liaAppelant";
 import { SOURCE_DEFS } from "@/lib/sources";
 
 export const dynamic = "force-dynamic";
@@ -38,22 +35,11 @@ function repondre({ status, corps }: Relais): Response {
   return corps === null ? new Response(null, { status, headers: ENTETES }) : Response.json(corps, { status, headers: ENTETES });
 }
 
-/** `undefined` = pas de session ou pas d'accès (401) ; `"invite"` = connecté mais pas le propriétaire (403). */
-async function appelant(): Promise<"proprietaire" | "invite" | undefined> {
-  const session = await auth();
-  const email = session?.user?.email;
-  if (!email) return undefined;
-  // La liste des invités vit en base : on s'assure du schéma avant de la lire (lib/migrations.ts).
-  await assurerMigrations();
-  if (!(await aAcces(email, APP_HUB))) return undefined;
-  return isAuthorizedEmail(email, process.env.AUTHORIZED_EMAIL) ? "proprietaire" : "invite";
-}
-
 async function relayer(req: Request, methode: "GET" | "PUT"): Promise<Response> {
   const debit = limiteur.verifier(cleClient(req.headers));
   if (!debit.ok) return reponse429(debit.retryApresS);
 
-  const qui = await appelant();
+  const qui = await appelantLia();
   if (!qui) return erreur(401, "unauthorized", "Session invalide.");
   if (qui === "invite") return erreur(403, "forbidden", "L'état de LIA est réservé au propriétaire.");
 
