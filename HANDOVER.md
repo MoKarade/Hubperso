@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.28.0 : allure humaine, nanobots, cible exacte, souvenirs (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.26.0 à v0.28.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé ffea030, vérifié par `git ls-remote`), v0.27.0 comprise. Les changements sont dans le paquet : allure humaine, des nanobots qui analysent à la place du carré, la cible exacte du clic droit et les souvenirs. Le hub ne change pas de code. Vérifié avant de pousser : `tests/liaBootServeur.test.ts` (le module `LiaBoot` se charge sans `window`, comme le serveur) reste vert avec ce paquet, et le serveur de production local rend `/login` en 200. À lire par le PC : l'allure de LIA, les nanobots pendant l'analyse, le clic droit sur un élément précis.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.26.0 : elle analyse l'élément cliqué, se pose sur les cartes, a des souvenirs (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.23.1 à v0.26.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 129bb79, vérifié par `git ls-remote`), v0.24.0 et v0.25.0 comprises. Les changements sont dans le paquet : elle se pose sur les cartes (v0.24.0), garde des souvenirs sur plusieurs jours dans le navigateur (v0.25.0), analyse l'élément exact sur lequel Marc a fait un clic droit, et lancée elle file sans gravité (v0.26.0). Le hub ne change pas de code. Vérifié avant de pousser : `tests/liaBootServeur.test.ts` (le module `LiaBoot` se charge sans `window`, comme le serveur) reste vert avec ce paquet, et le serveur de production local rend `/login` en 200. À lire par le PC : le clic droit sur un élément précis, et la LIA qui se pose sur une carte.
