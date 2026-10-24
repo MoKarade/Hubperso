@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.29.0 : sa façon de penser (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.28.0 à v0.29.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé bc47819, vérifié par `git ls-remote`), v0.28.1 comprise. Le changement est dans le paquet : sa façon de penser. Le hub ne change pas de code. Vérifié avant de pousser : `tests/liaBootServeur.test.ts` (le module `LiaBoot` se charge sans `window`, comme le serveur) reste vert avec ce paquet, et le serveur de production local rend `/login` en 200. À lire par le PC : la façon de penser de LIA pendant une analyse.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.28.0 : allure humaine, nanobots, cible exacte, souvenirs (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.26.0 à v0.28.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé ffea030, vérifié par `git ls-remote`), v0.27.0 comprise. Les changements sont dans le paquet : allure humaine, des nanobots qui analysent à la place du carré, la cible exacte du clic droit et les souvenirs. Le hub ne change pas de code. Vérifié avant de pousser : `tests/liaBootServeur.test.ts` (le module `LiaBoot` se charge sans `window`, comme le serveur) reste vert avec ce paquet, et le serveur de production local rend `/login` en 200. À lire par le PC : l'allure de LIA, les nanobots pendant l'analyse, le clic droit sur un élément précis.
