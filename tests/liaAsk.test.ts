@@ -140,7 +140,9 @@ describe("humeurs", () => {
   });
 });
 
-const moq = vi.hoisted(() => ({ auth: vi.fn(), aAcces: vi.fn(), fetch: vi.fn() }));
+const moq = vi.hoisted(() => ({ auth: vi.fn(), aAcces: vi.fn(), fetch: vi.fn(), lirePause: vi.fn() }));
+// La pause vit en base (`lib/liaPauseDb.ts`, éprouvée sur PGlite dans `tests/liaPause.test.ts`) : ici on lui fait dire oui ou non.
+vi.mock("@/lib/liaPauseDb", () => ({ lirePause: moq.lirePause }));
 vi.mock("@/auth", () => ({ auth: moq.auth }));
 vi.mock("@/lib/migrations", () => ({ assurerMigrations: vi.fn(async () => {}) }));
 vi.mock("@/lib/personnes", async (importOriginal) => {
@@ -169,6 +171,7 @@ describe("POST /api/lia/ask", () => {
     vi.stubGlobal("fetch", moq.fetch);
     moq.auth.mockResolvedValue(null);
     moq.aAcces.mockResolvedValue(false);
+    moq.lirePause.mockResolvedValue({ pause: false, modifieLe: null });
     reponseMemoire({ text: "Bonjour", mood: "calme" });
   });
   afterEach(() => {
@@ -177,7 +180,47 @@ describe("POST /api/lia/ask", () => {
     moq.auth.mockReset();
     moq.aAcces.mockReset();
     moq.fetch.mockReset();
+    moq.lirePause.mockReset();
     vi.restoreAllMocks();
+  });
+
+  describe("pause (vérifiée côté serveur)", () => {
+    it("en pause : 423 « paused » pour une app, et MemoryAI n'est PAS appelée", async () => {
+      moq.lirePause.mockResolvedValue({ pause: true, modifieLe: "2026-10-24T03:00:00.000Z" });
+      const r = await POST(requete({ question: "q", proprietaire: true }, { "x-hub-token": JETON_APP }));
+      expect(r.status).toBe(423);
+      expect(r.headers.get("cache-control")).toBe("no-store");
+      expect(await r.json()).toEqual({ error: "paused", message: "LIA est en pause." });
+      expect(moq.fetch).not.toHaveBeenCalled();
+    });
+
+    it("en pause : la page du hub (session du propriétaire) est arrêtée aussi", async () => {
+      moq.lirePause.mockResolvedValue({ pause: true, modifieLe: null });
+      moq.auth.mockResolvedValue({ user: { email: "marc@exemple.invalid" } });
+      moq.aAcces.mockResolvedValue(true);
+      const r = await POST(requete({ question: "q" }));
+      expect(r.status).toBe(423);
+      expect(moq.fetch).not.toHaveBeenCalled();
+    });
+
+    it("pause illisible : 503, jamais « pas en pause » — MemoryAI n'est pas appelée", async () => {
+      moq.lirePause.mockResolvedValue("indisponible");
+      const r = await POST(requete({ question: "q", proprietaire: true }, { "x-hub-token": JETON_APP }));
+      expect(r.status).toBe(503);
+      expect(moq.fetch).not.toHaveBeenCalled();
+    });
+
+    it("la pause ne se lit qu'après l'authentification : sans jeton ni session, 401 et aucune lecture", async () => {
+      const r = await POST(requete({ question: "q" }));
+      expect(r.status).toBe(401);
+      expect(moq.lirePause).not.toHaveBeenCalled();
+    });
+
+    it("pause levée : le relais reprend comme avant", async () => {
+      const r = await POST(requete({ question: "q", proprietaire: true }, { "x-hub-token": JETON_APP }));
+      expect(r.status).toBe(200);
+      expect(moq.fetch).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("sans jeton ni session : 401, MemoryAI n'est pas appelée", async () => {
