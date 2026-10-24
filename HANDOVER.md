@@ -5,6 +5,9 @@
 ## 🟦 Session 2026-10-24 — **L'interrupteur de pause de LIA, vérifié par le serveur (Hubperso#457, part de #313)**
 
 L'état « LIA en pause » vit maintenant sur le serveur du hub : table `lia_reglages` (une seule ligne, `id = 1`, un booléen et une date, aucune donnée de Marc ; migration additive `drizzle/0003`), `lib/liaPause.ts` (pur : corps `{ "pause": booléen }` strict, réponse 423) et `lib/liaPauseDb.ts` (I/O). `GET|PUT /api/lia/pause` : propriétaire seul, derrière le garde du hub (401 sans session, 403 invité). `POST /api/lia/ask` lit la pause juste après l'authentification et, si elle est posée, répond 423 `paused` SANS appeler MemoryAI, pour la page comme pour les apps. Échec fermé : pause illisible = 503, jamais « pas en pause » ; seule exception, aucune base configurée (rien n'a pu être posé). Reste (#313) : brancher l'option `pause` de lia-ui v0.31.0 sur cette route et le plafond de messages spontanés (`plafondSpontaneesParJour`), quand le tag existe ; aucun bouton n'écrit encore la pause. Preuve en production : `GET /api/lia/pause` sans session rend 401, `/login` 200 ; la lecture d'un 423 réel demande la session du propriétaire (PC).
+## 🟦 Session 2026-10-24 — **lia-ui v0.30.0 (Hubperso#455)**
+
+`@mokarade/lia-ui` passe de v0.29.0 à v0.30.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 26d9af2, vérifié par `git ls-remote` : `v0.30.0^{}`). Le changement est dans le paquet ; son README n'a pas de section v0.30.0 (le détail n'est donc pas lu ici). Le hub ne change pas de code. Vérifié avant de pousser : gate complet vert (typecheck, lint, 0 avertissement, tests, build, `npm run portes`) et `next start` : `/login` 200 sans « window is not defined ». Preuve en production : déploiement READY sur le SHA fusionné, puis `/login` 200.
 
 ## 🟦 Session 2026-10-24 — **Accueil : la frise des dernières 24 h par app (Hubperso#357)**
 
