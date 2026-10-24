@@ -8,7 +8,13 @@ import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { decrireElementHub } from "@/lib/liaElement";
 import { poserQuestion } from "@/lib/liaClient";
-import { creerSuiviPause, INTERVALLE_PAUSE_MS, lirePauseServeur, PLAFOND_SPONTANEES_PAR_JOUR } from "@/lib/liaPauseClient";
+import {
+  creerSuiviPause,
+  ecrirePauseServeur,
+  INTERVALLE_PAUSE_MS,
+  lirePauseServeur,
+  PLAFOND_SPONTANEES_PAR_JOUR,
+} from "@/lib/liaPauseClient";
 import { poserConstat } from "@/lib/constat";
 import { visiterCarte } from "@/lib/liaVisite";
 import { entreesMonde, faitDepuisDataset, instantDernierAppel, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
@@ -102,7 +108,7 @@ function voir(e: Event): void {
 
 // La pause de LIA, relue du serveur (`GET /api/lia/pause`) : illisible = en pause (lib/liaPauseClient.ts). Le vrai refus est
 // côté serveur, dans `/api/lia/ask` (423) ; ici LIA se tait à l'écran sans attendre ce refus.
-const suiviPause = creerSuiviPause(lirePauseServeur, Date.now);
+const suiviPause = creerSuiviPause(lirePauseServeur, Date.now, ecrirePauseServeur);
 
 const demarrage = demarrerLia({
   cle: CLE_LIA_HUB,
@@ -116,6 +122,8 @@ const demarrage = demarrerLia({
   elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
   // lia-ui ≥ v0.31.0 : en pause, elle ne parle plus seule et n'appelle plus `ask` ; une pause qui lève vaut pause.
   pause: () => suiviPause.enPause(),
+  // lia-ui ≥ v0.32.0 : « Mets-toi en pause » / « Reviens » dans son menu ; la promesse ne se résout qu'une fois le serveur d'accord.
+  basculerPause: (enPause: boolean) => suiviPause.basculer(enPause),
   plafondSpontaneesParJour: PLAFOND_SPONTANEES_PAR_JOUR,
   ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
