@@ -8,6 +8,7 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   creerSuiviPause,
+  ecrirePauseServeur,
   INTERVALLE_PAUSE_MS,
   lirePauseServeur,
   lireReponsePause,
@@ -94,6 +95,94 @@ describe("creerSuiviPause", () => {
   });
 });
 
+describe("basculer (le geste de Marc, lia-ui v0.32.0)", () => {
+  function monter(ecriture: (voulue: boolean) => Promise<boolean | null>, lectures: Array<boolean | null> = []) {
+    const t = 1_000_000;
+    const file = [...lectures];
+    const suivi = creerSuiviPause(async () => file.shift() ?? null, () => t, ecriture);
+    return suivi;
+  }
+
+  it("un PUT confirmé se résout, et enPause rend alors la valeur voulue (dans les deux sens)", async () => {
+    const suivi = monter(async (v) => v, [false]);
+    await suivi.rafraichir();
+    expect(suivi.enPause()).toBe(false);
+    await suivi.basculer(true);
+    expect(suivi.enPause()).toBe(true);
+    await suivi.basculer(false);
+    expect(suivi.enPause()).toBe(false);
+  });
+
+  it("peut ramener LIA même avant toute lecture (la confirmation du serveur suffit)", async () => {
+    const suivi = monter(async (v) => v);
+    expect(suivi.enPause()).toBe(true);
+    await suivi.basculer(false);
+    expect(suivi.enPause()).toBe(false);
+  });
+
+  it("un refus ou une réponse illisible REJETTE et laisse l'état : jamais « en pause levée » sur un échec", async () => {
+    const suivi = monter(async () => null, [true]);
+    await suivi.rafraichir();
+    await expect(suivi.basculer(false)).rejects.toThrow();
+    expect(suivi.enPause()).toBe(true);
+  });
+
+  it("un réseau qui lève REJETTE aussi, sans changer l'état", async () => {
+    const suivi = monter(async () => {
+      throw new Error("réseau");
+    }, [false]);
+    await suivi.rafraichir();
+    await expect(suivi.basculer(true)).rejects.toThrow("réseau");
+    expect(suivi.enPause()).toBe(false);
+  });
+
+  it("une valeur confirmée différente de la demande REJETTE et ne change rien", async () => {
+    const suivi = monter(async (v) => !v, [true]);
+    await suivi.rafraichir();
+    await expect(suivi.basculer(false)).rejects.toThrow();
+    expect(suivi.enPause()).toBe(true);
+  });
+
+  it("une relecture lancée avant le geste n'écrase pas la pause confirmée en rentrant après lui", async () => {
+    let rendre: (v: boolean | null) => void = () => {};
+    const lecture = new Promise<boolean | null>((ok) => (rendre = ok));
+    const suivi = creerSuiviPause(() => lecture, () => 1_000_000, async (v) => v);
+    const enVol = suivi.rafraichir(); // part avec l'ancien état du serveur…
+    await suivi.basculer(true); // …Marc met LIA en pause entre-temps…
+    rendre(false); // …et la vieille lecture rentre « pas en pause ».
+    await enVol;
+    expect(suivi.enPause()).toBe(true);
+  });
+});
+
+describe("ecrirePauseServeur", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("envoie PUT /api/lia/pause avec { pause } et le cookie de session, et rend la pause confirmée", async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ pause: true, modifieLe: "2026-10-24T04:30:00.000Z" }), { status: 200 }));
+    vi.stubGlobal("fetch", f);
+    expect(await ecrirePauseServeur(true)).toBe(true);
+    expect(f).toHaveBeenCalledWith("/api/lia/pause", {
+      method: "PUT",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: '{"pause":true}',
+    });
+  });
+
+  it("401, 403, 503, 413 et un corps hors contrat valent « refusée » (null)", async () => {
+    for (const status of [401, 403, 503, 413]) {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "x" }), { status })));
+      expect(await ecrirePauseServeur(false), String(status)).toBeNull();
+    }
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ pause: "oui" }), { status: 200 })));
+    expect(await ecrirePauseServeur(false)).toBeNull();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("pas du json", { status: 200 })));
+    expect(await ecrirePauseServeur(false)).toBeNull();
+  });
+});
+
 describe("lirePauseServeur", () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -122,8 +211,10 @@ describe("câblage dans LiaBoot", () => {
   const src = readFileSync(resolve(process.cwd(), "components/LiaBoot.tsx"), "utf8");
 
   it("passe l'option pause de lia-ui au suivi, et le relit dans le navigateur seulement", () => {
-    expect(src).toMatch(/creerSuiviPause\(lirePauseServeur, Date\.now\)/);
-    expect(src).toMatch(/pause: \(\) => suiviPause\.enPause\(\)/);
+        expect(src).toMatch(/pause: \(\) => suiviPause\.enPause\(\)/);
+    // v0.32.0 : le geste du menu passe par le serveur, jamais par un état local de la page.
+    expect(src).toMatch(/creerSuiviPause\(lirePauseServeur, Date\.now, ecrirePauseServeur\)/);
+    expect(src).toMatch(/basculerPause: \(enPause: boolean\) => suiviPause\.basculer\(enPause\)/);
     expect(src).toMatch(/plafondSpontaneesParJour: PLAFOND_SPONTANEES_PAR_JOUR/);
     // Les minuteurs ne partent que dans le navigateur : le module est aussi évalué au rendu serveur.
     const bloc = src.slice(src.indexOf('if (typeof window !== "undefined")'));
