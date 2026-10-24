@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **Jeton Sentry du hub révoqué, vrai DSN du hub et de JobAI, build de prise en compte**
+
+Le jeton Sentry du hub est révoqué et remplacé par le vrai `SENTRY_DSN` du hub et de JobAI, et le `HUB_TOKEN` de JobAI est roté (autorisé par Marc le 24/10/2026, variables posées par le PC). Une variable Vercel ne s'applique qu'à un build neuf : la fusion de cette ligne le déclenche. Cette entrée remplace l'état « `SENTRY_DSN` n'est PAS posé dans Vercel » de la session du 16/10 (Hubperso#162). À vérifier après le déploiement `READY` : la lecture de `/api/hub/summary` de JobAI passe toujours.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.34.0 : lien étiré corrigé, même version que les apps (Hubperso#476)**
 
 Re-pin `@mokarade/lia-ui` v0.32.0 → v0.34.0 (`package.json` et lock d'accord ; `resolved` sur le sha pelé `6525ad47`). v0.33.0 apporte `surToucher`, v0.34.0 corrige le lien étiré `a.widget__detail` (un clic sur une carte désigne l'élément visé). Aucun code du hub touché : l'API utilisée (`demarrerLia`, `renderBlocks`, `basculerPause`, `etatHttp`) est inchangée. Vérifié : typecheck, lint, tests, build, portes verts ; `next start` donne `/login` 200 sans « window is not defined ». Reste : lecture en session de Marc (PC) du lien étiré et de `/api/lia/etat` (preuve de #476).
