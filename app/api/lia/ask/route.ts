@@ -19,6 +19,9 @@
 // fermées (`lireEtatLia`, `lib/liaAsk.ts`) puis relayé tel quel à MemoryAI, qui le balise comme une donnée sur
 // elle pour qu'elle ne nie plus son humeur. Hors forme : 400, jamais réparé.
 //
+// PAUSE (Marc, 22/10/2026) : `lia_reglages.pause`, posée par `PUT /api/lia/pause` (propriétaire), est lue ICI avant tout appel
+// sortant : en pause, 423 `paused` et MemoryAI n'est pas appelée, pour la page comme pour les apps.
+//
 // Le hub JOINT à chaque question du propriétaire un bilan d'état des apps (`contexte`, hub → MemoryAI
 // seulement, `lib/liaContexte.ts`) : une donnée datée écrite ici, jamais copiée du corps reçu.
 
@@ -29,6 +32,8 @@ import { assurerMigrations } from "@/lib/migrations";
 import { aAcces, APP_HUB } from "@/lib/personnes";
 import { appDuJeton } from "@/lib/jetonApp";
 import { SOURCE_DEFS } from "@/lib/sources";
+import { REPONSE_EN_PAUSE } from "@/lib/liaPause";
+import { lirePause } from "@/lib/liaPauseDb";
 import { contexteEtatApps } from "@/lib/liaContexte";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import {
@@ -80,6 +85,13 @@ export async function POST(req: Request): Promise<Response> {
   const qui = await appelant(req);
   if (!qui) return erreur(401, "unauthorized", "Jeton d'app ou session invalide.");
   if (qui === "invite") return erreur(403, "forbidden", "LIA est réservée au propriétaire.");
+
+  // La pause, lue sur le SERVEUR avant tout le reste (corps, MemoryAI) : en pause, aucune question n'atteint le modèle, que
+  // l'appelant soit la page ou une app. Illisible = refus (503), jamais « pas en pause » (lib/liaPauseDb.ts).
+  await assurerMigrations();
+  const pause = await lirePause();
+  if (pause === "indisponible") return erreur(503, "unavailable", "La pause de LIA est illisible.");
+  if (pause.pause) return erreur(REPONSE_EN_PAUSE.status, REPONSE_EN_PAUSE.corps.error, REPONSE_EN_PAUSE.corps.message);
 
   const texte = await req.text();
   if (Buffer.byteLength(texte, "utf8") > CORPS_MAX_OCTETS) {
