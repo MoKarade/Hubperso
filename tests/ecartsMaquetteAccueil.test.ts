@@ -148,7 +148,11 @@ describe("coûts : « ce mois-ci » d'abord, puis le cumul, jamais additionnés"
 
 describe("phrase et pastilles « à regarder » : la taille de la maquette (Hubperso#464)", () => {
   const css = readFileSync(join(__dirname, "..", "app", "globals.css"), "utf8");
-  const bloc = (selecteur: string) => css.match(new RegExp(`\\n${selecteur.replace(/\./g, "\\.")} \\{([^}]*)\\}`))?.[1] ?? "";
+  // Le corps `{ … }` de la règle, trouvé sans expression régulière construite à partir du sélecteur.
+  const bloc = (selecteur: string) => {
+    const debut = css.indexOf(`\n${selecteur} {`);
+    return debut < 0 ? "" : css.slice(debut, css.indexOf("}", debut));
+  };
 
   it("la phrase va de 1,5 à 2,3 rem sur 26 caractères, comme `.resume h2` de la maquette", () => {
     const phrase = bloc(".resume__phrase");
