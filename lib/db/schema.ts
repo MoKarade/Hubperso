@@ -168,3 +168,23 @@ export const ganttReleve = pgTable(
   },
   (t) => [check("gantt_releve_une_ligne", sql`${t.id} = 1`)],
 );
+
+/**
+ * Les réglages de LIA gardés par le SERVEUR du hub. Pour l'instant un seul : la pause.
+ *
+ * Une seule ligne (contrainte `id = 1`), comme `gantt_releve`. La pause est vérifiée ICI, côté serveur, parce qu'une pause
+ * que seul le navigateur connaît n'arrête rien : une app, un autre onglet ou un script appellent `/api/lia/ask` sans
+ * passer par la page. Aucune donnée de Marc dans cette table : un booléen et une date.
+ */
+export const liaReglages = pgTable(
+  "lia_reglages",
+  {
+    id: integer("id").primaryKey().default(1),
+    /** `true` : plus aucun appel au modèle (`/api/lia/ask` rend 423 sans quitter le hub). */
+    pause: boolean("pause").notNull().default(false),
+    modifieLe: timestamp("modifie_le", { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (t) => [check("lia_reglages_une_ligne", sql`${t.id} = 1`)],
+);
