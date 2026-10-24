@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.37.1 : la nouvelle LIA sur le hub (Hubperso#490)**
+
+Pin de `@mokarade/lia-ui` de v0.34.0 à v0.37.1 (sha pelé `e3304e5d`), seul changement (`package.json`, lock). v0.37.1 : l'analyse ne répète plus l'écran, plus de cadre, popup hors de l'élément, chat plus grand, cadre subtil. Le déclencheur des demandes (`surMode`, #450, PR #479) reste dans sa PR. Gate local et portes verts, `/login` 200 en `next start`. Preuve en production : déploiement `READY` sur le commit fusionné, puis lecture du PC à l'écran ; la tâche reste ouverte jusque-là.
+
 ## 🟦 Session 2026-10-24 — **Jeton Sentry du hub révoqué, vrai DSN du hub et de JobAI, build de prise en compte**
 
 Le jeton Sentry du hub est révoqué et remplacé par le vrai `SENTRY_DSN` du hub et de JobAI, et le `HUB_TOKEN` de JobAI est roté (autorisé par Marc le 24/10/2026, variables posées par le PC). Une variable Vercel ne s'applique qu'à un build neuf : la fusion de cette ligne le déclenche. Cette entrée remplace l'état « `SENTRY_DSN` n'est PAS posé dans Vercel » de la session du 16/10 (Hubperso#162). À vérifier après le déploiement `READY` : la lecture de `/api/hub/summary` de JobAI passe toujours.
