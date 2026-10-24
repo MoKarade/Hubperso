@@ -308,7 +308,7 @@ a:focus-visible,
   stroke-dasharray: 3 5;
 }
 /* L'état se lit à la forme : hors « à jour », les aplats deviennent des contours en tirets. */
-.widget__logo:is([data-etat="danger"], [data-etat="neutral"], [data-etat="info"])
+.widget__logo:is([data-etat="danger"], [data-etat="neutral"], [data-etat="info"], [data-lecture="aucune"])
   .logo
   :is(.logo__masse, .logo__plein, .logo__roue, .logo__ia) {
   fill: none;
@@ -320,7 +320,10 @@ a:focus-visible,
 .widget__logo[data-etat="danger"] {
   --logo: var(--danger);
 }
-.widget__logo[data-etat="neutral"] {
+/* Aucune lecture (injoignable, en construction, non branchée) : gris, même si le badge est rouge. Placée après
+   la règle du rouge, à spécificité égale : c'est elle qui gagne. */
+.widget__logo[data-etat="neutral"],
+.widget__logo[data-lecture="aucune"] {
   --logo: var(--neutral);
 }
 .logo__couvercle,
@@ -466,6 +469,32 @@ a:focus-visible,
 .widget__empty {
   font-size: 0.82rem;
   color: var(--text-faint);
+}
+/* « Dernière analyse » : le constat de LIA laissé sur la carte qu'elle a regardée, en pointillés teintés de la
+   couleur de l'app (maquette du 22/10). Caché tant qu'elle n'y est pas allée ; jamais écrit par le serveur. */
+.constat {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in oklch, var(--accent, var(--neutral)) 55%, transparent);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.constat[hidden] {
+  display: none;
+}
+.constat__titre {
+  display: block;
+  margin-bottom: 0.1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.constat__texte {
+  display: block;
+  overflow-wrap: anywhere;
 }
 /* Le pied : la fraîcheur à gauche, « Détail » et « Ouvrir » à droite (maquette du 22/10). */
 .widget__foot {

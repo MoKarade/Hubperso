@@ -7,7 +7,7 @@ import type { SummaryResult } from "@/lib/fetchSummary";
 import type { Releve } from "@/lib/historique";
 import { etatCarte, variationLisible, type PlaceCarte } from "@/lib/carte";
 import { widgetSize } from "@/lib/bento";
-import { statusBadge } from "@/lib/status";
+import { sansLecture, statusBadge } from "@/lib/status";
 import { ditCarte, graviteCarte } from "@/lib/liaParole";
 import { safeHttpUrl } from "@/lib/url";
 import { texteSur } from "@/lib/couleur";
@@ -248,7 +248,7 @@ export function AppWidget({
         {/* Le logo de la série A, décoratif (le nom suit) ; une app sans logo n'en reçoit PAS un
             inventé (`lib/logos.ts`). */}
         {aUnLogo(result.source.id) && (
-          <span className="widget__logo" data-etat={badge.tone}>
+          <span className="widget__logo" data-etat={badge.tone} data-lecture={sansLecture(result) ? "aucune" : undefined}>
             <LogoApp id={result.source.id} />
           </span>
         )}
@@ -288,6 +288,12 @@ export function AppWidget({
           <CorpsProbleme result={result} />
         )}
       </div>
+      {/* L'emplacement du cadre « Dernière analyse » : vide et caché tant que LIA n'a pas regardé cette carte
+          (`lib/constat.ts`). Le serveur n'y écrit jamais rien. */}
+      <p className="constat" data-constat="" hidden>
+        <span className="constat__titre" data-constat-titre="" />
+        <span className="constat__texte" data-constat-texte="" />
+      </p>
       <footer className="widget__foot">
         {result.state === "ok" && (
           <Fraicheur

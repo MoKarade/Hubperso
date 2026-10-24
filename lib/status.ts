@@ -56,3 +56,13 @@ export function severityTone(severity: "ok" | "warn" | "alert" | "info"): Tone {
       return "info";
   }
 }
+
+/**
+ * Une app dont le hub ne lit AUCUNE mesure : injoignable, refusée, réponse invalide, contrat trop récent,
+ * non branchée, ou en construction (« aucune mesure à analyser »). Son logo est dessiné en pointillés gris,
+ * jamais teinté : une couleur dirait qu'il y a quelque chose à lire (maquette validée, 22/10/2026). Une
+ * app qui répond, même en erreur ou en retard, a des mesures : elle garde sa teinte.
+ */
+export function sansLecture(result: SummaryResult): boolean {
+  return result.state !== "ok" || result.summary.status === "building";
+}
