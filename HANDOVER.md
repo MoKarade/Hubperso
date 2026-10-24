@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.22.1 : le cri « Aïe » corrigé (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.21.0 à v0.22.1 (`package.json` et lock ensemble, `resolved` sur le commit pelé 58bf2d2, vérifié par `git ls-remote`), v0.22.0 comprise. Le correctif du cri « Aïe » est dans le paquet ; v0.22.0 exporte aussi `validerEtat`, `COMPORTEMENTS`, `CAUSES` et les types `Cause` et `Interieur`, que le hub n'utilise pas (il ne garde pas l'état partagé, qui vit dans MemoryAI). Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : après un impact fort ou des appuis brusques, le cri « Aïe… » apparaît puis « Ça va mieux ».
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.21.0 : LIA lancée vole, rebondit et s'écrase (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.20.0 à v0.21.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 6524522). Le changement est dans le paquet : lâchée à plus de 450 px/s, LIA garde son élan (gravité, frottement, rebonds sur les quatre bords de sa zone de vie, roulement au sol) et s'écrase le long de l'impact ; un impact de plus de 1 400 px/s lui fait mal (un choc simulé par lancer) ; `data-vol="1"` sur `.lia-ui__corps` pendant le vol. Avec `prefers-reduced-motion` en mode « doux » ou « fixe », jamais de vol. Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : un glisser lancé fort fait voler LIA (`data-vol` posé), elle rebondit et s'écrase, puis se pose ; un impact fort déclenche « Aïe… ».
