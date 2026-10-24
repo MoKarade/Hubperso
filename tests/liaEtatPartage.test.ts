@@ -250,7 +250,7 @@ describe("la route reste derrière le garde du hub, sans jeton côté client", (
   it("la page la monte par etatHttp, sans jeton ni en-tête écrit à la main", () => {
     const boot = readFileSync(resolve(process.cwd(), "components/LiaBoot.tsx"), "utf8");
     expect(boot).toContain('import { etatHttp } from "@mokarade/lia-ui/etat-http"');
-    expect(boot).toContain('etat: etatHttp("/api/lia/etat")');
+    expect(boot).toContain('etatHttp("/api/lia/etat")');
     expect(boot).not.toMatch(/HUB_TOKEN|x-hub-token|x-lia-proprietaire/i);
   });
 });

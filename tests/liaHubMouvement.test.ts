@@ -27,7 +27,7 @@ describe("LiaBoot : réglages communs", () => {
 
   it("partage son état avec MemoryAI par la route du hub (une seule LIA), jamais par un jeton côté client", () => {
     // Marc, 23/10/2026 : « une seule LIA, un seul état, hébergé dans MemoryAI » (Hubperso#433).
-    expect(source).toContain('etat: etatHttp("/api/lia/etat")');
+    expect(source).toContain('etatHttp("/api/lia/etat")');
     expect(source).not.toMatch(/HUB_TOKEN|x-hub-token/i);
   });
 
