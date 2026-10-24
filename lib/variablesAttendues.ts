@@ -26,6 +26,7 @@
 // qu'un push de code sur `main` n'a pas construit un déploiement qui le contient. Jamais
 // « Redeploy » ni de commit vide. Un jeton posé APRÈS le démarrage d'un build n'y est pas.
 // Rechargés ainsi le 23/10/2026 (Hubperso#392) : GITHUB_GRAPHES_TOKEN, HUB_TOKEN_BATCHCHEF, HUB_TOKEN_CARAI, HUB_TOKEN_DRIVEAI, HUB_TOKEN_FINANCEAI, GANTT_SECRET.
+// Rechargés ainsi le 24/10/2026 (Hubperso#488) : SENTRY_DSN (jeton Sentry révoqué, vrai DSN du hub et de JobAI), HUB_TOKEN_JOBAI.
 //
 // ⚠️ `HUB_SESSION_PRIVATE_JWK` n'y est PAS : elle appartient à la phase 2 de la session
 // asymétrique, pas encore fusionnée. Elle entrera avec la branche qui la lit.

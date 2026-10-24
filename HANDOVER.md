@@ -2,9 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
-## 🟦 Session 2026-10-24 — **Les demandes « Que peut-on changer ici ? » gardées dans MemoryAI et relues dans /demandes, lia-ui v0.35.0 (Hubperso#450, EN BROUILLON)**
+## 🟦 Session 2026-10-24 — **Les demandes « Que peut-on changer ici ? » gardées dans MemoryAI et relues dans /demandes, lia-ui v0.37.1 (le déclencheur `surMode` vient de v0.35.0) (Hubperso#450, EN BROUILLON)**
 
 Décision du fil Assistant (commentaire de #450) : la demande vit dans MemoryAI (ADR 0021 de MemoryAI, `POST|GET /api/demandes`, MemoryAI#169), pas dans Neon. Côté hub, prêt contre le contrat du fil MemoryAI : `lib/demandes.ts` (pur : dépôt `{ app, genre, nom }` à trois champs, d'une liste fermée ou du vocabulaire du hub ; un champ de plus = 422 ; réponses de MemoryAI jamais réparées, hors contrat = indisponible), `lib/demandesMemoire.ts` (le saut, `HUB_TOKEN` de MemoryAI déjà détenu + `x-lia-proprietaire: 1`, aucun nouveau secret), `app/api/lia/demandes/route.ts` (propriétaire seul, la DATE est posée par le serveur du hub), page `/demandes` (entrée « Demandes » dans Gérer ; « indisponible » avec la raison plutôt qu'une liste inventée). `lib/liaElement.ts` : `cibleDemandeHub` garde la phrase du hub qui décrit l'élément (`GENRES_HUB`, avec sa catégorie MemoryAI), JAMAIS le texte de la page : une fausse consigne dans un élément ne sort pas. `lib/liaAppelant.ts` : le garde propriétaire de `/api/lia/etat`, partagé. Déclencheur : lia-ui v0.35.0 (sha pelé `b2d4b871`) signale l'entrée choisie (`elements.surMode`, lia-ui#108) ; `components/LiaBoot.tsx` dépose la demande pour « changer » seulement, jamais en pause, et un échec ne change rien à la réponse de LIA (`lib/demandesClient.ts`). **Reste** : l'OK de Marc sur MemoryAI#169 et la fusion de MemoryAI#180 (la route `/api/demandes`, en brouillon) ; avant, la page dit « indisponible » (404 toléré), rien n'est inventé. Preuve à lire par le PC : « Que peut-on changer ici ? » sur un chiffre, puis la ligne dans /demandes.
+
+## 🟦 Session 2026-10-24 — **Jeton Sentry du hub révoqué, vrai DSN du hub et de JobAI, build de prise en compte**
+
+Le jeton Sentry du hub est révoqué et remplacé par le vrai `SENTRY_DSN` du hub et de JobAI, et le `HUB_TOKEN` de JobAI est roté (autorisé par Marc le 24/10/2026, variables posées par le PC). Une variable Vercel ne s'applique qu'à un build neuf : la fusion de cette ligne le déclenche. Cette entrée remplace l'état « `SENTRY_DSN` n'est PAS posé dans Vercel » de la session du 16/10 (Hubperso#162). À vérifier après le déploiement `READY` : la lecture de `/api/hub/summary` de JobAI passe toujours.
 
 ## 🟦 Session 2026-10-24 — **lia-ui v0.34.0 : lien étiré corrigé, même version que les apps (Hubperso#476)**
 
