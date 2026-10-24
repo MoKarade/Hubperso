@@ -4,6 +4,8 @@
 // tant que la pause est posée (`lib/liaPause.ts`, `app/api/lia/ask/route.ts`). Ici on ne fait que laisser LIA se taire à
 // l'écran (plus de parole spontanée, plus de question envoyée) sans attendre un refus du serveur.
 //
+// Depuis lia-ui v0.32.0 le menu de LIA peut aussi mettre en pause et ramener (`basculerPause`) : `basculer` écrit côté serveur.
+//
 // `pause()` de lia-ui est SYNCHRONE et relue à chaque pas : on garde donc la dernière lecture en mémoire et un minuteur la
 // rafraîchit (`demarrerSuiviPause`). PUR ici : la lecture réseau et l'horloge se passent en paramètres.
 //
@@ -39,22 +41,46 @@ export function lireReponsePause(statut: number, json: unknown): boolean | null 
 export interface SuiviPause {
   /** Relit la pause. N'échoue jamais : une lecture ratée est « illisible » (`null`). */
   rafraichir(): Promise<void>;
+  /**
+   * Le geste de Marc (`basculerPause` de lia-ui ≥ v0.32.0). Écrit sur le serveur ; se résout SEULEMENT quand le serveur a
+   * confirmé la valeur voulue, et `enPause()` la rend alors. Tout le reste (écriture refusée ou illisible, valeur confirmée
+   * différente) REJETTE et laisse l'état tel qu'il était : lia-ui dit alors « Je n'ai pas pu changer ma pause. ».
+   */
+  basculer(voulue: boolean): Promise<void>;
   /** Ce qu'on passe à `pause` de lia-ui. Vrai tant que la pause est posée OU qu'on ne sait pas. */
   enPause(): boolean;
 }
 
-/** @param lire la lecture réseau : `true`/`false` ou `null` si illisible. Peut lever : c'est « illisible ». */
-export function creerSuiviPause(lire: () => Promise<boolean | null>, maintenant: () => number): SuiviPause {
+/**
+ * @param lire la lecture réseau : `true`/`false` ou `null` si illisible. Peut lever : c'est « illisible ».
+ * @param ecrire l'écriture réseau de la pause voulue : la pause CONFIRMÉE par le serveur, ou `null` si refusée ou illisible.
+ */
+export function creerSuiviPause(
+  lire: () => Promise<boolean | null>,
+  maintenant: () => number,
+  ecrire: (voulue: boolean) => Promise<boolean | null> = async () => null,
+): SuiviPause {
   let derniere: { pause: boolean; a: number } | null = null;
+  // Une relecture lancée AVANT un geste confirmé peut rentrer après lui avec l'ancienne valeur : elle ne doit pas l'écraser.
+  let geste = 0;
   return {
     async rafraichir() {
+      const depart = geste;
       let lue: boolean | null = null;
       try {
         lue = await lire();
       } catch {
         lue = null;
       }
-      if (lue !== null) derniere = { pause: lue, a: maintenant() };
+      if (lue !== null && depart === geste) derniere = { pause: lue, a: maintenant() };
+    },
+    async basculer(voulue) {
+      // Un ordre d'écriture qui lève est un échec comme un autre : il remonte à lia-ui, l'état ne bouge pas.
+      const confirmee = await ecrire(voulue);
+      if (confirmee === null) throw new Error("pause non enregistrée");
+      if (confirmee !== voulue) throw new Error("pause confirmée différente de celle demandée");
+      geste += 1;
+      derniere = { pause: confirmee, a: maintenant() };
     },
     enPause() {
       if (derniere === null) return true;
@@ -67,6 +93,24 @@ export function creerSuiviPause(lire: () => Promise<boolean | null>, maintenant:
 /** La lecture réelle : `GET /api/lia/pause` avec le cookie de session de la page. Jamais de cache. */
 export async function lirePauseServeur(): Promise<boolean | null> {
   const r = await fetch("/api/lia/pause", { cache: "no-store", credentials: "same-origin" });
+  let json: unknown = null;
+  try {
+    json = await r.json();
+  } catch {
+    json = null;
+  }
+  return lireReponsePause(r.status, json);
+}
+
+/** L'écriture réelle : `PUT /api/lia/pause` avec le cookie de session (propriétaire seul). Rend la pause confirmée, ou `null`. */
+export async function ecrirePauseServeur(voulue: boolean): Promise<boolean | null> {
+  const r = await fetch("/api/lia/pause", {
+    method: "PUT",
+    cache: "no-store",
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ pause: voulue }),
+  });
   let json: unknown = null;
   try {
     json = await r.json();
