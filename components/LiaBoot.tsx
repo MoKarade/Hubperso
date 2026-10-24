@@ -7,6 +7,7 @@ import { demarrerLia } from "@mokarade/lia-ui/boot";
 import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { decrireElementHub } from "@/lib/liaElement";
+import { rendreBlocsHub } from "@/lib/liaBlocs";
 import { poserQuestion } from "@/lib/liaClient";
 import {
   creerSuiviPause,
@@ -120,6 +121,8 @@ const demarrage = demarrerLia({
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
   // Clic droit sur n'importe quel élément (lia-ui ≥ v0.26.0) : le hub nomme ses blocs (`lib/liaElement.ts`), lia-ui décrit le reste.
   elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
+  // Les blocs de sa réponse (courbe, frise, jauge…) : dessinés par lia-ui derrière la porte du hub (`lib/liaBlocs.ts`).
+  renderBlocks: rendreBlocsHub,
   // lia-ui ≥ v0.31.0 : en pause, elle ne parle plus seule et n'appelle plus `ask` ; une pause qui lève vaut pause.
   pause: () => suiviPause.enPause(),
   // lia-ui ≥ v0.32.0 : « Mets-toi en pause » / « Reviens » dans son menu ; la promesse ne se résout qu'une fois le serveur d'accord.
