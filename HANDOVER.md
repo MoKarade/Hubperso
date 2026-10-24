@@ -4,7 +4,7 @@
 
 ## 🟦 Session 2026-10-24 — **lia-ui v0.34.0 : lien étiré corrigé, même version que les apps (Hubperso#476)**
 
-Re-pin `@mokarade/lia-ui` v0.32.0 → v0.34.0 (`package.json` et lock d'accord ; `resolved` sur le sha pelé `6525ad47`). v0.33.0 apporte `surToucher`, v0.34.0 corrige le lien étiré `a.widget__detail` (un clic sur une carte désigne l'élément visé). Aucun code du hub touché : l'API utilisée (`demarrerLia`, `renderBlocks`, `basculerPause`, `etatHttp`) est inchangée. Vérifié : typecheck, lint, tests, build, portes verts ; `next start` donne `/login` 200 sans « window is not defined ». Reste : lecture en session de Marc (PC) du lien étiré et de `/api/lia/etat`.
+Re-pin `@mokarade/lia-ui` v0.32.0 → v0.34.0 (`package.json` et lock d'accord ; `resolved` sur le sha pelé `6525ad47`). v0.33.0 apporte `surToucher`, v0.34.0 corrige le lien étiré `a.widget__detail` (un clic sur une carte désigne l'élément visé). Aucun code du hub touché : l'API utilisée (`demarrerLia`, `renderBlocks`, `basculerPause`, `etatHttp`) est inchangée. Vérifié : typecheck, lint, tests, build, portes verts ; `next start` donne `/login` 200 sans « window is not defined ». Reste : lecture en session de Marc (PC) du lien étiré et de `/api/lia/etat` (preuve de #476).
 
 ## 🟦 Session 2026-10-24 — **Les blocs de la réponse de LIA (courbe, jauge, chronologie…) s'affichent (Hubperso#360)**
 
