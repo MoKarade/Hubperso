@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **Une seule LIA : le hub partage son état avec MemoryAI (Hubperso#433)**
+
+Nouvelle route `GET|PUT /api/lia/etat` (`app/api/lia/etat/route.ts`) : elle relaie côté serveur à `https://memoryai.hubperso.com/api/etat-lia` avec le `HUB_TOKEN` que le hub détient déjà pour MemoryAI (aucun nouveau secret, jamais dans une réponse) et `x-lia-proprietaire: 1`. Elle reste DERRIÈRE le garde (aucune exception dans `lib/authGuard.ts`, aucune exclusion du matcher) et se garde encore seule : sans session 401 sans appel à MemoryAI, invité 403, sans jeton 503. `lib/liaEtatPartage.ts` (pur) juge les deux sens avec `validerEtat` du paquet : un PUT de la page trop gros (16 Ko) donne 413, hors contrat 400, et c'est l'état nettoyé qui part ; une réponse de MemoryAI n'est rendue que si c'est un état valide (200 ; 409 avec l'état plus récent), 204 sans état, 400 et 413 passent, tout le reste (jeton refusé, mémoire gelée, hors contrat, injoignable) devient 503 et LIA garde son état local. `components/LiaBoot.tsx` monte `etat: etatHttp("/api/lia/etat")` : la LIA du hub lit et écrit le même état que celle de MemoryAI et des apps. Tout est `no-store`. À lire par le PC une fois en ligne, connecté en propriétaire : `GET /api/lia/etat` rend 200 ou 204 ; une humeur ou une douleur prise sur le hub se retrouve dans `lia.partage()` côté MemoryAI.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.23.1 : LIA bondit, son ombre suit, l'analyse s'affiche tout de suite (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.22.1 à v0.23.1 (`package.json` et lock ensemble, `resolved` sur le commit pelé 23dbd4f, vérifié par `git ls-remote`), v0.23.0 comprise. Les changements sont dans le paquet : dans 3 promenades sur 10, LIA s'accroupit 0,18 s puis bondit en arc vers son but (0,6 à 1 s) avec une ombre au sol qui rapetisse et pâlit avec la hauteur (v0.23.0, `--lia-ombre`), et le cadre d'analyse apparaît dès la première image (v0.23.1). Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : un bond avec son ombre sur l'accueil, et le cadre d'analyse visible dès qu'elle analyse un bloc.

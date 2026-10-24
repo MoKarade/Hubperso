@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { MotifMonde } from "@mokarade/lia-ui";
 import { demarrerLia } from "@mokarade/lia-ui/boot";
+import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { poserQuestion } from "@/lib/liaClient";
 import { visiterCarte } from "@/lib/liaVisite";
@@ -89,6 +90,10 @@ function voir(e: Event): void {
 
 const demarrage = demarrerLia({
   cle: CLE_LIA_HUB,
+  // UNE seule LIA : son état (envies, journal, humeur, monde intérieur) est celui de MemoryAI, lu et écrit par la
+  // route du hub (`app/api/lia/etat/route.ts`, session du hub, jeton jamais côté client). Si la route échoue, LIA
+  // garde son état local et vit quand même.
+  etat: etatHttp("/api/lia/etat"),
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
   ask: (question, signal, etat) => poserQuestion(question, signal, window.location.pathname, undefined, etat),
   onSpontane: (motif: MotifLia) => parleSeule(motif, lireFaits(), new Date().getHours()),
