@@ -139,6 +139,14 @@ export function ditCouts(quotasASurveiller: number, nbQuotas: number): string {
 
 export type MotifLia = "salut" | "rien" | "relance";
 
+/**
+ * POURQUOI LIA écrit seule (décision de Marc du 22/10/2026 : « le message dit pourquoi il écrit », Hubperso#313). Le texte d'un
+ * problème vient des cartes et ne change pas ; on y ajoute seulement la raison de la prise de parole. Un salut porte déjà la
+ * sienne (« Bonjour Marc. ») ; un constat que Marc demande (« Analyser », il fixe une carte) aussi : c'est lui qui a regardé.
+ */
+export const RAISON_SIGNALEMENT = "Je te signale : ";
+export const RAISON_RAPPEL = "Je te le rappelle : ";
+
 /** Les faits qui posent problème, le plus grave d'abord (ordre des cartes conservé à gravité égale). */
 function problemes(faits: readonly FaitLia[]): FaitLia[] {
   return faits
@@ -164,8 +172,9 @@ export function parleSeule(motif: MotifLia, faits: readonly FaitLia[], heure: nu
       return faits.every((f) => f.gravite === "ok") ? `${bonjour} Tout est à jour.` : bonjour;
     }
     case "rien":
+      return pire ? `${RAISON_SIGNALEMENT}${pire.dit}` : null;
     case "relance":
-      return pire ? pire.dit : null;
+      return pire ? `${RAISON_RAPPEL}${pire.dit}` : null;
   }
 }
 
@@ -207,7 +216,7 @@ export interface ParoleMonde {
 /**
  * Le texte vrai que le hub a pour un motif, ou `null`. Il vient des cartes AFFICHÉES, comme tout le
  * reste (`data-lia-dit`) : aucune phrase écrite d'avance, aucun chiffre inventé.
- *   - `appeler` : le problème le plus grave, une fois par tranche de 10 min (`dernierAppel` : l'instant
+ *   - `appeler` : le problème le plus grave, dit comme un signalement (`RAISON_SIGNALEMENT`), une fois par tranche de 10 min (`dernierAppel` : l'instant
  *     du dernier `appeler` du journal de LIA, en millisecondes, ou `null`) ;
  *   - `accompagner` : Marc fixe une carte, LIA en dit le constat (`carte`, lue de ses `data-lia-*`) ;
  *   - `resumer`, `feliciter`, `rappeler`, `souvenir` : rien de vrai à dire pour l'instant, `null`.
@@ -223,7 +232,7 @@ export function parleMonde(
     case "appeler": {
       if (dernierAppel !== null && maintenant - dernierAppel < DELAI_ENTRE_APPELS_MS) return null;
       const pire = problemes(faits)[0];
-      return pire ? { text: pire.dit, appId: pire.appId } : null;
+      return pire ? { text: `${RAISON_SIGNALEMENT}${pire.dit}`, appId: pire.appId } : null;
     }
     case "accompagner":
       return carte ? { text: carte.dit, appId: carte.appId } : null;
