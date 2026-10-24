@@ -25,6 +25,12 @@ describe("LiaBoot : réglages communs", () => {
     for (const corps of effets) expect(corps).not.toContain("demarrerLia");
   });
 
+  it("partage son état avec MemoryAI par la route du hub (une seule LIA), jamais par un jeton côté client", () => {
+    // Marc, 23/10/2026 : « une seule LIA, un seul état, hébergé dans MemoryAI » (Hubperso#433).
+    expect(source).toContain('etat: etatHttp("/api/lia/etat")');
+    expect(source).not.toMatch(/HUB_TOKEN|x-hub-token/i);
+  });
+
   it("le layout racine charge ce module, donc LIA existe aussi sur loading, error et not-found", () => {
     const layout = readFileSync(join(__dirname, "..", "app", "layout.tsx"), "utf8");
     expect(layout).toContain('import { LiaBoot } from "@/components/LiaBoot"');
