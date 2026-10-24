@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.38.0 : l'analyse dessinée par les nanobots (Hubperso#496)**
+
+Pin de `@mokarade/lia-ui` de v0.37.2 à v0.38.0 (sha pelé `9faf1ac9`), seul changement (`package.json`, lock). v0.38.0 : les 100 nanobots dessinent eux-mêmes l'animation d'analyse (4 coins, ligne qui balaie, points qui s'allument) sur l'élément analysé, retour de Marc du 24/10. Gate local et portes verts, `/login` 200 en `next start`. Preuve en production : déploiement `READY` sur le commit fusionné, puis capture du PC après clic droit → « Explique-moi ça » ; la tâche reste ouverte jusque-là.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.37.2 : nanobots seuls (Hubperso#493)**
 
 Pin de `@mokarade/lia-ui` de v0.37.1 à v0.37.2 (sha pelé `5ab9a089`), seul changement (`package.json`, lock). Correctif « nanobots seuls » demandé par Marc. Gate local et portes verts, `/login` 200 en `next start`. Preuve en production : déploiement `READY` sur le commit fusionné, puis lecture du PC à l'écran ; la tâche reste ouverte jusque-là.
