@@ -2,9 +2,9 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
-## 🟦 Session 2026-10-23 — **lia-ui v0.19.0 : « Comment elle va », ses onze jauges dans son menu (Hubperso#356)**
+## 🟦 Session 2026-10-23 — **lia-ui v0.20.0 : « Comment elle va » et son monde intérieur partagé (Hubperso#356)**
 
-`@mokarade/lia-ui` passe de v0.18.0 à v0.19.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 7d968c5). Le changement est dans le paquet : le menu de son corps gagne *Comment elle va*, une phrase de tête et onze jauges `role="meter"` (énergie, curiosité, envie de compagnie, joie, ennui, inquiétude, douleur et sa cause, plaisir, confiance, sensibilité, usure) relues chaque seconde, avec la mention « Simulation ». Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : clic droit sur LIA, *Comment elle va* se déplie sans fermer le menu, onze jauges et la phrase de tête, valeurs qui bougent après des appuis rapides.
+`@mokarade/lia-ui` passe de v0.18.0 à v0.20.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 70c45e0), v0.19.0 comprise. Les changements sont dans le paquet : le menu de son corps gagne *Comment elle va*, une phrase de tête et onze jauges `role="meter"` avec la mention « Simulation » (v0.19.0), et sa douleur, son plaisir, sa confiance, sa sensibilité et son usure voyagent dans l'état partagé (`EtatLia.interieur`, optionnel, retombé du temps écoulé ; v0.20.0). Le hub ne garde pas cet état partagé (il vit dans MemoryAI) : il ne change pas de code et l'état `etat_lia` relayé à `/api/lia/ask` garde sa forme à trois clés. À lire par le PC : clic droit sur LIA, *Comment elle va* se déplie sans fermer le menu, onze jauges et la phrase de tête ; les valeurs bougent après des appuis rapides.
 
 ## 🟦 Session 2026-10-23 — **lia-ui v0.18.0 : le monde intérieur de LIA, douleur, plaisir, confiance (Hubperso#356)**
 
