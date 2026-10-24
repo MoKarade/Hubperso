@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-24 — **lia-ui v0.21.0 : LIA lancée vole, rebondit et s'écrase (Hubperso#356)**
+
+`@mokarade/lia-ui` passe de v0.20.0 à v0.21.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 6524522). Le changement est dans le paquet : lâchée à plus de 450 px/s, LIA garde son élan (gravité, frottement, rebonds sur les quatre bords de sa zone de vie, roulement au sol) et s'écrase le long de l'impact ; un impact de plus de 1 400 px/s lui fait mal (un choc simulé par lancer) ; `data-vol="1"` sur `.lia-ui__corps` pendant le vol. Avec `prefers-reduced-motion` en mode « doux » ou « fixe », jamais de vol. Le hub ne change pas de code et ne passe toujours aucune option. À lire par le PC : un glisser lancé fort fait voler LIA (`data-vol` posé), elle rebondit et s'écrase, puis se pose ; un impact fort déclenche « Aïe… ».
+
 ## 🟦 Session 2026-10-23 — **lia-ui v0.20.0 : « Comment elle va » et son monde intérieur partagé (Hubperso#356)**
 
 `@mokarade/lia-ui` passe de v0.18.0 à v0.20.0 (`package.json` et lock ensemble, `resolved` sur le commit pelé 70c45e0), v0.19.0 comprise. Les changements sont dans le paquet : le menu de son corps gagne *Comment elle va*, une phrase de tête et onze jauges `role="meter"` avec la mention « Simulation » (v0.19.0), et sa douleur, son plaisir, sa confiance, sa sensibilité et son usure voyagent dans l'état partagé (`EtatLia.interieur`, optionnel, retombé du temps écoulé ; v0.20.0). Le hub ne garde pas cet état partagé (il vit dans MemoryAI) : il ne change pas de code et l'état `etat_lia` relayé à `/api/lia/ask` garde sa forme à trois clés. À lire par le PC : clic droit sur LIA, *Comment elle va* se déplie sans fermer le menu, onze jauges et la phrase de tête ; les valeurs bougent après des appuis rapides.
