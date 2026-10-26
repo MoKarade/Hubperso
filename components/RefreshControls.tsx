@@ -14,10 +14,12 @@
 import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-// 15 s : rafraîchissement quasi-continu (uniquement onglet visible) pour voir vite les
-// changements (coût après un chat, état d'un batch…). Le bouton « Rafraîchir » reste le
-// moyen INSTANTANÉ sur demande. Poll léger : chaque summary est une lecture bon marché.
-const REFRESH_INTERVAL_MS = 15_000;
+// 60 s (15 s jusqu'au 26/10/2026) : chaque tick ré-exécute la page serveur ET relit les 6 summaries
+// (6 invocations chez les apps), donc 4 ticks par minute coûtaient ~28 invocations par minute et par
+// onglet visible (Vercel, 220 $ en octobre 2026). Les chiffres d'une app bougent à l'échelle de la
+// minute (relevés espacés, `dataAsOf`), pas de la seconde. Le bouton « Rafraîchir » reste le moyen
+// INSTANTANÉ sur demande, et le retour sur l'onglet rafraîchit aussitôt.
+const REFRESH_INTERVAL_MS = 60_000;
 
 export function RefreshControls() {
   const router = useRouter();

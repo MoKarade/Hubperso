@@ -160,15 +160,15 @@ describe("RefreshControls — minuterie et bouton", () => {
     Object.defineProperty(document, "visibilityState", { value: etat, configurable: true });
   }
 
-  it("rafraîchit toutes les 15 s quand l'onglet est visible, jamais avant", () => {
+  it("rafraîchit toutes les 60 s quand l'onglet est visible, jamais avant (coût Vercel)", () => {
     vi.useFakeTimers();
     visibilite("visible");
     monter(h(RefreshControls));
-    act(() => vi.advanceTimersByTime(14_999));
+    act(() => vi.advanceTimersByTime(59_999));
     expect(moq.refresh).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(1));
     expect(moq.refresh).toHaveBeenCalledTimes(1);
-    act(() => vi.advanceTimersByTime(15_000));
+    act(() => vi.advanceTimersByTime(60_000));
     expect(moq.refresh).toHaveBeenCalledTimes(2);
   });
 
