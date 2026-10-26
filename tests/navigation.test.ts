@@ -56,10 +56,11 @@ describe("modeleNavigation", () => {
     ]);
   });
 
-  it("Gérer (graphes, administration) n'existe que pour le propriétaire", () => {
+  it("Gérer (graphes, chantier, administration) n'existe que pour le propriétaire", () => {
     expect(modeleNavigation(APPS, false).gerer).toEqual([]);
     expect(modeleNavigation(APPS, true).gerer.map((e) => e.href)).toEqual([
       "/graphes",
+      "/chantier",
       "/administration",
     ]);
   });
@@ -85,12 +86,13 @@ describe("page active", () => {
     expect(estActive("/app/financeai-bis", "/app/financeai")).toBe(false);
   });
 
-  it("barre du bas : une page d'app reste sous Accueil, graphes et admin sous Plus", () => {
+  it("barre du bas : une page d'app reste sous Accueil, graphes, chantier et admin sous Plus", () => {
     expect(rangBarre("/")).toBe("accueil");
     expect(rangBarre("/app/carai")).toBe("accueil");
     expect(rangBarre("/attention")).toBe("attention");
     expect(rangBarre("/couts")).toBe("couts");
     expect(rangBarre("/graphes")).toBe("plus");
+    expect(rangBarre("/chantier")).toBe("plus");
     expect(rangBarre("/administration")).toBe("plus");
   });
 
@@ -133,7 +135,7 @@ describe("Cadre (rendu serveur)", () => {
     expect(html).toContain("--accent:#2DD4BF");
   });
 
-  it("n'offre graphes et administration qu'au propriétaire", () => {
+  it("n'offre graphes, chantier et administration qu'au propriétaire", () => {
     expect(rendre("/", false)).not.toContain('href="/graphes"');
     expect(rendre("/", false)).not.toContain('href="/administration"');
     expect(rendre("/", true)).toContain('href="/graphes"');
@@ -196,7 +198,7 @@ describe("NavigationMontee (garde serveur)", () => {
     const el = (await NavigationMontee({ children: enfants })) as ReactElement<{
       modele: ReturnType<typeof modeleNavigation>;
     }>;
-    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "administration"]);
+    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "chantier", "administration"]);
   });
 
   it("session illisible : pages sans navigation, et l'erreur est journalisée (jamais avalée)", async () => {
