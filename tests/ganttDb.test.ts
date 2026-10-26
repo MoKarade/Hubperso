@@ -25,7 +25,7 @@ const client = new PGlite();
 const dbTest = drizzle(client);
 porteur.db = dbTest;
 
-const { enregistrerGantt, lireGantt } = await import("../lib/ganttDb");
+const { enregistrerGantt, lireEnteteGantt, lireGantt } = await import("../lib/ganttDb");
 const { ganttReleve } = await import("../lib/db/schema");
 
 const envoi = (surcharge = {}) => ({
@@ -84,5 +84,14 @@ describe("lib/ganttDb", () => {
         quota: {},
       }),
     ).rejects.toThrow();
+  });
+
+  it("l'en-tête rend les deux heures SANS le contenu, ou null sans relevé", async () => {
+    expect(await lireEnteteGantt()).toBeNull();
+    await enregistrerGantt(envoi());
+    const entete = await lireEnteteGantt();
+    expect(entete?.envoyeLe.toISOString()).toBe("2026-10-22T20:50:00.000Z");
+    expect(entete?.recuLe).toBeInstanceOf(Date);
+    expect(Object.keys(entete ?? {}).sort()).toEqual(["envoyeLe", "recuLe"]);
   });
 });
