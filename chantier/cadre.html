@@ -25,6 +25,12 @@
       octets = new Uint8Array(m.octets);
       etat('');
       attente.splice(0).forEach(function (r) { r({ bytes: octets }); });
+    } else if (m.type === 'chantier-couts') {
+      // Les coûts et quotas des apps (la page Coûts du hub, reprise ici) : lus par le hub, jamais par ce document.
+      recu = true;
+      window.hubCouts = m.couts && typeof m.couts === 'object' ? m.couts : null;
+      window.hubCoutsErreur = typeof m.erreur === 'string' ? m.erreur : '';
+      if (typeof window.surCouts === 'function') window.surCouts();
     } else if (m.type === 'chantier-etat') {
       recu = true;
       etat(typeof m.message === 'string' ? m.message : '');
@@ -1089,6 +1095,9 @@ body.anim .bk.cours{animation:bp 2.4s ease-in-out infinite}
 .clist i{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none;align-self:center}
 .clist b{margin-left:auto;color:var(--ink);font-size:17px;font-weight:700}
 .csec{margin-top:52px}
+.happ{border-top:1px solid var(--line);padding:12px 0;display:grid;gap:8px}
+.happ h4{margin:0;font:700 15px var(--f);display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+.happ h4 small{color:var(--mute);font-weight:600;font-size:12.5px}
 .ccap{display:flex;align-items:baseline;gap:12px;margin:0 0 6px;font-size:14px;color:var(--mute);font-weight:600}
 .ccap b{color:var(--ink);font-size:15px}
 .cch{width:100%;display:block;overflow:visible}
@@ -1425,7 +1434,8 @@ const saved = store.get();
 const TABS = ['toi', 'taches', 'gantt', 'rythme'];
 // anciens onglets (avant le 19/10) : Plan et Cartes = Tâches, Vitesse et Quota = Rythme
 const ANCIEN = {plan: 'taches', cartes: 'taches', vitesse: 'rythme', quota: 'rythme'};
-const tabDe = t => TABS.includes(t) ? t : ANCIEN[t] || null;
+// « mur » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
+const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' ? t : ANCIEN[t] || null;
 // durées de l'onglet Rythme (Marc, 21/10) et découpage des fusions : type, app, ou qui (Jules, fil Claude, autre)
 const VPS = ['24h', '7j', '30j', '90j'], VSPL = ['type', 'app', 'qui'], QSS = ['claude', 'vercel', 'actions', 'jules', 'gemini', 'api'];
 const ST = {tab: tabDe(saved.tab) || 'toi', f: saved.f && saved.f !== 'toi' ? saved.f : 'tout', z: saved.z || 'fit', open: saved.open || {}, stack: [], pan: 0, vp: VPS.includes(saved.vp) ? saved.vp : '24h', vsplit: VSPL.includes(saved.vsplit) ? saved.vsplit : 'type', vsel: null, vselm: null, cap: saved.cap === 'file' ? 'file' : 'depot', qs: QSS.includes(saved.qs) ? saved.qs : 'claude'};
@@ -4684,7 +4694,33 @@ function vGanttFull(){
 
   /* ---------- Coûts ---------- */
   const fd = d => +d.slice(8) + ' ' + cMoisCourt(d.slice(0, 7)).slice(0, 4).replace(/\.$/, '');
-  function vCoutsM(){
+  /* ---------- Coûts des apps : ce que montrait la page Coûts du hub, reprise ici ----------
+     Le hub lit les coûts chez chaque app (leurs jetons restent chez lui) et les poste dans le canal : `window.hubCouts`.
+     Un total PAR période, jamais fusionnés ; une app sans coût est nommée, jamais comptée pour 0 ; un quota sans plafond
+     publié n'a pas de jauge. */
+  window.surCouts = () => { if (M && ST.tab === 'couts') render(); };
+  const nbr = v => Number.isFinite(+v) ? +v : 0;
+  function vAppsHub(){
+    const D = window.hubCouts, titre = `<p class="ccap"><b>Coûts des apps</b></p>`;
+    if (D === undefined) return `<section class="csec" style="margin-top:0">${titre}<p class="empty" role="status">En attente des coûts des apps…</p></section>`;
+    if (!D || !Array.isArray(D.detail)) return `<section class="csec" style="margin-top:0">${titre}<p class="empty" role="status">${esc(window.hubCoutsErreur || 'Les coûts des apps sont indisponibles.')}</p></section>`;
+    const totaux = (D.totaux || []).map(t => `<div><i style="--c:var(--doing)"></i>${esc(t.periode)} · ${nbr(t.apps)} app${nbr(t.apps) > 1 ? 's' : ''}<b>≈ ${nfmt(nbr(t.cad), 2)} $</b></div>`).join('');
+    const apps = D.detail.map(a => {
+      const q = Array.isArray(a.quotas) ? a.quotas : [], unite = x => x.unit ? ' ' + x.unit : '';
+      const avecPlafond = q.filter(x => x.pct != null).map(x => ({t: x.label, v: nbr(x.pct) / 100, col: x.alerte ? 'var(--now)' : undefined,
+        lab: nfmt(nbr(x.used)) + ' / ' + nfmt(nbr(x.limit)) + unite(x), title: x.remise || ''}));
+      const sansPlafond = q.filter(x => x.pct == null).map(x => `<div><span>${esc(x.label)}</span><b>${esc(nfmt(nbr(x.used)) + unite(x))} · plafond non publié</b></div>`).join('');
+      const cout = a.cout ? `<div><span>Coût · ${esc(a.cout.periode)}</span><b>≈ ${nfmt(nbr(a.cout.cad), 2)} $${a.cout.devise === 'USD' ? ` (${nfmt(nbr(a.cout.brut), 2)} USD)` : ''}</b></div>` : '';
+      const vide = !a.suivie ? `<p class="qnote">${a.enLigne ? 'Cette app ne publie pas encore de coûts ni de quotas.' : 'État indisponible.'}</p>` : '';
+      return `<div class="happ"><h4>${esc(a.nom)}${a.enLigne ? '' : ' <small>hors ligne</small>'}</h4>${vide}`
+        + (cout || sansPlafond ? `<div class="qrows">${cout}${sansPlafond}</div>` : '') + (avecPlafond.length ? barRows(avecPlafond) : '') + `</div>`;
+    }).join('');
+    return `<section class="csec" style="margin-top:0">${titre}<p class="qnote">${nbr(D.suivies)} app${nbr(D.suivies) > 1 ? 's' : ''} suivie${nbr(D.suivies) > 1 ? 's' : ''} sur ${nbr(D.apps)}${nbr(D.alertes) ? ` · ${nbr(D.alertes)} quota${nbr(D.alertes) > 1 ? 's' : ''} à surveiller` : ''}</p>`
+      + (totaux ? `<div class="clist">${totaux}</div>` : '') + (D.note ? `<p class="qnote">${esc(D.note)}</p>` : '')
+      + apps + `<p class="qnote">Les coûts sont convertis en dollars canadiens à un taux approximatif (les API LLM facturent en USD). Chaque montant vient de l’app elle-même, jamais estimé par le hub.</p></section>`;
+  }
+  function vCoutsM(){ return vAppsHub() + vCoutsRegistre(); }
+  function vCoutsRegistre(){
     if (!CLIGNES.length && !VERCEL_RECUS.length && !CAVENIR.length) return `<p class="empty" role="status">Le registre des dépenses n’est pas encore transmis au hub : rien n’est inventé en attendant.</p>`;
     const C = cModel(), tot = C.total;
     const pp = C.parPoste.map(([k, v]) => [k, v, CPOSTES.find(p => p[0] === k)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);

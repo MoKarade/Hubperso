@@ -2,6 +2,15 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-26 (soir) — **Page Chantier dans le hub, étape 3a : les coûts des apps entrent dans l'onglet Coûts du Chantier (Hubperso#550)**
+
+Marc, 26/10/2026 21 h 24 Z : « Dans le hub il y a normalement déjà une page pour le coût, je veux qu'elle soit enlevée et que ses infos soient rajoutées dans ce que tu fais. » Deux PR, pour tenir sous la limite de taille : **3a (celle-ci) ajoute**, 3b retire la page. Rien ne disparaît avant d'être repris.
+- **`GET /api/chantier/couts`** (`app/api/chantier/couts/route.ts`, propriétaire seul : 401 sans session, 404 sinon, 429 au-delà de 6 par minute, `no-store`) lit les apps comme la page `/couts` (`fetchAllSummaries`, leurs jetons ne quittent pas le hub) et rend ce que `lib/chantierCouts.ts` met en forme : totaux PAR période (jamais fusionnés, la raison écrite), coût de chaque app (montant converti ET brut, devise), quotas (part du plafond, remise à zéro), apps sans coût nommées, apps hors ligne dites.
+- `ChantierCadre` lit la route à la présentation du cadre, puis toutes les 5 min onglet visible, et la poste par le canal (`chantier-couts`) ; le document (`vAppsHub` dans `chantier/cadre.html`) la peint en tête de l'onglet Coûts. Sans lecture : « En attente des coûts des apps… » ou la raison (session expirée, trop de lectures), jamais un total vide.
+- `?onglet=` (`mur`, `toi`, `gantt`, `couts`) devient le fragment de l'adresse du cadre ; une valeur inconnue est ignorée (`ongletDe`). Le document accepte désormais `#couts` et `#mur`.
+- Tests : `chantierCouts` (règles d'honnêteté), `chantierCoutsRoute` (401, 404, aucune app interrogée sans droit, 429, 200), `chantierCadreDom` (coûts postés, relus à 5 min, erreurs dites, onglet caché), `chantierCadre` (onglets validés, document). Vérifié sur un vrai serveur avec une session fabriquée : l'onglet Coûts affiche les coûts postés, au bureau et au téléphone ; la vraie route répond 200 `no-store`.
+- **Reste à faire (3b, tâche #550)** : retirer `app/couts/` et son CSS mort, la rediriger (307) vers `/chantier?onglet=couts`, « Chantier » prend la place de « Coûts » dans la barre du bas pour le propriétaire, palette et menu LIA pointent vers l'onglet, la carte de l'accueil n'a le lien « Voir le détail » que pour le propriétaire. **Décision à connaître** : un invité du hub perdra le détail des coûts (page propriétaire seul). Le registre des dépenses (reçus) reste vide dans l'onglet tant que le PC ne le transmet pas (clé `couts_manuels`).
+
 ## 🟦 Session 2026-10-26 (soir) — **Page Chantier dans le hub, étape 2 : la page dans un cadre isolé (Hubperso#540)**
 
 Marc, 26/10/2026 (« A, go ») : la page de suivi (accueil, à toi, Gantt, coûts) s'ouvre depuis le menu du hub, **servie telle quelle** (réécriture en React seulement plus tard et seulement si Marc le veut), propriétaire seul.

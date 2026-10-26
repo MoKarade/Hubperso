@@ -8,11 +8,15 @@
 // tant que le PC n'a rien envoyé de neuf). Le hub peut donc se rafraîchir sans jamais toucher à
 // la base pour elle.
 //
+// Les coûts et quotas des apps (ce que montre la page `/couts`, qui doit disparaître) arrivent au cadre par
+// `/api/chantier/couts`, lue par le composant avec la session du propriétaire.
+//
 // NO FAKE DATA : sans relevé, la page le dit (« Aucun relevé reçu pour l'instant ») ; elle n'invente
 // ni heure ni chiffre.
 
 import { exigerProprietaire } from "@/lib/gardeHub";
 import { ChantierCadre } from "@/components/ChantierCadre";
+import { ongletDe } from "@/lib/chantierCadre";
 
 export const metadata = {
   title: "Chantier — Hub perso",
@@ -20,7 +24,9 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function ChantierPage() {
+export default async function ChantierPage({ searchParams }: { searchParams: Promise<{ onglet?: string | string[] }> }) {
   await exigerProprietaire();
-  return <ChantierCadre />;
+  // `?onglet=couts` ouvre l'onglet Coûts (la page `/couts` y redirigera) ; une valeur inconnue est ignorée.
+  const { onglet } = await searchParams;
+  return <ChantierCadre onglet={ongletDe(onglet)} />;
 }

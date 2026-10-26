@@ -6,13 +6,18 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   CSP_CADRE,
+  MESSAGE_COUTS,
   MESSAGE_PRET,
+  ONGLETS,
   SANDBOX_CADRE,
   URL_CADRE,
+  URL_COUTS,
   URL_RELEVE,
   consigneDeReponse,
+  erreurCouts,
   estGzip,
   estMessagePret,
+  ongletDe,
 } from "@/lib/chantierCadre";
 
 const DOCUMENT = readFileSync(resolve(process.cwd(), "chantier", "cadre.html"), "utf8");
@@ -149,5 +154,41 @@ describe("chantier/cadre.html", () => {
       const code = readFileSync(resolve(process.cwd(), fichier), "utf8").replace(/\/\/[^\n]*/g, "");
       expect(code, fichier).not.toMatch(/postMessage\([^)]*["']\*["']/);
     }
+  });
+});
+
+describe("les coûts des apps dans le cadre (la page Coûts du hub, reprise)", () => {
+  it("l'onglet demandé par l'adresse est validé : une valeur inconnue n'ouvre rien d'inventé", () => {
+    expect(ONGLETS).toContain("couts");
+    expect(ongletDe("couts")).toBe("couts");
+    for (const mauvais of [undefined, null, "", "COUTS", "couts#x", "../x", ["couts"], 3]) {
+      expect(ongletDe(mauvais)).toBeNull();
+    }
+  });
+
+  it("chaque onglet validé existe dans le document", () => {
+    for (const onglet of ONGLETS) expect(DOCUMENT, onglet).toContain(`['${onglet}', `);
+  });
+
+  it("le document reçoit les coûts par le canal, sans réseau, et dit quand ils manquent", () => {
+    expect(URL_COUTS).toBe("/api/chantier/couts");
+    expect(MESSAGE_COUTS).toBe("chantier-couts");
+    expect(DOCUMENT).toContain(`m.type === '${MESSAGE_COUTS}'`);
+    expect(DOCUMENT).toContain("window.hubCouts");
+    expect(DOCUMENT).toContain("En attente des coûts des apps");
+    expect(DOCUMENT).not.toContain(URL_COUTS); // il ne les lit pas lui-même
+  });
+
+  it("le document garde les règles de l'ancienne page : une période à la fois, plafond non publié dit", () => {
+    expect(DOCUMENT).toContain("plafond non publié");
+    expect(DOCUMENT).toContain("Cette app ne publie pas encore de coûts ni de quotas.");
+    expect(DOCUMENT).toContain("jamais estimé par le hub");
+  });
+
+  it("la raison d'un refus est dite en clair", () => {
+    expect(erreurCouts(401)).toMatch(/session du hub a expiré/);
+    expect(erreurCouts(404)).toMatch(/réservé au propriétaire/);
+    expect(erreurCouts(429)).toMatch(/Trop de lectures/);
+    expect(erreurCouts(500)).toContain("erreur 500");
   });
 });
