@@ -40,3 +40,16 @@ export async function lireGantt() {
   const lignes = await db.select().from(ganttReleve).where(eq(ganttReleve.id, 1)).limit(1);
   return lignes[0] ?? null;
 }
+
+/**
+ * Les deux heures du dernier relevé, SANS son contenu : de quoi juger « rien de nouveau » (ETag)
+ * sans relire les ~400 Ko de `donnees_gz_b64`. `null` si le PC n'a encore rien envoyé.
+ */
+export async function lireEnteteGantt() {
+  const lignes = await db
+    .select({ recuLe: ganttReleve.recuLe, envoyeLe: ganttReleve.envoyeLe })
+    .from(ganttReleve)
+    .where(eq(ganttReleve.id, 1))
+    .limit(1);
+  return lignes[0] ?? null;
+}

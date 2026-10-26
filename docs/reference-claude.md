@@ -66,6 +66,11 @@ widgets 100 % génériques.
     la mémoire du hub, un pouvoir qu'aucune app n'a de raison d'avoir — et qui se
     propagerait à chaque app ajoutée. 503 si le secret manque côté serveur, 401 s'il est
     faux : la distinction EST le diagnostic (l'un envoie sur Vercel, l'autre sur GitHub).
+- **`GET /api/chantier/releve` ne traverse PAS le garde** (26/10/2026) : elle reste derrière la session
+  et se garde encore seule (accès au hub, puis propriétaire ; un invité reçoit 404, il n'apprend pas que
+  la page existe). Elle rend le dernier relevé du Gantt en gzip, avec `ETag` (heure de réception) :
+  un `If-None-Match` connu rend 304 sans relire le contenu en base. Lue par la page Chantier ;
+  jamais mise en cache (`no-store`). Logique pure : `lib/chantierReleve.ts`.
 - **`POST /api/lia/ask` traverse aussi le garde, et se garde toute seule** (22/10/2026, #336) :
   la question de LIA. Une app s'identifie par son `HUB_TOKEN` (`appDuJeton`, la source vient du
   jeton, jamais du corps) ; l'accueil, par la session + `aAcces(…, APP_HUB)` lus dans la route.
