@@ -92,7 +92,7 @@ const CSS = lire("app/globals.css");
  */
 const ACCROCHES_SANS_REGLE = [
   { classe: "page__sub", vu: "app/attention/page.tsx" },
-  { classe: "couts__quota", vu: "app/couts/page.tsx, components/DetailCouts.tsx" },
+  { classe: "couts__quota", vu: "components/DetailCouts.tsx" },
 ];
 
 describe("socle visuel — aucune couleur hors des jetons", () => {
