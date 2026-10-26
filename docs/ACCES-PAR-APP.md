@@ -92,7 +92,7 @@ invité sur BatchChef doit pouvoir se connecter — sinon impossible d'atteindre
 sans que ça lui ouvre le tableau de bord du hub, qui affiche les données des six apps. Le
 hub se traite donc lui-même comme une app parmi les autres, sous l'identifiant `APP_HUB`
 (`"hubperso"`) : ses pages exigent en plus `aAcces(email, APP_HUB)`, via `exigerAccesHub()`
-(`lib/gardeHub.ts`), appelée par `app/page.tsx` et `app/app/[id]/page.tsx` (le détail des coûts vit dans `/api/chantier/couts`, propriétaire seul).
+(`lib/gardeHub.ts`), appelée par `app/page.tsx`, `app/couts/page.tsx` et `app/app/[id]/page.tsx`.
 `tests/gardePages.test.ts` énumère les fichiers réels de `app/` et échoue si une page en
 oublie l'appel — deux exceptions nommées : `/login` (boucle) et `/sans-acces` (voir
 ci-dessous).

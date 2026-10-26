@@ -83,7 +83,7 @@ export function commandes(apps: AppPalette[]): Commande[] {
   const pages: Commande[] = [
     { id: "page-accueil", libelle: "Tableau de bord", genre: "page", cible: "/" },
     { id: "page-attention", libelle: "Ce qui demande mon attention", genre: "page", cible: "/attention" },
-    { id: "page-couts", libelle: "Coûts & quotas", genre: "page", cible: "/chantier?onglet=couts" },
+    { id: "page-couts", libelle: "Coûts & quotas", genre: "page", cible: "/couts" },
     { id: "page-admin", libelle: "Administration", genre: "page", cible: "/administration" },
     { id: "page-graphes", libelle: "Graphes de code", genre: "page", cible: "/graphes" },
   ];

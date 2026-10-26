@@ -35,7 +35,7 @@ describe("LiaBoot : réglages communs", () => {
     const layout = readFileSync(join(__dirname, "..", "app", "layout.tsx"), "utf8");
     expect(layout).toContain('import { LiaBoot } from "@/components/LiaBoot"');
     // Aucune de ces pages ne la remonte ni ne la retire : elle vit dans le body, hors de React.
-    for (const f of ["app/error.tsx", "app/not-found.tsx", "app/attention/loading.tsx"]) {
+    for (const f of ["app/error.tsx", "app/not-found.tsx", "app/attention/loading.tsx", "app/couts/loading.tsx"]) {
       const src = readFileSync(join(__dirname, "..", f), "utf8");
       expect(src).not.toMatch(/lia-ui|LiaBoot|<Lia[\s/>]/);
     }

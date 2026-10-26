@@ -4,7 +4,7 @@
 //     200 les totaux par période, le coût et les quotas de chaque app (`lib/chantierCouts.ts`)
 //     401 pas de session · 404 connecté mais pas le propriétaire · 429 trop vite
 //
-// Remplace la page `/couts` (retirée à la demande de Marc, 26/10/2026) : même source, `fetchAllSummaries`,
+// Reprend la page `/couts` (que Marc a demandé de retirer, 26/10/2026 ; son retrait suit) : même source, `fetchAllSummaries`,
 // c'est-à-dire les jetons `x-hub-token` des apps. D'où une route DERRIÈRE le garde du hub (jamais dans
 // les exclusions du middleware) qui se garde encore seule, et réservée au propriétaire : un invité du hub
 // a perdu le détail des coûts avec la page. 404 et non 403, il n'apprend pas que la page existe.

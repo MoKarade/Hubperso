@@ -277,17 +277,11 @@ describe("CostsCard", () => {
     expect(html).not.toContain("couts-panneau__alerte");
   });
 
-  it("le propriétaire a « Voir le détail » vers l'onglet Coûts du Chantier (le panneau n'est plus une carte-lien)", () => {
-    const html = rendre(h(CostsCard, { digest: vide, maintenant: MAINTENANT, detail: true }));
-    expect(html.match(/<a\b/g)).toHaveLength(1);
-    expect(html).toContain('href="/chantier?onglet=couts"');
-    expect(texte(html)).toContain("Voir le détail");
-  });
-
-  it("un invité du hub n'a aucun lien : la page de détail est réservée au propriétaire", () => {
+  it("le seul lien est « Voir le détail » vers /couts (le panneau n'est plus une carte-lien)", () => {
     const html = rendre(h(CostsCard, { digest: vide, maintenant: MAINTENANT }));
-    expect(html).not.toContain("<a");
-    expect(texte(html)).not.toContain("Voir le détail");
+    expect(html.match(/<a\b/g)).toHaveLength(1);
+    expect(html).toContain('href="/couts"');
+    expect(texte(html)).toContain("Voir le détail");
   });
 
   it("quotas à surveiller : singulier et pluriel", () => {

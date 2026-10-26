@@ -98,12 +98,6 @@ describe("GET /api/chantier/cadre", () => {
 });
 
 describe("next.config.mjs", () => {
-  it("/couts redirige (307, pas permanent) vers l'onglet Coûts du Chantier", async () => {
-    const { default: config } = await import("../next.config.mjs");
-    const redirections = await config.redirects!();
-    expect(redirections).toEqual([{ source: "/couts", destination: "/chantier?onglet=couts", permanent: false }]);
-  });
-
   it("exclut le cadre de la CSP globale, lui seul, et l'embarque avec la route", async () => {
     const { default: config } = await import("../next.config.mjs");
     const blocs = await config.headers!();

@@ -31,7 +31,7 @@ const DOMAINE_HUB = "hubperso.com";
 /**
  * Cette destination est-elle une app du hub ?
  *
- * Accepte les chemins RELATIFS (`/attention`) — même origine, aucun risque — et les URL
+ * Accepte les chemins RELATIFS (`/couts`) — même origine, aucun risque — et les URL
  * absolues en `https` sur `hubperso.com` ou l'un de ses sous-domaines. Refuse tout le
  * reste, y compris ce qui n'est pas analysable.
  */

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { exigerAccesHub } from "@/lib/gardeHub";
-import { estProprietaire } from "@/lib/personnes";
 import { isAuthConfigured } from "@/lib/authConfigured";
 import { getSources, type HubSource } from "@/lib/sources";
 import { fetchSummary, type SummaryResult } from "@/lib/fetchSummary";
@@ -122,9 +121,9 @@ async function StreamedFrise({
 }
 
 /** Panneau des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
-async function StreamedCosts({ promises, detail }: { promises: Promise<SummaryResult>[]; detail: boolean }) {
+async function StreamedCosts({ promises }: { promises: Promise<SummaryResult>[] }) {
   const results = await Promise.all(promises);
-  return <CostsCard digest={aggregateUsage(results)} maintenant={maintenantMs()} detail={detail} />;
+  return <CostsCard digest={aggregateUsage(results)} maintenant={maintenantMs()} />;
 }
 
 export default async function Page() {
@@ -154,9 +153,7 @@ export default async function Page() {
   // Et pas seulement la session : l'ACCÈS AU HUB. Une personne invitée sur une seule app a
   // une session valide (la connexion est unique) — cette page-ci affiche les données des
   // cinq apps, elle exige donc `aAcces(…, APP_HUB)`. Voir lib/gardeHub.ts.
-  const session = await exigerAccesHub();
-  // Le détail des coûts (onglet Coûts du Chantier) est réservé au propriétaire : lui seul voit le lien.
-  const proprietaire = estProprietaire(session.user?.email);
+  await exigerAccesHub();
 
   const sources: HubSource[] = getSources();
   // Lancées tout de suite et toutes ensemble : le parallélisme vient d'ici, pas de Suspense.
@@ -228,7 +225,7 @@ export default async function Page() {
 
       {/* Sous les cartes (maquette de base) : les coûts se lisent après l'état des apps. */}
       <Suspense fallback={<div className="couts-panneau couts-panneau--attente" aria-busy="true" />}>
-        <StreamedCosts promises={promises} detail={proprietaire} />
+        <StreamedCosts promises={promises} />
       </Suspense>
     </main>
   );

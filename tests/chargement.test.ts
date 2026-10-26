@@ -1,10 +1,10 @@
-// tests/chargement.test.ts — carte 3 : Attention affiche « Chargement… » pendant
+// tests/chargement.test.ts — carte 3 : Coûts et Attention affichent « Chargement… » pendant
 // que les apps répondent (jusqu'à 9 s), au lieu d'un écran vide.
 
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-describe.each(["app/attention/loading.tsx"])("%s", (chemin) => {
+describe.each(["app/couts/loading.tsx", "app/attention/loading.tsx"])("%s", (chemin) => {
   it("existe", () => {
     expect(existsSync(chemin)).toBe(true);
   });

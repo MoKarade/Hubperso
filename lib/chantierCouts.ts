@@ -1,6 +1,6 @@
 // lib/chantierCouts.ts — les coûts et quotas des apps, mis en forme pour l'onglet Coûts de la page Chantier.
 //
-// Ce que montrait la page `/couts` (retirée, décision de Marc du 26/10/2026) vit désormais dans l'onglet
+// Ce que montre la page `/couts` (à retirer, décision de Marc du 26/10/2026) vit aussi dans l'onglet
 // Coûts du Chantier : les totaux PAR période, le coût et les quotas de chaque app. PUR : aucune I/O, la
 // route `app/api/chantier/couts/route.ts` fait les lectures et le composant `ChantierCadre` poste le
 // résultat au cadre (le cadre n'a pas de réseau, voir `lib/chantierCadre.ts`).
