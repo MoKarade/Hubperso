@@ -1893,7 +1893,14 @@ function tree(n, d, a, seen){
   return h;
 }
 /* ---------- quota : où j'en suis, où je devrais être, ce qu'il reste par jour ---------- */
-const QCL = {get(){ try { return JSON.parse(localStorage.getItem('chantier-quota-claude') || 'null'); } catch(e){ return null; } },
+// Ce qui revient du stockage est reconstruit champ par champ (nombre, date ISO, saisie datetime-local) : rien de brut n'atteint le rendu.
+const QCL = {get(){ try {
+    const v = JSON.parse(localStorage.getItem('chantier-quota-claude') || 'null');
+    if (!v || typeof v !== 'object') return null;
+    const pct = v.pct == null ? NaN : Number(v.pct), reset = new Date(v.reset == null ? NaN : v.reset), at = Number(v.at);
+    return {pct: Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : null, reset: Number.isNaN(reset.getTime()) ? null : reset.toISOString(),
+      resetLocal: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(v.resetLocal)) ? String(v.resetLocal) : '', at: Number.isFinite(at) ? at : 0};
+  } catch(e){ return null; } },
   set(v){ try { localStorage.setItem('chantier-quota-claude', JSON.stringify(v)); } catch(e){} }};
 // « AAAA-MM-JJTHH:MM » saisi en heure du Québec -> instant UTC, quel que soit le fuseau du navigateur
 function qcMs(l){
@@ -2474,7 +2481,7 @@ function quotaSheet(key){
   if (g.used != null) h += `<p class="qnote">${esc(g.note || '')} <br>Mesure : ${esc(g.mesure || '—')}${g.stale ? ' · NON MESURÉ DEPUIS ' + esc(dur(g.now - g.stale)) + ' (valeur figée, pas l\'état actuel)' : g.perime ? ' · PÉRIMÉE (dernier relevé réussi)' : ''}. Source de la limite : ${esc(g.source || '—')}.</p>`;
   if (key === 'claude' && (g.used == null || g.saisie)){
     const cl = QCL.get();
-    h += `<div class="qin"><label>Utilisé&nbsp;<input type="number" min="0" max="100" step="1" id="clp" value="${cl && cl.pct != null ? cl.pct : ''}" aria-label="Pourcentage utilisé"> %</label><label>Remise à zéro (heure du Québec)&nbsp;<input type="datetime-local" id="clr" value="${esc(cl && cl.resetLocal || '')}"></label><button class="ib" data-cl>Enregistrer</button></div><p class="qnote">Dans claude.ai : Réglages > Utilisation. Gardé seulement dans ce navigateur.</p>`;
+    h += `<div class="qin"><label>Utilisé&nbsp;<input type="number" min="0" max="100" step="1" id="clp" value="${esc(cl && cl.pct != null ? String(cl.pct) : '')}" aria-label="Pourcentage utilisé"> %</label><label>Remise à zéro (heure du Québec)&nbsp;<input type="datetime-local" id="clr" value="${esc(cl && cl.resetLocal || '')}"></label><button class="ib" data-cl>Enregistrer</button></div><p class="qnote">Dans claude.ai : Réglages > Utilisation. Gardé seulement dans ce navigateur.</p>`;
   }
   if (key === 'api') h += `<p class="qnote">Neon (base de données) : pas de lecture d'usage depuis cette session. Rien n'est inventé pour combler.</p>`;
   return h;
