@@ -66,7 +66,11 @@ async function appelant(req: Request): Promise<Appelant | "invite" | undefined> 
   const jeton = req.headers.get(HUB_TOKEN_HEADER);
   if (jeton !== null) {
     const appId = appDuJeton(jeton);
-    return appId ? { source: appId, proprietaire: null } : undefined;
+    if (!appId) {
+      console.error("[lia/ask] jeton d'app inconnu (401)");
+      return undefined;
+    }
+    return { source: appId, proprietaire: null };
   }
   const session = await auth();
   const email = session?.user?.email;
