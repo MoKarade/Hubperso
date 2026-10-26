@@ -12,7 +12,7 @@
 //     pages, ni son stockage local ;
 //   - AUCUN réseau (`connect-src 'none'`) : elle ne peut rien envoyer ailleurs, ni relire l'API
 //     du hub avec la session ;
-//   - elle ne reçoit QUE ce que le hub lui poste (`postMessage`) : le relevé du Gantt.
+//   - elle ne reçoit QUE ce que le hub lui écrit dans son canal (`MessageChannel`) : le relevé du Gantt.
 //
 // Le document servi ne contient AUCUNE donnée (ni relevé, ni montant, ni registre des dépenses) :
 // `tests/chantierCadre.test.ts` le verrouille, parce que ce dépôt est PUBLIC.
@@ -53,11 +53,21 @@ export const CSP_CADRE = [
 
 /** Ce que le document du cadre et le hub se disent (`chantier/cadre.html`, `components/ChantierCadre.tsx`). */
 export const MESSAGE_PRET = "chantier-pret";
-export const MESSAGE_PING = "chantier-ping";
+export const MESSAGE_OK = "chantier-ok";
 export const MESSAGE_RELEVE = "chantier-releve";
 export const MESSAGE_ETAT = "chantier-etat";
 
-/** Le cadre dit qu'il est prêt à recevoir le relevé. Tout le reste est ignoré. */
+/**
+ * Le cadre dit qu'il est prêt à recevoir le relevé, et remet un bout de canal (`MessagePort`) : c'est
+ * par ce canal, et lui seul, que le hub lui écrit ensuite. Tout le reste est ignoré.
+ *
+ * ── POURQUOI UN CANAL ET PAS `postMessage(…, "*")` ───────────────────────────────────
+ *
+ * L'origine du cadre est OPAQUE : aucune valeur de `targetOrigin` ne la désigne, il ne resterait que
+ * « * » — n'importe quel document qui occuperait cette fenêtre recevrait le relevé. Un canal n'a
+ * qu'un destinataire, quoi qu'il arrive à la fenêtre. Dans l'autre sens, le cadre nomme l'origine du
+ * hub (celle de sa propre adresse), jamais « * ».
+ */
 export function estMessagePret(donnee: unknown): boolean {
   return (
     typeof donnee === "object" &&

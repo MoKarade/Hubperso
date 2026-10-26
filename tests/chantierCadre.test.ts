@@ -138,9 +138,16 @@ describe("chantier/cadre.html", () => {
     }
   });
 
-  it("parle au hub par postMessage : annonce qu'il est prêt, ne répond qu'à la fenêtre parente", () => {
-    expect(DOCUMENT).toContain(`'${MESSAGE_PRET}'`);
-    expect(DOCUMENT).toContain("ev.source !== window.parent");
-    expect(DOCUMENT).toContain("'chantier-ping'"); // il redit « prêt » à chaque sonde du hub (voir ChantierCadre)
+  it("parle au hub par un canal : nomme l'origine du hub, jamais « * », et ne lit que son canal", () => {
+    expect(DOCUMENT).toContain(`type: '${MESSAGE_PRET}'`);
+    expect(DOCUMENT).toContain("new MessageChannel()");
+    expect(DOCUMENT).toContain("new URL(location.href).origin");
+    expect(DOCUMENT).toContain("canal.port1.onmessage = surCanal");
+    // aucun postMessage à destinataire « * » : ni dans la page, ni dans le hub
+    expect(DOCUMENT).not.toMatch(/postMessage\([^)]*['"]\*['"]/);
+    for (const fichier of ["components/ChantierCadre.tsx"]) {
+      const code = readFileSync(resolve(process.cwd(), fichier), "utf8").replace(/\/\/[^\n]*/g, "");
+      expect(code, fichier).not.toMatch(/postMessage\([^)]*["']\*["']/);
+    }
   });
 });

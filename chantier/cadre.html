@@ -4,29 +4,40 @@
 <script>/* Chantier dans le hub : cette page tourne dans un cadre à origine OPAQUE (iframe `sandbox`, sans
    `allow-same-origin`) : elle n'a ni cookie du hub, ni accès à ses pages, ni réseau (`connect-src 'none'`).
    Le hub (la page parente, composant `ChantierCadre`) lit le relevé avec la session du propriétaire et le lui
-   POSTE ; ce shim le rend à la page par la même interface que l'artefact (`window.claude.use('files')`). */
+   POSTE ; ce shim le rend à la page par la même interface que l'artefact (`window.claude.use('files')`).
+   Le relevé ne passe JAMAIS par un `postMessage` à destinataire « * » : la page crée un canal (MessageChannel),
+   remet l'un de ses bouts au hub — en nommant son origine, celle de l'adresse de CE document —, et le hub
+   n'écrit plus que dans ce canal, qui n'a qu'un destinataire. */
 (function () {
-  var octets = null, attente = [];
+  var octets = null, attente = [], recu = false;
   function etat(texte) {
     var e = document.getElementById('err');
     if (e) { e.hidden = !texte; e.textContent = texte || ''; }
     else if (texte) document.addEventListener('DOMContentLoaded', function () { etat(texte); }, { once: true });
   }
-  window.addEventListener('message', function (ev) {
-    if (ev.source !== window.parent) return;
+  function surCanal(ev) {
     var m = ev.data;
     if (!m || typeof m !== 'object') return;
-    if (m.type === 'chantier-releve' && m.octets instanceof ArrayBuffer) {
+    if (m.type === 'chantier-ok') {
+      recu = true;
+    } else if (m.type === 'chantier-releve' && m.octets instanceof ArrayBuffer) {
+      recu = true;
       octets = new Uint8Array(m.octets);
       etat('');
       attente.splice(0).forEach(function (r) { r({ bytes: octets }); });
-    } else if (m.type === 'chantier-ping') {
-      // le hub écoute peut-être après notre premier « prêt » : on le redit à chaque sonde
-      window.parent.postMessage({ type: 'chantier-pret' }, '*');
     } else if (m.type === 'chantier-etat') {
+      recu = true;
       etat(typeof m.message === 'string' ? m.message : '');
     }
-  });
+  }
+  // Le hub peut écouter APRÈS notre premier appel (l'hydratation vient après le document) : on se
+  // représente chaque seconde, avec un canal neuf (un bout ne se transfère qu'une fois), jusqu'à son « ok ».
+  function bonjour() {
+    if (recu || window.parent === window) return;
+    var canal = new MessageChannel();
+    canal.port1.onmessage = surCanal;
+    window.parent.postMessage({ type: 'chantier-pret' }, new URL(location.href).origin, [canal.port2]);
+  }
   window.claude = {
     use: function (nom) {
       // Seules les données du relevé sont servies ; le connecteur Drive et la base de l'artefact n'existent pas ici.
@@ -38,7 +49,8 @@
       });
     }
   };
-  window.parent.postMessage({ type: 'chantier-pret' }, '*');
+  bonjour();
+  var minuteur = setInterval(function () { if (recu) clearInterval(minuteur); else bonjour(); }, 1000);
 })();
 </script>
 <meta charset="utf-8">

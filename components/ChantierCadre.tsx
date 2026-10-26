@@ -13,14 +13,15 @@
 //    répond 304 sans lire le contenu tant que le PC n'a rien envoyé de neuf (toutes les 10 min) ;
 //  - rien n'est demandé onglet caché ; au retour sur l'onglet, une lecture tout de suite.
 //
-// `postMessage(…, "*")` : l'origine du cadre est OPAQUE, aucune valeur de `targetOrigin` ne la
-// désigne. Le destinataire est donc fixé par la fenêtre (`contentWindow` de CET `<iframe>`), et la
-// page n'a aucun lien qui ne s'ouvre pas dans une autre fenêtre (verrou : `tests/chantierCadre.test.ts`).
+// Le cadre se présente avec un canal (`MessagePort`, voir `estMessagePret`) : le hub n'écrit QUE dans ce
+// canal, jamais par `postMessage(…, "*")` — l'origine du cadre est opaque et un « * » livrerait le relevé à
+// n'importe quel document qui occuperait la fenêtre. Le cadre se représente chaque seconde (le hub peut
+// n'écouter qu'après l'hydratation) jusqu'à ce que le hub lui réponde « ok » par le canal.
 
 import { useEffect, useRef } from "react";
 import {
   MESSAGE_ETAT,
-  MESSAGE_PING,
+  MESSAGE_OK,
   MESSAGE_RELEVE,
   SANDBOX_CADRE,
   URL_CADRE,
@@ -38,31 +39,23 @@ async function decompresser(gzip: ArrayBuffer): Promise<ArrayBuffer> {
 /** Le PC envoie toutes les 10 min ; relire chaque minute suffit, et 304 ne coûte pas la lecture en base. */
 const INTERVALLE_MS = 60_000;
 
-/** Tant que le cadre ne s'est pas annoncé, on le sonde chaque seconde (voir `ping`). */
-const SONDE_MS = 1_000;
-
 export function ChantierCadre() {
   const cadre = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    let pret = false;
+    let canal: MessagePort | null = null;
     let etag: string | null = null;
     let bandeau = false;
     let enCours = false;
 
-    // Le cadre et le hub chargent chacun à leur rythme : le « prêt » du cadre peut partir AVANT que ce
-    // composant écoute (l'hydratation vient après le document), et il serait perdu. Le hub sonde donc
-    // le cadre (au montage, à son chargement, puis chaque seconde) jusqu'à ce qu'il réponde « prêt ».
-    const ping = () => cadre.current?.contentWindow?.postMessage({ type: MESSAGE_PING }, "*");
-
     const dire = (message: string) => {
-      cadre.current?.contentWindow?.postMessage({ type: MESSAGE_ETAT, message }, "*");
+      canal?.postMessage({ type: MESSAGE_ETAT, message });
       bandeau = message !== "";
     };
 
     async function lire() {
-      const fenetre = cadre.current?.contentWindow;
-      if (!pret || !fenetre || enCours) return;
+      const sortie = canal;
+      if (!sortie || enCours) return;
       enCours = true;
       try {
         const reponse = await fetch(URL_RELEVE, {
@@ -75,7 +68,7 @@ export function ChantierCadre() {
           let octets = await reponse.arrayBuffer();
           if (estGzip(octets)) octets = await decompresser(octets);
           etag = reponse.headers.get("etag");
-          fenetre.postMessage({ type: MESSAGE_RELEVE, octets }, "*", [octets]);
+          sortie.postMessage({ type: MESSAGE_RELEVE, octets }, [octets]);
           bandeau = false;
         } else if (consigne.type === "inchange") {
           if (bandeau) dire("");
@@ -90,10 +83,14 @@ export function ChantierCadre() {
     }
 
     function surMessage(evenement: MessageEvent) {
-      // Seul NOTRE cadre est écouté : n'importe quelle autre fenêtre est ignorée.
-      if (evenement.source !== cadre.current?.contentWindow || !estMessagePret(evenement.data)) return;
-      if (pret) return; // le cadre répond aussi aux sondes : un deuxième « prêt » ne redemande rien
-      pret = true;
+      // Seul NOTRE cadre est écouté (et son origine est opaque : « null ») ; le premier canal reçu est
+      // le bon, les suivants (le cadre se représente tant qu'il n'a pas reçu « ok ») sont ignorés.
+      if (evenement.source !== cadre.current?.contentWindow || evenement.origin !== "null") return;
+      if (!estMessagePret(evenement.data) || canal) return;
+      const [port] = evenement.ports;
+      if (!port) return;
+      canal = port;
+      canal.postMessage({ type: MESSAGE_OK });
       void lire();
     }
 
@@ -101,21 +98,14 @@ export function ChantierCadre() {
       if (document.visibilityState === "visible") void lire();
     };
 
-    const surChargement = () => ping();
-    const cadreEl = cadre.current;
-
     window.addEventListener("message", surMessage);
     document.addEventListener("visibilitychange", surVisibilite);
-    cadreEl?.addEventListener("load", surChargement);
     const minuteur = setInterval(surVisibilite, INTERVALLE_MS);
-    const sonde = setInterval(() => (pret ? clearInterval(sonde) : ping()), SONDE_MS);
-    ping();
     return () => {
       window.removeEventListener("message", surMessage);
       document.removeEventListener("visibilitychange", surVisibilite);
-      cadreEl?.removeEventListener("load", surChargement);
       clearInterval(minuteur);
-      clearInterval(sonde);
+      canal?.close();
     };
   }, []);
 

@@ -4,7 +4,7 @@
 //     200 le document (HTML autonome, SANS donnée), CSP en bac à sable, `frame-ancestors 'self'`
 //     401 pas de session · 404 connecté mais pas le propriétaire · 500 document introuvable
 //
-// Ce document ne porte rien de privé (le relevé arrive par le hub, `postMessage`) ; la route reste
+// Ce document ne porte rien de privé (le relevé arrive par le hub, dans un canal) ; la route reste
 // pourtant derrière la connexion et réservée au propriétaire : la page n'a de sens que pour lui, et
 // un invité du hub ne doit pas apprendre qu'elle existe (404, pas 403). Propriétaire = `AUTHORIZED_EMAIL`,
 // sans réseau ni base, comme `app/api/graphes/[depot]/route.ts`.
