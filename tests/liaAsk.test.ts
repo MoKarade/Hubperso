@@ -230,12 +230,26 @@ describe("POST /api/lia/ask", () => {
     expect(moq.fetch).not.toHaveBeenCalled();
   });
 
-  it("jeton d'app faux : 401, sans repli sur une session valide", async () => {
+  it("jeton d'app faux : 401, journalise l'erreur sans le jeton, sans repli sur une session valide", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     moq.auth.mockResolvedValue({ user: { email: "marc@exemple.invalid" } });
     moq.aAcces.mockResolvedValue(true);
-    const r = await POST(requete({ question: "q" }, { "x-hub-token": "jeton-de-test-faux" }));
+    const jetonInconnu = "jeton-de-test-faux-secret-12345";
+    const r = await POST(requete({ question: "q" }, { "x-hub-token": jetonInconnu }));
     expect(r.status).toBe(401);
     expect(moq.fetch).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith("[lia/ask] jeton d'app inconnu (401)");
+    const tousLesArgs = consoleSpy.mock.calls.flatMap((call) => call.map(String)).join(" ");
+    expect(tousLesArgs).not.toContain(jetonInconnu);
+  });
+
+  it("jeton d'app valide : ne journalise aucun jeton d'app inconnu", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await POST(
+      requete({ question: "Où en est le budget ?", proprietaire: true }, { "x-hub-token": JETON_APP }),
+    );
+    expect(r.status).toBe(200);
+    expect(consoleSpy).not.toHaveBeenCalledWith("[lia/ask] jeton d'app inconnu (401)");
   });
 
   it("jeton d'app valide : relaie à MemoryAI avec le jeton du hub et la source tirée du jeton", async () => {
