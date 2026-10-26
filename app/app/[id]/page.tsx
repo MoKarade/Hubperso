@@ -8,7 +8,7 @@
 // SÉCURITÉ. Cette page AFFICHE DES DONNÉES et déclenche le fetch porteur du `x-hub-token` :
 // elle doit rester derrière la middleware (son chemin n'a pas de point, donc le matcher la
 // couvre — ne jamais l'ajouter aux exclusions) ET revérifier la session côté serveur avant
-// le moindre fetch, comme `app/page.tsx` et `app/couts/page.tsx`. Défense en profondeur.
+// le moindre fetch, comme `app/page.tsx` et `app/attention/page.tsx`. Défense en profondeur.
 //
 // Elle n'interroge QUE la source demandée, jamais les cinq : ouvrir un détail ne doit pas
 // coûter quatre appels inutiles — DriveAI en particulier paie chaque appel sur un quota dur.

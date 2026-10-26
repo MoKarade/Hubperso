@@ -38,6 +38,11 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/api/chantier/cadre": ["./chantier/cadre.html"],
   },
+  // La page Coûts a disparu (Marc, 26/10/2026) : ses infos vivent dans l'onglet Coûts du Chantier. Un favori
+  // ou un lien ancien y arrive ; temporaire (307), pour ne pas figer la redirection dans les navigateurs.
+  async redirects() {
+    return [{ source: "/couts", destination: "/chantier?onglet=couts", permanent: false }];
+  },
   // En-têtes de sécurité pour toute exposition Internet.
   async headers() {
     return [

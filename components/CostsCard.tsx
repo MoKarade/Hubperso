@@ -94,7 +94,16 @@ function JaugeQuota({ jauge, maintenant }: { jauge: Jauge; maintenant: number })
   );
 }
 
-export function CostsCard({ digest, maintenant }: { digest: UsageDigest; maintenant: number }) {
+export function CostsCard({
+  digest,
+  maintenant,
+  detail = false,
+}: {
+  digest: UsageDigest;
+  maintenant: number;
+  /** Le détail des coûts vit dans l'onglet Coûts du Chantier, réservé au propriétaire : le lien n'est posé que pour lui. */
+  detail?: boolean;
+}) {
   const blocs = blocsCouts(digest);
   const sansCout = appsSansCout(digest);
   const quotas = jauges(digest);
@@ -116,9 +125,11 @@ export function CostsCard({ digest, maintenant }: { digest: UsageDigest; mainten
             </p>
           )}
         </div>
-        <Link className="btn couts-panneau__detail" href="/couts">
-          Voir le détail
-        </Link>
+        {detail && (
+          <Link className="btn couts-panneau__detail" href="/chantier?onglet=couts">
+            Voir le détail
+          </Link>
+        )}
       </header>
 
       {digest.trackedCount === 0 ? (

@@ -1,7 +1,8 @@
 // lib/navigation.ts — ce que la navigation du hub propose, et où on est.
 //
 // Marc, 22/10/2026 (maquette validée) : une barre latérale à l'ordinateur, une barre du bas au
-// téléphone, les mêmes entrées dans les deux : Vue (accueil, attention, coûts), Apps, Gérer.
+// téléphone, les mêmes entrées dans les deux : Vue (accueil, attention, et le chantier pour le propriétaire), Apps, Gérer.
+// (La page Coûts a disparu le 26/10/2026 : ses infos vivent dans l'onglet Coûts du chantier.)
 // Ce fichier est PUR : il décide QUOI afficher et QUELLE entrée est active, il ne rend rien. Le
 // composant (`components/Navigation.tsx`) ne fait que peindre ce que lui rend `modeleNavigation`.
 //
@@ -11,7 +12,7 @@
 // pastille. L'état d'une app se lit sur sa carte et sur /attention.
 
 /** Les icônes de la navigation (tracés dans `components/Navigation.tsx`). */
-export type IconeNav = "accueil" | "attention" | "couts" | "plus" | "graphes" | "chantier" | "admin";
+export type IconeNav = "accueil" | "attention" | "plus" | "graphes" | "chantier" | "admin";
 
 export interface EntreeNav {
   /** Stable : sert de clé et, pour une app, de `HubSource.id`. */
@@ -28,7 +29,7 @@ export interface EntreeNav {
 export interface ModeleNav {
   vue: EntreeNav[];
   apps: EntreeNav[];
-  /** Vide pour quiconque n'est pas le propriétaire : graphes, chantier et administration lui sont réservés. */
+  /** Vide pour quiconque n'est pas le propriétaire : graphes et administration lui sont réservés. */
   gerer: EntreeNav[];
 }
 
@@ -40,14 +41,15 @@ export interface AppNav {
 }
 
 /** Où se tient la barre du bas : ses trois entrées de page, ou la quatrième, « Plus » (la feuille). */
-export type RangBarre = "accueil" | "attention" | "couts" | "plus";
+export type RangBarre = "accueil" | "attention" | "chantier" | "plus";
 
 export function modeleNavigation(apps: readonly AppNav[], proprietaire: boolean): ModeleNav {
   return {
     vue: [
       { id: "accueil", libelle: "Accueil", href: "/", icone: "accueil" },
       { id: "attention", libelle: "Attention", href: "/attention", icone: "attention" },
-      { id: "couts", libelle: "Coûts", href: "/couts", icone: "couts" },
+      // Le Chantier (suivi, Gantt, coûts) prend la place que tenait « Coûts » : propriétaire seul.
+      ...(proprietaire ? [{ id: "chantier", libelle: "Chantier", href: "/chantier", icone: "chantier" as const }] : []),
     ],
     apps: apps.map((app) => ({
       id: app.id,
@@ -59,7 +61,6 @@ export function modeleNavigation(apps: readonly AppNav[], proprietaire: boolean)
     gerer: proprietaire
       ? [
           { id: "graphes", libelle: "Graphes de code", href: "/graphes", icone: "graphes" },
-          { id: "chantier", libelle: "Chantier", href: "/chantier", icone: "chantier" },
           { id: "administration", libelle: "Administration", href: "/administration", icone: "admin" },
         ]
       : [],
@@ -74,12 +75,12 @@ export function estActive(chemin: string, href: string): boolean {
 
 /**
  * Où la barre du bas se tient. Une page d'app est « un cran sous l'accueil » (on y arrive depuis
- * une carte) ; graphes, chantier et administration vivent dans « Plus ».
+ * une carte) ; graphes et administration vivent dans « Plus ».
  */
 export function rangBarre(chemin: string): RangBarre {
   if (estActive(chemin, "/attention")) return "attention";
-  if (estActive(chemin, "/couts")) return "couts";
-  if (estActive(chemin, "/graphes") || estActive(chemin, "/chantier") || estActive(chemin, "/administration")) {
+  if (estActive(chemin, "/chantier")) return "chantier";
+  if (estActive(chemin, "/graphes") || estActive(chemin, "/administration")) {
     return "plus";
   }
   return "accueil";

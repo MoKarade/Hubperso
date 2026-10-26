@@ -76,6 +76,11 @@ widgets 100 % génériques.
   (`next.config.mjs` : `frame-ancestors 'none'` interdirait le cadre) et porte la sienne (`lib/chantierCadre.ts` :
   `sandbox` sans `allow-same-origin`, `connect-src 'none'`, `frame-ancestors 'self'`). Propriétaire seul (`AUTHORIZED_EMAIL`,
   sans réseau), 404 pour un invité. Ne jamais y ajouter de donnée : le dépôt est public (`tests/chantierCadre.test.ts`).
+- **`GET /api/chantier/couts` reste derrière la session et se garde seule** (26/10/2026) : elle remplace la page `/couts`
+  (retirée ; `/couts` redirige vers `/chantier?onglet=couts`). Elle interroge les apps avec leurs jetons (`fetchAllSummaries`),
+  donc propriétaire seul (`AUTHORIZED_EMAIL`, sans réseau ; 401 sans session, 404 sinon, 429 au-delà de 6/min), `no-store`.
+  Mise en forme pure : `lib/chantierCouts.ts` (un total PAR période, jamais fusionnés). Lue par `components/ChantierCadre.tsx`,
+  postée au cadre par le canal (`chantier-couts`) : le cadre n'a aucun réseau.
 - **`POST /api/lia/ask` traverse aussi le garde, et se garde toute seule** (22/10/2026, #336) :
   la question de LIA. Une app s'identifie par son `HUB_TOKEN` (`appDuJeton`, la source vient du
   jeton, jamais du corps) ; l'accueil, par la session + `aAcces(…, APP_HUB)` lus dans la route.
