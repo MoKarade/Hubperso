@@ -2,9 +2,9 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
-## 🟦 Session 2026-10-26 — **lia-ui v0.40.0 : les sources d'une réponse de LIA deviennent des liens (Hubperso#517)**
+## 🟦 Session 2026-10-26 — **lia-ui v0.41.0 : sources cliquables et chat en bulle lissée (Hubperso#517)**
 
-Pin de `@mokarade/lia-ui` de v0.39.0 à v0.40.0 (sha pelé `b3babcb`), seul changement (`package.json`, lock ; le test de `liaEtatPartage` garde son titre v0.39.0, qui décrit la fonction livrée alors). v0.40.0 : les marques `[→lien]` et `[↗lien]` d'une réponse sortent du texte et deviennent une ligne « Sources » de petits liens sous le message (https, sans identifiants ; une marque invalide reste du texte). Retour de Marc du 26/10 : « incompréhensible, trop de texte, pas de liens ». Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__sources`, puis une réponse réelle de LIA relevée par le PC ; la tâche reste ouverte jusque-là.
+Pin de `@mokarade/lia-ui` de v0.39.0 à v0.41.0 (sha pelé `4d0c6f9`), seul changement (`package.json`, lock ; le test de `liaEtatPartage` garde son titre v0.39.0, qui décrit la fonction livrée alors). v0.40.0 : les marques `[→lien]` et `[↗lien]` d'une réponse sortent du texte et deviennent une ligne « Sources » de petits liens (https, sans identifiants ; une marque invalide reste du texte). v0.41.0 : le chat ne se replace plus à chaque image, reste dans l'écran visible (clavier du téléphone compris), glisse vers sa place, ne bouge pas quand le texte arrive, journal collé en bas. Retours de Marc du 26/10 : « incompréhensible, trop de texte, pas de liens » et « clunky, ça bug quand ça sort de la page ». Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__sources` et `lia-ui__chat--glisse`, puis relevé du PC (bureau et téléphone) ; la tâche reste ouverte jusque-là.
 
 ## 🟦 Session 2026-10-26 — **Coût Vercel du hub : moins d'invocations et de CPU (Hubperso#508)**
 
