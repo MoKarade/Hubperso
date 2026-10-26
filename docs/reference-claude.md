@@ -71,6 +71,11 @@ widgets 100 % génériques.
   la page existe). Elle rend le dernier relevé du Gantt en gzip, avec `ETag` (heure de réception) :
   un `If-None-Match` connu rend 304 sans relire le contenu en base. Lue par la page Chantier ;
   jamais mise en cache (`no-store`). Logique pure : `lib/chantierReleve.ts`.
+- **`GET /api/chantier/cadre` ne traverse PAS le CSP du hub** (26/10/2026) : le document de la page Chantier
+  (`chantier/cadre.html`, sans aucune donnée) est mis en cadre par `/chantier`. Il est **exclu de la CSP globale**
+  (`next.config.mjs` : `frame-ancestors 'none'` interdirait le cadre) et porte la sienne (`lib/chantierCadre.ts` :
+  `sandbox` sans `allow-same-origin`, `connect-src 'none'`, `frame-ancestors 'self'`). Propriétaire seul (`AUTHORIZED_EMAIL`,
+  sans réseau), 404 pour un invité. Ne jamais y ajouter de donnée : le dépôt est public (`tests/chantierCadre.test.ts`).
 - **`POST /api/lia/ask` traverse aussi le garde, et se garde toute seule** (22/10/2026, #336) :
   la question de LIA. Une app s'identifie par son `HUB_TOKEN` (`appDuJeton`, la source vient du
   jeton, jamais du corps) ; l'accueil, par la session + `aAcces(…, APP_HUB)` lus dans la route.

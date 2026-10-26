@@ -64,6 +64,11 @@ const TRACES: Record<IconeNav, ReactNode> = {
       <path d="M8 7.5l8-1M7 9l4 7M17 8l-4 8" />
     </>
   ),
+  chantier: (
+    <>
+      <path d="M4 7h7M7 12h10M5 17h8" />
+    </>
+  ),
   admin: (
     <>
       <circle cx="12" cy="12" r="3" />
