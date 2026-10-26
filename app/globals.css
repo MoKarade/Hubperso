@@ -2840,6 +2840,16 @@ a:focus-visible,
 .cadre__contenu:focus {
   outline: none;
 }
+/* ── CHANTIER (26/10/2026) : la page de suivi tient dans un cadre isolé (`components/ChantierCadre.tsx`).
+   Il remplit la place du contenu, au-dessus de la barre du bas (téléphone) ou à côté de la barre
+   latérale (≥ 1024 px) ; la page y défile seule et porte ses propres onglets. */
+.chantier-cadre {
+  display: block;
+  width: 100%;
+  height: calc(100dvh - 4.75rem - env(safe-area-inset-bottom, 0px));
+  border: 0;
+  background: var(--bg);
+}
 /* Lien d'évitement : invisible tant qu'on ne tabule pas dessus. */
 .cadre__saut {
   position: absolute;
@@ -3046,6 +3056,9 @@ a:focus-visible,
   }
   .cadre__contenu {
     padding-bottom: 0;
+  }
+  .chantier-cadre {
+    height: 100dvh;
   }
   .nav {
     position: sticky;

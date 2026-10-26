@@ -1,18 +1,18 @@
-// app/chantier/page.tsx — suivi de l'heure du dernier relevé Gantt.
+// app/chantier/page.tsx — la page de suivi du chantier (accueil, à toi, Gantt, coûts), dans le hub.
 //
-// RÉSERVÉE AU PROPRIÉTAIRE (`exigerProprietaire`) : un relevé Gantt contient l'activité
-// du PC de Marc.
+// RÉSERVÉE AU PROPRIÉTAIRE (`exigerProprietaire`) : le relevé contient l'activité du PC de Marc et les
+// titres de tâches privés (FinanceAI, DriveAI).
 //
-// NO FAKE DATA :
-// - Sans ligne en base : « Aucun relevé reçu pour l'instant », jamais une date inventée.
-// - Base injoignable : « Le relevé est indisponible : <détail> », jamais une fausse absence.
-// - La page n'affiche PAS le contenu du relevé (titres de tâches privés), seulement les deux heures.
+// Cette page ne lit RIEN en base : elle pose un cadre isolé (`components/ChantierCadre.tsx`) qui
+// charge le document `/api/chantier/cadre`, puis relit le relevé par `/api/chantier/releve` (304
+// tant que le PC n'a rien envoyé de neuf). Le hub peut donc se rafraîchir sans jamais toucher à
+// la base pour elle.
+//
+// NO FAKE DATA : sans relevé, la page le dit (« Aucun relevé reçu pour l'instant ») ; elle n'invente
+// ni heure ni chiffre.
 
-import Link from "next/link";
 import { exigerProprietaire } from "@/lib/gardeHub";
-import { baseConfiguree } from "@/lib/db";
-import { lireGantt } from "@/lib/ganttDb";
-import { etatChantier, type EtatChantier } from "@/lib/chantier";
+import { ChantierCadre } from "@/components/ChantierCadre";
 
 export const metadata = {
   title: "Chantier — Hub perso",
@@ -22,45 +22,5 @@ export const dynamic = "force-dynamic";
 
 export default async function ChantierPage() {
   await exigerProprietaire();
-
-  let etat: EtatChantier;
-
-  if (!baseConfiguree()) {
-    etat = etatChantier(null, new Error("DATABASE_URL absente"));
-  } else {
-    try {
-      const releve = await lireGantt();
-      etat = etatChantier(releve);
-    } catch (erreur) {
-      console.error("[chantier] lecture du relevé Gantt impossible :", erreur);
-      etat = etatChantier(null, erreur);
-    }
-  }
-
-  return (
-    <main className="page">
-      <header className="page__head">
-        <div>
-          <p className="page__eyebrow">hubperso.com</p>
-          <h1 className="page__title">Chantier</h1>
-        </div>
-        <Link href="/" className="btn">
-          ← Hub
-        </Link>
-      </header>
-
-      {etat.type === "indisponible" ? (
-        <p className="admin__vide" role="alert">
-          {etat.message}
-        </p>
-      ) : etat.type === "aucun" ? (
-        <p className="attention__vide">{etat.message}</p>
-      ) : (
-        <div className="attention__vide">
-          <p className="page__sub">{etat.recuTexte}</p>
-          <p className="page__meta">{etat.envoyeTexte}</p>
-        </div>
-      )}
-    </main>
-  );
+  return <ChantierCadre />;
 }

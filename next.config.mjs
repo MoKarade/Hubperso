@@ -33,14 +33,20 @@ const nextConfig = {
   // Sans cela Next empaquette le SDK Sentry côté serveur et son chargeur de crochets échoue avec
   // « Cannot find package '@sentry/server-runtime-injection' » (constaté dans app-template).
   serverExternalPackages: ["@sentry/server-runtime-injection"],
+  // Le document de la page Chantier n'est lu qu'à l'exécution (`fs`) : sans cette ligne, Vercel ne
+  // l'empaquetterait pas avec la route et elle répondrait 500 en production.
+  outputFileTracingIncludes: {
+    "/api/chantier/cadre": ["./chantier/cadre.html"],
+  },
   // En-têtes de sécurité pour toute exposition Internet.
   async headers() {
     return [
       {
-        // Tout SAUF les graphes de code : ces pages (code d'un dépôt, non fiable) portent leur
-        // propre CSP en bac à sable (app/api/graphes/[depot]/route.ts). Deux CSP s'additionnent
-        // en intersection, et `script-src 'self'` du hub y serait redondant et trompeur.
-        source: "/((?!api/graphes/).*)",
+        // Tout SAUF les graphes de code et le cadre de la page Chantier : ces documents portent leur
+        // propre CSP en bac à sable (app/api/graphes/[depot]/route.ts, app/api/chantier/cadre/route.ts).
+        // Deux CSP s'additionnent en intersection : `script-src 'self'` du hub y serait redondant
+        // et trompeur, et `frame-ancestors 'none'` interdirait de mettre le cadre dans /chantier.
+        source: "/((?!api/graphes/|api/chantier/cadre(?:/|$)).*)",
         headers: [
           { key: "Content-Security-Policy", value: CSP },
           // HSTS : le hub est 100 % HTTPS (Vercel). 1 an, sous-domaines inclus — les apps
@@ -66,6 +72,21 @@ const nextConfig = {
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      {
+        // Le cadre de /chantier garde les autres en-têtes de sécurité du hub, sans la CSP globale,
+        // et n'est affichable que par le hub lui-même (même origine).
+        source: "/api/chantier/cadre",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
