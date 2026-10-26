@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-26 — **lia-ui v0.42.0 : la hauteur de la bulle se révèle en douceur (Hubperso#528)**
+
+Pin de `@mokarade/lia-ui` de v0.41.1 à v0.42.0 (sha pelé `cff04f4`), seul changement (`package.json`, lock). La bulle de v0.41.1 restait dans l'écran mais changeait de hauteur d'un coup à chaque réponse. v0.42.0 découvre la hauteur gagnée en 280 ms depuis le bord fixe (`clip-path`), sans ombre coupée, et ne bouge rien avec `prefers-reduced-motion`. Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `inset(-24px)` avec `animate`, puis mesure sur la page de connexion publique.
+
 ## 🟦 Session 2026-10-26 — **lia-ui v0.41.1 : la bulle ne dépasse plus de l'écran (Hubperso#522)**
 
 Pin de `@mokarade/lia-ui` de v0.41.0 à v0.41.1 (sha pelé `90dc7e7`), seul changement (`package.json`, lock). Le relevé du PC sur v0.41.0 montrait la bulle hors écran à l'ouverture et à l'arrivée de la réponse (jusqu'à 118 px), puis un saut de 40 à 90 px. v0.41.1 place sans glisser quand la taille ou l'écran change (clavier, rotation) et, à côté de LIA dans la moitié basse de l'écran, garde le bord du bas fixe : la bulle grandit vers le haut. Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__chat--glisse`, puis nouveau relevé du PC (bureau et téléphone) ; la tâche reste ouverte jusque-là.
