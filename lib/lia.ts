@@ -9,7 +9,7 @@ export type EntreeLia = { id: string; label: string; href: string };
 
 export const ENTREES_LIA: readonly EntreeLia[] = [
   { id: "attention", label: "Voir ce qui demande de l’attention", href: "/attention" },
-  { id: "couts", label: "Voir les coûts et quotas", href: "/couts" },
+  { id: "couts", label: "Voir les coûts et quotas", href: "/chantier?onglet=couts" },
 ];
 
 /** Clé de mémorisation locale (position, vie autonome) : une par hôte, pour ne pas mêler le hub aux apps. */

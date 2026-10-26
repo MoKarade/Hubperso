@@ -47,22 +47,23 @@ afterEach(() => {
 });
 
 describe("modeleNavigation", () => {
-  it("Vue = accueil, attention, coûts ; Apps = une entrée par app vers sa page", () => {
+  it("Vue = accueil, attention (+ chantier pour le propriétaire) ; Apps = une entrée par app vers sa page", () => {
     const m = modeleNavigation(APPS, false);
-    expect(m.vue.map((e) => e.href)).toEqual(["/", "/attention", "/couts"]);
+    expect(m.vue.map((e) => e.href)).toEqual(["/", "/attention"]);
+    expect(modeleNavigation(APPS, true).vue.map((e) => e.href)).toEqual(["/", "/attention", "/chantier"]);
     expect(m.apps.map((e) => [e.libelle, e.href])).toEqual([
       ["FinanceAI", "/app/financeai"],
       ["CarAI", "/app/carai"],
     ]);
   });
 
-  it("Gérer (graphes, chantier, administration) n'existe que pour le propriétaire", () => {
+  it("Gérer (graphes, administration) n'existe que pour le propriétaire ; la page Coûts n'existe plus", () => {
     expect(modeleNavigation(APPS, false).gerer).toEqual([]);
-    expect(modeleNavigation(APPS, true).gerer.map((e) => e.href)).toEqual([
-      "/graphes",
-      "/chantier",
-      "/administration",
-    ]);
+    expect(modeleNavigation(APPS, true).gerer.map((e) => e.href)).toEqual(["/graphes", "/administration"]);
+    for (const proprietaire of [false, true]) {
+      const m = modeleNavigation(APPS, proprietaire);
+      expect([...m.vue, ...m.gerer].some((e) => e.href === "/couts")).toBe(false);
+    }
   });
 
   it("ne porte aucun état : ni point de couleur, ni compteur (rien d'inventé)", () => {
@@ -86,13 +87,12 @@ describe("page active", () => {
     expect(estActive("/app/financeai-bis", "/app/financeai")).toBe(false);
   });
 
-  it("barre du bas : une page d'app reste sous Accueil, graphes, chantier et admin sous Plus", () => {
+  it("barre du bas : une page d'app reste sous Accueil, le chantier a sa place, graphes et admin sous Plus", () => {
     expect(rangBarre("/")).toBe("accueil");
     expect(rangBarre("/app/carai")).toBe("accueil");
     expect(rangBarre("/attention")).toBe("attention");
-    expect(rangBarre("/couts")).toBe("couts");
+    expect(rangBarre("/chantier")).toBe("chantier");
     expect(rangBarre("/graphes")).toBe("plus");
-    expect(rangBarre("/chantier")).toBe("plus");
     expect(rangBarre("/administration")).toBe("plus");
   });
 
@@ -198,7 +198,8 @@ describe("NavigationMontee (garde serveur)", () => {
     const el = (await NavigationMontee({ children: enfants })) as ReactElement<{
       modele: ReturnType<typeof modeleNavigation>;
     }>;
-    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "chantier", "administration"]);
+    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "administration"]);
+    expect(el.props.modele.vue.map((e) => e.id)).toContain("chantier");
   });
 
   it("session illisible : pages sans navigation, et l'erreur est journalisée (jamais avalée)", async () => {
