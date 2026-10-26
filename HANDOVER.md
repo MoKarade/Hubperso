@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-26 — **lia-ui v0.41.1 : la bulle ne dépasse plus de l'écran (Hubperso#522)**
+
+Pin de `@mokarade/lia-ui` de v0.41.0 à v0.41.1 (sha pelé `90dc7e7`), seul changement (`package.json`, lock). Le relevé du PC sur v0.41.0 montrait la bulle hors écran à l'ouverture et à l'arrivée de la réponse (jusqu'à 118 px), puis un saut de 40 à 90 px. v0.41.1 place sans glisser quand la taille ou l'écran change (clavier, rotation) et, à côté de LIA dans la moitié basse de l'écran, garde le bord du bas fixe : la bulle grandit vers le haut. Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__chat--glisse`, puis nouveau relevé du PC (bureau et téléphone) ; la tâche reste ouverte jusque-là.
+
 ## 🟦 Session 2026-10-26 — **lia-ui v0.41.0 : sources cliquables et chat en bulle lissée (Hubperso#517)**
 
 Pin de `@mokarade/lia-ui` de v0.39.0 à v0.41.0 (sha pelé `4d0c6f9`), seul changement (`package.json`, lock ; le test de `liaEtatPartage` garde son titre v0.39.0, qui décrit la fonction livrée alors). v0.40.0 : les marques `[→lien]` et `[↗lien]` d'une réponse sortent du texte et deviennent une ligne « Sources » de petits liens (https, sans identifiants ; une marque invalide reste du texte). v0.41.0 : le chat ne se replace plus à chaque image, reste dans l'écran visible (clavier du téléphone compris), glisse vers sa place, ne bouge pas quand le texte arrive, journal collé en bas. Retours de Marc du 26/10 : « incompréhensible, trop de texte, pas de liens » et « clunky, ça bug quand ça sort de la page ». Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__sources` et `lia-ui__chat--glisse`, puis relevé du PC (bureau et téléphone) ; la tâche reste ouverte jusque-là.
