@@ -11,7 +11,7 @@
 // pastille. L'état d'une app se lit sur sa carte et sur /attention.
 
 /** Les icônes de la navigation (tracés dans `components/Navigation.tsx`). */
-export type IconeNav = "accueil" | "attention" | "couts" | "plus" | "graphes" | "demandes" | "admin";
+export type IconeNav = "accueil" | "attention" | "couts" | "plus" | "graphes" | "admin";
 
 export interface EntreeNav {
   /** Stable : sert de clé et, pour une app, de `HubSource.id`. */
@@ -28,7 +28,7 @@ export interface EntreeNav {
 export interface ModeleNav {
   vue: EntreeNav[];
   apps: EntreeNav[];
-  /** Vide pour quiconque n'est pas le propriétaire : graphes, demandes et administration lui sont réservés. */
+  /** Vide pour quiconque n'est pas le propriétaire : graphes et administration lui sont réservés. */
   gerer: EntreeNav[];
 }
 
@@ -59,7 +59,6 @@ export function modeleNavigation(apps: readonly AppNav[], proprietaire: boolean)
     gerer: proprietaire
       ? [
           { id: "graphes", libelle: "Graphes de code", href: "/graphes", icone: "graphes" },
-          { id: "demandes", libelle: "Demandes", href: "/demandes", icone: "demandes" },
           { id: "administration", libelle: "Administration", href: "/administration", icone: "admin" },
         ]
       : [],
@@ -74,12 +73,12 @@ export function estActive(chemin: string, href: string): boolean {
 
 /**
  * Où la barre du bas se tient. Une page d'app est « un cran sous l'accueil » (on y arrive depuis
- * une carte) ; graphes, demandes et administration vivent dans « Plus ».
+ * une carte) ; graphes et administration vivent dans « Plus ».
  */
 export function rangBarre(chemin: string): RangBarre {
   if (estActive(chemin, "/attention")) return "attention";
   if (estActive(chemin, "/couts")) return "couts";
-  if (estActive(chemin, "/graphes") || estActive(chemin, "/demandes") || estActive(chemin, "/administration")) return "plus";
+  if (estActive(chemin, "/graphes") || estActive(chemin, "/administration")) return "plus";
   return "accueil";
 }
 

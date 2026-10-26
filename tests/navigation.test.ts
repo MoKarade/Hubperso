@@ -56,11 +56,10 @@ describe("modeleNavigation", () => {
     ]);
   });
 
-  it("Gérer (graphes, demandes, administration) n'existe que pour le propriétaire", () => {
+  it("Gérer (graphes, administration) n'existe que pour le propriétaire", () => {
     expect(modeleNavigation(APPS, false).gerer).toEqual([]);
     expect(modeleNavigation(APPS, true).gerer.map((e) => e.href)).toEqual([
       "/graphes",
-      "/demandes",
       "/administration",
     ]);
   });
@@ -92,7 +91,6 @@ describe("page active", () => {
     expect(rangBarre("/attention")).toBe("attention");
     expect(rangBarre("/couts")).toBe("couts");
     expect(rangBarre("/graphes")).toBe("plus");
-    expect(rangBarre("/demandes")).toBe("plus");
     expect(rangBarre("/administration")).toBe("plus");
   });
 
@@ -138,8 +136,6 @@ describe("Cadre (rendu serveur)", () => {
   it("n'offre graphes et administration qu'au propriétaire", () => {
     expect(rendre("/", false)).not.toContain('href="/graphes"');
     expect(rendre("/", false)).not.toContain('href="/administration"');
-    expect(rendre("/", false)).not.toContain('href="/demandes"');
-    expect(rendre("/", true)).toContain('href="/demandes"');
     expect(rendre("/", true)).toContain('href="/graphes"');
     expect(rendre("/", true)).toContain('href="/administration"');
   });
@@ -200,7 +196,7 @@ describe("NavigationMontee (garde serveur)", () => {
     const el = (await NavigationMontee({ children: enfants })) as ReactElement<{
       modele: ReturnType<typeof modeleNavigation>;
     }>;
-    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "demandes", "administration"]);
+    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "administration"]);
   });
 
   it("session illisible : pages sans navigation, et l'erreur est journalisée (jamais avalée)", async () => {

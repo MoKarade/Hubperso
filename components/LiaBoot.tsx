@@ -6,8 +6,7 @@ import { decrireParDefaut, type MotifMonde } from "@mokarade/lia-ui";
 import { demarrerLia } from "@mokarade/lia-ui/boot";
 import { etatHttp } from "@mokarade/lia-ui/etat-http";
 import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
-import { cibleDemandeHub, decrireElementHub } from "@/lib/liaElement";
-import { deposerDemande } from "@/lib/demandesClient";
+import { decrireElementHub } from "@/lib/liaElement";
 import { rendreBlocsHub } from "@/lib/liaBlocs";
 import { poserQuestion } from "@/lib/liaClient";
 import {
@@ -126,15 +125,7 @@ const demarrage = demarrerLia({
       : etatSansLectureCachee(etatHttp("/api/lia/etat"), () => document.visibilityState === "hidden"),
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
   // Clic droit sur n'importe quel élément (lia-ui ≥ v0.26.0) : le hub nomme ses blocs (`lib/liaElement.ts`), lia-ui décrit le reste.
-  elements: {
-    decrire: (el) => decrireElementHub(el, decrireParDefaut),
-    // lia-ui ≥ v0.35.0 : l'entrée du menu choisie. « Que peut-on changer ici ? » est GARDÉE dans MemoryAI (`/demandes`) : l'app,
-    // le genre et la phrase du hub qui décrit l'élément, jamais son texte (`lib/demandes.ts`). En pause, rien n'est déposé
-    // (pause = plus aucune action) ; un échec n'a aucun effet sur la réponse de LIA (`lib/demandesClient.ts`).
-    surMode: (mode, el) => {
-      if (mode === "changer" && !suiviPause.enPause()) void deposerDemande(cibleDemandeHub(el));
-    },
-  },
+  elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
   // Les blocs de sa réponse (courbe, frise, jauge…) : dessinés par lia-ui derrière la porte du hub (`lib/liaBlocs.ts`).
   renderBlocks: rendreBlocsHub,
   // lia-ui ≥ v0.31.0 : en pause, elle ne parle plus seule et n'appelle plus `ask` ; une pause qui lève vaut pause.

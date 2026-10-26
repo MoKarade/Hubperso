@@ -15,11 +15,11 @@ import type { Relais } from "@/lib/liaEtatPartage";
 
 /** Les apps que MemoryAI accepte dans `app` : `hub` pour tout ce qui n'est pas dans la carte d'une app. */
 export const APPS_DEMANDE = ["hub", "financeai", "driveai", "batchchef", "carai", "jobai", "memoryai"] as const;
-export type AppDemande = (typeof APPS_DEMANDE)[number];
+type AppDemande = (typeof APPS_DEMANDE)[number];
 
 /** Les genres que MemoryAI accepte (ADR 0021), du plus précis au repli. */
 export const GENRES_DEMANDE = ["tuile", "bouton", "page", "graphique", "texte", "autre"] as const;
-export type GenreDemande = (typeof GENRES_DEMANDE)[number];
+type GenreDemande = (typeof GENRES_DEMANDE)[number];
 
 /** `nom` : 1 à 80 caractères (limite de MemoryAI). */
 export const NOM_DEMANDE_MAX = 80;
