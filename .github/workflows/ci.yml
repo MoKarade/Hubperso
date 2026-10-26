@@ -19,7 +19,7 @@ on:
   # Le cron ne sert qu'au job `audit` (voir plus bas) : une vulnérabilité apparaît sans
   # qu'une ligne de code n'ait changé. Lundi 12 h UTC.
   schedule:
-    - cron: "0 12 * * 1"
+    - cron: "17 12 * * 1"
   workflow_dispatch:
 
 # Une seule exécution utile par référence : un push qui en suit un autre annule le premier.
