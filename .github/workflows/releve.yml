@@ -52,7 +52,7 @@ on:
     # L'espacement minimal côté serveur est de 15 min (`INTERVALLE_RELEVE_MS`). Demander
     # plus souvent que 30 min ne produirait pas plus de relevés, seulement plus d'appels :
     # la route répondrait « aucun relevé écrit » et on brûlerait du quota pour rien.
-    - cron: "*/30 * * * *"
+    - cron: "7,37 * * * *"
 
 permissions:
   contents: read
