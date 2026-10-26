@@ -207,6 +207,13 @@ describe("plafond de paroles spontanées", () => {
   });
 });
 
+describe("coût Vercel (26/10/2026)", () => {
+  it("la pause se relit toutes les 60 s ; la validité reste trois relectures (échec fermé inchangé)", () => {
+    expect(INTERVALLE_PAUSE_MS).toBe(60_000);
+    expect(VALIDITE_PAUSE_MS).toBe(3 * INTERVALLE_PAUSE_MS);
+  });
+});
+
 describe("câblage dans LiaBoot", () => {
   const src = readFileSync(resolve(process.cwd(), "components/LiaBoot.tsx"), "utf8");
 
@@ -221,5 +228,12 @@ describe("câblage dans LiaBoot", () => {
     expect(bloc).toMatch(/suiviPause\.rafraichir\(\)/);
     expect(bloc).toMatch(/setInterval/);
     expect(src.slice(0, src.indexOf('if (typeof window !== "undefined")'))).not.toMatch(/setInterval/);
+  });
+
+  it("onglet caché : ni relecture de la pause ni relecture de l'état partagé (coût Vercel)", () => {
+    // Le minuteur de la pause ne relit que si l'onglet est visible.
+    expect(src).toMatch(/setInterval\(\(\) => \{\s*if \(document\.visibilityState === "visible"\) void suiviPause\.rafraichir\(\);\s*\}, INTERVALLE_PAUSE_MS\)/);
+    // L'état partagé passe par l'adaptateur, jamais par `etatHttp` nu.
+    expect(src).toMatch(/etatSansLectureCachee\(etatHttp\("\/api\/lia\/etat"\)/);
   });
 });

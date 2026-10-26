@@ -3,7 +3,7 @@
 //
 // ── CE QUI BORNE LA CROISSANCE, ET POURQUOI C'EST EN SQL ────────────────────────────
 //
-// Le hub interroge les apps toutes les ~15 s tant qu'un onglet est ouvert. Écrire à chaque
+// Le hub interroge les apps toutes les ~60 s tant qu'un onglet est visible (15 s avant le 26/10/2026). Écrire à chaque
 // fois ferait 5 760 lignes par jour et par app pour redire, l'essentiel du temps, la même
 // chose — sur un Neon gratuit, et pour une valeur nulle.
 //

@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic";
  * quatre appels partaient bien en parallèle, mais la page attendait LE PLUS LENT : au réveil
  * à froid de DriveAI (Vercel + Apps Script), ça voulait dire jusqu'à 9 s d'écran vide — le
  * budget réseau complet (`TIMEOUT_MS`) — et ça recommençait à CHAQUE rafraîchissement
- * automatique (toutes les 15 s).
+ * automatique (toutes les 60 s).
  *
  * Maintenant : les promesses sont lancées ici (toujours en parallèle, toujours server-side,
  * les jetons ne quittent pas le serveur), puis passées à des composants qui les attendent

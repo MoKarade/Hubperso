@@ -119,7 +119,7 @@ describe("RefreshControls", () => {
     expect(html).toContain('aria-busy="false"');
     expect(html).not.toContain("disabled");
     expect(texte(html)).toBe("↻ Rafraîchir");
-    // La minuterie (15 s) et l'écoute de visibilité vivent dans un effet : jamais au rendu
+    // La minuterie (60 s) et l'écoute de visibilité vivent dans un effet : jamais au rendu
     // serveur. Leur comportement est testé dans tests/composantsDom.test.ts.
     expect(moq.refresh).not.toHaveBeenCalled();
   });

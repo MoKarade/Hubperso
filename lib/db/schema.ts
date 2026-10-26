@@ -113,7 +113,7 @@ export const acces = pgTable(
  *
  * ── CE QUI BORNE LA CROISSANCE ──────────────────────────────────────────────────────
  *
- * Le hub interroge les apps toutes les ~15 s tant qu'un onglet est ouvert. Écrire à chaque
+ * Le hub interroge les apps toutes les ~60 s tant qu'un onglet est visible (15 s avant le 26/10/2026). Écrire à chaque
  * fois ferait 5 760 lignes par jour et par app pour, l'essentiel du temps, redire la même
  * chose. L'écriture est donc espacée (`INTERVALLE_RELEVE_MS`) et l'insertion est
  * CONDITIONNELLE en SQL — voir `lib/historique.ts`. Les vieux relevés sont élagués.

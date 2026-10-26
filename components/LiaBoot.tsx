@@ -16,6 +16,7 @@ import {
   lirePauseServeur,
   PLAFOND_SPONTANEES_PAR_JOUR,
 } from "@/lib/liaPauseClient";
+import { etatSansLectureCachee } from "@/lib/etatHorsFond";
 import { poserConstat } from "@/lib/constat";
 import { visiterCarte } from "@/lib/liaVisite";
 import { entreesMonde, faitDepuisDataset, instantDernierAppel, parleMonde, parleSeule, type FaitLia, type MotifLia } from "@/lib/liaParole";
@@ -117,7 +118,11 @@ const demarrage = demarrerLia({
   // route du hub (`app/api/lia/etat/route.ts`, session du hub, jeton jamais côté client). Si la route échoue, LIA
   // garde son état local et vit quand même. ⚠️ `etatHttp` lit `window.location` dès sa création : sur le serveur (rendu de
   // chaque page) ce module est aussi évalué, donc seulement dans le navigateur (production, 24/10/2026 : 500 partout).
-  etat: typeof window === "undefined" ? undefined : etatHttp("/api/lia/etat"),
+  // Onglet caché : la relecture minute de lia-ui ne touche plus le réseau (`lib/etatHorsFond.ts`, coût Vercel).
+  etat:
+    typeof window === "undefined"
+      ? undefined
+      : etatSansLectureCachee(etatHttp("/api/lia/etat"), () => document.visibilityState === "hidden"),
   actions: ENTREES_LIA.map((e) => ({ id: e.id, label: e.label, run: () => aller(e.href) })),
   // Clic droit sur n'importe quel élément (lia-ui ≥ v0.26.0) : le hub nomme ses blocs (`lib/liaElement.ts`), lia-ui décrit le reste.
   elements: { decrire: (el) => decrireElementHub(el, decrireParDefaut) },
@@ -136,10 +141,13 @@ const demarrage = demarrerLia({
 });
 
 if (typeof window !== "undefined") {
-  // Relecture de la pause : tout de suite, toutes les 30 s, et au retour sur l'onglet. Seulement dans le navigateur
-  // (ce module est aussi évalué au rendu serveur).
+  // Relecture de la pause : tout de suite, toutes les 60 s onglet visible, et au retour sur l'onglet. Un onglet caché
+  // ne relit rien (coût Vercel) : la pause vaut « en pause » au bout de `VALIDITE_PAUSE_MS`, et le retour relit aussitôt.
+  // Seulement dans le navigateur (ce module est aussi évalué au rendu serveur).
   void suiviPause.rafraichir();
-  window.setInterval(() => void suiviPause.rafraichir(), INTERVALLE_PAUSE_MS);
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") void suiviPause.rafraichir();
+  }, INTERVALLE_PAUSE_MS);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void suiviPause.rafraichir();
   });
