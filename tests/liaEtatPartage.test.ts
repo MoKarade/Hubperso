@@ -254,3 +254,49 @@ describe("la route reste derrière le garde du hub, sans jeton côté client", (
     expect(boot).not.toMatch(/HUB_TOKEN|x-hub-token|x-lia-proprietaire/i);
   });
 });
+
+describe("la discussion qui suit Marc d'une app à l'autre (lia-ui v0.39.0)", () => {
+  const DISCUSSION = {
+    ouvert: true,
+    quand: ETAT.maj,
+    msgs: [
+      { de: "moi", texte: "Où en est ma recharge ?" },
+      { de: "lia", texte: "Elle est à 80 %." },
+    ],
+  };
+  const AVEC_DISCUSSION = { ...ETAT, discussion: DISCUSSION };
+
+  it("ce que la page écrit garde sa discussion, bornée par le paquet, sans clé inconnue", () => {
+    const lu = lireCorpsEtat(JSON.stringify({ ...AVEC_DISCUSSION, discussion: { ...DISCUSSION, intrus: "x" } }));
+    expect(lu).toEqual({ ok: true, etat: AVEC_DISCUSSION });
+    const longue = { ...DISCUSSION, msgs: [{ de: "moi", texte: "y".repeat(9000) }] };
+    const borne = lireCorpsEtat(JSON.stringify({ ...ETAT, discussion: longue }));
+    expect(borne.ok && borne.etat.discussion?.msgs[0]?.texte.length).toBe(600);
+  });
+
+  it("une discussion fermée ne garde aucun texte, et une discussion hors contrat est retirée sans refuser l'état", () => {
+    const fermee = lireCorpsEtat(JSON.stringify({ ...ETAT, discussion: { ...DISCUSSION, ouvert: false } }));
+    expect(fermee.ok && fermee.etat.discussion).toEqual({ ouvert: false, quand: ETAT.maj, msgs: [] });
+    const douteuse = lireCorpsEtat(JSON.stringify({ ...ETAT, discussion: { ouvert: "oui", msgs: 3 } }));
+    expect(douteuse).toEqual({ ok: true, etat: ETAT });
+  });
+
+  it("ce que MemoryAI répond rend la discussion à la page", () => {
+    expect(relayerReponse("GET", 200, JSON.stringify(AVEC_DISCUSSION))).toEqual({ status: 200, corps: AVEC_DISCUSSION });
+    expect(relayerReponse("PUT", 409, JSON.stringify(AVEC_DISCUSSION))).toEqual({ status: 409, corps: AVEC_DISCUSSION });
+  });
+
+  it("l'état au maximum des bornes du paquet (4 000 caractères, accents compris) tient sous la limite de 16 Ko", () => {
+    const pleine = [...Array.from({ length: 6 }, () => "é".repeat(600)), "é".repeat(400)].map((texte, i) => ({ de: i % 2 ? "lia" : "moi", texte }));
+    const corps = JSON.stringify({ ...ETAT, discussion: { ...DISCUSSION, msgs: pleine } });
+    expect(Buffer.byteLength(corps, "utf8")).toBeLessThan(TAILLE_MAX_ETAT);
+    const lu = lireCorpsEtat(corps);
+    expect(lu.ok && lu.etat.discussion?.msgs.length).toBe(7);
+  });
+
+  it("une page qui n'a pas borné sa discussion est refusée en 413 avant d'être lue", () => {
+    const pleine = Array.from({ length: 20 }, (_, i) => ({ de: i % 2 ? "lia" : "moi", texte: "é".repeat(600) }));
+    const lu = lireCorpsEtat(JSON.stringify({ ...ETAT, discussion: { ...DISCUSSION, msgs: pleine } }));
+    expect(lu).toMatchObject({ ok: false, status: 413 });
+  });
+});

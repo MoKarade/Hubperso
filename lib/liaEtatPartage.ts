@@ -7,7 +7,9 @@
 //     (la fonction même que LIA applique, exportée par le paquet depuis v0.22.0) est relayé ;
 //   - ce que MemoryAI RÉPOND : un 200 ou un 409 n'est rendu que s'il est un état valide ; tout le reste
 //     (jeton refusé, base absente, réponse hors contrat) devient 503, jamais une réponse réparée.
-// Aucun contenu de Marc dans cet état : des nombres, des verbes de LIA et un nom d'humeur.
+// L'état porte des nombres, des verbes de LIA et un nom d'humeur ; depuis lia-ui v0.39.0 il peut aussi porter la
+// fin de la discussion (`discussion` : 20 messages de 600 caractères au plus, 4 000 au total, texte de Marc compris).
+// Ce texte est une DONNÉE : le hub le relaie sans le lire, MemoryAI le garde chiffré, et `validerEtat` le borne.
 
 import { validerEtat, type EtatLia } from "@mokarade/lia-ui";
 

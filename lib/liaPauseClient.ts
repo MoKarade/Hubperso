@@ -15,8 +15,13 @@
 // hors contrat. Une lecture réussie reste valable `VALIDITE_PAUSE_MS` (trois rafraîchissements) : un raté passager ne fait pas
 // taire LIA, mais une panne qui dure oui. Sans cela, une pause posée ne retiendrait pas une page qui ne la relit plus.
 
-/** Fréquence de relecture de la pause par la page. */
-export const INTERVALLE_PAUSE_MS = 30_000;
+/**
+ * Fréquence de relecture de la pause par la page, ONGLET VISIBLE seulement (`components/LiaBoot.tsx`). 30 s jusqu'au 26/10/2026 et
+ * sans égard à la visibilité : un onglet oublié faisait 2 880 invocations par jour (coût Vercel). Un onglet caché ne relit plus ;
+ * faute de lecture, la pause vaut « en pause » au bout de `VALIDITE_PAUSE_MS` (échec fermé inchangé), et le retour sur l'onglet
+ * relit aussitôt.
+ */
+export const INTERVALLE_PAUSE_MS = 60_000;
 /** Une lecture réussie reste crue ce temps ; au-delà, faute de nouvelle lecture, LIA se tait. */
 export const VALIDITE_PAUSE_MS = 3 * INTERVALLE_PAUSE_MS;
 
