@@ -4,7 +4,7 @@
 
 ## 🟦 Session 2026-10-26 — **lia-ui v0.40.0 : les sources d'une réponse de LIA deviennent des liens (Hubperso#517)**
 
-Pin de `@mokarade/lia-ui` de v0.39.0 à v0.40.0 (sha pelé `b3babcb`), seul changement (`package.json`, lock). v0.40.0 : les marques `[→lien]` et `[↗lien]` d'une réponse sortent du texte et deviennent une ligne « Sources » de petits liens sous le message (https, sans identifiants ; une marque invalide reste du texte). Retour de Marc du 26/10 : « incompréhensible, trop de texte, pas de liens ». Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__sources`, puis une réponse réelle de LIA relevée par le PC ; la tâche reste ouverte jusque-là.
+Pin de `@mokarade/lia-ui` de v0.39.0 à v0.40.0 (sha pelé `b3babcb`), seul changement (`package.json`, lock ; le test de `liaEtatPartage` garde son titre v0.39.0, qui décrit la fonction livrée alors). v0.40.0 : les marques `[→lien]` et `[↗lien]` d'une réponse sortent du texte et deviennent une ligne « Sources » de petits liens sous le message (https, sans identifiants ; une marque invalide reste du texte). Retour de Marc du 26/10 : « incompréhensible, trop de texte, pas de liens ». Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `lia-ui__sources`, puis une réponse réelle de LIA relevée par le PC ; la tâche reste ouverte jusque-là.
 
 ## 🟦 Session 2026-10-26 — **Coût Vercel du hub : moins d'invocations et de CPU (Hubperso#508)**
 
