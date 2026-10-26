@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-26 (soir) — **Page Chantier dans le hub, étape 1 : la route de lecture du relevé**
+
+Marc, 26/10/2026 (« A, go ») : la page Chantier de l'artefact claude.ai vient dans un onglet du hub, **servie telle quelle dans un cadre isolé (iframe)** derrière la connexion du hub, réécriture en React seulement plus tard et seulement si Marc le veut. Plan : « Plan : page Chantier dans un onglet Hubperso » (document du projet). Cette PR est la première brique, **sans rien de visible**.
+- `GET /api/chantier/releve` (`app/api/chantier/releve/route.ts`) : session, accès au hub, puis **propriétaire seul** ; sans session 401, invité du hub 404 (il n'apprend pas que la page existe), sans base 503, aucun relevé reçu 404 `aucun`, lecture qui échoue 500, limite 30/min. Rend le gzip du relevé **tel que le PC l'a envoyé** (`Content-Encoding: gzip`, `no-store`), avec `ETag` = heure de réception et les heures d'envoi et de réception en en-têtes. La route reste derrière le garde (`lib/authGuard.ts` inchangé : aucune exception de plus).
+- **ETag, pour ne pas retélécharger** : `If-None-Match` connu → 304 sans corps, et le contenu (~430 Ko) n'est PAS relu en base : un en-tête de deux heures est lu à part (`lireEnteteGantt`). La réponse est `no-store`, donc le navigateur ne revalide pas seul : la page devra renvoyer `If-None-Match` à la main (étape 2).
+- Logique pure : `lib/chantierReleve.ts` (ETag, comparaison, contrôle du gzip). Tests : `chantierReleve`, `chantierReleveRoute` (401, 404, 503, 304 sans relecture, 200 gzip relu, 500, 429), `ganttDb` (en-tête sans contenu), `gardePages`.
+- **Reste à faire** (une PR chacune, plan du document) : 2 = la page et l'entrée « Chantier » sous « Gérer » (propriétaire seul ; au téléphone dans « Plus », la barre du bas garde 4 entrées) ; 3 = les boutons « À toi » (écriture + côté PC) ; la page ne doit PAS relire la base à chaque `router.refresh` du hub (15/60 s) : elle ne lit que l'en-tête, jamais le contenu. Le coût par fil est gardé en réserve, masqué pour l'instant.
+
 ## 🟦 Session 2026-10-26 — **lia-ui v0.42.0 : la hauteur de la bulle se révèle en douceur (Hubperso#528)**
 
 Pin de `@mokarade/lia-ui` de v0.41.1 à v0.42.0 (sha pelé `cff04f4`), seul changement (`package.json`, lock). La bulle de v0.41.1 restait dans l'écran mais changeait de hauteur d'un coup à chaque réponse. v0.42.0 découvre la hauteur gagnée en 280 ms depuis le bord fixe (`clip-path`), sans ombre coupée, et ne bouge rien avec `prefers-reduced-motion`. Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `inset(-24px)` avec `animate`, puis mesure sur la page de connexion publique.
