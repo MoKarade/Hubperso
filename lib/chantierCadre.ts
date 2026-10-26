@@ -51,11 +51,33 @@ export const CSP_CADRE = [
   "frame-ancestors 'self'",
 ].join("; ");
 
+/** Où le hub lit les coûts et quotas des apps (`app/api/chantier/couts/route.ts`), pour l'onglet Coûts. */
+export const URL_COUTS = "/api/chantier/couts";
+
 /** Ce que le document du cadre et le hub se disent (`chantier/cadre.html`, `components/ChantierCadre.tsx`). */
 export const MESSAGE_PRET = "chantier-pret";
 export const MESSAGE_OK = "chantier-ok";
 export const MESSAGE_RELEVE = "chantier-releve";
 export const MESSAGE_ETAT = "chantier-etat";
+/** Les coûts des apps : `{ type, couts }` (`lib/chantierCouts.ts`), ou `{ type, erreur }` quand ils ne se lisent pas. */
+export const MESSAGE_COUTS = "chantier-couts";
+
+/**
+ * Les onglets de la page, dans les mots du document (`?onglet=couts` ouvre le bon : `mur` est l'accueil de la page). Une valeur inconnue
+ * donne `null` : la page s'ouvre sur son onglet habituel, jamais sur un fragment inventé par l'adresse.
+ */
+export const ONGLETS = ["mur", "toi", "gantt", "couts"] as const;
+export function ongletDe(valeur: unknown): (typeof ONGLETS)[number] | null {
+  return ONGLETS.find((o) => o === valeur) ?? null;
+}
+
+/** Pourquoi les coûts ne se lisent pas, dit au cadre en clair (le reste du relevé n'en souffre pas). */
+export function erreurCouts(status: number): string {
+  if (status === 401) return "La session du hub a expiré : recharge la page pour te reconnecter.";
+  if (status === 404) return "Le détail des coûts est réservé au propriétaire du hub.";
+  if (status === 429) return "Trop de lectures d'affilée : nouvel essai dans quelques minutes.";
+  return `Les coûts des apps sont indisponibles (erreur ${status}).`;
+}
 
 /**
  * Le cadre dit qu'il est prêt à recevoir le relevé, et remet un bout de canal (`MessagePort`) : c'est

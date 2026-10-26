@@ -15,10 +15,16 @@ import { ChantierCadre } from "@/components/ChantierCadre";
 let conteneur: HTMLDivElement;
 let racine: Root;
 const fetchMoq = vi.fn();
+/** Les coûts des apps : une autre route, lue à part (5 min) ; le relevé garde son propre mock. */
+const coutsMoq = vi.fn();
+const COUTS = { suivies: 1, apps: 2, alertes: 0, totaux: [], note: null, detail: [] };
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.stubGlobal("fetch", fetchMoq);
+  coutsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => COUTS });
+  vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
+    url === "/api/chantier/couts" ? coutsMoq(url, init) : fetchMoq(url, init),
+  );
   conteneur = document.createElement("div");
   document.body.appendChild(conteneur);
   racine = createRoot(conteneur);
@@ -28,6 +34,7 @@ afterEach(() => {
   act(() => racine.unmount());
   conteneur.remove();
   fetchMoq.mockReset();
+  coutsMoq.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -62,11 +69,18 @@ async function presenter(source: Window | null, port: FaussePort | null, donnee:
   });
 }
 
-/** Les messages de DONNÉES écrits dans le canal (sans le « ok » d'accueil). */
+/** Les messages de DONNÉES du relevé écrits dans le canal (sans le « ok » d'accueil ni les coûts). */
 function donnees(port: FaussePort) {
   return port.postMessage.mock.calls
     .map((c) => c[0] as { type: string; message?: string; octets?: ArrayBuffer })
-    .filter((m) => m.type !== "chantier-ok");
+    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts");
+}
+
+/** Les messages de coûts écrits dans le canal. */
+function couts(port: FaussePort) {
+  return port.postMessage.mock.calls
+    .map((c) => c[0] as { type: string; couts?: unknown; erreur?: string })
+    .filter((m) => m.type === "chantier-couts");
 }
 
 async function avancer(ms: number) {
@@ -197,6 +211,46 @@ describe("ChantierCadre", () => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
     expect(fetchMoq).toHaveBeenCalledTimes(1);
+  });
+
+  it("les coûts des apps sont lus avec la session et postés dans le canal, puis relus toutes les 5 minutes", async () => {
+    const { cadre, direct } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    expect(coutsMoq).toHaveBeenCalledTimes(1);
+    expect(coutsMoq.mock.calls[0]![1]).toMatchObject({ cache: "no-store", credentials: "same-origin" });
+    expect(couts(port)).toEqual([{ type: "chantier-couts", couts: COUTS }]);
+    await avancer(60_000 * 4);
+    expect(coutsMoq).toHaveBeenCalledTimes(1); // pas avant 5 minutes
+    await avancer(60_000 * 2);
+    expect(coutsMoq).toHaveBeenCalledTimes(2);
+    expect(direct).not.toHaveBeenCalled();
+  });
+
+  it("des coûts illisibles sont dits au cadre en clair, jamais un total vide ; le relevé n'en souffre pas", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    coutsMoq.mockResolvedValue({ ok: false, status: 429, json: async () => ({}) });
+    await presenter(cadre.contentWindow, port);
+    expect(couts(port)).toHaveLength(1);
+    expect(couts(port)[0]!.couts).toBeUndefined();
+    expect(couts(port)[0]!.erreur).toMatch(/Trop de lectures/);
+    expect(donnees(port)).toHaveLength(1);
+    coutsMoq.mockRejectedValue(new TypeError("Failed to fetch"));
+    await avancer(60_000 * 5);
+    expect(couts(port).at(-1)!.erreur).toMatch(/le hub ne répond pas/);
+  });
+
+  it("onglet caché : les coûts ne sont pas relus non plus", async () => {
+    const { cadre } = monter();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, faussePort());
+    coutsMoq.mockClear();
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    await avancer(60_000 * 10);
+    expect(coutsMoq).not.toHaveBeenCalled();
   });
 
   it("démonté : le canal est fermé, plus de minuteur ni d'écoute", async () => {

@@ -20,15 +20,19 @@
 
 import { useEffect, useRef } from "react";
 import {
+  MESSAGE_COUTS,
   MESSAGE_ETAT,
   MESSAGE_OK,
   MESSAGE_RELEVE,
   SANDBOX_CADRE,
   URL_CADRE,
+  URL_COUTS,
   URL_RELEVE,
   consigneDeReponse,
+  erreurCouts,
   estGzip,
   estMessagePret,
+  type ONGLETS,
 } from "@/lib/chantierCadre";
 
 async function decompresser(gzip: ArrayBuffer): Promise<ArrayBuffer> {
@@ -39,7 +43,10 @@ async function decompresser(gzip: ArrayBuffer): Promise<ArrayBuffer> {
 /** Le PC envoie toutes les 10 min ; relire chaque minute suffit, et 304 ne coûte pas la lecture en base. */
 const INTERVALLE_MS = 60_000;
 
-export function ChantierCadre() {
+/** Les coûts demandent un tour chez chaque app : toutes les 5 min, onglet visible seulement. */
+const INTERVALLE_COUTS_MS = 300_000;
+
+export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[number] | null }) {
   const cadre = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -47,6 +54,8 @@ export function ChantierCadre() {
     let etag: string | null = null;
     let bandeau = false;
     let enCours = false;
+    let coutsEnCours = false;
+    let coutsLusA = 0;
 
     const dire = (message: string) => {
       canal?.postMessage({ type: MESSAGE_ETAT, message });
@@ -82,6 +91,25 @@ export function ChantierCadre() {
       }
     }
 
+    async function lireCouts() {
+      const sortie = canal;
+      if (!sortie || coutsEnCours) return;
+      coutsEnCours = true;
+      try {
+        const reponse = await fetch(URL_COUTS, { cache: "no-store", credentials: "same-origin" });
+        if (reponse.ok) {
+          sortie.postMessage({ type: MESSAGE_COUTS, couts: await reponse.json() });
+        } else {
+          sortie.postMessage({ type: MESSAGE_COUTS, erreur: erreurCouts(reponse.status) });
+        }
+      } catch {
+        sortie.postMessage({ type: MESSAGE_COUTS, erreur: "Les coûts des apps sont indisponibles : le hub ne répond pas." });
+      } finally {
+        coutsLusA = Date.now();
+        coutsEnCours = false;
+      }
+    }
+
     function surMessage(evenement: MessageEvent) {
       // Seul NOTRE cadre est écouté (et son origine est opaque : « null ») ; le premier canal reçu est
       // le bon, les suivants (le cadre se représente tant qu'il n'a pas reçu « ok ») sont ignorés.
@@ -92,10 +120,13 @@ export function ChantierCadre() {
       canal = port;
       canal.postMessage({ type: MESSAGE_OK });
       void lire();
+      void lireCouts();
     }
 
     const surVisibilite = () => {
-      if (document.visibilityState === "visible") void lire();
+      if (document.visibilityState !== "visible") return;
+      void lire();
+      if (Date.now() - coutsLusA >= INTERVALLE_COUTS_MS) void lireCouts();
     };
 
     window.addEventListener("message", surMessage);
@@ -114,7 +145,7 @@ export function ChantierCadre() {
       ref={cadre}
       className="chantier-cadre"
       title="Chantier : suivi des tâches, Gantt et coûts"
-      src={URL_CADRE}
+      src={onglet ? `${URL_CADRE}#${onglet}` : URL_CADRE}
       sandbox={SANDBOX_CADRE}
       referrerPolicy="no-referrer"
     />
