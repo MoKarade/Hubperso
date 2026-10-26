@@ -24,3 +24,4 @@ jobs:
       # `hubperso.com` redirige vers `www.hubperso.com` : on sonde l'adresse finale.
       url-base: https://www.hubperso.com
       chemin-summary: ""
+    secrets: inherit
