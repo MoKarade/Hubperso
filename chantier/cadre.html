@@ -3704,7 +3704,7 @@ function setAll(open){
   const go = n => { if (n.leaf || seen.has(n)) return; seen.add(n); ST.open[pre + n.ref] = open; (n.children || []).forEach(go); };
   M.apps.forEach(go);
 }
-function nodeOf(ref){ if (ref === 'sante') return 'sante'; if (ref === 'fiab') return 'fiab'; if (ref === 'legende') return 'legende'; if (ref.startsWith('q:')) return ref; if (ref.startsWith('app:')) return M.apps.find(a => a.ref === ref) || null; return M.N[ref] || null; }
+function nodeOf(ref){ if (ref === 'sante') return 'sante'; if (ref === 'fiab') return 'fiab'; if (ref === 'legende') return 'legende'; if (ref.startsWith('q:')){ const k = ref.slice(2), g = (qmodel() || []).find(x => x.key === k); return g ? 'q:' + g.key : null; } if (ref.startsWith('app:')) return M.apps.find(a => a.ref === ref) || null; return M.N[ref] || null; }
 function openSheet(ref, push = true){
   const n = nodeOf(ref); if (!n) return;
   if (push) ST.stack.push(ref);
