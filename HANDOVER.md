@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-26 — **lia-ui v0.39.0 : la discussion de LIA suit Marc d'une app à l'autre (Hubperso#505)**
+
+Pin de `@mokarade/lia-ui` de v0.38.0 à v0.39.0 (sha pelé `54490566`) : `package.json`, lock, un test et le commentaire de `lib/liaEtatPartage.ts`. Marc (26/10) : « Oui, via MemoryAI » — la fin de la discussion de LIA est gardée avec l'état partagé et rouverte dans l'app suivante (moins de 30 min, jamais sur un champ où il écrit). `validerEtat`, importé du paquet, ne retire plus la clé `discussion` : le relais `/api/lia/etat` la laisse passer (≤ 20 messages de 600 caractères, 4 000 au total, fermée = sans texte, corps > 16 Ko = 413). Ce n'est plus un état « sans contenu de Marc » : le texte est une donnée, relayée sans être lue. Côté MemoryAI, la garde chiffrée de `discussion` est MemoryAI#263 (fil MemoryAI) ; tant qu'elle n'est pas livrée, MemoryAI (encore en v0.38.0) ne garde pas la clé et la discussion reste locale à chaque app. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi en v0.39.0 ; la preuve de bout en bout (hub → CarAI) attend CarAI#166.
+
 ## 🟦 Session 2026-10-24 — **lia-ui v0.38.0 : l'analyse dessinée par les nanobots (Hubperso#496)**
 
 Pin de `@mokarade/lia-ui` de v0.37.2 à v0.38.0 (sha pelé `9faf1ac9`), seul changement (`package.json`, lock). v0.38.0 : les 100 nanobots dessinent eux-mêmes l'animation d'analyse (4 coins, ligne qui balaie, points qui s'allument) sur l'élément analysé, retour de Marc du 24/10. Gate local et portes verts, `/login` 200 en `next start`. Preuve en production : déploiement `READY` sur le commit fusionné, puis capture du PC après clic droit → « Explique-moi ça » ; la tâche reste ouverte jusque-là.
