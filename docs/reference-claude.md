@@ -81,6 +81,10 @@ widgets 100 % génériques.
   donc propriétaire seul (`AUTHORIZED_EMAIL`, sans réseau ; 401 sans session, 404 sinon, 429 au-delà de 6/min), `no-store`.
   Mise en forme pure : `lib/chantierCouts.ts` (un total PAR période, jamais fusionnés). Lue par `components/ChantierCadre.tsx`,
   postée au cadre par le canal (`chantier-couts`) : le cadre n'a aucun réseau.
+- **`POST /api/chantier/gestes` reste derrière la session et se garde seule** (27/10/2026) : le geste d'un bouton de l'onglet « À toi »
+  (Fusionner, Fait, une réponse), que le PC applique ensuite sur GitHub. Propriétaire seul (`AUTHORIZED_EMAIL`, sans réseau ; 401 sans session,
+  404 sinon), uniquement depuis NOTRE page (`Origin` = l'hôte du hub, 403 sinon), 20/min, corps ≤ 4 Ko validé par `lib/chantierGestes.ts`
+  (champ inconnu = 422), idempotente par `id`. Table `chantier_gestes` ; reçue du cadre par le canal (`chantier-geste`), jamais lue par lui.
 - **`POST /api/lia/ask` traverse aussi le garde, et se garde toute seule** (22/10/2026, #336) :
   la question de LIA. Une app s'identifie par son `HUB_TOKEN` (`appDuJeton`, la source vient du
   jeton, jamais du corps) ; l'accueil, par la session + `aAcces(…, APP_HUB)` lus dans la route.

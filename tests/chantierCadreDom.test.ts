@@ -17,13 +17,16 @@ let racine: Root;
 const fetchMoq = vi.fn();
 /** Les coûts des apps : une autre route, lue à part (5 min) ; le relevé garde son propre mock. */
 const coutsMoq = vi.fn();
+/** Les gestes de l'onglet « À toi » : une troisième route, écrite seulement sur demande du cadre. */
+const gestesMoq = vi.fn();
 const COUTS = { suivies: 1, apps: 2, alertes: 0, totaux: [], note: null, detail: [] };
 
 beforeEach(() => {
   vi.useFakeTimers();
   coutsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => COUTS });
+  gestesMoq.mockResolvedValue({ ok: true, status: 201 });
   vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
-    url === "/api/chantier/couts" ? coutsMoq(url, init) : fetchMoq(url, init),
+    url === "/api/chantier/couts" ? coutsMoq(url, init) : url === "/api/chantier/gestes" ? gestesMoq(url, init) : fetchMoq(url, init),
   );
   conteneur = document.createElement("div");
   document.body.appendChild(conteneur);
@@ -35,6 +38,7 @@ afterEach(() => {
   conteneur.remove();
   fetchMoq.mockReset();
   coutsMoq.mockReset();
+  gestesMoq.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -48,7 +52,7 @@ const reponse = (status: number, etag?: string) => ({
 
 /** Un bout de canal : tout ce que le hub y écrit est gardé. */
 function faussePort() {
-  return { postMessage: vi.fn(), close: vi.fn() };
+  return { postMessage: vi.fn(), close: vi.fn(), onmessage: null as ((m: { data: unknown }) => void) | null };
 }
 type FaussePort = ReturnType<typeof faussePort>;
 
@@ -73,7 +77,21 @@ async function presenter(source: Window | null, port: FaussePort | null, donnee:
 function donnees(port: FaussePort) {
   return port.postMessage.mock.calls
     .map((c) => c[0] as { type: string; message?: string; octets?: ArrayBuffer })
-    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts");
+    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste");
+}
+
+/** Les réponses aux gestes écrites dans le canal. */
+function reponsesGestes(port: FaussePort) {
+  return port.postMessage.mock.calls
+    .map((c) => c[0] as { type: string; id?: string; ok?: boolean; erreur?: string })
+    .filter((m) => m.type === "chantier-geste");
+}
+
+/** Le cadre remet un geste par son canal. */
+async function geste(port: FaussePort, donnee: unknown) {
+  await act(async () => {
+    port.onmessage?.({ data: donnee });
+  });
 }
 
 /** Les messages de coûts écrits dans le canal. */
@@ -110,7 +128,7 @@ describe("ChantierCadre", () => {
     const port = faussePort();
     fetchMoq.mockResolvedValue(reponse(200, '"1760000000000"'));
     await presenter(cadre.contentWindow, port);
-    expect(port.postMessage.mock.calls[0]![0]).toEqual({ type: "chantier-ok" });
+    expect(port.postMessage.mock.calls[0]![0]).toEqual({ type: "chantier-ok", gestes: true });
     expect(fetchMoq).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMoq.mock.calls[0]!;
     expect(url).toBe("/api/chantier/releve");
@@ -251,6 +269,50 @@ describe("ChantierCadre", () => {
     vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
     await avancer(60_000 * 10);
     expect(coutsMoq).not.toHaveBeenCalled();
+  });
+
+  it("un geste du cadre est déposé par le hub avec la session, et le cadre en est informé", async () => {
+    const { cadre, direct } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    const corps = { v: 1, id: "abc-123456", ref: "Org/depot#12", geste: "fusionner", texte: null, quand: "2026-10-27T10:00:00.000Z" };
+    await geste(port, { type: "chantier-geste", geste: corps });
+    expect(gestesMoq).toHaveBeenCalledTimes(1);
+    const [url, init] = gestesMoq.mock.calls[0]!;
+    expect(url).toBe("/api/chantier/gestes");
+    expect(init).toMatchObject({ method: "POST", credentials: "same-origin", cache: "no-store" });
+    expect(JSON.parse(init.body)).toEqual(corps);
+    expect(reponsesGestes(port)).toEqual([{ type: "chantier-geste", id: "abc-123456", ok: true }]);
+    expect(direct).not.toHaveBeenCalled();
+  });
+
+  it("un geste refusé ou un hub qui ne répond pas est dit au cadre en clair, jamais « déposé »", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    gestesMoq.mockResolvedValue({ ok: false, status: 401 });
+    await geste(port, { type: "chantier-geste", geste: { id: "abc-123456" } });
+    expect(reponsesGestes(port)[0]).toMatchObject({ id: "abc-123456", ok: false });
+    expect(reponsesGestes(port)[0]!.erreur).toMatch(/session/);
+    gestesMoq.mockRejectedValue(new TypeError("Failed to fetch"));
+    await geste(port, { type: "chantier-geste", geste: { id: "def-654321" } });
+    expect(reponsesGestes(port)[1]).toMatchObject({ id: "def-654321", ok: false });
+    expect(reponsesGestes(port)[1]!.erreur).toMatch(/le hub ne répond pas/);
+  });
+
+  it("ce qui n'a pas la forme d'un geste n'est jamais relayé", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    for (const donnee of [null, "geste", { type: "autre", geste: { id: "abc-123456" } }, { type: "chantier-geste" },
+      { type: "chantier-geste", geste: "x" }, { type: "chantier-geste", geste: { ref: "sans id" } }, { type: "chantier-geste", geste: { id: 5 } }]) {
+      await geste(port, donnee);
+    }
+    expect(gestesMoq).not.toHaveBeenCalled();
+    expect(reponsesGestes(port)).toEqual([]);
   });
 
   it("démonté : le canal est fermé, plus de minuteur ni d'écoute", async () => {
