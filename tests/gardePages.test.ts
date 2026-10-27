@@ -156,6 +156,8 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "l'horloge du hub, appelée par un workflow GitHub Actions et authentifiée par CRON_SECRET",
     "api/gantt/route.ts":
       "le PC de Marc y envoie le relevé du Gantt (tour.py), authentifié par GANTT_SECRET",
+    "api/chantier/gestes/pc/route.ts":
+      "le PC de Marc y lit les gestes de l'onglet « À toi » et accuse ceux qu'il a pris (reponses.py), authentifié par GANTT_SECRET",
   };
 
   /**

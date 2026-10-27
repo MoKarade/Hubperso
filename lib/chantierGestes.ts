@@ -76,6 +76,29 @@ export function validerGeste(corps: unknown): ValidationGeste {
   };
 }
 
+/** Combien de gestes le PC lit, et accuse, par tour. */
+export const ACCUSE_MAX = 50;
+
+/** Taille maximale du corps d'un accusé (octets) : 50 identifiants de 48 caractères tiennent largement. */
+export const TAILLE_MAX_ACCUSE = 8_192;
+
+export type ValidationAccuse = { ok: true; ids: string[] } | { ok: false; raison: string };
+
+/** L'accusé du PC : `{ ids: [...] }`, les gestes qu'il vient d'appliquer (ou de refuser) sur GitHub. */
+export function validerAccuse(corps: unknown): ValidationAccuse {
+  if (!estObjet(corps)) return { ok: false, raison: "corps : un objet JSON est attendu" };
+  const inconnu = Object.keys(corps).find((k) => k !== "ids");
+  if (inconnu !== undefined) return { ok: false, raison: `${inconnu} : champ inconnu` };
+  const { ids } = corps;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > ACCUSE_MAX) {
+    return { ok: false, raison: `ids : de 1 à ${ACCUSE_MAX} identifiants sont attendus` };
+  }
+  if (!ids.every((id): id is string => typeof id === "string" && ID.test(id))) {
+    return { ok: false, raison: "ids : 6 à 48 caractères a-z, 0-9 et tiret, chacun" };
+  }
+  return { ok: true, ids: [...new Set(ids)] };
+}
+
 /**
  * La demande vient-elle de NOTRE page ? Un POST qui écrit sur GitHub ne se fie pas au cookie seul :
  * l'en-tête `Origin` (toujours posé par un navigateur sur un POST) doit nommer l'hôte du hub.

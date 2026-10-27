@@ -23,7 +23,7 @@ const client = new PGlite();
 const dbTest = drizzle(client);
 porteur.db = dbTest;
 
-const { deposerGeste } = await import("../lib/chantierGestesDb");
+const { accuserGestes, deposerGeste, gestesEnAttente } = await import("../lib/chantierGestesDb");
 const { chantierGestes } = await import("../lib/db/schema");
 
 const geste = (surcharge = {}) => ({
@@ -66,5 +66,37 @@ describe("lib/chantierGestesDb", () => {
     await deposerGeste(geste());
     await deposerGeste(geste({ id: "zz9y8x7w-abcdef" }));
     expect(await dbTest.select().from(chantierGestes)).toHaveLength(2);
+  });
+
+  it("le PC lit les gestes pas encore pris, du plus ancien au plus récent, dans le corps d'hier", async () => {
+    await deposerGeste(geste({ id: "premier-000001", geste: "reponse", texte: "Oui" }));
+    await deposerGeste(geste({ id: "second-000002" }));
+    expect(await gestesEnAttente()).toEqual([
+      { v: 1, id: "premier-000001", ref: "Org/depot#12", geste: "reponse", texte: "Oui", quand: "2026-10-27T10:00:00.000Z" },
+      { v: 1, id: "second-000002", ref: "Org/depot#12", geste: "fusionner", texte: null, quand: "2026-10-27T10:00:00.000Z" },
+    ]);
+  });
+
+  it("lire ne marque rien ; l'accusé retire de la liste et ne se pose qu'une fois", async () => {
+    await deposerGeste(geste({ id: "premier-000001" }));
+    await deposerGeste(geste({ id: "second-000002" }));
+    expect(await gestesEnAttente()).toHaveLength(2);
+    expect(await gestesEnAttente()).toHaveLength(2);
+
+    expect(await accuserGestes(["premier-000001", "inconnu-123456"])).toEqual(["premier-000001"]);
+    expect((await gestesEnAttente()).map((g) => g.id)).toEqual(["second-000002"]);
+
+    const [pris] = await dbTest.select().from(chantierGestes).where(sql`${chantierGestes.id} = 'premier-000001'`);
+    const heure = pris!.priseLe;
+    expect(heure).toBeInstanceOf(Date);
+    // Un second accusé ne déplace pas l'heure de prise et ne rend rien.
+    expect(await accuserGestes(["premier-000001"])).toEqual([]);
+    const [encore] = await dbTest.select().from(chantierGestes).where(sql`${chantierGestes.id} = 'premier-000001'`);
+    expect(encore!.priseLe).toEqual(heure);
+  });
+
+  it("n'en rend pas plus de 50 d'un coup", async () => {
+    for (let i = 0; i < 52; i++) await deposerGeste(geste({ id: `geste-${String(i).padStart(4, "0")}` }));
+    expect(await gestesEnAttente()).toHaveLength(50);
   });
 });
