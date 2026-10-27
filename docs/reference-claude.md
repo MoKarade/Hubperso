@@ -85,6 +85,7 @@ widgets 100 % génériques.
   (Fusionner, Fait, une réponse), que le PC applique ensuite sur GitHub. Propriétaire seul (`AUTHORIZED_EMAIL`, sans réseau ; 401 sans session,
   404 sinon), uniquement depuis NOTRE page (`Origin` = l'hôte du hub, 403 sinon), 20/min, corps ≤ 4 Ko validé par `lib/chantierGestes.ts`
   (champ inconnu = 422), idempotente par `id`. Table `chantier_gestes` ; reçue du cadre par le canal (`chantier-geste`), jamais lue par lui.
+- **`/api/chantier/gestes/pc` est la QUATRIÈME route de serveur à serveur** (27/10/2026) : le PC y lit (GET) les gestes de l'onglet « À toi » pas encore pris et accuse (POST `{ ids }`) ceux qu'il a appliqués. Même secret DÉDIÉ que `/api/gantt` (`GANTT_SECRET`, Bearer, `memeJeton`, 503 si absent, 401 si faux), égalité STRICTE dans `isPublicPath`, jamais le matcher du middleware ; le dépôt (`/api/chantier/gestes`) reste derrière la session. Lire ne marque rien ; verrous : `tests/authGuard.test.ts`, `tests/gardePages.test.ts` (`ROUTES_A_JETON`), `tests/chantierGestesPc.test.ts`.
 - **`POST /api/lia/ask` traverse aussi le garde, et se garde toute seule** (22/10/2026, #336) :
   la question de LIA. Une app s'identifie par son `HUB_TOKEN` (`appDuJeton`, la source vient du
   jeton, jamais du corps) ; l'accueil, par la session + `aAcces(…, APP_HUB)` lus dans la route.

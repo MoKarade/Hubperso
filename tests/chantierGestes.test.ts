@@ -4,7 +4,7 @@
 // ce que `validerGeste` REND, pas seulement qu'il ne lève pas.
 
 import { describe, expect, it } from "vitest";
-import { TEXTE_MAX, erreurGeste, memeOrigine, validerGeste } from "@/lib/chantierGestes";
+import { ACCUSE_MAX, TEXTE_MAX, erreurGeste, memeOrigine, validerAccuse, validerGeste } from "@/lib/chantierGestes";
 
 const BON = { v: 1, id: "mh3k2x9a-4fzq1w", ref: "Org/depot#12", geste: "fusionner", texte: null, quand: "2026-10-27T10:00:00.000Z" };
 
@@ -76,5 +76,34 @@ describe("erreurGeste", () => {
     expect(erreurGeste(429)).toContain("Trop de gestes");
     expect(erreurGeste(503)).toContain("base");
     expect(erreurGeste(500)).toContain("500");
+  });
+});
+
+describe("validerAccuse", () => {
+  it("accepte une liste d'identifiants et la rend sans doublon, dans l'ordre", () => {
+    expect(validerAccuse({ ids: ["mh3k2x9a-4fzq1w", "zz9y8x7w-abcdef", "mh3k2x9a-4fzq1w"] })).toEqual({
+      ok: true,
+      ids: ["mh3k2x9a-4fzq1w", "zz9y8x7w-abcdef"],
+    });
+  });
+
+  it("refuse tout ce qui n'est pas { ids: [1 à 50 identifiants valides] }", () => {
+    const ok = Array.from({ length: ACCUSE_MAX }, (_, i) => `geste-${String(i).padStart(4, "0")}`);
+    expect(validerAccuse({ ids: ok }).ok).toBe(true);
+    for (const mauvais of [
+      null,
+      [],
+      "x",
+      {},
+      { ids: [] },
+      { ids: "mh3k2x9a-4fzq1w" },
+      { ids: [...ok, "geste-9999"] },
+      { ids: [42] },
+      { ids: ["MAJUSCULES-1"] },
+      { ids: ["court"] },
+      { ids: ["mh3k2x9a-4fzq1w"], en_plus: true },
+    ]) {
+      expect(validerAccuse(mauvais).ok, JSON.stringify(mauvais)).toBe(false);
+    }
   });
 });

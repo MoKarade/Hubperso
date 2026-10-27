@@ -66,6 +66,13 @@ describe("isPublicPath", () => {
   // Une route de plus de serveur à serveur : le PC de Marc envoie le relevé du Gantt. Même forme,
   // même raison, chemin nommé exactement. Elle exige `Authorization: Bearer <GANTT_SECRET>`
   // (app/api/gantt/route.ts) ; `tests/gardePages.test.ts` en vérifie l'auth de remplacement.
+  it("laisse passer /api/chantier/gestes/pc — et exactement ce chemin, pas le dépôt des gestes", () => {
+    expect(isPublicPath("/api/chantier/gestes/pc")).toBe(true);
+    expect(isPublicPath("/api/chantier/gestes/pc/")).toBe(false);
+    expect(isPublicPath("/api/chantier/gestes/pcx")).toBe(false);
+    expect(isPublicPath("/api/chantier/gestes")).toBe(false);
+  });
+
   it("laisse passer /api/gantt — et exactement ce chemin", () => {
     expect(isPublicPath("/api/gantt")).toBe(true);
     expect(isPublicPath("/api/gantt/")).toBe(false);

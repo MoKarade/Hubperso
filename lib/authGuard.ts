@@ -73,6 +73,13 @@ export function isPublicPath(pathname: string): boolean {
   // Égalité STRICTE, jamais un préfixe, et jamais le matcher du middleware (leçon n°4).
   if (pathname === "/api/gantt") return true;
 
+  // GET/POST /api/chantier/gestes/pc : le PC y LIT les gestes de l'onglet « À toi » (GET) et y
+  // ACCUSE ceux qu'il a pris (POST). Quatrième route de serveur à serveur : même secret DÉDIÉ que
+  // /api/gantt (`GANTT_SECRET`, Bearer, temps constant, 503 si absent, 401 si faux), égalité
+  // STRICTE et jamais le matcher du middleware. Le dépôt des gestes (/api/chantier/gestes) reste,
+  // lui, derrière la session.
+  if (pathname === "/api/chantier/gestes/pc") return true;
+
   // GET /api/sante : la sonde de santé de la vigie de l'Atelier (patron JobAI#49 /
   // BatchChef#154). TROISIÈME route qui traverse le garde, et la seule SANS aucune
   // authentification — délibérément : elle ne rend que `{ ok, cause }`, jamais une donnée,
