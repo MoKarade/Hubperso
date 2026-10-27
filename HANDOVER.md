@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-27 — **Page Chantier dans le hub, étape 4a : les boutons « À toi » déposent leur geste au hub, sans Drive (Hubperso#556)**
+
+Avant, un clic (Fusionner, Fait, une réponse) déposait `reponse-<horodatage>.json` dans le dossier Drive `_Gantt` avec le connecteur Drive du lecteur ; le PC (`outils/gantt-pc/reponses.py`, MoKarade/.github) l'appliquait sur GitHub. Dans le cadre isolé il n'y a ni connecteur ni réseau : les boutons étaient des liens vers GitHub.
+- **`POST /api/chantier/gestes`** (`app/api/chantier/gestes/route.ts`) : session, propriétaire seul (`AUTHORIZED_EMAIL`, 404 pour un invité), demande venue de NOTRE page (`Origin` = l'hôte du hub, sinon 403 : un geste peut fusionner une PR), 20 par minute et par client, corps ≤ 4 Ko, validé par `lib/chantierGestes.ts` (corps d'hier inchangé : `{v:1, id, ref, geste: fusionner|fait|reponse, texte, quand}`, tout champ inconnu = 422 avant toute écriture). 201 déposé, 200 si l'`id` était déjà là (un renvoi ne crée pas de seconde ligne), 503 si la base ne répond pas (jamais un « déposé » mensonger).
+- **Table `chantier_gestes`** (migration `0004`, additive) : l'`id`, la référence, le geste, la phrase, l'heure du clic, l'heure de réception et `prise_le` (posée par le PC). Aucune donnée de relevé.
+- **Cadre ↔ hub** : le hub répond « ok » avec `gestes: true` ; le cadre remet `{type:"chantier-geste", geste}` dans son canal, le hub dépose (`ChantierCadre`) et répond `{type, id, ok}`. Le cadre garde son état « armé → déposé → appliqué / refusé / lent » (le PC répond par `reponses` du relevé) ; le hub passe avant Drive, Drive reste le repli, GitHub sans l'un ni l'autre.
+- **Reste (4b, 4c)** : le PC doit LIRE ces gestes. 4b ici : lecture et accusé derrière `GANTT_SECRET` (déjà posé). 4c dans MoKarade/.github : `reponses.py` lit le hub (Drive en secours). Sans eux, un clic reste « déposé » puis « lent », jamais « appliqué ».
+
 ## 🟦 Session 2026-10-26 (soir) — **Page Chantier dans le hub, étape 3 : la page Coûts du hub disparaît, ses infos entrent dans l'onglet Coûts du Chantier**
 
 Marc, 26/10/2026 21 h 24 Z : « Dans le hub il y a normalement déjà une page pour le coût, je veux qu'elle soit enlevée et que ses infos soient rajoutées dans ce que tu fais. »

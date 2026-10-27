@@ -9,7 +9,7 @@
    remet l'un de ses bouts au hub — en nommant son origine, celle de l'adresse de CE document —, et le hub
    n'écrit plus que dans ce canal, qui n'a qu'un destinataire. */
 (function () {
-  var octets = null, attente = [], recu = false;
+  var octets = null, attente = [], recu = false, canalHub = null, gestes = {};
   function etat(texte) {
     var e = document.getElementById('err');
     if (e) { e.hidden = !texte; e.textContent = texte || ''; }
@@ -20,6 +20,15 @@
     if (!m || typeof m !== 'object') return;
     if (m.type === 'chantier-ok') {
       recu = true;
+      // Le hub sait déposer les gestes de l'onglet « À toi » (à la place du dossier Drive, que ce cadre n'a pas).
+      if (m.gestes === true) {
+        canalHub = ev.target;
+        window.hubGestes = true;
+        if (typeof window.surGestes === 'function') window.surGestes();
+      }
+    } else if (m.type === 'chantier-geste' && typeof m.id === 'string' && gestes[m.id]) {
+      var g = gestes[m.id]; delete gestes[m.id]; clearTimeout(g.t);
+      if (m.ok === true) g.ok(); else g.ko(new Error(typeof m.erreur === 'string' && m.erreur ? m.erreur : 'refusé'));
     } else if (m.type === 'chantier-releve' && m.octets instanceof ArrayBuffer) {
       recu = true;
       octets = new Uint8Array(m.octets);
@@ -44,6 +53,16 @@
     canal.port1.onmessage = surCanal;
     window.parent.postMessage({ type: 'chantier-pret' }, new URL(location.href).origin, [canal.port2]);
   }
+  // Un geste (Fusionner, Fait, une réponse) : le hub le dépose avec la session du propriétaire ; ce cadre n'a ni réseau ni Drive.
+  window.hubGestes = false;
+  window.hubGeste = function (corps) {
+    return new Promise(function (ok, ko) {
+      if (!canalHub) return ko(new Error('Le hub ne répond pas.'));
+      var t = setTimeout(function () { delete gestes[corps.id]; ko(new Error('Le hub ne répond pas.')); }, 15000);
+      gestes[corps.id] = { ok: ok, ko: ko, t: t };
+      canalHub.postMessage({ type: 'chantier-geste', geste: corps });
+    });
+  };
   window.claude = {
     use: function (nom) {
       // Seules les données du relevé sont servies ; le connecteur Drive et la base de l'artefact n'existent pas ici.
@@ -2950,11 +2969,14 @@ function vGraphifyCov(V){
 }
 
 /* ---------- onglet « À toi » (Marc, 19/10) : tout ce qui t'attend, et un bouton qui fait enchaîner ----------
-   Un clic dépose reponse-<horodatage>.json dans le dossier Drive _Gantt, avec le connecteur Google Drive de la personne qui regarde.
+   Un clic dépose le geste : dans le hub, c'est lui qui le range (window.hubGeste, la route des gestes du hub, session du propriétaire) ;
+   ailleurs, reponse-<horodatage>.json dans le dossier Drive _Gantt, avec le connecteur Google Drive de la personne qui regarde.
    Au tour suivant (10 min au plus), le PC (MoKarade/.github, outils/gantt-pc/reponses.py) l'applique sur GitHub, puis réveille le
-   Coordinateur. La page n'écrit rien d'autre. Sans connecteur, le bouton devient un lien vers GitHub.
+   Coordinateur. La page n'écrit rien d'autre. Sans hub ni connecteur, le bouton devient un lien vers GitHub.
    Deux touches pour agir : la première arme le bouton (anneau qui se vide en 4 s), la seconde envoie. */
 const DRV = {mcp: null, parent: null};              // rempli par drive() dès que donnees.json.gz est trouvé (son dossier)
+const peutEnvoyer = () => window.hubGestes === true || !!(DRV.mcp && DRV.parent);   // le hub d'abord, Drive sinon
+window.surGestes = () => { if (M && ST.tab === 'toi') render(); };
 const ENVK = 'chantier-envois';
 const ENVS = {get(){ try { return JSON.parse(localStorage.getItem(ENVK) || '{}') || {}; } catch(e){ return {}; } },
   set(v){ try { localStorage.setItem(ENVK, JSON.stringify(v)); } catch(e){} }};
@@ -3018,12 +3040,12 @@ function etatEnvoi(k){
 }
 const msgEnvoi = k => { const e = ENVOIS[k], j = e && (CUR && CUR.reponses || []).find(x => x.id === e.id); return (j && j.msg) || (e && e.err) || ''; };
 function boutonAction(it, a){
-  const k = cle(a.ref, a.geste, a.txt), st = etatEnvoi(k), peut = !!(DRV.mcp && DRV.parent);
+  const k = cle(a.ref, a.geste, a.txt), st = etatEnvoi(k), peut = peutEnvoyer();
   const ico = a.geste === 'fusionner' ? 'fusion' : a.geste === 'reponse' ? null : 'fait';
   const lab = a.geste === 'fusionner' ? 'Fusionner' : a.geste === 'reponse' ? a.txt : 'Fait';
   const inner = (ico ? svgI(ico) : '') + (a.geste === 'reponse' ? `<span>${esc(a.txt)}</span>` : '') + `<i class="ring" aria-hidden="true"></i>`;
   if (!peut && !st){
-    // sans connecteur Google Drive : la même action, faite à la main sur GitHub
+    // ni hub ni connecteur Google Drive : la même action, faite à la main sur GitHub
     const href = a.geste === 'fusionner' ? it.url : (M.N[a.ref] ? M.N[a.ref].url : it.url) + GH_COMMENT;
     return `<a class="ta ${a.geste === 'reponse' ? 'rep' : ''}" href="${esc(href)}" target="_blank" rel="noopener" aria-label="${esc(lab)} sur GitHub">${inner}</a>`;
   }
@@ -3082,14 +3104,17 @@ function actionDe(k){
   return null;
 }
 async function envoyer(k){
-  const a = actionDe(k); if (!a || !DRV.mcp || !DRV.parent) return;
+  const a = actionDe(k); if (!a || !peutEnvoyer()) return;
   const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8), quand = new Date().toISOString();
+  const corps = {v: 1, id, ref: a.ref, geste: a.geste, texte: a.txt || null, quand};
+  const parHub = window.hubGestes === true;
   ENVOIS[k] = {id, ref: a.ref, geste: a.geste, at: Date.now(), st: 'envoi'}; ENVS.set(ENVOIS); render();
   try {
-    await DRV.mcp.callTool('Google Drive', 'create_file', {title: `reponse-${quand.replace(/[:.]/g, '-')}-${id}.json`, parentId: DRV.parent,
-      textContent: JSON.stringify({v: 1, id, ref: a.ref, geste: a.geste, texte: a.txt || null, quand}), contentMimeType: 'application/json', disableConversionToGoogleType: true});
+    if (parHub) await window.hubGeste(corps);
+    else await DRV.mcp.callTool('Google Drive', 'create_file', {title: `reponse-${quand.replace(/[:.]/g, '-')}-${id}.json`, parentId: DRV.parent,
+      textContent: JSON.stringify(corps), contentMimeType: 'application/json', disableConversionToGoogleType: true});
     ENVOIS[k].st = 'depose';
-  } catch(e){ ENVOIS[k].st = 'echec'; ENVOIS[k].err = 'Drive : ' + ((e && (e.code || e.message)) || 'refusé'); }
+  } catch(e){ ENVOIS[k].st = 'echec'; ENVOIS[k].err = (parHub ? 'Hub : ' : 'Drive : ') + ((e && (e.code || e.message)) || 'refusé'); }
   ENVS.set(ENVOIS); render();
 }
 function toucheAction(k){
