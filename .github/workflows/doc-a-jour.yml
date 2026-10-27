@@ -38,4 +38,7 @@ jobs:
           node-version: "24"
 
       - name: Comparer le code et la doc
-        run: node scripts/doc-a-jour.mjs "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/doc-a-jour.mjs "origin/$BASE_REF" "$HEAD_SHA"
