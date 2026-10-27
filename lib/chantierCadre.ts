@@ -54,6 +54,9 @@ export const CSP_CADRE = [
 /** Où le hub lit les coûts et quotas des apps (`app/api/chantier/couts/route.ts`), pour l'onglet Coûts. */
 export const URL_COUTS = "/api/chantier/couts";
 
+/** Où le hub dépose un geste de l'onglet « À toi » (`app/api/chantier/gestes/route.ts`), à la place du dossier Drive. */
+export const URL_GESTES = "/api/chantier/gestes";
+
 /** Ce que le document du cadre et le hub se disent (`chantier/cadre.html`, `components/ChantierCadre.tsx`). */
 export const MESSAGE_PRET = "chantier-pret";
 export const MESSAGE_OK = "chantier-ok";
@@ -61,6 +64,11 @@ export const MESSAGE_RELEVE = "chantier-releve";
 export const MESSAGE_ETAT = "chantier-etat";
 /** Les coûts des apps : `{ type, couts }` (`lib/chantierCouts.ts`), ou `{ type, erreur }` quand ils ne se lisent pas. */
 export const MESSAGE_COUTS = "chantier-couts";
+/**
+ * Un geste de l'onglet « À toi » : le cadre dit `{ type, geste }` (le corps de `lib/chantierGestes.ts`), le hub répond
+ * `{ type, id, ok: true }` une fois déposé ou `{ type, id, ok: false, erreur }`. Le cadre n'a pas de réseau : c'est le hub qui dépose.
+ */
+export const MESSAGE_GESTE = "chantier-geste";
 
 /**
  * Les onglets de la page, dans les mots du document (`?onglet=couts` ouvre le bon : `mur` est l'accueil de la page). Une valeur inconnue

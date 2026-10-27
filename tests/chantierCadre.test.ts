@@ -7,11 +7,13 @@ import { describe, expect, it } from "vitest";
 import {
   CSP_CADRE,
   MESSAGE_COUTS,
+  MESSAGE_GESTE,
   MESSAGE_PRET,
   ONGLETS,
   SANDBOX_CADRE,
   URL_CADRE,
   URL_COUTS,
+  URL_GESTES,
   URL_RELEVE,
   consigneDeReponse,
   erreurCouts,
@@ -190,5 +192,22 @@ describe("les coûts des apps dans le cadre (la page Coûts du hub, reprise)", (
     expect(erreurCouts(404)).toMatch(/réservé au propriétaire/);
     expect(erreurCouts(429)).toMatch(/Trop de lectures/);
     expect(erreurCouts(500)).toContain("erreur 500");
+  });
+});
+
+describe("les gestes de l'onglet « À toi » dans le cadre (sans Drive)", () => {
+  it("le cadre remet le geste au hub par son canal et attend sa réponse, jamais un « * »", () => {
+    expect(URL_GESTES).toBe("/api/chantier/gestes");
+    expect(MESSAGE_GESTE).toBe("chantier-geste");
+    expect(DOCUMENT).toContain(`m.type === '${MESSAGE_GESTE}'`);
+    expect(DOCUMENT).toContain("window.hubGeste");
+    expect(DOCUMENT).toContain("canalHub.postMessage({ type: '" + MESSAGE_GESTE + "'");
+    expect(DOCUMENT).not.toContain(URL_GESTES); // il ne dépose pas lui-même : il n'a pas de réseau
+  });
+
+  it("le hub d'abord, le dossier Drive en repli, GitHub sans l'un ni l'autre", () => {
+    expect(DOCUMENT).toContain("window.hubGestes === true || !!(DRV.mcp && DRV.parent)");
+    expect(DOCUMENT).toContain("if (parHub) await window.hubGeste(corps)");
+    expect(DOCUMENT).toContain("ni hub ni connecteur Google Drive");
   });
 });

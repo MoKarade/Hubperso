@@ -188,3 +188,25 @@ export const liaReglages = pgTable(
   },
   (t) => [check("lia_reglages_une_ligne", sql`${t.id} = 1`)],
 );
+
+/**
+ * Les gestes de l'onglet « À toi » de la page Chantier (Fusionner, Fait, une réponse) en attente du PC (`lib/chantierGestes.ts`).
+ *
+ * Le hub les DÉPOSE (`POST /api/chantier/gestes`, session du propriétaire) ; le PC les lit et les applique sur GitHub, puis
+ * pose `prise_le`. Le corps est celui de l'ancien `reponse-<horodatage>.json` du Drive : `id` est la clé, un renvoi du même
+ * geste ne crée pas de seconde ligne. Aucune donnée de relevé ici : une référence de tâche, un geste, une phrase de réponse.
+ */
+export const chantierGestes = pgTable("chantier_gestes", {
+  id: text("id").primaryKey(),
+  ref: text("ref").notNull(),
+  geste: text("geste").notNull(),
+  texte: text("texte"),
+  /** L'heure du clic déclarée par le navigateur. */
+  quand: timestamp("quand", { withTimezone: true }).notNull(),
+  /** L'heure de RÉCEPTION, celle du hub. */
+  recuLe: timestamp("recu_le", { withTimezone: true })
+    .notNull()
+    .default(sql`now()`),
+  /** `null` tant que le PC ne l'a pas pris. */
+  priseLe: timestamp("prise_le", { withTimezone: true }),
+});

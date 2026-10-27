@@ -19,14 +19,17 @@
 // n'écouter qu'après l'hydratation) jusqu'à ce que le hub lui réponde « ok » par le canal.
 
 import { useEffect, useRef } from "react";
+import { erreurGeste } from "@/lib/chantierGestes";
 import {
   MESSAGE_COUTS,
   MESSAGE_ETAT,
+  MESSAGE_GESTE,
   MESSAGE_OK,
   MESSAGE_RELEVE,
   SANDBOX_CADRE,
   URL_CADRE,
   URL_COUTS,
+  URL_GESTES,
   URL_RELEVE,
   consigneDeReponse,
   erreurCouts,
@@ -110,6 +113,34 @@ export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[num
       }
     }
 
+    /**
+     * Le cadre remet un geste (Fusionner, Fait, une réponse) : le hub le dépose avec la session du propriétaire, le
+     * cadre n'ayant ni réseau ni Drive. Le serveur valide tout ; ici on ne relaie que ce qui a la forme d'un geste,
+     * et la réponse repart dans le canal avec l'`id` du geste (jamais ailleurs).
+     */
+    async function deposerGeste(donnee: unknown) {
+      const sortie = canal;
+      const geste = (donnee as { geste?: unknown } | null)?.geste;
+      const id = (geste as { id?: unknown } | null)?.id;
+      if (!sortie || typeof geste !== "object" || geste === null || typeof id !== "string") return;
+      try {
+        const reponse = await fetch(URL_GESTES, {
+          method: "POST",
+          cache: "no-store",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(geste),
+        });
+        sortie.postMessage(
+          reponse.ok
+            ? { type: MESSAGE_GESTE, id, ok: true }
+            : { type: MESSAGE_GESTE, id, ok: false, erreur: erreurGeste(reponse.status) },
+        );
+      } catch {
+        sortie.postMessage({ type: MESSAGE_GESTE, id, ok: false, erreur: "Le geste n'est pas déposé : le hub ne répond pas." });
+      }
+    }
+
     function surMessage(evenement: MessageEvent) {
       // Seul NOTRE cadre est écouté (et son origine est opaque : « null ») ; le premier canal reçu est
       // le bon, les suivants (le cadre se représente tant qu'il n'a pas reçu « ok ») sont ignorés.
@@ -118,7 +149,10 @@ export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[num
       const [port] = evenement.ports;
       if (!port) return;
       canal = port;
-      canal.postMessage({ type: MESSAGE_OK });
+      canal.onmessage = (m: MessageEvent) => {
+        if ((m.data as { type?: unknown } | null)?.type === MESSAGE_GESTE) void deposerGeste(m.data);
+      };
+      canal.postMessage({ type: MESSAGE_OK, gestes: true });
       void lire();
       void lireCouts();
     }
