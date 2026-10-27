@@ -40,6 +40,10 @@ Marc, 26/10/2026 (« A, go ») : la page Chantier de l'artefact claude.ai vient 
 - Logique pure : `lib/chantierReleve.ts` (ETag, comparaison, contrôle du gzip). Tests : `chantierReleve`, `chantierReleveRoute` (401, 404, 503, 304 sans relecture, 200 gzip relu, 500, 429), `ganttDb` (en-tête sans contenu), `gardePages`.
 - **Reste à faire** (une PR chacune, plan du document) : 2 = la page et l'entrée « Chantier » sous « Gérer » (propriétaire seul ; au téléphone dans « Plus », la barre du bas garde 4 entrées) ; 3 = les boutons « À toi » (écriture + côté PC) ; la page ne doit PAS relire la base à chaque `router.refresh` du hub (15/60 s) : elle ne lit que l'en-tête, jamais le contenu. Le coût par fil est gardé en réserve, masqué pour l'instant.
 
+## 🟦 Session 2026-10-27 — **lia-ui v0.42.1, la discussion la plus récente l'emporte (Hubperso#562)**
+
+Le hub épingle `@mokarade/lia-ui` v0.42.1 (sha pelé `b8967ec`), seul changement (`package.json`, lock). Au montage, la discussion de l'onglet était datée « maintenant » et passait devant celle de l'état partagé : une question posée sur le hub ne se retrouvait pas dans CarAI. v0.42.1 range le vrai instant avec la discussion de l'onglet, et la plus récente gagne à la première lecture de l'état. Rien à brancher côté app. Preuve : déploiement Vercel de production `READY` sur le commit fusionné, puis relevé du PC (lia-ui#140).
+
 ## 🟦 Session 2026-10-26 — **lia-ui v0.42.0 : la hauteur de la bulle se révèle en douceur (Hubperso#528)**
 
 Pin de `@mokarade/lia-ui` de v0.41.1 à v0.42.0 (sha pelé `cff04f4`), seul changement (`package.json`, lock). La bulle de v0.41.1 restait dans l'écran mais changeait de hauteur d'un coup à chaque réponse. v0.42.0 découvre la hauteur gagnée en 280 ms depuis le bord fixe (`clip-path`), sans ombre coupée, et ne bouge rien avec `prefers-reduced-motion`. Rien à brancher côté hub. Preuve en production : déploiement `READY` sur le commit fusionné, bundle servi contenant `inset(-24px)` avec `animate`, puis mesure sur la page de connexion publique.
