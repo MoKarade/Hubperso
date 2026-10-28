@@ -19,6 +19,7 @@ import { redirect } from "next/navigation";
 import { DEPOTS, etatDepot, idDepot, jetonGraphes, type EtatGraphe } from "@/lib/graphes";
 import { ilYa } from "@/lib/format";
 import { maintenantMs } from "@/lib/horloge";
+import { faitsCarteGraphe } from "@/lib/liaGraphes";
 import { ConstellationSvg } from "@/components/ConstellationSvg";
 import { GraphesVivants } from "@/components/GraphesVivants";
 
@@ -93,11 +94,12 @@ export default async function GraphesPage() {
               key={depot}
               className={`carte-graphe carte-graphe--${etat.etat}`}
               style={{ "--i": i } as React.CSSProperties}
+              data-lia-donnees={faitsCarteGraphe(depot, etat, maintenant)}
               {...(pret ? { "data-graphe": idDepot(depot), "data-nom": depot } : {})}
             >
-              <div className="carte-graphe__vue" {...(pret ? { "data-ouvrir": "" } : {})}>
+              <div className="carte-graphe__vue" data-lia-genre="l’aperçu du graphe de code d’un dépôt" {...(pret ? { "data-ouvrir": "" } : {})}>
                 <ConstellationSvg nom={depot} />
-                {pret && <div className="carte-graphe__apercu" />}
+                {pret && <div className="carte-graphe__apercu" data-lia-genre="l’aperçu du graphe de code d’un dépôt" />}
               </div>
               <h2 className="carte-graphe__nom">{depot}</h2>
               <Etat etat={etat} maintenant={maintenant} />
