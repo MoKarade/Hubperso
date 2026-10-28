@@ -4347,21 +4347,22 @@ function faitsDe(n, H){
     const qs = Object.keys(qui).sort((a, b) => qui[b] - qui[a]);
     f.push(qs.length ? 'acteurs : ' + qs.slice(0, 4).map(k => k + ' (' + qui[k] + ' tâche' + (qui[k] > 1 ? 's' : '') + ')').join(', ') : 'acteurs : non relevés');
     // le détail de ce qui coince, par ordre d'urgence : c'est ce que Marc demande à LIA (« je ne vois pas le détail » n'est plus une réponse)
-    const t = l => '« ' + (l.t || '').slice(0, 55) + ' »';
+    const t = (l, n) => '« ' + (l.t || '').slice(0, n || 34) + ' »';
     const att = l => (l.waits || []).filter(w => w.unknown || w.open).map(w => w.unknown ? w.ref : '#' + w.n).slice(0, 3).join(', ');
+    // [libellé, test, dit, combien de titres] : les preuves (le bloc le plus demandé) en nomment plus ; tout doit tenir dans FAITS_MAX
     const groupes = [
-      ['bloquées', l => l.e === 'blk', l => t(l) + (att(l) ? ' attend ' + att(l) : '')],
-      ['preuve manquante ou en retard', l => l.e === 'ret' || l.pm, l => t(l) + (l.oub ? ' : ' + (H.retTxt(l) || '').slice(0, 70) : '')],
-      ['fusionnées, preuve à poser', l => l.e === 'fus' || l.e === 'prog', l => t(l) + (l.merged != null ? ' (fusionnée ' + H.quand(l.merged) + ')' : '')],
-      ['attendent Marc', l => l.e === 'marc', l => t(l) + (l.geste && l.geste.t ? ' : ' + String(l.geste.t).slice(0, 60) : '')],
-      ['oubliées', l => l.oubli, l => t(l)],
+      ['bloquées', l => l.e === 'blk', l => t(l, 30) + (att(l) ? ' attend ' + att(l) : ''), 4],
+      ['preuve manquante ou en retard', l => l.e === 'ret' || l.pm, (l, i) => t(l) + (l.oub && i < 2 ? ' : ' + (H.retTxt(l) || '').slice(0, 36) : ''), 8],
+      ['fusionnées, preuve à poser', l => l.e === 'fus' || l.e === 'prog', (l, i) => t(l) + (l.merged != null && i < 3 ? ' (' + H.quand(l.merged, 1) + ')' : ''), 8],
+      ['attendent Marc', l => l.e === 'marc', l => t(l) + (l.geste && l.geste.t ? ' : ' + String(l.geste.t).slice(0, 45) : ''), 4],
+      ['oubliées', l => l.oubli, l => t(l), 4],
     ];
     const vus = new Set();
-    groupes.forEach(([lib, test, dit]) => {
+    groupes.forEach(([lib, test, dit, max]) => {
       const L = ls.filter(l => test(l) && !vus.has(l));
       if (!L.length) return;
       L.forEach(l => vus.add(l));
-      f.push(lib + ' : ' + L.slice(0, 4).map(dit).join(' ; ') + (L.length > 4 ? ' ; … et ' + (L.length - 4) + ' autres' : ''));
+      f.push(lib + ' : ' + L.slice(0, max).map((l, i) => dit(l, i)).join(' ; ') + (L.length > max ? ' ; … et ' + (L.length - max) + ' autres' : ''));
     });
     const ouvertes = ls.filter(l => !vus.has(l) && l.open !== false && l.e !== 'acc' && l.e !== 'aband');
     if (ouvertes.length) f.push('autres à suivre : ' + ouvertes.slice(0, 4).map(l => t(l) + ' ' + H.STE[l.e]).join(' ; ') + (ouvertes.length > 4 ? ' ; … et ' + (ouvertes.length - 4) + ' autres' : ''));
