@@ -211,3 +211,16 @@ describe("les gestes de l'onglet « À toi » dans le cadre (sans Drive)", () =>
     expect(DOCUMENT).toContain("ni hub ni connecteur Google Drive");
   });
 });
+
+describe("la barre du Gantt montre l'état au fil du temps (Hubperso#572)", () => {
+  it("chaque barre de tâche ou de parent est découpée par état, avec sa légende", () => {
+    expect(DOCUMENT).toContain("function etatsOf(");
+    expect(DOCUMENT).toContain("function agregOf(");
+    expect(DOCUMENT).toContain("Couleur d'une barre, à chaque instant");
+    expect(DOCUMENT).toContain("const hist = etatsOf(n, seg);");
+  });
+
+  it("une tâche sans historique d'états garde sa barre d'avant : aucune couleur inventée", () => {
+    expect(DOCUMENT).toContain("bars += hist || seg(n.start, end, `gl2 ${sc}`)");
+  });
+});
