@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { decrireParDefaut, type MotifMonde } from "@mokarade/lia-ui";
 import { demarrerLia } from "@mokarade/lia-ui/boot";
 import { etatHttp } from "@mokarade/lia-ui/etat-http";
-import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_VOIR } from "@/lib/lia";
+import { CLE_LIA_HUB, ENTREES_LIA, EVENEMENT_LIA_CLIC_CADRE, EVENEMENT_LIA_VOIR } from "@/lib/lia";
 import { decrireElementHub } from "@/lib/liaElement";
 import { rendreBlocsHub } from "@/lib/liaBlocs";
 import { poserQuestion } from "@/lib/liaClient";
@@ -108,6 +108,19 @@ function voir(e: Event): void {
   }, attente);
 }
 
+/**
+ * Un clic droit reçu dans le cadre Chantier (origine opaque, que LIA ne peut pas lire) : `ChantierCadre` l'a validé et nous le
+ * passe ; LIA ouvre son menu à la bonne place de la page, cible = l'`<iframe>`. Sans LIA montée, rien ne se passe.
+ */
+function clicCadre(e: Event): void {
+  const d = (e as CustomEvent<{ cadre?: unknown; x?: unknown; y?: unknown; description?: unknown }>).detail;
+  const handle = demarrage.poignee();
+  if (!handle || !d || !(d.cadre instanceof HTMLIFrameElement)) return;
+  const { x, y, description } = d;
+  if (typeof x !== "number" || typeof y !== "number" || typeof description !== "object" || description === null) return;
+  handle.menuExterne({ cadre: d.cadre, x, y, description: description as { genre: string; texte?: string } });
+}
+
 // La pause de LIA, relue du serveur (`GET /api/lia/pause`) : illisible = en pause (lib/liaPauseClient.ts). Le vrai refus est
 // côté serveur, dans `/api/lia/ask` (423) ; ici LIA se tait à l'écran sans attendre ce refus.
 const suiviPause = creerSuiviPause(lirePauseServeur, Date.now, ecrirePauseServeur);
@@ -165,6 +178,7 @@ if (typeof window !== "undefined") {
   // Un seul écouteur, même si le module est évalué deux fois (rechargement à chaud) : `voir` est la même
   // fonction tant que le module est le même, et `addEventListener` ignore un doublon identique.
   window.addEventListener(EVENEMENT_LIA_VOIR, voir);
+  window.addEventListener(EVENEMENT_LIA_CLIC_CADRE, clicCadre);
 }
 
 /** Confie le routeur à LIA ; ne rend rien. Elle, elle est déjà là (voir `demarrage` plus haut). */

@@ -21,3 +21,9 @@ export const CLE_LIA_HUB = "lia-hub";
  * et `LiaBoot` écoute. Aucune donnée ne transite, seulement l'identifiant d'une app déclarée.
  */
 export const EVENEMENT_LIA_VOIR = "hub:lia-voir";
+
+/**
+ * Événement par lequel `ChantierCadre` relaie à LIA un clic droit reçu DANS le cadre isolé (origine opaque, que LIA ne peut pas lire) :
+ * `detail: { cadre, x, y, description }`, déjà validé (`lireClicDroit`, `lib/chantierCadre.ts`). `LiaBoot` écoute et appelle `menuExterne`.
+ */
+export const EVENEMENT_LIA_CLIC_CADRE = "hub:lia-clic-cadre";
