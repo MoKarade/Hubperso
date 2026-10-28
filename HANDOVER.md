@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 1 : le hub lit les bilans gardés dans Drive (Hubperso#578, pour #543)**
+
+Marc, 28/10/2026 : les bilans (Brief du jour, rapport hebdo) se gardent dans Drive ; le hub les lit en direct.
+- **`GET /api/bilans`** (60 jours et 12 semaines au plus) et **`GET /api/bilans/<id>`** : propriétaire seul (404 invité, 401 sans session, 409 sans droit Drive, 503 sans `BILANS_DRIVE_FOLDER_ID`, 502 si Google ne répond pas), `no-store`. Noms reconnus : `bilan-jour-` / `bilan-semaine-AAAA-MM-JJ.html`, dans UN dossier.
+- **Jeton** (`lib/jetonDrive.ts`) lu dans le cookie de session, jamais hors de la route ; lecture bornée au dossier (`lib/bilansDrive.ts`) ; document servi en bac à sable sans réseau. Rien dans le dépôt ni en base (public). **Reste** : la page (#543), la routine, la variable (geste de Marc).
+
 ## 🟦 Session 2026-10-28 — **Portées Google : la lecture de Drive entre dans la connexion partagée (Hubperso#575, pour l'onglet Bilans #543)**
 
 Marc, 28/10/2026 (« le hub lit Drive en direct », puis « Oui, 4 apps quand même » après avoir lu l'avertissement) : le hub doit lire les bilans que la routine range dans Drive.
