@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { optionsSentry, retirerDonneesPersonnelles } from "@/lib/sentryConfig";
+import { OPTIONS_HTTP_SENTRY, optionsSentry, retirerDonneesPersonnelles } from "@/lib/sentryConfig";
 
 describe("optionsSentry", () => {
   it("est éteint sans DSN (absent, vide ou en blancs)", () => {
@@ -75,7 +75,26 @@ describe("branchement", () => {
   });
 
   it("le serveur passe par optionsSentry, jamais par un Sentry.init libre", () => {
-    expect(lire("instrumentation.ts")).toMatch(/Sentry\.init\(optionsSentry\(/);
+    expect(lire("instrumentation.ts")).toMatch(/optionsSentry\(process\.env\.SENTRY_DSN\)/);
+  });
+
+  it("Hubperso#702 : le suivi de sessions par requête est coupé, branché sur l'intégration HTTP du serveur", () => {
+    expect(OPTIONS_HTTP_SENTRY).toEqual({ sessions: false });
+    const source = lire("instrumentation.ts");
+    expect(source).toMatch(/integrations:\s*\[Sentry\.httpIntegration\(OPTIONS_HTTP_SENTRY\)\]/);
+    // `httpIntegration` n'existe pas dans le SDK edge (le build échoue sinon) : seulement sous le runtime Node.
+    expect(source).toMatch(/NEXT_RUNTIME === "nodejs"[\s\S]*httpIntegration/);
+  });
+
+  it("Hubperso#702 : l'option existe bien dans la version installée du SDK (un renommage la rendrait muette)", () => {
+    const types = lire("node_modules/@sentry/node/build/types/integrations/http/httpServerIntegration.d.ts");
+    expect(types).toMatch(/sessions\?:\s*boolean/);
+  });
+
+  it("Hubperso#702 : les erreurs partent toujours, nettoyées (le nettoyage reste branché avec l'intégration)", () => {
+    const options = { ...optionsSentry("https://cle@exemple.invalid/1") };
+    expect(options.enabled).toBe(true);
+    expect(options.beforeSend({ request: { headers: { cookie: "fictif" } }, user: { email: "x" } })).toEqual({ request: {} });
   });
 
   it("aucune copie du DSN vers le navigateur (variable NEXT_PUBLIC_, CSP, fichier client)", () => {

@@ -55,3 +55,12 @@ export function optionsSentry(dsn: string | undefined): OptionsSentry {
     beforeSend: retirerDonneesPersonnelles,
   };
 }
+
+/**
+ * Réglage de l'intégration HTTP serveur de Sentry (Hubperso#702). Par défaut le SDK ouvre une « session » de
+ * suivi de santé des versions pour CHAQUE requête entrante et l'envoie à Sentry : sur `/login`, environ deux
+ * appels sortants par invocation (7,1 k vus en 24 h le 28/10/2026) pour une fonction qu'on n'utilise pas.
+ * Le besoin est de voir les erreurs : elles, partent toujours (`captureRequestError`, `beforeSend` inchangé).
+ * `sessions` est l'option de `httpIntegration` de la version installée (`@sentry/node`, `HttpServerIntegrationOptions`).
+ */
+export const OPTIONS_HTTP_SENTRY = { sessions: false } as const;
