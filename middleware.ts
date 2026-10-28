@@ -10,8 +10,9 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { decideGuard } from "@/lib/authGuard";
 import { isAuthConfigured } from "@/lib/authConfigured";
+import { NOM_COOKIE_SESSION_SIGNEE, appliquerSessionSignee } from "@/lib/sessionSignee";
 
-export default auth((req) => {
+export default auth(async (req) => {
   // Fail-closed : sans AUTH_SECRET/AUTHORIZED_EMAIL, Auth.js loggue MissingSecret mais
   // laisse passer (constaté sur Vercel). On refuse alors TOUT ce qui est protégé.
   if (!isAuthConfigured()) {
@@ -31,16 +32,27 @@ export default auth((req) => {
     search: req.nextUrl.search,
   });
 
+  // Cookie de session SIGNÉ (ES256) que lisent les apps (lib/sessionSignee.ts) : posé quand la
+  // session du hub est valide, effacé quand elle ne l'est plus. Additif : n'ajoute ni ne retire
+  // aucun accès, et sans clé ou sans domaine partagé il ne fait rien.
+  const signee = (reponse: NextResponse) =>
+    appliquerSessionSignee(reponse, {
+      cookie: req.cookies.get(NOM_COOKIE_SESSION_SIGNEE)?.value,
+      email: req.auth?.user?.email,
+    });
+
   switch (decision.type) {
     case "next":
-      return;
+      return signee(NextResponse.next());
     case "unauthorized":
-      return NextResponse.json(
-        { error: "unauthenticated", message: "Authentification requise." },
-        { status: 401 },
+      return signee(
+        NextResponse.json(
+          { error: "unauthenticated", message: "Authentification requise." },
+          { status: 401 },
+        ),
       );
     case "redirect":
-      return NextResponse.redirect(new URL(decision.location, req.nextUrl.origin));
+      return signee(NextResponse.redirect(new URL(decision.location, req.nextUrl.origin)));
   }
 });
 

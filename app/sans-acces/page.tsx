@@ -16,6 +16,7 @@
 
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
+import { effacerSessionSignee } from "@/lib/effacerSessionSignee";
 
 export const metadata = {
   title: "Accès refusé — Hub perso",
@@ -55,6 +56,7 @@ export default async function SansAccesPage() {
         <form
           action={async () => {
             "use server";
+            await effacerSessionSignee();
             await signOut({ redirectTo: "/login" });
           }}
         >

@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **Session partagée : le hub signe le cookie ES256 (phase 2, Hubperso#607, mission #606)**
+
+Marc, 28/10/2026 (« A ») : le hub émet le cookie signé que JobAI, CarAI, MemoryAI et FinanceAI savent déjà lire.
+- **`lib/sessionSignee.ts`** : `__Secure-hub.session` (ES256, `kid` de la clé, émetteur `hubperso.com`, 30 jours, re-signé à mi-vie ou si la clé, l'adresse ou l'émetteur change), posé par `middleware.ts` pour toute session valide. Additif : le cookie chiffré reste la référence du hub.
+- **Fermé par défaut** : rien n'est posé sans `HUB_SESSION_PRIVATE_JWK` (EC P-256 privée avec `kid`) ET `AUTH_COOKIE_DOMAIN` ; erreur de signature = réponse normale sans cookie, journal sans secret.
+- **Déconnexion** : `lib/effacerSessionSignee.ts` avant `signOut()` (bouton du header et page « sans accès ») ; le middleware l'efface aussi quand la session n'est plus valide. [À vérifier] Les apps doivent faire pareil à leur déconnexion avant la pose des clés (#609).
+- **`jose`** devient dépendance directe (déjà présente via next-auth). **Reste** : route de contrôle (#608), clés posées par le PC et preuve (#609). Hors périmètre : phase 3 (retrait de l'ancien cookie).
+
 ## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 2 : la page « Bilans » et son entrée sous « Gérer » (Hubperso#543)**
 
 - **Entrée « Bilans »** sous « Gérer » (`lib/navigation.ts`, icône `bilans`), donc dans « Plus » au téléphone ; propriétaire seul (un invité ne la voit pas), la barre du bas la range sous « Plus ».
