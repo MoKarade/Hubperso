@@ -226,3 +226,20 @@ appartiennent.
 Le premier point — « le projet Google ne contient plus qu'un client OAuth » — **ne sera pas
 atteint**, et ne doit plus servir de critère. Les autres restent valables. FinanceAI reste
 au backlog, sans lien avec ce constat.
+
+---
+
+## Amendement du 28/10 — la lecture de Drive entre dans les portées partagées
+
+Décision de Marc (28/10/2026, deux cartes, « Oui, 4 apps quand même »), pour l'onglet Bilans du
+hub (Hubperso#543) : le hub doit lire les bilans que la routine range dans Drive.
+
+- Les quatre apps qui partagent le cookie demandent `drive.readonly` en plus de l'identité et de
+  Tasks (`lib/jetonsGoogle.ts`, identique dans les quatre dépôts). Lecture seule : aucune écriture.
+- Ce que ça renverse : la ligne « Ni Drive » de l'ADR et de `docs/CONNEXION-UNIQUE.md`. L'alternative
+  d'une connexion Drive propre au hub (jeton en base, bouton dans l'administration) a été proposée
+  et écartée par Marc.
+- Coût assumé : `drive.readonly` est une portée **restreinte**. Sans vérification Google, l'écran de
+  connexion affiche « application non vérifiée » ; et si l'écran de consentement est en mode Test, le
+  jeton expire au bout de sept jours (voir « Conséquences vérifiables »). Les sessions déjà ouvertes
+  n'ont pas le droit : une reconnexion est nécessaire dans chaque app.
