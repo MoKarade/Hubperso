@@ -5,11 +5,10 @@ import type { Bilan, GenreBilan } from "./bilans";
 
 export const URL_BILANS = "/api/bilans";
 
-/** Le texte d'un échec de `/api/bilans` (statut HTTP + champ `error` de la réponse). */
-export function messageErreurBilans(statut: number, code: unknown): string {
+/** Le texte d'un échec de `/api/bilans` (son statut HTTP). */
+export function messageErreurBilans(statut: number): string {
   if (statut === 401) return "Ta session a expiré : reconnecte-toi au hub.";
   if (statut === 409) return "Il manque le droit de lire Drive : reconnecte-toi une fois au hub et accepte l'écran Google.";
-  if (statut === 503 && code === "dossier-non-configure") return "Le dossier Drive des bilans n'est pas encore branché.";
   if (statut === 503) return "Le dossier Drive des bilans est introuvable.";
   if (statut === 429) return "Trop de lectures d'un coup : réessaie dans une minute.";
   if (statut === 502) return "Google ne répond pas pour l'instant.";

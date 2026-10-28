@@ -9,13 +9,12 @@ const b = (id: string, genre: "jour" | "semaine", date: string): Bilan => ({ id,
 
 describe("messageErreurBilans", () => {
   it("dit la raison, et de quoi agir pour le droit Drive", () => {
-    expect(messageErreurBilans(409, "droit-drive-absent")).toMatch(/reconnecte-toi/i);
-    expect(messageErreurBilans(503, "dossier-non-configure")).toMatch(/pas encore branché/);
-    expect(messageErreurBilans(503, "dossier-introuvable")).toMatch(/introuvable/);
-    expect(messageErreurBilans(401, "unauthorized")).toMatch(/session/);
-    expect(messageErreurBilans(502, "drive-injoignable")).toMatch(/Google/);
-    expect(messageErreurBilans(429, "x")).toMatch(/minute/);
-    expect(messageErreurBilans(500, null)).toMatch(/indisponibles/);
+    expect(messageErreurBilans(409)).toMatch(/reconnecte-toi/i);
+    expect(messageErreurBilans(503)).toMatch(/introuvable/);
+    expect(messageErreurBilans(401)).toMatch(/session/);
+    expect(messageErreurBilans(502)).toMatch(/Google/);
+    expect(messageErreurBilans(429)).toMatch(/minute/);
+    expect(messageErreurBilans(500)).toMatch(/indisponibles/);
   });
 });
 

@@ -30,11 +30,11 @@ async function lireBilans(): Promise<Etat> {
     } catch {
       json = null;
     }
-    if (!r.ok) return { type: "erreur", message: messageErreurBilans(r.status, (json as { error?: unknown } | null)?.error) };
+    if (!r.ok) return { type: "erreur", message: messageErreurBilans(r.status) };
     const bilans = bilansDeReponse(json);
-    return bilans ? { type: "ok", bilans } : { type: "erreur", message: messageErreurBilans(502, null) };
+    return bilans ? { type: "ok", bilans } : { type: "erreur", message: messageErreurBilans(502) };
   } catch {
-    return { type: "erreur", message: messageErreurBilans(502, null) };
+    return { type: "erreur", message: messageErreurBilans(502) };
   }
 }
 
