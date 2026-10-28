@@ -644,6 +644,8 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("moyenne ' + dur(d.mean) + ' · médiane ' + dur(d.med)");
     // la file Mergify est son étape, séparée des contrôles
     expect(DOCUMENT).toContain("(xcQueue(l, D) ? 'mg' : 'ci')");
+    expect(DOCUMENT).toContain("const cc = Math.min(Math.max(ci, fin), mg)");
+    expect(DOCUMENT).toContain("c === 'mg' ? mgPos(x) - mgPos(y)");
     expect(DOCUMENT).toContain("case 'acc': return l.end ? 'acceptée ' + quand(l.end)");
     expect(DOCUMENT).toContain("id: 'prs'");
   });

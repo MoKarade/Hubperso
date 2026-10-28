@@ -5249,7 +5249,7 @@ function vGanttFull(){
       const add = (k, a, b) => { if (a != null && b != null && b >= a && b >= t0) S[k].push(b - a); };
       add('file', l.c, l.start); add('prise', l.start, cr); if (c1 != null && cr != null) add('draft', cr, c1);
       const e = pr && log[l.k + '#' + pr.n], ci = e && e.ci ? t(e.ci) : null, fin = mg != null && cr != null ? Math.max(Math.min(c1 != null ? c1 : mg, mg), cr) : null;
-      if (ci != null && fin != null && ci >= fin - 60e3 && ci <= mg + 60e3){ add('ci', fin, ci); add('mg', ci, mg); }
+      if (ci != null && fin != null && ci >= fin - 60e3 && ci <= mg + 60e3){ const cc = Math.min(Math.max(ci, fin), mg); add('ci', fin, cc); add('mg', cc, mg); }   // 60 s d'écart d'horloge : bornée, jamais perdue
       add('prove', mg, pv); add('acc', pv, x);
     });
     const o = {}; Object.keys(S).forEach(k => { const a = S[k]; o[k] = {n: a.length, mean: a.length ? a.reduce((u, v) => u + v, 0) / a.length : null, med: med(a)}; });
@@ -5319,13 +5319,14 @@ function vGanttFull(){
     const hors = D ? D.P.prs.filter(r => r && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r, tache: r.tache}))
       : ((M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : []).map(h => ({repo: h.repo, n: h.n, t: h.t, url: h.url, draft: !!h.draft, ag: h.bot ? '' : '', bot: h.bot}));
     const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? (xcQueue({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'mg' : 'ci') : 'rel';
+    const mgPos = l => { const r = xcRec(l, D); return r && r.mergify && r.mergify.position != null ? r.mergify.position : Infinity; };
     const cell = (a, c, g) => {
       if (g === 'dep'){
         const d = D && Object.keys(D.dep).find(k => k.toLowerCase() === a.rl), x = d ? xcDepEtat(D.dep[d]) : xcDepEtat(null), v = d ? D.dep[d] : null;
         return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, En ligne"><span class="xc-b s-dep ${x[1]}" data-tip="${tipAttr(a.app + '\n' + x[2] + (v && v.environnement ? ' · ' + v.environnement : '') + (v && v.maj_le ? '\nmis à jour ' + ago(Date.parse(v.maj_le)) : '') + (v ? '\ndernier déploiement du dépôt, pas celui d’une PR' : ''))}">${esc(x[0])}</span></div>`;
       }
       if (g && !D) return `<div class="xc-c gh" data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"></div>`;
-      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
+      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : c === 'mg' ? mgPos(x) - mgPos(y) : (y.last || y.start || 0) - (x.last || x.start || 0));
       const hh2 = c === 'draft' || c === 'rel' || c === 'ci' || c === 'mg' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b s-${c}${h.rec && !h.rec.tache ? ' h' : ''}${h.rec && xcEtatCi(h.rec) === 'vert' ? ' ok' : ''}${h.rec && ['rouge', 'annule'].includes(xcEtatCi(h.rec)) ? ' r' : ''}" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · ' + (h.tache ? 'tâche ' + h.tache : 'PR sans tâche') + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
       return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now, D)).join('')}${hh2}</div>`;
     };
