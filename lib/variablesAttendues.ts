@@ -82,6 +82,11 @@ const FIXES: readonly VariableAttendue[] = [
     siAbsente: "réception du Gantt désactivée : /api/gantt répond 503, l'onglet Chantier Apps n'a rien à montrer",
   },
   {
+    nom: "BILANS_DRIVE_FOLDER_ID",
+    exigence: "optionnelle",
+    siAbsente: "onglet Bilans « non configuré » : /api/bilans répond 503 (identifiant du dossier Drive des bilans, variable serveur)",
+  },
+  {
     nom: "AUTH_COOKIE_DOMAIN",
     exigence: "optionnelle",
     siAbsente: "session limitée à hubperso.com, non partagée avec les sous-domaines des apps",
