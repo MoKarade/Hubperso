@@ -17,11 +17,19 @@ const moq = vi.hoisted(() => ({
   assurerMigrations: vi.fn(async () => {}),
   enregistrerGantt: vi.fn(),
   memeJeton: vi.fn(),
+  pousser: vi.fn(async () => "envoye"),
+  apres: [] as Array<() => Promise<void> | void>,
 }));
 
 vi.mock("@/lib/db", () => ({ baseConfiguree: moq.baseConfiguree }));
 vi.mock("@/lib/migrations", () => ({ assurerMigrations: moq.assurerMigrations }));
 vi.mock("@/lib/ganttDb", () => ({ enregistrerGantt: moq.enregistrerGantt }));
+// `after` n'existe que dans une requête Next : on garde son callback pour le lancer à la main, comme après la réponse.
+vi.mock("next/server", async (importOriginal) => {
+  const vrai = await importOriginal<typeof import("next/server")>();
+  return { ...vrai, after: (f: () => Promise<void> | void) => void moq.apres.push(f) };
+});
+vi.mock("@/lib/chantierSortiesEnvoi", () => ({ pousserSortiesChantier: moq.pousser }));
 vi.mock("@/lib/jetonApp", async (importOriginal) => {
   const vrai = await importOriginal<typeof import("@/lib/jetonApp")>();
   moq.memeJeton.mockImplementation(vrai.memeJeton);
@@ -51,6 +59,8 @@ function requete(authorization?: string, corps: string = JSON.stringify(envoi())
 beforeEach(() => {
   vi.stubEnv("GANTT_SECRET", SECRET);
   moq.enregistrerGantt.mockResolvedValue("2026-10-22T20:50:03.000Z");
+  moq.apres.length = 0;
+  moq.pousser.mockClear();
 });
 
 afterEach(() => {
@@ -108,6 +118,29 @@ describe("POST /api/gantt — réception", () => {
     expect(await res.json()).toEqual({ ok: true, recu: "2026-10-22T20:50:03.000Z" });
     expect(moq.assurerMigrations).toHaveBeenCalledTimes(1);
     expect(moq.enregistrerGantt).toHaveBeenCalledWith(envoi());
+  });
+
+  it("après la réponse, le hub pousse l'état du chantier à MemoryAI avec le jeton dédié ; sans envoi valide, rien n'est poussé", async () => {
+    vi.stubEnv("MEMORYAI_SORTIES_TOKEN", "jeton-de-test-sorties-0123456789");
+    const res = await POST(requete(`Bearer ${SECRET}`));
+    expect(res.status).toBe(200);
+    expect(moq.pousser).not.toHaveBeenCalled(); // pas avant la réponse
+    expect(moq.apres).toHaveLength(1);
+    await moq.apres[0]!();
+    expect(moq.pousser).toHaveBeenCalledWith(
+      expect.objectContaining({ donneesGzB64: envoi().donnees_gz_b64, jeton: "jeton-de-test-sorties-0123456789", maintenant: expect.any(Date) }),
+    );
+    moq.apres.length = 0;
+    await POST(requete("Bearer faux"));
+    await POST(requete(`Bearer ${SECRET}`, "pas du json"));
+    expect(moq.apres).toHaveLength(0);
+  });
+
+  it("une écriture en base qui échoue ne pousse rien", async () => {
+    moq.enregistrerGantt.mockRejectedValue(new Error("base"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect((await POST(requete(`Bearer ${SECRET}`))).status).toBe(500);
+    expect(moq.apres).toHaveLength(0);
   });
 
   it("sans base : 503, rien écrit", async () => {

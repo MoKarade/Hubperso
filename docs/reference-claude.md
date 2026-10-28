@@ -60,6 +60,12 @@ widgets 100 % génériques.
     égalité stricte dans `isPublicPath`. Le Drive du PC est privé : le hub ne le lit pas, il
     range le DERNIER envoi (table `gantt_releve`, une seule ligne) et les pages le relisent
     derrière la connexion. Un corps invalide (400) ou trop gros (413) ne touche jamais la ligne.
+    **Après la réponse** (`after`), une fois par heure au plus (l'envoi des dix premières minutes, UTC),
+    le hub POUSSE l'état du chantier (une ligne par app, une par mission ouverte, niveau 1) à
+    `POST /api/sorties` de MemoryAI avec `MEMORYAI_SORTIES_TOKEN` (`lib/chantierSorties.ts`, pur ;
+    `lib/chantierSortiesEnvoi.ts`, l'envoi) : c'est ce qui permet à LIA de lire le chantier elle-même
+    (Hubperso#651). Variable absente = rien n'est poussé ; un échec se dit au journal et ne touche
+    ni la réponse au PC ni la ligne en base.
   - `POST /api/cron/releve` — l'**horloge** du hub, appelée par
     `.github/workflows/releve.yml` (ADR 0003). Authentifiée par un secret **DÉDIÉ**
     (`CRON_SECRET`), pas par un `HUB_TOKEN_*` : ce qu'elle déclenche est une ÉCRITURE dans

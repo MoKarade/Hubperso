@@ -82,6 +82,11 @@ const FIXES: readonly VariableAttendue[] = [
     siAbsente: "réception du Gantt désactivée : /api/gantt répond 503, l'onglet Chantier Apps n'a rien à montrer",
   },
   {
+    nom: "MEMORYAI_SORTIES_TOKEN",
+    exigence: "optionnelle",
+    siAbsente: "le hub ne pousse pas l'état du chantier à MemoryAI : LIA ne lit que les faits envoyés avec le clic droit (jeton d'écrivain de la porte POST /api/sorties, variable serveur)",
+  },
+  {
     nom: "BILANS_DRIVE_FOLDER_ID",
     exigence: "optionnelle",
     siAbsente: "le dossier Drive « Bilans » par défaut (lib/bilansGarde.ts) ; la variable le remplace, par exemple pour un autre dossier",
