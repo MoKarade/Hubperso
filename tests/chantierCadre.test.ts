@@ -21,6 +21,7 @@ import {
   erreurCouts,
   estGzip,
   estMessagePret,
+  lireClicDroit,
   ongletDe,
 } from "@/lib/chantierCadre";
 
@@ -339,5 +340,49 @@ describe("le clic droit du cadre est dit au hub (#610)", () => {
   it("appui long tactile de 650 ms, annulé par un mouvement de plus de 8 px", () => {
     expect(DOCUMENT).toContain("}, 650)");
     expect(DOCUMENT).toContain("> 8) finLong()");
+  });
+});
+
+describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
+  const bon = { type: MESSAGE_CLIC_DROIT, x: 120.5, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
+
+  it("un message conforme donne la place et la description", () => {
+    expect(lireClicDroit(bon)).toEqual({ x: 120.5, y: 48, description: { genre: "une barre du Gantt", texte: "Hubperso#604" } });
+  });
+
+  it("sans texte, la description n'a que le genre", () => {
+    expect(lireClicDroit({ ...bon, texte: "" })).toEqual({ x: 120.5, y: 48, description: { genre: "une barre du Gantt" } });
+    expect(lireClicDroit({ ...bon, texte: undefined })).toEqual({ x: 120.5, y: 48, description: { genre: "une barre du Gantt" } });
+  });
+
+  it("le texte est coupé à 300 caractères, le genre à 80, sans caractère de contrôle", () => {
+    const r = lireClicDroit({ ...bon, genre: `un${"x".repeat(200)}`, texte: `a\u0000b\n${"y".repeat(500)}` })!;
+    expect(r.description.genre).toHaveLength(80);
+    expect(r.description.texte).toHaveLength(300);
+    expect(r.description.texte!.startsWith("a b y")).toBe(true);
+  });
+
+  it("une donnée du cadre n'est jamais une consigne : seuls x, y, genre et texte sortent", () => {
+    const r = lireClicDroit({ ...bon, outil: "supprimer", href: "javascript:alert(1)" })!;
+    expect(Object.keys(r).sort()).toEqual(["description", "x", "y"]);
+    expect(Object.keys(r.description).sort()).toEqual(["genre", "texte"]);
+  });
+
+  it("un message mal formé est ignoré", () => {
+    for (const mauvais of [
+      null,
+      "chantier-clic-droit",
+      [],
+      { ...bon, type: "chantier-geste" },
+      { ...bon, x: "120" },
+      { ...bon, y: Number.NaN },
+      { ...bon, x: Infinity },
+      { ...bon, x: 1e9 },
+      { ...bon, genre: 5 },
+      { ...bon, genre: "   " },
+      { ...bon, genre: undefined },
+    ]) {
+      expect(lireClicDroit(mauvais), JSON.stringify(mauvais)).toBeNull();
+    }
   });
 });
