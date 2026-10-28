@@ -806,6 +806,9 @@ body.anim .card .cs i{animation:grow .7s ease both}
 .xc-ctl{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:2px 0 6px}.xc-ctl .per{margin:0}
 .xc-w svg{width:10px;height:10px;margin-right:5px;vertical-align:-1px;fill:currentColor}
 .xc-fl{display:inline-flex;align-items:center;gap:6px}.xc-fl svg{width:12px;height:12px;fill:var(--mute)}
+.xc-cb{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:10px 0 4px}.xc-cb>b{align-self:center;font-size:13px;color:var(--mute);margin-right:4px}
+.xc-ci{display:flex;flex-direction:column;gap:2px;min-width:132px;flex:1 1 132px;padding:8px 12px;border-radius:10px;background:var(--panel);box-shadow:inset 3px 0 0 var(--done)}.xc-ci.ko{box-shadow:inset 3px 0 0 var(--blk-t)}.xc-ci.nd{box-shadow:inset 3px 0 0 var(--todo)}
+.xc-ci span{font-size:12.5px;color:var(--mute)}.xc-ci b{font:700 20px/1.1 var(--fd);color:var(--ink);font-variant-numeric:tabular-nums}.xc-ci em{font-style:normal;font-size:12px;color:var(--mute)}.xc-ci.ko em{color:var(--blk-t)}
 .xc-ph{margin:14px 0 4px}.xc-pht{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;font-size:13px;color:var(--mute)}.xc-pht>b{font-size:15px;color:var(--ink)}.xc-pht span b{color:var(--ink);font-variant-numeric:tabular-nums}
 .xc-phb{display:flex;gap:2px;height:34px;margin:6px 0;border-radius:8px;overflow:hidden}.xc-phb span{display:flex;align-items:center;min-width:0;padding:0 10px;background:var(--c);color:var(--bg);font:700 12.5px/1 var(--fd);white-space:nowrap;overflow:hidden}
 .xc-w{font-style:normal;font-size:12px;line-height:1.25;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--line) 55%,transparent);color:var(--mute);white-space:nowrap}
@@ -5335,20 +5338,24 @@ function vGanttFull(){
   const XFORME = {h: '<circle cx="8" cy="8" r="6.5"/>', ia: '<path d="M8 1 15 8 8 15 1 8z"/>', m: '<rect x="2" y="2" width="12" height="12" rx="2"/>'};
   // durée moyenne de chaque étape mesurée sur les 30 derniers jours : seules les étapes que le relevé date (issue, prise, PR, derniers commits, fin des contrôles, fusion, preuve, fermeture)
   const XDUR_J = 30;
+  // la cible du 29/10 (Marc) : file, prise et preuve en 10 min au plus chacune, comptées depuis « éligible depuis »
+  const XCIBLE = 10 * 60e3;
   // ce que la ligne « durée » affiche : moyenne ou médiane, pour tous les types de tâche ou un seul (comme la frise du fil workflow)
   let XST = 'moy', XQ = 'tous';
   try { const a = localStorage.getItem('mxxst'), b = localStorage.getItem('mxxq'); if (a === 'moy' || a === 'med') XST = a; if (['tous', 'claude', 'jules', 'copilot'].includes(b)) XQ = b; } catch (e) {}
   const xcDur = ms => ms < 60e3 ? '< 1 min' : dur(ms);
   const xcType = l => l.j ? 'jules' : l.pr && /^copilot/i.test(l.pr.au || '') ? 'copilot' : 'claude';
   const xcEtapes = () => { const E = CUR && CUR.etapes; return E && typeof E === 'object' && E.prets && typeof E.prets === 'object' ? E : EV.size ? {prets: {}, en_ligne: {}, couvert_depuis: {}, restant: 0} : null; };
+  // « éligible depuis » : le plus tard de la création de la tâche et de la fermeture de chacune des tâches dont elle dépend (une dépendance inconnue ne se date pas : elle compte pour rien)
+  const xcEligible = l => (l.waits || []).reduce((m, w) => { const e = w && !w.unknown && w.end != null ? (typeof w.end === 'number' ? w.end : Date.parse(w.end)) : NaN; return isFinite(e) && e > m ? e : m; }, l.c);
   const xcDurees = () => {
-    const now = Date.now(), t0 = now - XDUR_J * DAY, log = {}, S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}, E = xcEtapes(), sans = {n: 0}, t = v => { const x = typeof v === 'number' ? v : Date.parse(v); return isFinite(x) ? x : null; };
+    const now = Date.now(), t0 = now - XDUR_J * DAY, log = {}, S = {file: [], fileEl: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}, E = xcEtapes(), sans = {n: 0}, t = v => { const x = typeof v === 'number' ? v : Date.parse(v); return isFinite(x) ? x : null; };
     (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => { log[x.r + '#' + x.n] = x; });
     const add = (k, a, b) => { if (a != null && b != null && b >= a && b >= t0) S[k].push(b - a); };
     M.leaves.forEach(l => {
       if (XQ !== 'tous' && xcType(l) !== XQ) return;
       const pr = l.pr, cr = pr ? t(pr.created) : null, c1 = pr ? t(pr.c1) : null, mg = l.merged, pv = l.pv ? t(l.pv.c) : null, x = l.e === 'acc' ? l.end : null;
-      add('file', l.c, l.start); add('prise', l.start, cr); if (!E && c1 != null && cr != null) add('draft', cr, c1);
+      add('file', l.c, l.start); add('fileEl', xcEligible(l), l.start); add('prise', l.start, cr); if (!E && c1 != null && cr != null) add('draft', cr, c1);
       const e = pr && log[l.k + '#' + pr.n], ci = e && e.ci ? t(e.ci) : null, fin = mg != null && cr != null ? Math.max(Math.min(c1 != null ? c1 : mg, mg), cr) : null;
       if (ci != null && fin != null && ci >= fin - 60e3 && ci <= mg + 60e3){ const cc = Math.min(Math.max(ci, fin), mg); add('ci', fin, cc); add('mg', cc, mg); }   // 60 s d'écart d'horloge : bornée, jamais perdue
       add('prove', mg, pv); add('acc', pv, x); add('total', l.c, x);
@@ -5366,7 +5373,7 @@ function vGanttFull(){
         else if (E.en_ligne && !ed && !(E.restant > 0) && now - m > 30 * 60e3 && cov[x.r] && m >= t(cov[x.r])) sans.n++;
       });
     }
-    const o = {}; Object.keys(S).forEach(k => { const a = S[k]; o[k] = {n: a.length, mean: a.length ? a.reduce((u, v) => u + v, 0) / a.length : null, med: med(a)}; });
+    const o = {}; Object.keys(S).forEach(k => { const a = S[k]; o[k] = {n: a.length, mean: a.length ? a.reduce((u, v) => u + v, 0) / a.length : null, med: med(a), dans: a.filter(v => v <= XCIBLE).length}; });
     if (!E){ delete o.rel; delete o.dep; } else { o.dep.sans = sans.n; o.reste = E.restant; }
     return o;
   };
@@ -5489,6 +5496,14 @@ function vGanttFull(){
     const pv = k => val(k) || 0, PH = [['Avant la PR', pv('file') + pv('prise'), 'var(--vio)', 'attente en file puis travail avant l’ouverture de la PR'], ['Dans la PR', pv('draft') + (E2 ? pv('rel') : pv('ci') + pv('mg')), 'var(--doing)', 'brouillon, contrôles et file Mergify'], ['Après la fusion', pv('prove') + pv('acc'), 'var(--done)', 'preuve en production puis acceptation']], ptot = PH.reduce((u, x) => u + x[1], 0);
     const ph = ptot > 0 ? `<div class="xc-ph"><div class="xc-pht"><b>Où va le temps</b>${DU.total && DU.total.n ? `<span data-tip="${tipAttr('Création de l’issue → acceptée, mesuré à part : la somme des étapes n’est pas le total\nsur ' + DU.total.n + ' tâches, ' + XDUR_J + ' derniers jours')}">créée → acceptée : <b>${esc(xcDur(XST === 'med' ? DU.total.med : DU.total.mean))}</b></span>` : ''}</div>
       <div class="xc-phb" role="img" aria-label="${esc(PH.map(x => x[0] + ' ' + xcDur(x[1])).join(', '))}">${PH.filter(x => x[1] > 0).map(x => `<span style="flex:${x[1]};--c:${x[2]}" data-tip="${tipAttr(x[0] + ' : ' + xcDur(x[1]) + ' (' + Math.round(x[1] / ptot * 100) + ' %)\n' + x[3] + '\nsomme des étapes ' + (XST === 'med' ? 'médianes' : 'moyennes') + ', pas le total mesuré')}">${esc(x[0])} · ${esc(xcDur(x[1]))}</span>`).join('')}</div></div>` : '';
+    // les trois délais visés : la part des tâches des 30 derniers jours qui les tiennent, et le nombre de dépassements, dits tels quels
+    const cibles = [['fileEl', 'File', 'éligible → prise : de la création (ou de la fermeture de la dernière dépendance) à la prise par un agent'], ['prise', 'Prise', 'prise → PR ouverte'], ['prove', 'Preuve', 'fusion → preuve « Acceptée »']].map(([c, n, def]) => {
+      const d = DU[c];
+      if (!d || !d.n) return `<div class="xc-ci nd" data-tip="${tipAttr(n + ' : ' + def + '\naucune tâche mesurée sur ' + XDUR_J + ' jours')}"><span>${esc(n)}</span><b>—</b><em>rien à mesurer</em></div>`;
+      const hors = d.n - d.dans, v = XST === 'med' ? d.med : d.mean;
+      return `<div class="xc-ci${hors ? ' ko' : ''}" data-tip="${tipAttr(n + ' : ' + def + '\n' + (XST === 'med' ? 'médiane ' : 'moyenne ') + xcDur(v) + ' · cible ' + xcDur(XCIBLE) + '\n' + d.dans + ' sur ' + d.n + ' dans la cible, ' + hors + ' au-dessus (' + XDUR_J + ' derniers jours)')}"><span>${esc(n)}</span><b>${esc(xcDur(v))}</b><em>${hors ? nfmt(hors) + ' sur ' + nfmt(d.n) + ' au-dessus de ' + xcDur(XCIBLE) : 'tous sous ' + xcDur(XCIBLE)}</em></div>`;
+    }).join('');
+    const cibleHtml = `<div class="xc-cb" role="group" aria-label="Délais visés : ${xcDur(XCIBLE)} au plus chacun"><b>Cible ${esc(xcDur(XCIBLE))}</b>${cibles}</div>`;
     const seg = (attr, cur, items) => `<div class="per" role="group">${items.map(([k, n]) => `<button ${attr}="${k}" aria-pressed="${cur === k}">${n}</button>`).join('')}</div>`;
     const ctl = `<div class="xc-ctl" role="group" aria-label="Réglages des durées">${seg('data-xst', XST, [['moy', 'Moyenne'], ['med', 'Médiane']])}${seg('data-xq', XQ, [['tous', 'Tous'], ['claude', 'Claude'], ['jules', 'Jules'], ['copilot', 'Copilot']])}</div>`;
     const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
@@ -5497,7 +5512,7 @@ function vGanttFull(){
     const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
     const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('s-mg', 'rang chez Mergify', '1')}${k('h', 'PR sans tâche')}<span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.h}</svg>humain</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.ia}</svg>IA</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.m}</svg>machine</span></div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
-    return `<div class="xc">${top}${ph}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${durRow}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
+    return `<div class="xc">${top}${ph}${cibleHtml}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${durRow}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
   }
   // l'onglet En cours se redessine tout seul : les âges, les pastilles et les barres avancent sans toucher la page
   setInterval(() => { if (M && ST.tab === 'cours' && !document.hidden) render(); }, 30e3);
