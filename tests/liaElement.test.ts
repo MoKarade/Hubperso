@@ -92,6 +92,44 @@ describe("le hub nomme ses blocs", () => {
   });
 });
 
+describe("les cartes de /graphes (Hubperso#730)", () => {
+  const faits = "Graphe de code du dépôt MoKarade/MemoryAI : prêt, commit 0123456, publié il y a 3 h.";
+  const vignettes =
+    `<ul class="graphes__grille"><li class="carte-graphe carte-graphe--ok" data-lia-donnees="${faits}">` +
+    '<div class="carte-graphe__vue" data-lia-genre="l’aperçu du graphe de code d’un dépôt"><svg class="constellation"></svg><div class="carte-graphe__apercu" data-lia-genre="l’aperçu du graphe de code d’un dépôt"><canvas></canvas></div></div>' +
+    '<h2 class="carte-graphe__nom">MoKarade/MemoryAI</h2><p class="carte-graphe__etat"><code>0123456</code><span>il y a 3 h</span></p>' +
+    '<a class="btn carte-graphe__ouvrir" href="/x">Ouvrir</a></li></ul>';
+
+  it("la carte entière : son genre et les faits du dépôt", () => {
+    dans(vignettes);
+    const d = decrire(".carte-graphe");
+    expect(d?.genre).toBe("la carte du graphe de code d’un dépôt");
+    expect(d?.donnees).toBe(faits);
+  });
+
+  it("la vignette 3D (aperçu ou dessin) : plus « un élément de la page », les faits du dépôt suivent", () => {
+    dans(vignettes);
+    for (const sel of [".carte-graphe__apercu", ".carte-graphe__vue"]) {
+      const d = decrire(sel);
+      expect(d?.genre, sel).toBe("l’aperçu du graphe de code d’un dépôt");
+      expect(d?.donnees, sel).toBe(faits);
+    }
+  });
+
+  it("le nom du dépôt et l'état restent décrits précisément, avec les mêmes faits", () => {
+    dans(vignettes);
+    expect(decrire(".carte-graphe__nom")?.donnees).toBe(faits);
+    expect(decrire(".carte-graphe__nom")?.texte).toBe("MoKarade/MemoryAI");
+    expect(decrire(".carte-graphe__ouvrir")?.donnees).toBe(faits);
+  });
+
+  it("la page marque chaque carte avec les faits de son état (verrou sur la source)", () => {
+    const page = lire("app/graphes/page.tsx");
+    expect(page).toContain("data-lia-donnees={faitsCarteGraphe(depot, etat, maintenant)}");
+    expect(page.match(/data-lia-genre=/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("les courbes : LIA reçoit ce que le tracé montre", () => {
   const pts = [
     { t: Date.UTC(2026, 9, 14, 16), v: 120 },

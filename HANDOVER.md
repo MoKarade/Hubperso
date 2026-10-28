@@ -19,6 +19,14 @@
 - **Tests** : `tests/chantierCadre.test.ts` (le cadre ne contient plus de rechargement ni de navigation de lui-même), `tests/chantierCadreDom.test.ts` (adresse neuve, onglet repris, onglet inventé ignoré, adresse d'ouverture conservée).
 - **Preuve à lire** : `/chantier` ouvert, un déploiement passe, le cadre se recharge seul (page cachée ou inutilisée depuis 45 s) et reste vivant, sans « unauthenticated ».
 
+## 28/10/2026 : LIA décrit les vignettes de /graphes (Hubperso#730, mission MoKarade/.github#719)
+
+- **Constat** (PC, 23:26Z, production) : « Explique-moi ça » sur une vignette de `/graphes` (graphe de code, nuage de points) ne rendait que « Un élément de la page ». La vignette est un dessin 3D (WebGL, `public/graphes/vue3d.js`) posé sur une constellation décorative `aria-hidden` : aucun texte, aucun genre. C'est du balisage de la page, pas du paquet lia-ui.
+- **Correction** : `lib/liaGraphes.ts` (pur, `faitsCarteGraphe`) écrit les faits de chaque carte d'après son état réel : dépôt, prêt/aucun/expiré/erreur/non branché, commit court et âge. `app/graphes/page.tsx` les pose en `data-lia-donnees` sur chaque `li.carte-graphe`, et nomme `.carte-graphe__vue` et `.carte-graphe__apercu` (`data-lia-genre`). `lib/liaElement.ts` : `.carte-graphe` rejoint `GENRES_HUB` et `CONTENEURS` (le titre, l'état et « Ouvrir » restent décrits précisément, avec les mêmes faits).
+- **Honnêteté** : les faits disent que les nœuds et les liens du dessin 3D ne sont ni lus ni devinés. Aucun compte de nœuds ou de liens n'est inventé (`MetaGraphe` ne les expose pas dans l'état de la page).
+- **Tests** : `tests/liaGraphes.test.ts` (chaque état, borne de 1 200 caractères, pas de compte inventé), `tests/liaElement.test.ts` (carte, vignette, titre et verrou sur la source de la page ; rouge avant la correction).
+- **Preuve à lire** : sur `hubperso.com/graphes`, « Explique-moi ça » sur une vignette répond avec le dépôt, l'état, le commit court et l'âge du graphe, et dit que le dessin 3D n'est pas lisible depuis la page.
+
 ## 28/10/2026 : lia-ui v0.48.0, LIA lit les barres HTML et relit l'état moins souvent (Hubperso#717, mission MoKarade/.github#719)
 
 Épingle `@mokarade/lia-ui` v0.48.0 (sha pelé `b0c8524`), seul changement (`package.json`, lock). v0.47.1 (lia-ui#162, fil Vercel : `/api/lia/etat` = 2,3 k appels/24 h, 28 % des invocations du hub) : l'état partagé n'est relu que toutes les 2 minutes et seulement quand la page est à l'écran, une page qui revient au premier plan relit tout de suite. v0.48.0 (lia-ui#164) : un clic droit sur une barre de graphique dessinée en HTML vise sa ligne et LIA lit le texte de chaque ligne et la largeur dessinée de sa barre. Preuve : déploiement `READY` sur le commit fusionné ; le fil Vercel relève `/api/lia/etat` sur 24 h après le déploiement (cible : au moins moitié moins d'appels).
