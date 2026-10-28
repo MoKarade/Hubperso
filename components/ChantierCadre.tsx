@@ -10,6 +10,8 @@
 //
 //  - le cadre ne se recharge pas (l'`<iframe>` garde son `src`, la page garde son état) — ni en changeant
 //    de page du hub : `ChantierPersistant` le monte dans la mise en page, il y reste caché hors de `/chantier` ;
+//    seule exception, une version neuve du document (un déploiement) : le HUB navigue alors l'`<iframe>` (jamais le cadre lui-même,
+//    dont le rechargement part sans cookie de session et affiche un 401, Hubperso#719) ;
 //  - la base n'est pas relue à chaque tour : le relevé est redemandé avec `If-None-Match`, la route
 //    répond 304 sans lire le contenu tant que le PC n'a rien envoyé de neuf (toutes les 10 min) ;
 //  - rien n'est demandé onglet caché, ni cadre caché (hors de `/chantier`) ; au retour, une lecture tout de suite.
@@ -46,6 +48,8 @@ import {
   estGzip,
   estMessagePret,
   lireClicDroit,
+  ongletDe,
+  urlCadreRecharge,
   type ONGLETS,
 } from "@/lib/chantierCadre";
 
@@ -75,6 +79,7 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
   // L'adresse du cadre ne change jamais après le premier rendu : un autre `src` rechargerait le document.
   const [src] = useState(() => (onglet ? `${URL_CADRE}#${onglet}` : URL_CADRE));
   const actifRef = useRef(actif);
+  const ongletOuverture = useRef(onglet);
   const actions = useRef<{ reveiller: () => void; onglet: (o: Onglet) => void } | null>(null);
 
   useEffect(() => {
@@ -92,6 +97,9 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
     let coutsLusA = 0;
     let versionLueA = 0;
     let versionCadre: string | null = null;
+    // l'onglet que le hub sait du cadre (l'adresse d'ouverture, puis ce que le cadre dit en se rechargeant) et le nombre de rechargements
+    let ongletConnu: Onglet | null = ongletOuverture.current;
+    let rechargements = 0;
 
     const dire = (message: string) => {
       canal?.postMessage({ type: MESSAGE_ETAT, message });
@@ -271,7 +279,10 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
         if (type === MESSAGE_GESTE) void deposerGeste(m.data);
         else if (type === MESSAGE_CLIC_DROIT) relayerClicDroit(m.data);
         else if (type === MESSAGE_RECHARGE) {
-          // Le cadre se recharge : son document neuf se présentera avec un canal neuf, qu'il faut alors accepter.
+          // Le cadre veut se recharger : c'est ICI qu'on le fait (navigation lancée par le hub, avec le cookie de session). Son
+          // document neuf se présentera avec un canal neuf, qu'il faut alors accepter. L'onglet donné par le cadre est validé.
+          ongletConnu = ongletDe((m.data as { onglet?: unknown }).onglet) ?? ongletConnu;
+          if (cadre.current) cadre.current.src = urlCadreRecharge(++rechargements, ongletConnu);
           canal?.close();
           canal = null;
           etag = null;
@@ -298,7 +309,10 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
 
     actions.current = {
       reveiller: surVisibilite,
-      onglet: (o) => canal?.postMessage({ type: MESSAGE_ONGLET, onglet: o }),
+      onglet: (o) => {
+        ongletConnu = o;
+        canal?.postMessage({ type: MESSAGE_ONGLET, onglet: o });
+      },
     };
     window.addEventListener("message", surMessage);
     document.addEventListener("visibilitychange", surVisibilite);
