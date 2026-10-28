@@ -3,6 +3,8 @@
 // Le cookie est `httpOnly` : ni Marc ni un contrôle de production ne peut le lire. Cette
 // vérification fait ce que font les apps — `verifierSession` de hub-contract avec les clés
 // publiques (`HUB_SESSION_PUBLIC_KEYS`) — et ne rend que l'ÉTAT, jamais le cookie ni une clé.
+// Les deux clés ne sont lues qu'au build : après les avoir posées ou changées sur Vercel, il
+// faut un déploiement neuf (un commit qui touche un fichier servi) avant de lire la route.
 import { decodeProtectedHeader } from "jose";
 import { verifierSession, type ClesPubliques } from "@mokarade/hub-contract/session";
 
