@@ -51,7 +51,7 @@ const nextConfig = {
         // propre CSP en bac à sable (app/api/graphes/[depot]/route.ts, app/api/chantier/cadre/route.ts).
         // Deux CSP s'additionnent en intersection : `script-src 'self'` du hub y serait redondant
         // et trompeur, et `frame-ancestors 'none'` interdirait de mettre le cadre dans /chantier.
-        source: "/((?!api/graphes/|api/chantier/cadre(?:/|$)).*)",
+        source: "/((?!api/graphes/|api/chantier/cadre(?:/|$)|api/bilans/).*)",
         headers: [
           { key: "Content-Security-Policy", value: CSP },
           // HSTS : le hub est 100 % HTTPS (Vercel). 1 an, sous-domaines inclus — les apps
@@ -77,6 +77,20 @@ const nextConfig = {
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      {
+        // Le document d'un bilan (`/api/bilans/<id>`) : même traitement que le cadre du Chantier, sa CSP est celle de la route.
+        source: "/api/bilans/:id",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "no-referrer" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
