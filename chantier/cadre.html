@@ -248,7 +248,6 @@ button.pill{cursor:pointer}
 .qrow .p{grid-area:p;font-size:13px;color:var(--mute)}
 .qrow .qdp{color:var(--ink);font-weight:700}
 .qv-ok{--qc:var(--done)}.qv-vig{--qc:var(--marc)}.qv-ko{--qc:var(--now)}.qv-nd{--qc:var(--todo)}.qv-act{--qc:var(--a-mem)}
-.qmore{margin-top:14px}.qmore summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--mute);font-size:14px;font-weight:600}
 
 .gfin{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:4px;background:var(--done);box-shadow:0 0 0 2px var(--bg)}
 .gfin::after{content:"";position:absolute;left:4.5px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
@@ -4724,18 +4723,6 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const html = rows.map(r => `<div class="orow"><span class="n">${esc(r.nom)}</span><span class="ob" role="img" aria-label="${esc(r.nom + ' : ' + r.n + ' ouvertes')}" style="--w:${(r.n / mx * 100).toFixed(1)}%">${OUV.filter(o => r.v[o[0]]).map(([k, name, col]) => `<i style="flex:${r.v[k]};--c:${col}" data-tip="${tipAttr(r.nom + ' · ' + name + ' : ' + r.v[k])}"></i>`).join('')}</span><span class="v">${nfmt(r.n)}</span></div>`).join('');
     return fig('Tâches ouvertes : où', html ? `<div class="olist">${html}</div>` : '<p class="soon" role="status">Aucune tâche ouverte.</p>', chips(OUV.map(([k, name, col]) => [col, name, nfmt(L.filter(l => ouvGroupe(l.e) === k).length)])));
   }
-  /* la consommation de chaque ressource, jour par jour : les 7 jours que donne le relevé (quota.jours), rien de plus ancien */
-  function chQuotaJours(W){
-    const Q = CUR && CUR.quota, J = Q && Array.isArray(Q.jours) ? Q.jours : [];
-    if (!J.length) return '';
-    const R = [['actions', 'Actions · minutes', 'min', 'var(--done)'], ['vercel', 'Vercel · déploiements', 'déploiements', 'var(--doing)'], ['jules', 'Jules · tâches', 'tâches', 'var(--marc)'], ['gemini', 'Gemini · relectures', 'relectures', 'var(--a-mem)']];
-    return R.map(([k, titre, unit, col]) => {
-      const g = Q.jauges && Q.jauges[k], pj = g && g.par_jour; if (!pj) return '';
-      const bins = J.map(d => ({k: d, lab: d.slice(8), long: dlab(Date.parse(d + 'T12:00:00Z')), v: {x: +pj[d] || 0}}));
-      const sum = bins.reduce((a, b) => a + b.v.x, 0);
-      return chStack(W, {title: titre + ' par jour', bins, keys: [{k: 'x', name: unit, col}], unit, per: '7 jours', foot: `<div class="kp2"><b>${nfmt(sum)}</b><span>${esc(unit)} en 7 j</span></div>`});
-    }).filter(Boolean);
-  }
   /* quand le robot travaille : heure x jour de semaine */
   function chChaleur(W, P, endT, titre){
     const L = 30, T = 4, iw = W - L - 4, cs = Math.min(26, iw / 24), R = PS().ms < 7 * DAY ? 1 : 7, H = T + R * cs + 24, DJ = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'], WD = {Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6};
@@ -4837,7 +4824,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]), ['taches'])
       + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]), ['taches'])
       + band(BI.prog, 'Tâches ouvertes', grid(2, [sf('Âge des tâches', () => chAge(W2)), sf('Tâches par app', () => chOuvertesApp(W2))]) + '<p class="qnote">L’état du moment : toutes les tâches ouvertes, quelle que soit la période choisie ; l’âge compte depuis la création de la tâche.</p>', ['taches'])
-      + band(BI.res, 'Ressources', rings() + (() => { const c = chQuotaJours(W2); return c.length ? `<div class="qjours"><h3 class="qjh">Quotas par jour<small>les 7 derniers jours du relevé</small></h3>${grid(2, c)}</div>` : ''; })() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
+      + band(BI.res, 'Ressources', rings() + `<div class="qjours"><h3 class="qjh">Consommation, ${esc(PS().n)}<small>suit la période choisie ; le relevé dit depuis quand il a des mesures</small></h3>${grid(2, ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api'].filter(k => (((CUR && CUR.quota && CUR.quota.jauges) || {})[k])).map(k => sf(k, () => chRes(k, W2))))}</div>` + (qs.length ? `<div class="qjours"><h3 class="qjh">Réel contre rythme<small>la ligne pointillée est le rythme qui tient jusqu'à la remise à zéro</small></h3>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</div>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
       + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`, ['recus', 'couts-apps', 'taux'])
       + sf('Données', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>', 'Données : d’où vient chaque chiffre', vDonnees()));
   }
@@ -4895,30 +4882,63 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     return `<div class="dh"><span class="r">${arc(p, col, 84, 9)}<b>${g.used == null ? '—' : g.api ? '' : nfmt(Math.round(p * 100)) + '<small>%</small>'}</b></span><div><b>${esc(big)}</b><small>${esc(g.court)}${g.j ? ' · ' + esc(g.j.mot) : ''}</small></div></div>`
       + (g.extra && g.extra.length ? `<ul class="dl">${g.extra.slice(0, 8).map(([a, b]) => `<li><span>${esc(a)}</span><em>${esc(b)}</em></li>`).join('')}</ul>` : '');
   }
+  /* la courbe principale de chaque ressource, sur la PÉRIODE choisie : toujours affichée dans Ressources, et en tête du détail au clic.
+     Vercel, Jules, Gemini et Actions viennent de leurs évènements datés ; Claude et l'API de leur historique. Le relevé n'a pas toujours
+     toute la période : la courbe montre ce qu'il y a et dit « relevé depuis le … » (jamais un zéro inventé avant). */
+  function chRes(key, W){
+    const g = ((CUR && CUR.quota && CUR.quota.jauges) || {})[key] || {}, now = Date.now(), K = extraKeys();
+    const tsOf = e => Date.parse(e[0]), valid = e => isFinite(tsOf(e));
+    if (key === 'vercel'){
+      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf));
+      return chStack(W, {title: 'Déploiements', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'déploiements', first});
+    }
+    if (key === 'jules'){
+      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf));
+      return chStack(W, {title: 'Tâches données à Jules', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'tâches', first});
+    }
+    if (key === 'gemini'){
+      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf));
+      return chStack(W, {title: 'Appels à Gemini', bins: evBins(now, ev, tsOf, e => e[2] === 'pr' ? 'pr' : 'dem'), keys: [{k: 'pr', name: 'Relectures de PR', col: 'var(--marc)'}, {k: 'dem', name: 'Demandes', col: 'var(--vio)'}], unit: 'appels', first});
+    }
+    if (key === 'actions'){
+      const rs = (g.runs || []).filter(valid), first = denseFirst(rs.map(tsOf)), mn = e => +e[3] || 0;
+      return chStack(W, {title: 'Minutes Actions', bins: evBins(now, rs.map(e => ({t: tsOf(e), k: repoKey(e[1]), w: mn(e)})), e => e.t, e => e.k), keys: K, unit: 'min', first});
+    }
+    if (key === 'claude'){
+      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), p: x.pct, s: x.session})).filter(x => isFinite(x.t)), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first);
+      return chLine(W, {title: 'Part utilisée', t0, t1: now, max: 100, breakDrop: 30, unit: '%', series: [{name: 'Semaine', col: 'var(--vio)', pts: h.filter(x => x.p != null).map(x => [x.t, x.p])}, {name: 'Session de 5 h', col: 'var(--doing)', pts: h.filter(x => x.s != null).map(x => [x.t, x.s])}], foot: `<div class="kp2"><span>coupure = remise à zéro</span>${clipNote(first, now) || '<span class="dash">une mesure par heure</span>'}</div>`});
+    }
+    if (key === 'api'){
+      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), c: x.cad})).filter(x => isFinite(x.t) && x.c != null), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first), rep = g.repere || 20;
+      const brk = h.find((x, i) => i && h[i - 1].c > x.c * 3);
+      return chLine(W, {title: 'Total du mois, en $ CA', t0, t1: now, dec: 2, unit: '$', ref: [{v: rep, label: 'repère ' + rep + ' $'}], vlines: brk ? [{t: brk.t, label: 'La mesure change ici : ' + nfmt(h[h.indexOf(brk) - 1].c, 2) + ' $ avant, ' + nfmt(brk.c, 2) + ' $ après [À vérifier]'}] : [], series: [{name: 'Mois en cours', col: 'var(--now)', pts: h.map(x => [x.t, x.c])}], foot: `<div class="kp2">${brk ? '<span>trait orangé : la mesure change, à vérifier</span>' : ''}${clipNote(first, now)}</div>`});
+    }
+    return '';
+  }
   function detBody(key, W){
     const Q = (CUR && CUR.quota && CUR.quota.jauges) || {}, g = Q[key] || {}, now = Date.now(), K = extraKeys();
     const tsOf = e => Date.parse(e[0]), valid = e => isFinite(tsOf(e)), P = PRL();
     if (key === 'vercel'){
       const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf)), win = ev.filter(e => inP(tsOf(e), now));
-      return sf('Déploiements', () => chStack(W, {title: 'Déploiements', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'déploiements', first}))
+      return sf('Déploiements', () => chRes('vercel', W))
         + sf('Construits ou sautés', () => chStack(W, {title: 'Construits ou sautés', bins: evBins(now, ev, tsOf, e => e[2] === 'construit' ? 'c' : 's'), keys: [{k: 'c', name: 'Construits', col: 'var(--doing)'}, {k: 's', name: 'Sautés (docs, tests)', col: 'var(--todo)'}], unit: 'déploiements', first}))
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, e => repoKey(e[1])), unit: 'déploiements'}));
     }
     if (key === 'jules'){
-      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf)), win = ev.filter(e => inP(tsOf(e), now));
-      return sf('Tâches données à Jules', () => chStack(W, {title: 'Tâches données à Jules', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'tâches', first}))
+      const ev = (g.evts || []).filter(valid), win = ev.filter(e => inP(tsOf(e), now));
+      return sf('Tâches données à Jules', () => chRes('jules', W))
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, e => repoKey(e[1])), unit: 'tâches'}))
         + sf('Dernières', () => lastList('Dernières tâches', ev.slice(-6).reverse().map(e => [e[1], dlab(tsOf(e)) + ' ' + hh(tsOf(e)), e[1] + '\n' + jour(tsOf(e)) + ' ' + hh(tsOf(e))])));
     }
     if (key === 'gemini'){
-      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf)), win = ev.filter(e => inP(tsOf(e), now));
-      return sf('Appels à Gemini', () => chStack(W, {title: 'Appels à Gemini', bins: evBins(now, ev, tsOf, e => e[2] === 'pr' ? 'pr' : 'dem'), keys: [{k: 'pr', name: 'Relectures de PR', col: 'var(--marc)'}, {k: 'dem', name: 'Demandes', col: 'var(--vio)'}], unit: 'appels', first}))
+      const ev = (g.evts || []).filter(valid), win = ev.filter(e => inP(tsOf(e), now));
+      return sf('Appels à Gemini', () => chRes('gemini', W))
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, e => repoKey(e[1])), unit: 'appels'}))
         + sf('Derniers', () => lastList('Derniers appels', ev.slice(-6).reverse().map(e => [e[1], (e[2] === 'pr' ? 'PR ' : 'demande ') + dlab(tsOf(e)) + ' ' + hh(tsOf(e)), e[1] + '\n' + jour(tsOf(e)) + ' ' + hh(tsOf(e))])));
     }
     if (key === 'actions'){
-      const rs = (g.runs || []).filter(valid), first = denseFirst(rs.map(tsOf)), win = rs.filter(e => inP(tsOf(e), now)), mn = e => +e[3] || 0;
-      return sf('Minutes', () => chStack(W, {title: 'Minutes Actions', bins: evBins(now, rs.map(e => ({t: tsOf(e), k: repoKey(e[1]), w: mn(e)})), e => e.t, e => e.k), keys: K, unit: 'min', first}))
+      const rs = (g.runs || []).filter(valid), win = rs.filter(e => inP(tsOf(e), now)), mn = e => +e[3] || 0;
+      return sf('Minutes', () => chRes('actions', W))
         + sf('Par dépôt', () => chRank(W, {title: 'Par dépôt, ' + PS().n, rows: rankOf(win, e => repoKey(e[1]), mn), unit: 'min'}))
         + sf('Fusions de PR', () => chJour(W, P, now));
     }
@@ -4929,15 +4949,8 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, p => p.r), unit: 'PR'}))
         + sf('Dernières', () => lastList('Dernières PR', C.slice().sort((a, b) => b.t - a.t).slice(0, 6).map(p => [repoName(p.r) + ' #' + p.n, dlab(p.t) + ' ' + hh(p.t), (p.b || '') + '\n' + jour(p.t) + ' ' + hh(p.t)])));
     }
-    if (key === 'claude'){
-      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), p: x.pct, s: x.session})).filter(x => isFinite(x.t)), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first);
-      return sf('Claude', () => chLine(W, {title: 'Part utilisée', t0, t1: now, max: 100, breakDrop: 30, unit: '%', series: [{name: 'Semaine', col: 'var(--vio)', pts: h.filter(x => x.p != null).map(x => [x.t, x.p])}, {name: 'Session de 5 h', col: 'var(--doing)', pts: h.filter(x => x.s != null).map(x => [x.t, x.s])}], foot: `<div class="kp2"><span>coupure = remise à zéro</span>${clipNote(first, now) || '<span class="dash">une mesure par heure</span>'}</div>`}));
-    }
-    if (key === 'api'){
-      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), c: x.cad})).filter(x => isFinite(x.t) && x.c != null), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first), rep = g.repere || 20;
-      const brk = h.find((x, i) => i && h[i - 1].c > x.c * 3);
-      return sf('API', () => chLine(W, {title: 'Total du mois, en $ CA', t0, t1: now, dec: 2, unit: '$', ref: [{v: rep, label: 'repère ' + rep + ' $'}], vlines: brk ? [{t: brk.t, label: 'La mesure change ici : ' + nfmt(h[h.indexOf(brk) - 1].c, 2) + ' $ avant, ' + nfmt(brk.c, 2) + ' $ après [À vérifier]'}] : [], series: [{name: 'Mois en cours', col: 'var(--now)', pts: h.map(x => [x.t, x.c])}], foot: `<div class="kp2">${brk ? '<span>trait orangé : la mesure change, à vérifier</span>' : ''}${clipNote(first, now)}</div>`}));
-    }
+    if (key === 'claude') return sf('Claude', () => chRes('claude', W));
+    if (key === 'api') return sf('API', () => chRes('api', W));
     return '';
   }
   const panEl = document.createElement('div'); panEl.id = 'mpan'; panEl.hidden = true; panEl.setAttribute('role', 'dialog'); panEl.setAttribute('aria-modal', 'true'); document.body.appendChild(panEl);

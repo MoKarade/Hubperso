@@ -253,8 +253,9 @@ describe("les quotas se lisent d'un coup d'oeil, une ligne par ressource", () =>
     expect(DOCUMENT).toContain("data-det=\"copilot\"");
   });
 
-  it("les courbes sont repliées sous les lignes et les cibles font au moins 44 px", () => {
-    expect(DOCUMENT).toContain("<details class=\"qmore\"><summary>Courbes réel contre rythme</summary>");
+  it("les courbes réel contre rythme sont toujours affichées, sans tiroir, et les cibles font au moins 44 px", () => {
+    expect(DOCUMENT).toContain('<h3 class="qjh">Réel contre rythme');
+    expect(DOCUMENT).not.toContain("qmore");
     expect(DOCUMENT).toMatch(/\.qrow\{[^}]*min-height:44px/);
   });
 });
@@ -503,7 +504,7 @@ describe("le cadre se tient à jour sans que l'on recharge la page (#640)", () =
 describe("plus de graphes, tirés du relevé seulement (#640)", () => {
   it("le chiffre du haut porte sa pastille de fraîcheur, les quotas par jour leur titre, le taux sa valeur visible", () => {
     expect(DOCUMENT).toContain("${fraisHTML(['taches'])}</div></div></section>`");
-    expect(DOCUMENT).toContain('<h3 class="qjh">Quotas par jour');
+    expect(DOCUMENT).toContain('<h3 class="qjh">Consommation, ${esc(PS().n)}');
     expect(DOCUMENT).toContain('const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b>');
     expect(DOCUMENT).toContain("Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p>${fxLigne()}");
     expect(DOCUMENT).toContain("taux fixe, estimé : le relevé ne donne pas encore le taux du jour");
@@ -516,11 +517,15 @@ describe("plus de graphes, tirés du relevé seulement (#640)", () => {
     expect(DOCUMENT).toContain("toutes les tâches ouvertes, quelle que soit la période choisie");
   });
 
-  it("la consommation par jour de chaque ressource vient de quota.jours et de par_jour, jamais d'une série inventée", () => {
-    expect(DOCUMENT).toContain("function chQuotaJours(W)");
-    expect(DOCUMENT).toContain("Array.isArray(Q.jours) ? Q.jours : []");
-    expect(DOCUMENT).toContain("g.par_jour");
-    expect(DOCUMENT).toContain("per: '7 jours'");
+  it("la consommation de chaque ressource suit la période choisie (7 jours, 1 mois, 3 mois), jamais une série inventée", () => {
+    expect(DOCUMENT).toContain("function chRes(key, W)");
+    expect(DOCUMENT).not.toContain("chQuotaJours");
+    for (const k of ["vercel", "jules", "gemini", "actions", "claude", "api"]) {
+      expect(DOCUMENT).toContain(`chRes('${k}', W`);
+    }
+    expect(DOCUMENT).toContain("evBins(");
+    expect(DOCUMENT).toContain("Math.max(now - PS().ms, first)");
+    expect(DOCUMENT).toContain("['actions', 'vercel', 'jules', 'gemini', 'claude', 'api'].filter(");
   });
 
   it("le taux USD→CAD est celui du relevé (Banque du Canada) quand il existe, borné, sinon le repli est dit fixe", () => {
