@@ -4319,11 +4319,27 @@ function faitsDe(n, H){
     else if (n.fe != null) f.push('fin prévue : ' + q(n.fe));
     const qui = {}; ls.forEach(l => (l.acteurs || []).forEach(a => { qui[nom(a)] = (qui[nom(a)] || 0) + 1; }));
     const qs = Object.keys(qui).sort((a, b) => qui[b] - qui[a]);
-    if (qs.length) f.push('acteurs : ' + qs.map(k => k + ' (' + qui[k] + ' tâche' + (qui[k] > 1 ? 's' : '') + ')').join(', '));
-    const ouvertes = ls.filter(l => l.open !== false && l.e !== 'acc' && l.e !== 'aband');
-    if (ouvertes.length) f.push('à suivre : ' + ouvertes.slice(0, 6).map(l => '« ' + H.court(l.t) + ' » ' + H.STE[l.e]).join(' ; ') + (ouvertes.length > 6 ? ' ; … et ' + (ouvertes.length - 6) + ' autres' : ''));
+    f.push(qs.length ? 'acteurs : ' + qs.slice(0, 4).map(k => k + ' (' + qui[k] + ' tâche' + (qui[k] > 1 ? 's' : '') + ')').join(', ') : 'acteurs : non relevés');
+    // le détail de ce qui coince, par ordre d'urgence : c'est ce que Marc demande à LIA (« je ne vois pas le détail » n'est plus une réponse)
+    const t = l => '« ' + (l.t || '').slice(0, 55) + ' »';
+    const att = l => (l.waits || []).filter(w => w.unknown || w.open).map(w => w.unknown ? w.ref : '#' + w.n).slice(0, 3).join(', ');
+    const groupes = [
+      ['bloquées', l => l.e === 'blk', l => t(l) + (att(l) ? ' attend ' + att(l) : '')],
+      ['preuve manquante ou en retard', l => l.e === 'ret' || l.pm, l => t(l) + (l.oub ? ' : ' + (H.retTxt(l) || '').slice(0, 70) : '')],
+      ['attendent Marc', l => l.e === 'marc', l => t(l) + (l.geste && l.geste.t ? ' : ' + String(l.geste.t).slice(0, 60) : '')],
+      ['oubliées', l => l.oubli, l => t(l)],
+    ];
+    const vus = new Set();
+    groupes.forEach(([lib, test, dit]) => {
+      const L = ls.filter(l => test(l) && !vus.has(l));
+      if (!L.length) return;
+      L.forEach(l => vus.add(l));
+      f.push(lib + ' : ' + L.slice(0, 4).map(dit).join(' ; ') + (L.length > 4 ? ' ; … et ' + (L.length - 4) + ' autres' : ''));
+    });
+    const ouvertes = ls.filter(l => !vus.has(l) && l.open !== false && l.e !== 'acc' && l.e !== 'aband');
+    if (ouvertes.length) f.push('autres à suivre : ' + ouvertes.slice(0, 4).map(l => t(l) + ' ' + H.STE[l.e]).join(' ; ') + (ouvertes.length > 4 ? ' ; … et ' + (ouvertes.length - 4) + ' autres' : ''));
   }
-  return f.join(' ; ').replace(/\s+/g, ' ').slice(0, FAITS_MAX);
+  return f.join(' | ').replace(/\s+/g, ' ').slice(0, FAITS_MAX);
 }
 function clicDroitDe(el){
   if (!el || !el.closest) return null;
