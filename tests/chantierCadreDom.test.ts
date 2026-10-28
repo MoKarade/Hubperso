@@ -628,7 +628,7 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     const r2 = { ref: "r2", lvl: "tâche", leaf: true, t: "Autre preuve", e: "ret", open: true };
     const g = { ...mission, ls: [b1, r1, r2, t3, t2], ce: { blk: 1, ret: 2, marc: 1, cours: 1 } };
     const f = faitsDe(g, H);
-    expect(f).toContain("bloquées : « Brancher la réparation » attend #9, y#3");
+    expect(f).toContain("bloquées : « Brancher la réparation » dépend de #9, y#3");
     expect(f).toContain("preuve manquante ou en retard (date = fusion) : « Poser le jeton » : attend ton geste ; « Autre preuve »");
     expect(f).toContain("attendent Marc : « Relais mobile » : choisir");
     expect(f).toContain("autres à suivre : « Page chantier » en cours");
