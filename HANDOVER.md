@@ -34,6 +34,13 @@
 - **Tests** : `tests/chantierRattrapage.test.ts`, `tests/chantierRattrapageRoute.test.ts`, `tests/chantierEvenementsReleve.test.ts` (instantanés), `tests/chantierCadreDom.test.ts` (une lecture, 503 jamais relu, échec redemandé après 5 minutes).
 - **Preuve à lire** : une fois le jeton posé et déployé, ouvrir `/chantier` : « Tâches et PR » passe à « à jour » sans relevé du PC, et le détail de la source dit « rattrapé chez GitHub à l'ouverture ».
 
+## 28/10/2026 : `/api/lia/etat` accepte le jeton d'une app, DriveAI partage l'état de LIA (Hubperso#685, mission MoKarade/.github#719)
+
+- **Ce qui change** : `GET|PUT /api/lia/etat` accepte `x-hub-token` (l'app est identifiée par `appDuJeton`, jamais par le corps) avec `x-lia-proprietaire: 1` posé par l'app après avoir vérifié SA session. Jeton connu sans l'en-tête : 403 (MemoryAI non appelée) ; jeton faux ou ambigu : 401 SANS repli sur la session ; aucun jeton : la session, comme avant. Le relais vers MemoryAI, la limite de débit, `lireCorpsEtat` et `no-store` ne changent pas.
+- **Écart avec le texte de la tâche** : « aucune exception dans `lib/authGuard.ts` » ne tenait pas, une app n'ayant pas de cookie du hub : la requête serait arrêtée par le middleware avant la route. La route est donc laissée passer en ÉGALITÉ STRICTE (comme `/api/lia/ask`), jamais dans le matcher, et se garde toute seule ; `tests/gardePages.test.ts` la range dans les routes à jeton, `tests/authGuard.test.ts` verrouille le chemin exact.
+- **Charge** : le chemin du jeton ne lit ni session ni base (moins de travail que la page). Pour la page, rien ne change : même `auth()` et même relais.
+- **Preuve à lire** : `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/lia/etat` rend 401 ; DriveAI#771 lit puis écrit l'état avec son jeton.
+
 ## 28/10/2026 : LIA lit les graphiques de la page Chantier (Hubperso#681, mission MoKarade/.github#575)
 
 - **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Dans le cadre du Chantier (`chantier/cadre.html`), le texte d'un bloc ne portait que le titre et les axes : les chiffres sont dans les infobulles (`data-tip`) de chaque barre ou point.
