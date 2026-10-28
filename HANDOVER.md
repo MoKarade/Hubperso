@@ -40,6 +40,10 @@ Marc, 26/10/2026 (« A, go ») : la page Chantier de l'artefact claude.ai vient 
 - Logique pure : `lib/chantierReleve.ts` (ETag, comparaison, contrôle du gzip). Tests : `chantierReleve`, `chantierReleveRoute` (401, 404, 503, 304 sans relecture, 200 gzip relu, 500, 429), `ganttDb` (en-tête sans contenu), `gardePages`.
 - **Reste à faire** (une PR chacune, plan du document) : 2 = la page et l'entrée « Chantier » sous « Gérer » (propriétaire seul ; au téléphone dans « Plus », la barre du bas garde 4 entrées) ; 3 = les boutons « À toi » (écriture + côté PC) ; la page ne doit PAS relire la base à chaque `router.refresh` du hub (15/60 s) : elle ne lit que l'en-tête, jamais le contenu. Le coût par fil est gardé en réserve, masqué pour l'instant.
 
+## 🟦 Session 2026-10-28 — **lia-ui v0.42.2, une discussion fermée ailleurs reste fermée (Hubperso#565)**
+
+Le hub épingle `@mokarade/lia-ui` v0.42.2 (sha pelé `9852596`), seul changement (`package.json`, lock). v0.42.1 ne rapprochait la discussion de l'onglet de celle de l'état partagé qu'à la première lecture, et seulement si la partagée était ouverte : une discussion fermée sur le hub était réécrasée par celle, plus ancienne, d'un onglet. v0.42.2 rapproche à chaque lecture (la plus récente gagne, fermée ailleurs = fermée ici) et écrit toujours la plus récente des deux. Rien à brancher côté app. Preuve : déploiement Vercel de production `READY` sur le commit fusionné, puis relevé du PC (lia-ui#144).
+
 ## 🟦 Session 2026-10-27 — **lia-ui v0.42.1, la discussion la plus récente l'emporte (Hubperso#562)**
 
 Le hub épingle `@mokarade/lia-ui` v0.42.1 (sha pelé `b8967ec`), seul changement (`package.json`, lock). Au montage, la discussion de l'onglet était datée « maintenant » et passait devant celle de l'état partagé : une question posée sur le hub ne se retrouvait pas dans CarAI. v0.42.1 range le vrai instant avec la discussion de l'onglet, et la plus récente gagne à la première lecture de l'état. Rien à brancher côté app. Preuve : déploiement Vercel de production `READY` sur le commit fusionné, puis relevé du PC (lia-ui#140).
