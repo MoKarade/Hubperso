@@ -348,7 +348,7 @@ describe("l'onglet Vitesse : la rapidité des PR et des tâches, par acteur (#61
     expect(DOCUMENT).toContain("['vitesse', 'Vitesse']");
     expect(DOCUMENT).toContain("tab === 'vitesse' ? vVitesseM()");
     expect(DOCUMENT).toMatch(/const ANCIEN = \{plan: 'taches', cartes: 'taches', quota: 'rythme'\};/);
-    expect(DOCUMENT).toContain("t === 'vitesse' ? t : ANCIEN[t]");
+    expect(DOCUMENT).toContain("t === 'vitesse' || t === 'parcours' ? t : ANCIEN[t]");
   });
 
   it("mêmes couleurs d'acteurs que « Qui fusionne » de l'Accueil (une seule table)", () => {
@@ -399,5 +399,29 @@ describe("la période choisie commande toute la page (#621)", () => {
   it("« Quand ça fusionne » ne force plus 7 jours : une rangée par heure sous 7 j", () => {
     expect(DOCUMENT).toContain("R = PS().ms < 7 * DAY ? 1 : 7");
     expect(DOCUMENT).not.toContain("au moins 7 j pour que la carte soit lisible");
+  });
+});
+
+describe("l'onglet Parcours : de l'idée à l'affichage dans l'app (#625)", () => {
+  it("existe dans la barre et s'ouvre par ?onglet=parcours", () => {
+    expect(ongletDe("parcours")).toBe("parcours");
+    expect(DOCUMENT).toContain("['parcours', 'Parcours']");
+    expect(DOCUMENT).toContain("tab === 'parcours' ? vParcoursM()");
+    expect(DOCUMENT).toContain("t === 'vitesse' || t === 'parcours' ? t");
+  });
+
+  it("les phases viennent d'instants du relevé ; un instant absent saute la phase, jamais estimé", () => {
+    expect(DOCUMENT).toContain("[['idee', l.c], ['prise', l.start], ['pr', cr], ['fus', l.merged], ['acc', l.end]].filter(b => b[1] != null");
+    expect(DOCUMENT).toContain("ok ? PCPH[a][2] : 'var(--line2)'");
+    expect(DOCUMENT).toContain("'Non détaillé'");
+  });
+
+  it("« dans l'app » n'a pas d'instant propre : dès le relevé qui suit l'acceptation", () => {
+    expect(DOCUMENT).toContain("Visible dans cette page dès le relevé qui suit l\\'acceptation");
+  });
+
+  it("la période filtre le trajet et chaque ligne ouvre la fiche de la tâche", () => {
+    expect(DOCUMENT).toContain("const L = M.leaves.filter(act)");
+    expect(DOCUMENT).toContain('class="pcr" data-open="${esc(l.ref)}"');
   });
 });

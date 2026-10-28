@@ -1192,6 +1192,22 @@ body.m{--mute:#a9b0bb}
 .sq{width:11px;height:11px;border-radius:3px;display:inline-block;align-self:center}
 .chips{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:14px;color:var(--mute)}
 .chips span{display:inline-flex;align-items:center;gap:7px}.chips i{width:11px;height:11px;border-radius:3px;display:inline-block}.chips b{color:var(--ink)}
+/* Parcours : le trajet d'une tâche, de l'idée à l'affichage dans l'app (Marc 28/10) */
+.pcf{display:flex;align-items:flex-start;margin:6px 0 4px}
+.pcs{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:clamp(48px,9vw,86px);text-align:center}
+.pcd{display:grid;place-items:center;width:clamp(40px,7vw,60px);aspect-ratio:1;border-radius:50%;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:inset 0 0 0 2px var(--c)}
+.pcd svg{width:52%;height:52%;fill:none;stroke:var(--c);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pcs b{font:800 clamp(20px,3.4vw,30px) var(--fd);line-height:1}.pcs small{font-size:12px;color:var(--mute);line-height:1.2}
+.pcl{flex:1;min-width:14px;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:clamp(12px,2.4vw,22px)}
+.pcl i{display:block;width:100%;height:8px;border-radius:4px;background:var(--c)}.pcl.nd i{background:repeating-linear-gradient(90deg,var(--line2) 0 5px,transparent 5px 10px)}
+.pcl span{font:700 clamp(12px,1.8vw,15px) var(--fd);white-space:nowrap}
+.pcr{display:grid;grid-template-columns:minmax(0,15em) minmax(0,1fr) 5.2em;gap:4px 14px;align-items:center;width:100%;min-height:44px;padding:6px 0;text-align:left;box-shadow:0 -1px 0 var(--line)}
+.pcr .t{display:flex;align-items:center;gap:8px;min-width:0;font-size:14px}.pcr .t i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--c)}.pcr .t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcb{display:flex;gap:2px;height:14px}.pcb i{display:block;min-width:4px;border-radius:3px;background:var(--c)}.pcb i.mix{background:var(--line2)}.pcb i.op{background:repeating-linear-gradient(135deg,var(--c) 0 3px,transparent 3px 6px);outline:1.5px solid var(--c);outline-offset:-1.5px}
+.pcr .v{text-align:right;font:700 15px var(--fd)}
+@media(max-width:720px){.pcr{grid-template-columns:minmax(0,1fr) 4.6em}.pcr .pcb{grid-column:1/-1;grid-row:2}
+.pcf{flex-direction:column;align-items:stretch;gap:0}.pcs{flex-direction:row;width:auto;gap:14px;text-align:left;align-items:center}.pcs b{min-width:2.2em}
+.pcl{flex:none;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:14px;padding:0 0 0 16px;min-height:30px}.pcl i{width:8px;height:30px;flex:none}.pcl.nd i{background:repeating-linear-gradient(180deg,var(--line2) 0 5px,transparent 5px 10px)}}
 .qas{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px 22px}
 .qa{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;align-content:start;padding:18px 18px 16px;border-radius:20px;background:rgba(255,255,255,.04);box-shadow:inset 0 3px 0 var(--c)}
 .qa h3{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}.qa h3 i{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none}
@@ -1491,7 +1507,7 @@ const TABS = ['toi', 'taches', 'gantt', 'rythme'];
 // anciens onglets (avant le 19/10) : Plan et Cartes = Tâches, Vitesse et Quota = Rythme
 const ANCIEN = {plan: 'taches', cartes: 'taches', quota: 'rythme'};
 // « mur », « vitesse » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
-const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' || t === 'vitesse' ? t : ANCIEN[t] || null;
+const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' || t === 'vitesse' || t === 'parcours' ? t : ANCIEN[t] || null;
 // durées de l'onglet Rythme (Marc, 21/10) et découpage des fusions : type, app, ou qui (Jules, fil Claude, autre)
 const VPS = ['24h', '7j', '30j', '90j'], VSPL = ['type', 'app', 'qui'], QSS = ['claude', 'vercel', 'actions', 'jules', 'gemini', 'api'];
 const ST = {tab: tabDe(saved.tab) || 'toi', f: saved.f && saved.f !== 'toi' ? saved.f : 'tout', z: saved.z || 'fit', open: saved.open || {}, stack: [], pan: 0, vp: VPS.includes(saved.vp) ? saved.vp : '24h', vsplit: VSPL.includes(saved.vsplit) ? saved.vsplit : 'type', vsel: null, vselm: null, cap: saved.cap === 'file' ? 'file' : 'depot', qs: QSS.includes(saved.qs) ? saved.qs : 'claude'};
@@ -4366,10 +4382,11 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     mur: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="5" rx="1.2"/><rect x="12" y="4" width="9" height="5" rx="1.2"/><rect x="3" y="11" width="10" height="5" rx="1.2"/><rect x="15" y="11" width="6" height="5" rx="1.2"/><rect x="3" y="18" width="5" height="3" rx="1"/><rect x="10" y="18" width="11" height="3" rx="1"/></svg>',
     toi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.8"/><path d="M4.6 20.5c.8-4 3.6-6.2 7.4-6.2s6.6 2.2 7.4 6.2"/></svg>',
     gantt: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="10" height="3.6" rx="1.8"/><rect x="8" y="10.2" width="13" height="3.6" rx="1.8"/><rect x="5" y="15.9" width="9" height="3.6" rx="1.8"/></svg>',
+    parcours: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/></svg>',
     vitesse: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>',
     couts: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.8-1.3-2.4-2-4.4-2-2.5 0-4 1.2-4 3 0 4.2 8.6 2.2 8.6 6.6 0 1.8-1.7 3.1-4.5 3.1-2.2 0-3.9-.8-4.8-2.2"/></svg>'
   };
-  const TABS = [['mur', 'Accueil'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
+  const TABS = [['mur', 'Accueil'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['parcours', 'Parcours'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
   const arc = (p, col, sz = 76, sw = 8) => { const r = (sz - sw) / 2, c = 2 * Math.PI * r, v = Math.max(0.012, Math.min(1, p)); return `<svg viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="${sw}"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(v * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${sz / 2} ${sz / 2})"/></svg>`; };
   const mobile = () => innerWidth <= 700;
 
@@ -5096,6 +5113,51 @@ function vGanttFull(){
       + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(colW(2), D), chTachesQui(colW(2), D)])));
   }
 
+  /* ---------- Parcours : de l'idée à l'affichage dans l'app (Marc 28/10) ----------
+     Les instants viennent du relevé : issue créée (idée), premier signal (prise), PR ouverte, fusion, acceptation. Rien n'est estimé :
+     un instant absent saute la phase au lieu de l'inventer. « Affichée » n'a pas d'instant propre : la page montre la tâche dès le
+     relevé qui suit son acceptation. */
+  const PCPH = {idee: ['att', 'Attente', 'var(--todo)'], prise: ['eco', 'Écriture', 'var(--doing)'], pr: ['rel', 'Relecture', 'var(--fus)'], fus: ['pre', 'Preuve', 'var(--vio)']};
+  const PCNEXT = {idee: 'prise', prise: 'pr', pr: 'fus', fus: 'acc'};
+  function parcoursOf(l){
+    const cr = l.pr && l.pr.created ? Date.parse(l.pr.created) : null, now = Math.max(Date.now(), M.asof || 0);
+    let prev = -Infinity; const B = [['idee', l.c], ['prise', l.start], ['pr', cr], ['fus', l.merged], ['acc', l.end]].filter(b => b[1] != null && isFinite(b[1])).map(b => { prev = Math.max(prev, b[1]); return [b[0], prev]; });
+    const ph = [];
+    for (let i = 0; i + 1 < B.length; i++){ const [a, ta] = B[i], [b, tb] = B[i + 1], ok = PCNEXT[a] === b; ph.push({k: ok ? PCPH[a][0] : 'mix', c: ok ? PCPH[a][2] : 'var(--line2)', a: ta, b: tb, d: (tb - ta) / 6e4, nm: ok ? PCPH[a][1] : 'Non détaillé'}); }
+    const last = B[B.length - 1];
+    if (l.open && last && last[0] !== 'acc') ph.push({k: PCPH[last[0]] ? PCPH[last[0]][0] : 'mix', c: PCPH[last[0]] ? PCPH[last[0]][2] : 'var(--line2)', a: last[1], b: now, d: (now - last[1]) / 6e4, nm: PCPH[last[0]] ? PCPH[last[0]][1] : 'En cours', op: true});
+    return {ph, B, total: B.length ? (l.open ? now : B[B.length - 1][1]) - B[0][1] : 0, at: last ? last[0] : null};
+  }
+  function vParcoursM(){
+    const ms = PS().ms, t0 = Date.now() - ms, inP = t => t != null && isFinite(t) && t >= t0, act = l => inP(l.u) || inP(l.x) || inP(l.c) || inP(l.start);
+    const L = M.leaves.filter(act), ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/></svg>';
+    const done = L.filter(l => l.e === 'acc' && inP(l.x)).map(l => ({l, p: parcoursOf(l)})).filter(x => x.p.ph.length);
+    const med = k => { const a = done.map(x => x.p.ph.filter(h => h.k === k).reduce((s, h) => s + h.d, 0)).filter((v, i) => done[i].p.ph.some(h => h.k === k)); return quant(a, .5); };
+    const where = {idee: 0, prise: 0, pr: 0, fus: 0, acc: 0};
+    L.forEach(l => { const pr = l.pr; where[l.e === 'acc' ? 'acc' : l.merged ? 'fus' : pr && pr.created && pr.state === 'open' ? 'pr' : l.start ? 'prise' : l.open ? 'idee' : 'acc']++; });
+    const ND = [['idee', 'Idée', 'var(--todo)', '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.7.6 1 1.3 1 2.1h5c0-.8.3-1.5 1-2.1A6 6 0 0 0 12 3z"/>'], ['prise', 'Prise', 'var(--doing)', '<path d="M8 5l11 7-11 7z"/>'], ['pr', 'PR', 'var(--fus)', VI.pr.replace(/^<svg[^>]*>|<\/svg>$/g, '')], ['fus', 'Fusion', 'var(--vio)', '<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M6 8.5v7M8.4 6h2a4 4 0 0 1 4 4v0M15.6 12H9"/>'], ['acc', 'Acceptée', 'var(--done)', VI.task.replace(/^<svg[^>]*>|<\/svg>$/g, '')], ['aff', 'Dans l\'app', 'var(--ink)', '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>']];
+    const LK = ['att', 'eco', 'rel', 'pre'];
+    let flow = '';
+    ND.forEach((n, i) => {
+      const cnt = n[0] === 'aff' ? where.acc : where[n[0]];
+      flow += `<div class="pcs" style="--c:${n[2]}" data-tip="${tipAttr(n[1] + ' : ' + nfmt(cnt) + ' tâche' + (cnt > 1 ? 's' : '') + ' en ' + PS().n)}"><span class="pcd"><svg viewBox="0 0 24 24" aria-hidden="true">${n[3]}</svg></span><b>${nfmt(cnt)}</b><small>${esc(n[1])}</small></div>`;
+      if (i < ND.length - 1){
+        const k = LK[i], v = k ? med(k) : null, nd = !k;
+        flow += `<div class="pcl${nd ? ' nd' : ''}" style="--c:${k ? PCPH[ND[i][0]][2] : 'var(--line2)'}" data-tip="${tipAttr(nd ? 'Visible dans cette page dès le relevé qui suit l\'acceptation' : (PCPH[ND[i][0]][1] + ' : médiane ' + mlab(v)))}"><span>${nd ? '≤ 1 relevé' : v == null ? '—' : mlab(v)}</span><i></i></div>`;
+      }
+    });
+    const tot = quant(done.map(x => x.p.total / 6e4), .5);
+    const hero = `<section class="hero2" style="padding-bottom:10px"><div class="pct" role="img" aria-label="Médiane de l'idée à l'acceptation : ${esc(mlab(tot))}"><b style="font-size:clamp(56px,11vw,120px)">${esc(mlab(tot))}</b></div><div class="hside"><div class="leg"><div>de l'idée à l'acceptation, médiane</div><div><b>${nfmt(done.length)}</b> tâche${done.length > 1 ? 's' : ''} finie${done.length > 1 ? 's' : ''} en ${esc(PS().n)}</div></div></div></section>`;
+    const rows = L.map(l => ({l, p: parcoursOf(l)})).filter(x => x.p.ph.length).sort((a, b) => (b.l.last || 0) - (a.l.last || 0)).slice(0, 30).map(({l, p}) => {
+      const mx = p.ph.reduce((s, h) => s + Math.max(h.d, .5), 0) || 1;
+      const bar = p.ph.map(h => `<i class="${h.k === 'mix' ? 'mix' : ''}${h.op ? ' op' : ''}" style="--c:${h.c};flex:${(Math.max(h.d, .5) / mx).toFixed(4)}" data-tip="${tipAttr(h.nm + (h.op ? ' (en cours)' : '') + ' : ' + mlab(h.d))}"></i>`).join('');
+      return `<button class="pcr" data-open="${esc(l.ref)}" aria-label="${esc(l.t)} : ${esc(mlab(p.total / 6e4))}"><span class="t" style="--c:${appCol(l.k)}"><i></i><span>${esc(l.t)}</span></span><span class="pcb" aria-hidden="true">${bar}</span><span class="v">${esc(mlab(p.total / 6e4))}</span></button>`;
+    }).join('');
+    const key = chips(Object.values(PCPH).map(h => [h[2], h[1]]));
+    return perBar('top') + hero + sf('Trajet', () => band(ico, 'Le trajet', `<div class="pcf" role="img" aria-label="Idée, prise, PR, fusion, acceptée, dans l'app">${flow}</div>`))
+      + sf('Tâches', () => band(BI.prog, 'Chaque tâche', rows ? `${key}<div class="pcrows">${rows}</div>` : '<p class="soon" role="status">Aucune tâche sur cette période.</p>'));
+  }
+
   let MEXC = false, GINIT = false;
   document.addEventListener('click', ev => { if (ev.target.closest('#mexb')){ MEXC = !MEXC; render(); } });
   document.addEventListener('click', ev => { const b = ev.target.closest('[data-gfil]'); if (!b) return; const k = b.dataset.gfil; if (!k) GF.clear(); else if (GF.has(k)) GF.delete(k); else GF.add(k); render(); });
@@ -5120,7 +5182,7 @@ function vGanttFull(){
       post(false); return;
     }
     VIEW.hidden = true; VIEW.innerHTML = '';
-    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : vToiM();
+    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : tab === 'parcours' ? vParcoursM() : vToiM();
     countUp($('#mv'));
   }
   window.render = function(){
