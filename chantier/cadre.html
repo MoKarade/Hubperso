@@ -1541,7 +1541,7 @@ const LVX = {
 };
 const STX = {done: 'fait', doing: 'en cours', todo: 'à faire'};
 // les huit états d'une tâche (§7 de docs/cycle-de-vie-tache.md, MoKarade/.github)
-const STE = {acc: 'acceptée', fus: 'fusionnée, à prouver', prog: 'attend sa preuve (automatique)', ret: 'preuve manquante ou en retard', cours: 'en cours', rel: 'en relecture', marc: 'attend Marc', blk: 'bloquée', todo: 'à faire', aband: 'abandonnée'};
+const STE = {acc: 'acceptée', fus: 'fusionnée, à prouver', prog: 'preuve prévue (automatique)', ret: 'preuve manquante ou en retard', cours: 'en cours', rel: 'en relecture', marc: 'attend Marc', blk: 'prévue, dépend d\'autre chose', todo: 'à faire', aband: 'abandonnée'};
 const stLabel = n => n.pm ? 'preuve à reposer (« Acceptée » absente ou mal formée)' : n.e === 'ret' && !n.open ? 'fermée sans preuve' : n.oub ? retTxt(n) : n.oubli ? STE[n.e] + ' · sans nouvelles' : STE[n.e];
 // une tâche n'est jamais « oubliée » : elle attend quelque chose ou quelqu'un, et passe « en retard » quand une règle du script (prochaine-tache.mjs) est dépassée
 const retTxt = n => { const o = n.oub; if (!o) return '';
@@ -1724,7 +1724,7 @@ function plan(N, leaves, ASOF, mode, PRO){
   const pend = leaves.filter(n => n.open && n.st === 'todo').sort((a, b) => (a.q || 999) - (b.q || 999) || a.prio - b.prio || a.n - b.n);
   pend.forEach(n => { n.fs = n.fe = null; n.why = null; n.hole = null; n.est = null; });
   const mort = new Set();
-  pend.forEach(n => { if (n.marc){ n.why = 'attend ton geste'; mort.add(n.ref); } else if (n.blk){ n.why = 'bloquée, sans date'; mort.add(n.ref); }
+  pend.forEach(n => { if (n.marc){ n.why = 'attend ton geste'; mort.add(n.ref); } else if (n.blk){ n.why = 'prévue, sans date'; mort.add(n.ref); }
     else if (n.exclue && n.exclue.code === 'fini-quand-absent'){ n.why = WHY_FQ; mort.add(n.ref); } });
   let todo = pend.filter(n => !mort.has(n.ref));
   const attente = new Set(todo.map(n => n.ref));
@@ -1733,7 +1733,7 @@ function plan(N, leaves, ASOF, mode, PRO){
     ch = false;
     todo = todo.filter(n => {
       const dead = n.dp.some(d => { const x = N[d]; return !x || (x.open && x.fe == null && !attente.has(d)); });
-      if (dead){ n.why = 'attend une tâche sans date'; attente.delete(n.ref); mort.add(n.ref); ch = true; return false; }
+      if (dead){ n.why = 'dépend d\'une tâche sans date'; attente.delete(n.ref); mort.add(n.ref); ch = true; return false; }
       return true;
     });
   }
@@ -1757,7 +1757,7 @@ function plan(N, leaves, ASOF, mode, PRO){
       const cand = base > 0 ? Math.max(T + 2 * MIN, Math.min(apres, filetApres(Math.max(base, T)))) : T + 2 * MIN;
       if (!best || cand < best.cand) best = {n, cand, base};
     });
-    if (!best){ todo.forEach(n => { n.why = 'attend une tâche sans date'; }); break; }
+    if (!best){ todo.forEach(n => { n.why = 'dépend d\'une tâche sans date'; }); break; }
     const n = best.n, k = key(n), start = Math.max(best.cand, depart + ESPACE);
     n.est = estOf(n.rl); n.fs = start; n.fe = start + n.est.d; n.ord = ++ordre;
     const a = best.base > 0 ? Math.max(best.base, T - 12 * H, n.c || 0) : 0;
@@ -1980,7 +1980,7 @@ const durCourt = n => n.start == null ? 'pas commencé' : n.st === 'done' ? 'fai
   : n.fini && n.end ? 'fermé en ' + dur(n.end - n.start) : 'depuis ' + dur(M.asof - n.start);
 const D1 = n => dur((n.end || M.asof) - n.start);
 /* étapes d'une tâche (relevé v9, `et`) : chaque étape court jusqu'à la suivante ; coupées au début et à la fin de la tâche, leur somme est sa durée */
-const ETL = (n, k) => ({cours: n.j ? 'en cours (Jules)' : 'en cours', marc: 'attend Marc', blk: 'attend autre chose', preuve: 'attend sa preuve',
+const ETL = (n, k) => ({cours: n.j ? 'en cours (Jules)' : 'en cours', marc: 'attend Marc', blk: 'prévue : dépend d\'autre chose', preuve: 'preuve prévue',
   corr: 'en correction (rouverte)', pause: 'en pause, sans étiquette', file: 'dans la file', faite: 'fermée',
   acc: 'acceptée', aband: 'abandonnée', pm: 'preuve à reposer'})[k] || k;
 function etapesOf(n){
@@ -2015,7 +2015,7 @@ function etapesOf(n){
 }
 const etapesC = n => n._et !== undefined ? n._et : (n._et = etapesOf(n));
 const ORDAG = ['cours', 'rel', 'corr', 'pm', 'marc', 'blk', 'preuve', 'file', 'pause'];
-const ETLP = {cours: 'des tâches travaillent', rel: 'des tâches travaillent', corr: 'une tâche en correction (rouverte)', pm: 'une preuve à reposer', marc: 'attend ton geste', blk: 'attend autre chose', preuve: 'attend des preuves', file: 'rien ne travaille', pause: 'rien ne travaille'};
+const ETLP = {cours: 'des tâches travaillent', rel: 'des tâches travaillent', corr: 'une tâche en correction (rouverte)', pm: 'une preuve à reposer', marc: 'attend ton geste', blk: 'prévue : dépend d\'autre chose', preuve: 'des preuves prévues', file: 'rien ne travaille', pause: 'rien ne travaille'};
 /* des événements d'état qui se recouvrent, fondus en une suite : à chaque instant, l'état le plus actif ; sans événement, `defaut` (null = rien) */
 function fondre(ev, deb, fin, defaut){
   const out = [], cuts = [...new Set([deb, fin, ...ev.flatMap(x => [x.a, x.b])])].filter(t => t >= deb && t <= fin).sort((a, b) => a - b);
@@ -2082,7 +2082,7 @@ function metaOf(n){
   switch (l.e){
     case 'acc': return {t: 'acceptée en ' + D1(l), c};
     case 'fus': return {t: 'fusionnée, à prouver · avant ' + quand(l.fe, 1), c};
-    case 'prog': return {t: l.pa != null ? 'preuve programmée · ' + quand(l.pa, 1) : 'attend sa preuve, faite par le fil', c};
+    case 'prog': return {t: l.pa != null ? 'preuve programmée · ' + quand(l.pa, 1) : 'preuve prévue, faite par le fil', c};
     case 'ret': return {t: l.pm ? 'preuve manquante · rouverte par le garde-fou' : !l.open ? 'fermée sans preuve · ' + D1(l) : 'preuve en retard' + (l.merged ? ' · fusionnée ' + quand(l.merged, 1) : ''), c};
     case 'aband': return {t: 'abandonnée', c: ''};
     case 'rel': return {t: l.oub ? retTxt(l) + ' depuis ' + hDur(l.oub.heures) : l.oubli ? 'en relecture · sans nouvelles depuis ' + dur(M.asof - l.last) : (actif(l) ? 'actif · ' : '') + 'en relecture · fin ≈ ' + quand(l.fe, 1), c};
@@ -3610,7 +3610,7 @@ function oubHTML(n){
   const o = n.oub, fm = n.fm;
   let t = `<b>${esc(CAUSE[o.cause] || o.cause)}</b>, depuis ${esc(hDur(o.heures))}. Qui la relance : ${esc(PROPRIO[o.proprietaire] || o.proprietaire || '—')}.`;
   let h = `<div class="sec"><small>En retard</small><p class="txt">${t}</p><p class="txt vide sec">Règle appliquée à chaque relevé (voir la légende) ; le PC la signale au coordinateur une fois par jour tant qu'elle reste en retard.</p></div>`;
-  if (o.racine && o.racine !== n.ref) h += `<div class="sec"><small>Elle attend</small>${refItem(o.racine)}</div>`;
+  if (o.racine && o.racine !== n.ref) h += `<div class="sec"><small>Elle dépend de</small>${refItem(o.racine)}</div>`;
   return h;
 }
 function vToi(){
@@ -3801,7 +3801,7 @@ function sheetHTML(n){
     h += `<div class="sec"><small>Avancement</small>${bar3(n.ce)}</div>`;
     h += `<div class="sec"><small>${n.lvl === 'app' ? 'Chantiers' : 'Contenu'}</small>${n.children.map(c => item(c)).join('') || '<p class="empty">Vide.</p>'}</div>`;
   } else {
-    if (n.waits.length) h += `<div class="sec"><small>Attend</small>${n.waits.map(w => w.unknown ? `<a class="it" href="https://github.com/MoKarade/${esc(w.ref.split('#')[0])}/issues/${esc(w.ref.split('#')[1])}" target="_blank" rel="noopener"><span class="tt">${esc(w.ref)} (hors backlog)</span><em>↗</em></a>` : item(w)).join('')}</div>`;
+    if (n.waits.length) h += `<div class="sec"><small>Dépend de</small>${n.waits.map(w => w.unknown ? `<a class="it" href="https://github.com/MoKarade/${esc(w.ref.split('#')[0])}/issues/${esc(w.ref.split('#')[1])}" target="_blank" rel="noopener"><span class="tt">${esc(w.ref)} (hors backlog)</span><em>↗</em></a>` : item(w)).join('')}</div>`;
     if (n.blocks.length) h += `<div class="sec"><small>Débloque</small>${n.blocks.map(b => item(b)).join('')}</div>`;
   }
   h += `<div class="links">`;
@@ -3811,8 +3811,8 @@ function sheetHTML(n){
   return h + `</div>`;
 }
 /* ---------- la file du script : pourquoi une tâche est (ou n'est pas) la suivante ---------- */
-const EXC = {'geste-marc': 'attend ton geste (étiquette qui:marc)', 'bloquee': 'bloquée (étiquette bloqué)', 'en-cours': 'déjà en cours', 'jules': 'prise par Jules',
-  'preuve-attendue': 'sa preuve est attendue (elle n\'occupe pas le dépôt)', 'attend-inconnue': 'attend une tâche que le backlog ne connaît pas', 'attend-ouverte': 'attend une tâche encore ouverte',
+const EXC = {'geste-marc': 'attend ton geste (étiquette qui:marc)', 'bloquee': 'prévue : dépend d\'autre chose (étiquette bloqué)', 'en-cours': 'déjà en cours', 'jules': 'prise par Jules',
+  'preuve-attendue': 'sa preuve est attendue (elle n\'occupe pas le dépôt)', 'attend-inconnue': 'dépend d\'une tâche que le backlog ne connaît pas', 'attend-ouverte': 'dépend d\'une tâche encore ouverte',
   'pr-ouverte': 'une PR ouverte la cite', 'fini-quand-absent': 'sans « Fini quand » écrit', 'frein-quota': 'retenue par le frein de quota (quota Claude de la semaine)'};
 const TIER = {1: 'preuve due', 2: 'prio:1', 3: 'sécurité', 4: 'même mission que la dernière', 5: 'même chantier que la dernière', 6: 'alternance entre missions', 7: 'le reste, par prio puis numéro'};
 function fileFact(n){
@@ -3896,7 +3896,7 @@ function tacheHTML(n, back){
   else if (!n.open && n.e !== 'aband') h += `<p class="txt vide">Pas de commentaire de preuve « Acceptée ».</p>`;
   h += `</div>`;
   // 6. dépendances
-  h += `<div class="sec" style="margin-top:14px"><small>Attend</small>${n.waits.length ? n.waits.map(w => w.unknown ? `<a class="it" href="https://github.com/MoKarade/${esc(w.ref.split('#')[0])}/issues/${esc(w.ref.split('#')[1])}" target="_blank" rel="noopener"><span class="tt">${esc(w.ref)} (hors backlog)</span><em>↗</em></a>` : item(w)).join('') : '<p class="txt vide">rien</p>'}</div>`;
+  h += `<div class="sec" style="margin-top:14px"><small>Dépend de</small>${n.waits.length ? n.waits.map(w => w.unknown ? `<a class="it" href="https://github.com/MoKarade/${esc(w.ref.split('#')[0])}/issues/${esc(w.ref.split('#')[1])}" target="_blank" rel="noopener"><span class="tt">${esc(w.ref)} (hors backlog)</span><em>↗</em></a>` : item(w)).join('') : '<p class="txt vide">rien</p>'}</div>`;
   h += `<div class="sec"><small>Débloque</small>${n.blocks.length ? n.blocks.map(b => item(b)).join('') : '<p class="txt vide">rien</p>'}</div>`;
   if (a || p.length) h += `<div class="sec"><small>Rangée dans</small><div class="path">` + (a ? `<button data-open="${esc(a.ref)}" style="--d:0;--ac:var(--a-${esc(a.k)})">${lvlChip('app')}<span class="tt">${esc(a.app)}</span></button>` : '')
     + p.map((x, i) => `<button data-open="${esc(x.ref)}" style="--d:${i + 1}">${lvlChip(x.lvl)}<span class="tt">${esc(x.t)}</span></button>`).join('') + `</div></div>`;
@@ -3925,9 +3925,9 @@ function santeHTML(){
   return h;
 }
 const REGLES = () => { const S = M.seuils || {};
-  return ['Une tâche ouverte a toujours un seul état : à faire, en cours, en relecture, attend ton geste, attend sa preuve, ou bloquée par une autre tâche. La preuve n\'est jamais à toi : le fil la fait lui-même.',
-    '« Bloquée par » nomme toujours la tâche attendue. Dans le Gantt, une flèche part de celle-ci vers la tâche qui l\'attend, même d\'une app à l\'autre.',
-    'Dans Tâches, les cartes reliées se rangent en colonnes, de ce qui n\'attend rien vers ce qui attend. Flèche verte : la tâche attendue est finie ; orange pointillée : elle attend ton geste. Une carte en pointillés vient d\'une autre mission ou d\'une autre app. Survoler une carte allume toute sa chaîne.',
+  return ['Une tâche ouverte a toujours un seul état : à faire, en cours, en relecture, attend ton geste (seul cas où elle « attend »), preuve prévue, ou prévue après une autre tâche. La preuve n\'est jamais à toi : le fil la fait lui-même.',
+    '« Dépend de » nomme toujours la tâche à finir avant. Dans le Gantt, une flèche part de celle-ci vers la tâche qui l\'attend, même d\'une app à l\'autre.',
+    'Dans Tâches, les cartes reliées se rangent en colonnes, de ce qui ne dépend de rien vers ce qui dépend d\'une autre. Flèche verte : la tâche à finir avant est finie ; orange pointillée : elle attend ton geste. Une carte en pointillés vient d\'une autre mission ou d\'une autre app. Survoler une carte allume toute sa chaîne.',
     'Une mission (ou un chantier) affiche toutes ses tâches. Elle est finie, avec une coche verte, quand toutes sont acceptées ; sa durée va de la première tâche commencée à la dernière fermée.',
     `Une tâche passe « en retard » (violet) : ton geste attendu depuis plus de ${S.marcHeures || 48} h quand il retient d'autres tâches (${Math.round((S.marcIsoleHeures || 168) / 24)} j sinon), une tâche bloquée sans personne pour la débloquer, ou un fil sans nouvelles depuis ${S.filHeures || 24} h. Le PC la signale au coordinateur une fois par jour.`]; };
 function legendeHTML(){
@@ -3941,8 +3941,8 @@ function legendeHTML(){
     + `<div class="sec"><small>Gantt</small>` + B('<rect x="9" y="1" width="2" height="18" fill="var(--now)"/>', 'maintenant')
     + B('<rect x="1.5" y="6" width="17" height="8" rx="3" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="1.5 2"/>', 'trou : la tâche était prête, rien ne tournait pour elle')
     + B('<rect x="1.5" y="5" width="17" height="10" rx="3" fill="color-mix(in srgb,var(--vio) 28%,transparent)" stroke="var(--vio)" stroke-width="1.5" stroke-dasharray="3 2"/>', 'silence d\'une tâche en retard')
-    + B('<path d="M2 15C9 15 11 5 17 5" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="3 2.4"/><path d="M14.5 2.8L18 5l-3.5 2.2z" fill="var(--mute)"/>', 'attend : de la tâche attendue vers celle qui attend') + `</div>`
-    + `<div class="sec"><small>Couleur d'une barre, à chaque instant</small>` + [['doing', 'travaille (plusieurs bleus : le travail a repris)'], ['vio', 'retravail : rouverte après sa fermeture'], ['marc', 'attend ton geste'], ['blk', 'attend autre chose'], ['fus', 'attend sa preuve'], ['todo', 'dans la file, en pause, ou rien ne travaille'], ['done', 'finie, preuve reçue'], ['now', 'fermée sans preuve']].map(([c, t]) => B(`<rect x="1.5" y="6" width="17" height="8" rx="3" fill="var(--${c})"/>`, t)).join('') + `<p class="txt">Un projet, un chantier ou une mission montre l'état le plus actif de ses tâches : bleu dès que l'une travaille (travail mesuré), gris quand rien ne travaille. Toutes les barres ont la même épaisseur.</p></div>`;
+    + B('<path d="M2 15C9 15 11 5 17 5" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="3 2.4"/><path d="M14.5 2.8L18 5l-3.5 2.2z" fill="var(--mute)"/>', 'dépend de : de la tâche à finir avant vers celle qui en dépend') + `</div>`
+    + `<div class="sec"><small>Couleur d'une barre, à chaque instant</small>` + [['doing', 'travaille (plusieurs bleus : le travail a repris)'], ['vio', 'retravail : rouverte après sa fermeture'], ['marc', 'attend ton geste'], ['blk', 'prévue : dépend d\'autre chose'], ['fus', 'preuve prévue'], ['todo', 'dans la file, en pause, ou rien ne travaille'], ['done', 'finie, preuve reçue'], ['now', 'fermée sans preuve']].map(([c, t]) => B(`<rect x="1.5" y="6" width="17" height="8" rx="3" fill="var(--${c})"/>`, t)).join('') + `<p class="txt">Un projet, un chantier ou une mission montre l'état le plus actif de ses tâches : bleu dès que l'une travaille (travail mesuré), gris quand rien ne travaille. Toutes les barres ont la même épaisseur.</p></div>`;
 }
 const PRE = () => ST.tab === 'taches' ? 'c:' : 'g:';
 function anyOpen(){ return M.apps.some(a => isOpen(PRE() + a.ref, true)); }
@@ -4382,7 +4382,7 @@ function faitsDe(n, H){
     if (n.pr) f.push('PR : ' + (n.pr.repo || n.rl || '') + '#' + n.pr.n + (n.pr.state ? ' (' + n.pr.state + ')' : ''));
     if (n.oub) f.push('retard : ' + H.retTxt(n));
     if (n.geste && n.geste.t) f.push('geste attendu de Marc : ' + n.geste.t);
-    if (n.waits && n.waits.length) f.push('attend : ' + n.waits.filter(w => w.unknown || w.open).map(w => w.unknown ? w.ref : w.t).join(', '));
+    if (n.waits && n.waits.length) f.push('dépend de : ' + n.waits.filter(w => w.unknown || w.open).map(w => w.unknown ? w.ref : w.t).join(', '));
     if (n.acteurs && n.acteurs.length) f.push('travaillé par : ' + n.acteurs.map(a => nom(a) + (a.commits ? ' (' + a.commits + ' commit' + (a.commits > 1 ? 's' : '') + ')' : '')).join(', '));
   } else {
     const ls = n.ls || [], c = n.ce || {};
@@ -4398,7 +4398,7 @@ function faitsDe(n, H){
     const att = l => (l.waits || []).filter(w => w.unknown || w.open).map(w => w.unknown ? w.ref : '#' + w.n).slice(0, 3).join(', ');
     // [libellé, test, dit, combien de titres] : les preuves (le bloc le plus demandé) en nomment plus, chacune avec sa date de fusion, et ne disent leur cause que si le groupe est petit ; tout doit tenir dans FAITS_MAX
     const groupes = [
-      ['bloquées', l => l.e === 'blk', l => t(l, 28) + (att(l) ? ' attend ' + att(l) : ''), 4],
+      ['bloquées', l => l.e === 'blk', l => t(l, 28) + (att(l) ? ' dépend de ' + att(l) : ''), 4],
       // les dates entre parenthèses sont celles de la FUSION : le libellé le dit une fois, pas à chaque titre
       ['preuve manquante ou en retard (date = fusion)', l => l.e === 'ret' || l.pm, (l, i, L) => t(l, 26) + (l.merged != null ? ' (' + H.quand(l.merged, 1) + ')' : '') + (l.oub && L.length <= 3 ? ' : ' + (H.retTxt(l) || '').slice(0, 30) : ''), 8],
       ['fusionnées, preuve à poser (idem)', l => l.e === 'fus' || l.e === 'prog', l => t(l, 26) + (l.merged != null ? ' (' + H.quand(l.merged, 1) + ')' : ''), 8],
@@ -5220,7 +5220,7 @@ function vGanttFull(){
       case 'fus': return l.pa != null ? 'preuve due ' + quand(l.pa) : 'preuve à faire après la fusion';
       case 'prog': return l.pa != null ? 'preuve prévue ' + quand(l.pa) : l.paT ? 'preuve : ' + String(l.paT).slice(0, 110) : 'preuve attendue après un événement';
       case 'ret': return l.pa != null ? 'preuve due depuis ' + quand(l.pa) : l.pm ? 'preuve manquante' : 'preuve en retard';
-      case 'blk': return l.oub && l.oub.cause ? l.oub.cause : w.length ? 'attend ' + w.map(x => x.ref).join(', ') : 'étiquette « bloqué »';
+      case 'blk': return l.oub && l.oub.cause ? l.oub.cause : w.length ? 'dépend de ' + w.map(x => x.ref).join(', ') : 'étiquette « bloqué »';
       case 'marc': return l.geste && l.geste.t ? 'geste : ' + l.geste.t : 'attend ton geste';
       default: return l.fs != null ? 'prévue ' + quand(l.fs, true) : l.why || (l.q != null ? 'file : rang ' + l.q : 'pas dans la file du script');
     }
@@ -5229,7 +5229,7 @@ function vGanttFull(){
   const XCOL = [
     ['idee', 'Idée', '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4"/><path d="M12 15.6v.1"/>'],
     ['file', 'En file', '<path d="M5 7h14M5 12h14M5 17h9"/>'],
-    ['att', 'Attend', '<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6M14 9v6"/>'],
+    ['att', 'Attend toi', '<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6M14 9v6"/>'],
     ['prise', 'Prise', '<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/>'],
     ['draft', 'PR brouillon', SVGI.pr],
     ['rel', 'PR prête', SVGI.pr],
@@ -5241,7 +5241,7 @@ function vGanttFull(){
     ['acc', 'Acceptée', SVGI.fait]
   ];
   // où chaque étape se passe : mot court sous l'étape, explication en infobulle
-  const XLIEU = {idee: ['toi', 'h', 'Une idée vient de toi ou du coordinateur, posée dans une issue GitHub'], file: ['PC', 'm', 'Le script de file du PC range et numérote les tâches'], att: ['toi / dép.', 'h', 'Un geste de ta part, ou une autre tâche à finir avant'],
+  const XLIEU = {idee: ['toi', 'h', 'Une idée vient de toi ou du coordinateur, posée dans une issue GitHub'], file: ['PC', 'm', 'Le script de file du PC range et numérote les tâches'], att: ['toi', 'h', 'Seulement un geste de ta part : tout le reste est prévu, avec sa raison'],
     prise: ['agent', 'ia', 'Un fil Claude, Jules ou Copilot travaille dans le nuage'], draft: ['agent', 'ia', 'L’agent pousse son code sur GitHub, la PR reste en brouillon'], rel: ['GitHub', 'm', 'PR sortie du brouillon, en attente des contrôles'],
     ci: ['GitHub / PC', 'm', 'Contrôles sur les machines GitHub ; sur le PC de Marc pour FinanceAI et DriveAI, dépôts privés'], mg: ['Mergify', 'm', 'Mergify met la PR en file et la fusionne quand tout est vert'], fus: ['GitHub', 'm', 'Fusion en squash dans la branche principale'],
     dep: ['Vercel', 'm', 'Vercel construit et met en ligne la branche principale'], prove: ['fil', 'ia', 'Le fil qui a livré vérifie en vrai et pose la preuve ; le garde-fou de GitHub la contrôle'], acc: ['GitHub', 'm', 'L’issue est fermée avec la preuve « Acceptée » ; on montre les 24 dernières heures']};
@@ -5291,7 +5291,7 @@ function vGanttFull(){
   const xcEtatCi = r => r && !r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null;
   const xcQueue = (l, D) => { const r = xcRec(l, D); return !!r && !!r.mergify && r.mergify.file === true; };
   const xcEnCi = (l, D) => { const r = xcRec(l, D); return !!r && !r.brouillon && ((r.mergify && r.mergify.file === true) || ['en_cours', 'vert', 'rouge', 'annule'].includes(xcEtatCi(r))); };
-  const xcCol = (l, D) => (l.e === 'cours' || l.e === 'rel') && l.pr && l.pr.state === 'open' && !l.pr.draft && xcEnCi(l, D) ? (xcQueue(l, D) ? 'mg' : 'ci') : l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'marc' || l.e === 'blk' ? 'att' : l.e === 'todo' && l.q == null ? 'idee' : 'file';
+  const xcCol = (l, D) => (l.e === 'cours' || l.e === 'rel') && l.pr && l.pr.state === 'open' && !l.pr.draft && xcEnCi(l, D) ? (xcQueue(l, D) ? 'mg' : 'ci') : l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'marc' ? 'att' : l.e === 'todo' && l.q == null ? 'idee' : 'file';
   const xcWho = l => { const q = ecQui(l); return q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'; };
   const xcCiTip = r => { const c = r.ci || {}, m = r.mergify || {};
     return (c.erreur ? '\ncontrôles : lecture en panne (' + c.erreur + ')' : c.etat ? '\ncontrôles : ' + ({vert: 'verts', rouge: 'en échec', en_cours: 'en cours', annule: 'annulés', aucun: 'aucun lancé', non_lu: 'pas lus'}[c.etat] || c.etat) + (c.ok != null ? ' · ' + c.ok + ' ok' + (c.ko ? ', ' + c.ko + ' en échec' : '') + (c.en_cours ? ', ' + c.en_cours + ' en cours' : '') + (c.en_file ? ', ' + c.en_file + ' en file' : '') : '') + (c.rouges && c.rouges.length ? '\nen échec : ' + c.rouges.slice(0, 4).join(', ') : '') : '')
@@ -5682,7 +5682,7 @@ function vGanttFull(){
      Les instants viennent du relevé : issue créée (idée), premier signal (prise), PR ouverte, fusion, acceptation. Rien n'est estimé :
      un instant absent saute la phase au lieu de l'inventer. « Affichée » n'a pas d'instant propre : la page montre la tâche dès le
      relevé qui suit son acceptation. */
-  const PCPH = {idee: ['att', 'Attente', 'var(--todo)'], prise: ['eco', 'Écriture', 'var(--doing)'], pr: ['rel', 'Relecture', 'var(--fus)'], fus: ['pre', 'Preuve', 'var(--vio)']};
+  const PCPH = {idee: ['att', 'Prévue', 'var(--todo)'], prise: ['eco', 'Écriture', 'var(--doing)'], pr: ['rel', 'Relecture', 'var(--fus)'], fus: ['pre', 'Preuve', 'var(--vio)']};
   const PCNEXT = {idee: 'prise', prise: 'pr', pr: 'fus', fus: 'acc'};
   function parcoursOf(l){
     const cr = l.pr && l.pr.created ? Date.parse(l.pr.created) : null, now = Math.max(Date.now(), M.asof || 0);

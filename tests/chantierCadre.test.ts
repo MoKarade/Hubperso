@@ -603,7 +603,11 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   });
 
   it("montre le process en pastilles, sans phrases : une colonne par étape, une ligne par app, le pouls et les 48 prochaines heures", () => {
-    for (const t of ["'Idée'", "'En file'", "'Attend'", "'Prise'", "'PR brouillon'", "'PR prête'", "'Contrôles'", "'File Mergify'", "'Fusionnée'", "'En ligne'", "'Preuve'", "'Acceptée'"]) expect(DOCUMENT).toContain(t);
+    for (const t of ["'Idée'", "'En file'", "'Attend toi'", "'Prise'", "'PR brouillon'", "'PR prête'", "'Contrôles'", "'File Mergify'", "'Fusionnée'", "'En ligne'", "'Preuve'", "'Acceptée'"]) expect(DOCUMENT).toContain(t);
+    // vocabulaire de Marc (28/10) : « attend » ne se dit que de son geste ; tout le reste est « prévu », avec sa raison
+    expect(DOCUMENT).toContain("l.e === 'marc' ? 'att'");
+    expect(DOCUMENT).toContain("blk: 'prévue : dépend d\\'autre chose'");
+    expect(DOCUMENT).not.toContain("'attend autre chose'");
     expect(DOCUMENT).toContain("function xcPouls(W)");
     expect(DOCUMENT).toContain("function xcSuite(W)");
     expect(DOCUMENT).toContain("const ecQui = l =>");

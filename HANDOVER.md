@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : la page Chantier ne dit « attend » que de ton geste, le reste est « prévu » (Hubperso#690, mission #538)
+
+- **Règle de Marc** (28/10, 20:52Z) : « ce qui n'attend pas moi directement n'est pas une tâche qui attend, c'est une tâche prévue ». Seule une tâche `qui:marc` « attend » (colonne « Attend toi » de En cours, états, légendes, fiches).
+- **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
+- **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
+
 ## 28/10/2026 : lia-ui v0.47.0, LIA lit les graphiques et ne scanne que sur demande (Hubperso#679, mission MoKarade/.github#575)
 
 Épingle `@mokarade/lia-ui` v0.47.0 (sha pelé `7f1d7bb`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « l'assistant voit toujours pas les graphes » et « l'animation de scan uniquement sur ce que je lui ai demandé ». v0.47.0 : LIA lit un graphique SVG (titre, axes, légende, valeurs écrites) sans code chez l'hôte ; les courbes du hub gardent leur résumé en mots (`data-lia-donnees`, Hubperso#675), qui prime. Les graphiques `<canvas>` restent illisibles (limite connue). v0.46.0 : le scan des nanobots ne joue que sur ce que Marc a demandé d'analyser. v0.45.1 (menu sur sa propre couche) arrive avec. Rien à brancher. Preuve : déploiement `READY` sur le commit fusionné, puis relevé du PC (question sur un graphique SVG du hub ; aucune visite spontanée ne lance l'essaim).
