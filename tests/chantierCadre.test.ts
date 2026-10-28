@@ -343,6 +343,32 @@ describe("le clic droit du cadre est dit au hub (#610)", () => {
   });
 });
 
+describe("l'onglet Vitesse : la rapidité des PR et des tâches, par acteur (#613)", () => {
+  it("existe dans la barre, s'ouvre par ?onglet=vitesse et n'est plus l'ancien « Rythme »", () => {
+    expect(ongletDe("vitesse")).toBe("vitesse");
+    expect(DOCUMENT).toContain("['vitesse', 'Vitesse']");
+    expect(DOCUMENT).toContain("tab === 'vitesse' ? vVitesseM()");
+    expect(DOCUMENT).toMatch(/const ANCIEN = \{plan: 'taches', cartes: 'taches', quota: 'rythme'\};/);
+    expect(DOCUMENT).toContain("t === 'vitesse' ? t : ANCIEN[t]");
+  });
+
+  it("mêmes couleurs d'acteurs que « Qui fusionne » de l'Accueil (une seule table)", () => {
+    expect(DOCUMENT).toContain("const LAB = QUI, tot");
+    expect(DOCUMENT.match(/const QUI = \{claude:/g)).toHaveLength(1);
+  });
+
+  it("rien n'est inventé : une tâche dont on ne sait pas qui l'a faite va dans « Non attribué »", () => {
+    expect(DOCUMENT).toContain("return !k ? 'inconnu' : QUI[k] ? k : 'autre';");
+    expect(DOCUMENT).toContain("inconnu: ['Non attribué'");
+  });
+
+  it("le délai d'une PR va de sa création à sa fusion, la durée d'une tâche de son début à son acceptation", () => {
+    expect(DOCUMENT).toContain("d: (p.t - Date.parse(p.c)) / 6e4");
+    expect(DOCUMENT).toContain("d: (l.end - l.start) / 6e4");
+  });
+});
+
+
 describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
   const bon = { type: MESSAGE_CLIC_DROIT, x: 120.5, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
 
