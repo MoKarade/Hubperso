@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : lia-ui v0.43.0, le clic droit de LIA marche partout (Hubperso#603, mission MoKarade/.github#575)
+
+Épingle `@mokarade/lia-ui` v0.43.0 (sha pelé `c0f1ff7`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « faut qu'il marche partout ». Le clic droit (et l'appui long) de LIA s'ouvre maintenant sur le fond de page, dans une fenêtre modale `<dialog>.showModal()`, et même quand un gestionnaire de la page bloque le menu natif ; les champs de saisie gardent le menu du navigateur. Rien à brancher. Preuve : déploiement de production `READY` sur le commit fusionné, puis relevé du PC (lia-ui#147).
+
 ## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 2 : la page « Bilans » et son entrée sous « Gérer » (Hubperso#543)**
 
 - **Entrée « Bilans »** sous « Gérer » (`lib/navigation.ts`, icône `bilans`), donc dans « Plus » au téléphone ; propriétaire seul (un invité ne la voit pas), la barre du bas la range sous « Plus ».
