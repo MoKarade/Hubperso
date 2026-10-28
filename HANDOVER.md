@@ -4,7 +4,7 @@
 
 ## 28/10/2026 : le clic droit couvre toute la page Chantier, vue Vitesse et téléphone compris (Hubperso#632, mission MoKarade/.github#575)
 
-Relevé du PC (28/10, 15:48Z) : sur `/chantier`, vue Vitesse, un clic droit sur une carte n'ouvrait aucun menu. `GENRES` (`chantier/cadre.html`) ne connaissait pas les cartes de vitesse (`.qa`, `.qm`, `.qsp`, `.qbar`), les graphiques (`.fg`) ni les sections (`.band`), et au téléphone la page vit dans `#mv`, hors de `#view` : rien ne rattrapait. Trois genres ajoutés et la page entière (`#view`, `#mv`, en-tête, bandeau) retombe sur « la page » : aucun point visible n'est sans menu. Le plus précis gagne toujours. Test (`tests/chantierCadreDom.test.ts`) : il exécute `GENRES` et `clicDroitDe` tels que publiés ; rouge sans le correctif. [À vérifier] relevé du PC sur la vue Vitesse après déploiement.
+Relevé du PC (28/10, 15:48Z) : sur `/chantier`, vue Vitesse, un clic droit sur une carte n'ouvrait aucun menu. `GENRES` (`chantier/cadre.html`) ne connaissait pas les cartes de vitesse (`.qa`, `.qm`, `.qsp`, `.qbar`), les graphiques (`.fg`) ni les sections (`.band`), et au téléphone la page vit dans `#mv`, hors de `#view` : rien ne rattrapait. Trois genres ajoutés et la page entière (`#view`, `#mv`, en-tête, bandeau) retombe sur « la page » : aucun point visible n'est sans menu. Le plus précis gagne toujours. Test (`tests/chantierCadreDom.test.ts`) : il exécute `GENRES` et `clicDroitDe` tels que publiés ; rouge sans le correctif. [À vérifier] relevé du PC sur la vue Vitesse (bureau et téléphone) après le déploiement de production.
 
 ## 🟦 Session 2026-10-28 — **Session partagée : route de contrôle du cookie signé (Hubperso#608, mission #606)**
 
