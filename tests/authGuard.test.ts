@@ -73,6 +73,13 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api/chantier/gestes")).toBe(false);
   });
 
+  it("laisse passer /api/chantier/notes-lia — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/chantier/notes-lia")).toBe(true);
+    expect(isPublicPath("/api/chantier/notes-lia/")).toBe(false);
+    expect(isPublicPath("/api/chantier/notes-liax")).toBe(false);
+    expect(isPublicPath("/api/chantier")).toBe(false);
+  });
+
   it("laisse passer /api/gantt — et exactement ce chemin", () => {
     expect(isPublicPath("/api/gantt")).toBe(true);
     expect(isPublicPath("/api/gantt/")).toBe(false);
