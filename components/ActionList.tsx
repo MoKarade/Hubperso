@@ -1,5 +1,6 @@
 import type { HubAction } from "@mokarade/hub-contract";
 import { safeHttpUrl } from "@/lib/url";
+import { attributsLien } from "@/lib/lienApp";
 import { BoutonTrigger } from "./BoutonTrigger";
 
 // Deux sortes d'actions, deux rendus qui n'ont rien à voir :
@@ -25,7 +26,7 @@ function Action({ action, appId }: { action: HubAction; appId: string }) {
   }
 
   return (
-    <a className="action" href={href} target="_blank" rel="noreferrer noopener">
+    <a className="action" href={href} {...attributsLien(href)}>
       {action.label}
       <span className="action__arrow" aria-hidden="true">
         ↗

@@ -25,6 +25,7 @@
 // « n'affiche rien » : le conseil reste lisible quand son lien est refusé.
 
 import type { Recommandation as Reco } from "@/lib/carte";
+import { attributsLien } from "@/lib/lienApp";
 import { Icone } from "./Icone";
 
 export function Recommandation({ reco, compact = false }: { reco: Reco; compact?: boolean }) {
@@ -41,7 +42,7 @@ export function Recommandation({ reco, compact = false }: { reco: Reco; compact?
           {reco.href ? (
             // `noreferrer noopener` comme partout ailleurs dans le hub : la cible est une
             // URL publiée par une app, donc pas quelque chose qu'on contrôle.
-            <a href={reco.href} target="_blank" rel="noreferrer noopener">
+            <a href={reco.href} {...attributsLien(reco.href)}>
               {reco.label}
             </a>
           ) : (

@@ -10,6 +10,7 @@
 
 import type { HubAlert } from "@mokarade/hub-contract";
 import { safeHttpUrl } from "@/lib/url";
+import { attributsLien } from "@/lib/lienApp";
 import { Icone } from "./Icone";
 import { iconeSeverite } from "@/lib/icones";
 
@@ -33,8 +34,7 @@ export function AlertBanner({ alert }: { alert: HubAlert }) {
         <a
           className="bandeau__lien"
           href={href}
-          target="_blank"
-          rel="noreferrer noopener"
+          {...attributsLien(href)}
         >
           Ouvrir
         </a>

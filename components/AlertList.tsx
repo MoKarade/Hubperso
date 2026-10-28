@@ -1,6 +1,7 @@
 import type { HubAlert } from "@mokarade/hub-contract";
 import { severityTone } from "@/lib/status";
 import { safeHttpUrl } from "@/lib/url";
+import { attributsLien } from "@/lib/lienApp";
 import { Icone } from "./Icone";
 import { iconeSeverite } from "@/lib/icones";
 
@@ -25,7 +26,7 @@ function AlertRow({ alert }: { alert: HubAlert }) {
   return (
     <li className="alert">
       {href ? (
-        <a className="alert__link" href={href} target="_blank" rel="noreferrer noopener">
+        <a className="alert__link" href={href} {...attributsLien(href)}>
           {content}
         </a>
       ) : (
