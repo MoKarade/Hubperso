@@ -23,6 +23,8 @@ const coutsMoq = vi.fn();
 const gestesMoq = vi.fn();
 /** Le document du cadre lui-même : le hub n'en lit que l'ETag (HEAD), pour savoir qu'un déploiement l'a changé. */
 const versionMoq = vi.fn();
+/** Les événements GitHub en direct : une cinquième route, lue toutes les 10 s ; ici rien de neuf, sauf test qui dit le contraire. */
+const evenementsMoq = vi.fn();
 const COUTS = { suivies: 1, apps: 2, alertes: 0, totaux: [], note: null, detail: [] };
 
 beforeEach(() => {
@@ -30,6 +32,7 @@ beforeEach(() => {
   coutsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => COUTS });
   gestesMoq.mockResolvedValue({ ok: true, status: 201 });
   versionMoq.mockResolvedValue({ status: 200, headers: { get: () => '"v1"' } });
+  evenementsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [], jusqua: null }) });
   vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
     url === "/api/chantier/couts"
       ? coutsMoq(url, init)
@@ -37,7 +40,9 @@ beforeEach(() => {
         ? gestesMoq(url, init)
         : url === "/api/chantier/cadre"
           ? versionMoq(url, init)
-          : fetchMoq(url, init),
+          : url.startsWith("/api/chantier/evenements")
+            ? evenementsMoq(url, init)
+            : fetchMoq(url, init),
   );
   conteneur = document.createElement("div");
   document.body.appendChild(conteneur);
@@ -51,6 +56,7 @@ afterEach(() => {
   coutsMoq.mockReset();
   gestesMoq.mockReset();
   versionMoq.mockReset();
+  evenementsMoq.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -89,7 +95,7 @@ async function presenter(source: Window | null, port: FaussePort | null, donnee:
 function donnees(port: FaussePort) {
   return port.postMessage.mock.calls
     .map((c) => c[0] as { type: string; message?: string; octets?: ArrayBuffer })
-    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve");
+    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve" && m.type !== "chantier-evenements");
 }
 
 /** Les réponses aux gestes écrites dans le canal. */
@@ -152,6 +158,29 @@ describe("ChantierCadre", () => {
     // les octets sont TRANSFÉRÉS au canal (pas copiés), et rien ne passe par la fenêtre
     expect(port.postMessage.mock.calls[1]![1]).toHaveLength(1);
     expect(direct).not.toHaveBeenCalled();
+  });
+
+  it("lit les événements GitHub toutes les 10 s depuis le dernier reçu, les écrit dans le canal, dit une panne en clair", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    const evts = () =>
+      port.postMessage.mock.calls
+        .map((c) => c[0] as { type: string; evenements?: unknown[]; erreur?: string })
+        .filter((m) => m.type === "chantier-evenements");
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    evenementsMoq
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [{ id: "a" }], jusqua: "2026-10-28T21:00:00.000Z" }) })
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ ok: false }) })
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [], jusqua: "2026-10-28T21:00:00.000Z" }) });
+    await presenter(cadre.contentWindow, port);
+    expect(evenementsMoq.mock.calls[0]![0]).toBe("/api/chantier/evenements");
+    expect(evts()[0]).toMatchObject({ evenements: [{ id: "a" }] });
+    await avancer(10_000);
+    expect(evenementsMoq.mock.calls[1]![0]).toBe("/api/chantier/evenements?depuis=" + encodeURIComponent("2026-10-28T21:00:00.000Z"));
+    expect(evts()[1]!.erreur).toBeTruthy();
+    expect(evts()[1]!.evenements).toBeUndefined();
+    await avancer(10_000);
+    expect(evts()[2]).toMatchObject({ evenements: [] });
   });
 
   it("relit chaque minute avec If-None-Match ; 304 : rien n'est réécrit", async () => {

@@ -15,6 +15,15 @@
 
 Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant de tâche (il attend un ID du backlog comme `C28-49:` ou l'exception `HORS-BACKLOG:`) : un re-pin sans ID de backlog porte `HORS-BACKLOG:` en tête de sujet.
 
+## 28/10/2026 : En cours lit les événements GitHub en direct (Hubperso#694, mission #538)
+
+- **Demande de Marc** (28/10, 20:57Z) : « page chantier en cours, full live pas de périmé ».
+- **Quoi** : `GET /api/chantier/evenements[?depuis=<ISO>]` (session du propriétaire, comme `/api/chantier/releve`) rend les événements rangés par #684 reçus après `depuis` (sans `depuis`, les 48 dernières heures, 2000 au plus), plus `jusqua` (réception du dernier). `components/ChantierCadre.tsx` les relit toutes les 10 s, onglet visible seulement (rien de neuf : aucune ligne lue), et les poste au cadre (`chantier-evenements`).
+- **Dans le cadre** : ce qui date d'APRÈS le relevé l'emporte. Une PR fusionnée ou fermée n'est plus ouverte (sa tâche passe en « Fusionnée »), un brouillon change de colonne, une PR neuve apparaît, un contrôle ROUGE se voit, le déploiement de production d'un dépôt se suit. Un contrôle ne devient jamais vert sur un seul événement : le vert vient du relevé. `etapes` vide : la sortie du brouillon (`ready_for_review`) et la mise en ligne (déploiement réussi sur le sha de fusion) reviennent des événements.
+- **Périmé** : « en direct » ne s'affiche que si la dernière lecture a moins de 90 s, sinon « relevé du PC » ; la source « Événements GitHub » passe en retard (45 s) puis périmée (90 s) ; sans événement reçu elle dit « le webhook n'est pas encore branché ». Les sources « Tâches et PR » et « PR ouvertes » passent en retard à 12 min et périmées à 20 min.
+- **Neon** : une lecture sans rien de neuf ne rend aucune ligne ; la première rend au plus 48 h.
+- **Preuve à lire** : après la pose du secret et des webhooks par le PC, fusionner une PR : sur `/chantier`, onglet En cours, sa brique passe en « Fusionnée » en moins de 15 s sans recharger.
+
 ## 28/10/2026 : le hub reçoit les événements GitHub signés, la page Chantier n'attend plus le relevé du PC (Hubperso#684, mission #538)
 
 - **Demande de Marc** (28/10, 20:49Z) : « rien ne se perd, aucun oubli, aucune erreur inconnue, tout dans les graphs de chantier, tout à jour tout le temps », sans minuteur ni dépendance au PC. Format convenu avec le fil workflow (phase 4).
