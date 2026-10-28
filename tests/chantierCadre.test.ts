@@ -497,8 +497,12 @@ describe("le cadre se tient à jour sans que l'on recharge la page (#640)", () =
     expect(DOCUMENT).toContain("m.type === 'chantier-version-neuve'");
     expect(DOCUMENT).toContain("window.surVersionNeuve = () => {");
     expect(DOCUMENT).toContain("!document.hidden && Date.now() - action < 45e3");
-    expect(DOCUMENT).toContain("portHub.postMessage({ type: 'chantier-recharge' });");
-    expect(DOCUMENT).toContain("location.reload()");
+    expect(DOCUMENT).toContain("portHub.postMessage({ type: 'chantier-recharge', onglet: location.hash.replace('#', '') });");
+  });
+
+  it("le cadre ne se recharge jamais lui-même : son rechargement part sans cookie de session (401 « unauthenticated », Hubperso#719)", () => {
+    expect(DOCUMENT).not.toContain("location.reload");
+    expect(DOCUMENT).not.toMatch(/location\.(href|assign|replace)\s*[=(]/);
   });
 });
 

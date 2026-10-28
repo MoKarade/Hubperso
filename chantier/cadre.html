@@ -81,11 +81,12 @@
       canalHub.postMessage({ type: 'chantier-geste', geste: corps });
     });
   };
-  // Se recharger : le hub est prévenu d'abord (il accepte alors le canal du document neuf), l'onglet reste dans l'adresse (#onglet).
+  // Se recharger : c'est le HUB qui recharge le cadre (Hubperso#719). Un rechargement lancé d'ici part sans le cookie de session
+  // (le cadre est en origine opaque, le cookie est SameSite=Lax) : le serveur répond 401 et le cadre affiche « unauthenticated ». Le hub
+  // ferme l'ancien canal, accepte celui du document neuf et le recharge lui-même, sur l'onglet que le cadre lui donne ici (celui de son adresse, tenue à jour à chaque changement d'onglet).
   window.hubRecharger = function () {
     if (!portHub) return false;
-    portHub.postMessage({ type: 'chantier-recharge' });
-    setTimeout(function () { location.reload(); }, 150);
+    portHub.postMessage({ type: 'chantier-recharge', onglet: location.hash.replace('#', '') });
     return true;
   };
   // Clic droit (ou appui long) : le hub ne voit pas ce qui se passe dans ce cadre, il reçoit donc `{type, x, y, genre, texte}`

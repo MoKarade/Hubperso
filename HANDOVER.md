@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : le hub recharge le cadre de /chantier, plus le cadre lui-même (Hubperso#719, mission #538)
+
+- **Constat** (PC, 22:13:20Z, production) : page ouverte depuis ~7 min, après le déploiement de #713, le cadre affichait `{"error":"unauthenticated","message":"Authentification requise."}` : la page n'était plus vivante.
+- **Cause** : sur une version neuve du document, le cadre se rechargeait lui-même (`location.reload()`). Il est en bac à sable sans `allow-same-origin` (origine opaque) : le navigateur n'envoie pas le cookie de session (SameSite=Lax) pour ce rechargement, le middleware répond 401 et le cadre l'affiche. Reproduit avec Chromium : le rechargement du cadre part sans cookie, une navigation lancée par la page parente part avec.
+- **Correction** : le cadre dit `chantier-recharge` avec son onglet (celui de son adresse) et ne fait plus rien d'autre ; `ChantierCadre` valide l'onglet (`ongletDe`), ferme le canal et navigue l'`<iframe>` vers `/api/chantier/cadre?r=<n>#<onglet>` (`urlCadreRecharge`, `lib/chantierCadre.ts`). `?r=` change à chaque rechargement, sinon le navigateur ne ferait qu'une navigation de fragment. Une valeur d'onglet inconnue est ignorée.
+- **Tests** : `tests/chantierCadre.test.ts` (le cadre ne contient plus de rechargement ni de navigation de lui-même), `tests/chantierCadreDom.test.ts` (adresse neuve, onglet repris, onglet inventé ignoré, adresse d'ouverture conservée).
+- **Preuve à lire** : `/chantier` ouvert, un déploiement passe, le cadre se recharge seul (page cachée ou inutilisée depuis 45 s) et reste vivant, sans « unauthenticated ».
+
 ## 28/10/2026 : lia-ui v0.48.0, LIA lit les barres HTML et relit l'état moins souvent (Hubperso#717, mission MoKarade/.github#719)
 
 Épingle `@mokarade/lia-ui` v0.48.0 (sha pelé `b0c8524`), seul changement (`package.json`, lock). v0.47.1 (lia-ui#162, fil Vercel : `/api/lia/etat` = 2,3 k appels/24 h, 28 % des invocations du hub) : l'état partagé n'est relu que toutes les 2 minutes et seulement quand la page est à l'écran, une page qui revient au premier plan relit tout de suite. v0.48.0 (lia-ui#164) : un clic droit sur une barre de graphique dessinée en HTML vise sa ligne et LIA lit le texte de chaque ligne et la largeur dessinée de sa barre. Preuve : déploiement `READY` sur le commit fusionné ; le fil Vercel relève `/api/lia/etat` sur 24 h après le déploiement (cible : au moins moitié moins d'appels).
@@ -27,6 +35,13 @@
 - **Règle de Marc** (28/10, 20:52Z) : « ce qui n'attend pas moi directement n'est pas une tâche qui attend, c'est une tâche prévue ». Seule une tâche `qui:marc` « attend » (colonne « Attend toi » de En cours, états, légendes, fiches).
 - **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
 - **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
+
+## 28/10/2026 : le suivi de sessions de Sentry est coupé côté serveur (Hubperso#702, mission #508)
+
+- **Cause** (diagnostic de #595) : le SDK `@sentry/nextjs` 11.9.0 ouvre par défaut une « session » de santé des versions pour chaque requête entrante (option `sessions` de l'intégration HTTP du serveur, `true` par défaut) et l'envoie à Sentry. Sur `/login`, 3,6 k invocations par 24 h donnaient environ 2 appels sortants chacune (7,1 k vus). `tracesSampleRate` était déjà à 0 : ce n'étaient pas des traces.
+- **Ce qui change** : `instrumentation.ts` passe `integrations: [Sentry.httpIntegration(OPTIONS_HTTP_SENTRY)]` à `Sentry.init` sous le runtime Node seulement (`httpIntegration` n'existe pas dans le SDK edge : le build Turbopack échoue sinon), avec `OPTIONS_HTTP_SENTRY = { sessions: false }` dans `lib/sentryConfig.ts`. Vérifié avec le SDK installé : l'intégration remplace la valeur par défaut (une seule `Http` dans la liste). Les erreurs partent toujours (`onRequestError`) et `beforeSend` retire toujours cookies, en-têtes, corps et utilisateur.
+- **Tests** : `tests/sentryConfig.test.ts` (option coupée, branchée dans `instrumentation.ts`, option présente dans les types du SDK installé, nettoyage des erreurs inchangé).
+- **Preuve à lire** (fil Vercel) : 24 h pleines après le déploiement, Vercel > Observability > `/login` > External APIs montre au moins 80 % d'appels Sentry en moins pour un nombre d'invocations comparable ; sinon la vraie cause est notée sur #702.
 
 ## 28/10/2026 : le hub rattrape par GitHub le trou entre le relevé du PC et les événements (Hubperso#699, mission #538)
 
