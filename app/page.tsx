@@ -10,6 +10,7 @@ import { maintenantMs } from "@/lib/horloge";
 import { ResumeHub } from "@/components/ResumeHub";
 import { resumeHub } from "@/lib/resume";
 import type { Releve } from "@/lib/historique";
+import { lireTauxCourant } from "@/lib/tauxChangeDb";
 import { aggregateUsage } from "@/lib/usage";
 import { formatDateTime } from "@/lib/format";
 import { AppWidget } from "@/components/AppWidget";
@@ -123,8 +124,8 @@ async function StreamedFrise({
 
 /** Panneau des coûts : agrégat, donc dépend de toutes les réponses. Streamée à part. */
 async function StreamedCosts({ promises, detail }: { promises: Promise<SummaryResult>[]; detail: boolean }) {
-  const results = await Promise.all(promises);
-  return <CostsCard digest={aggregateUsage(results)} maintenant={maintenantMs()} detail={detail} />;
+  const [results, change] = await Promise.all([Promise.all(promises), lireTauxCourant()]);
+  return <CostsCard digest={aggregateUsage(results, change)} maintenant={maintenantMs()} detail={detail} />;
 }
 
 export default async function Page() {

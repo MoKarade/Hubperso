@@ -6,6 +6,7 @@
 
 import type { HubQuota, HubUsage } from "@mokarade/hub-contract";
 import { barreQuota, libelleQuota } from "@/lib/carte";
+import { TAUX_PAR_DEFAUT } from "@/lib/tauxChange";
 import { PERIOD_LABEL, quotaRatio, toCad } from "@/lib/usage";
 import { formatCad, formatDateTime } from "@/lib/format";
 import { Sparkline } from "@/components/Sparkline";
@@ -32,10 +33,10 @@ function QuotaDetaille({ quota }: { quota: HubQuota }) {
   );
 }
 
-function CoutPeriode({ cost }: { cost: NonNullable<HubUsage["cost"]> }) {
+function CoutPeriode({ cost, taux }: { cost: NonNullable<HubUsage["cost"]>; taux: number }) {
   return (
     <p className="detail__cout">
-      {formatCad(toCad(cost.amount, cost.currency))}{" "}
+      {formatCad(toCad(cost.amount, cost.currency, taux))}{" "}
       <span className="detail__periode">
         ({PERIOD_LABEL[cost.period]}
         {cost.currency === "USD" && " — converti depuis USD"})
@@ -74,9 +75,12 @@ function CourbeCout({
 export function DetailCouts({
   usage,
   historique = [],
+  taux = TAUX_PAR_DEFAUT.taux,
 }: {
   usage: HubUsage | undefined;
   historique?: Releve[];
+  /** Le taux USD→CAD du relevé du PC (`lib/tauxChange.ts`) ; à défaut, le repli. */
+  taux?: number;
 }) {
   return (
     <section className="detail__bloc" aria-label="Coûts et quotas">
@@ -85,7 +89,7 @@ export function DetailCouts({
         <p className="detail__vide">Non suivi par cette app.</p>
       ) : (
         <>
-          {usage.cost && <CoutPeriode cost={usage.cost} />}
+          {usage.cost && <CoutPeriode cost={usage.cost} taux={taux} />}
           {usage.cost && <CourbeCout cost={usage.cost} historique={historique} />}
           {usage.quotas?.map((q, i) => (
             <QuotaDetaille key={`${q.label}-${i}`} quota={q} />

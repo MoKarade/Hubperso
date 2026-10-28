@@ -24,6 +24,7 @@ import { cumulerCouts } from "@/lib/coutCumule";
 import { debutDuMois, depenseDuMois, totauxDuMois } from "@/lib/coutMois";
 import { maintenantMs } from "@/lib/horloge";
 import { lireDerniersCouts, lireReferencesMois } from "@/lib/historiqueDb";
+import { lireTauxCourant } from "@/lib/tauxChangeDb";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import { assurerMigrations } from "@/lib/migrations";
 import { SOURCE_DEFS } from "@/lib/sources";
@@ -50,10 +51,12 @@ export async function GET(request: Request): Promise<Response> {
   // (jamais un 0). Voir `lib/coutMois.ts` : c'est une différence de cumuls, donc une estimation.
   const debut = debutDuMois(maintenantMs());
   const references = await lireReferencesMois(ids, new Date(debut));
+  // Le taux USD→CAD du dernier relevé du PC (Hubperso#642) : le même pour le cumul et le mois ; sans taux lisible, le repli, DIT.
+  const change = await lireTauxCourant();
   const mois =
     references === null
       ? null
-      : totauxDuMois(depenseDuMois(ids, debut, derniers, references.avant, references.apres));
+      : totauxDuMois(depenseDuMois(ids, debut, derniers, references.avant, references.apres, change.taux));
 
-  return Response.json({ ok: true, ...cumulerCouts(ids, derniers), mois }, { headers: NO_STORE });
+  return Response.json({ ok: true, ...cumulerCouts(ids, derniers, change), mois }, { headers: NO_STORE });
 }

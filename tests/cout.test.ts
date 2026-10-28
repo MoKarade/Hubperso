@@ -6,6 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Releve } from "../lib/historique";
+import { TAUX_REPLI, type TauxChange } from "../lib/tauxChange";
 
 let ip = 0;
 const requete = () =>
@@ -28,6 +29,7 @@ async function appeler(
   derniers: Releve[] | null,
   baseConfiguree = true,
   references: Refs = { avant: [], apres: [] },
+  change: TauxChange = { taux: TAUX_REPLI, date: null, source: null, repli: true, motif: "relevé du PC absent" },
 ) {
   vi.resetModules();
   vi.doMock("@/lib/db", () => ({ baseConfiguree: () => baseConfiguree }));
@@ -37,6 +39,7 @@ async function appeler(
     lireDerniersCouts: async () => derniers,
     lireReferencesMois: async () => references,
   }));
+  vi.doMock("@/lib/tauxChangeDb", () => ({ lireTauxCourant: async () => change }));
   const { GET } = await import("../app/api/cout/route");
   return GET(requete());
 }
@@ -45,6 +48,7 @@ afterEach(() => {
   vi.doUnmock("@/lib/horloge");
   vi.doUnmock("@/lib/db");
   vi.doUnmock("@/lib/historiqueDb");
+  vi.doUnmock("@/lib/tauxChangeDb");
   vi.doUnmock("@/lib/migrations");
   vi.resetModules();
 });
@@ -74,6 +78,14 @@ describe("GET /api/cout", () => {
     expect(corps.dataAsOf).toBeNull();
   });
 
+  it("rend le taux du relevé du PC avec sa date et sa source, et dit le repli quand il manque (Hubperso#642)", async () => {
+    const du_releve: TauxChange = { taux: 1.4038, date: "2026-10-27", source: "Banque du Canada", repli: false, motif: null };
+    const lu = await (await appeler([releve("a", 10, "total")], true, { avant: [], apres: [] }, du_releve)).json();
+    expect(lu).toMatchObject({ tauxUsdCad: 1.4038, tauxDate: "2026-10-27", tauxSource: "Banque du Canada", tauxRepli: false });
+    const repli = await (await appeler([releve("a", 10, "total")])).json();
+    expect(repli).toMatchObject({ tauxUsdCad: TAUX_REPLI, tauxDate: null, tauxSource: null, tauxRepli: true });
+  });
+
   it("répond 503 quand la base ne répond pas, sans rien d'autre", async () => {
     const res = await appeler(null);
     expect(res.status).toBe(503);
@@ -89,7 +101,7 @@ describe("GET /api/cout", () => {
     const texte = JSON.stringify(await (await appeler([releve("batchchef", 4)])).json());
     expect(texte).not.toMatch(/token|jeton|https?:|summary|@/i);
     expect(Object.keys(JSON.parse(texte)).sort()).toEqual(
-      ["apps", "cumulCad", "dataAsOf", "devise", "mois", "ok", "periode", "tauxUsdCad"].sort(),
+      ["apps", "cumulCad", "dataAsOf", "devise", "mois", "ok", "periode", "tauxDate", "tauxRepli", "tauxSource", "tauxUsdCad"].sort(),
     );
   });
 
@@ -123,6 +135,7 @@ describe("GET /api/cout", () => {
       lireDerniersCouts: async () => [],
       lireReferencesMois: async () => ({ avant: [], apres: [] }),
     }));
+    vi.doMock("@/lib/tauxChangeDb", () => ({ lireTauxCourant: async () => ({ taux: TAUX_REPLI, date: null, source: null, repli: true, motif: "x" }) }));
     const { GET } = await import("../app/api/cout/route");
     const memeClient = () =>
       new Request("https://hubperso.com/api/cout", { headers: { "x-real-ip": "10.9.9.9" } });

@@ -33,6 +33,7 @@ import { ActionList } from "@/components/ActionList";
 import { DetailMetriques } from "@/components/DetailMetriques";
 import { DetailAlertes } from "@/components/DetailAlertes";
 import { DetailCouts } from "@/components/DetailCouts";
+import { lireTauxCourant } from "@/lib/tauxChangeDb";
 import { DetailPli, DetailRecommandation, DetailSections } from "@/components/DetailContenu";
 import {
   BandeauPerime,
@@ -59,9 +60,10 @@ export default async function DetailAppPage({
 
   const maintenant = maintenantMs();
   // Le résumé de CETTE app et sa mémoire, en parallèle : l'un n'a pas à attendre l'autre.
-  const [result, historique] = await Promise.all([
+  const [result, historique, change] = await Promise.all([
     fetchSummary(source),
     lireHistorique(source.id),
+    lireTauxCourant(),
   ]);
   const badge = statusBadge(result);
   const summary = result.state === "ok" ? result.summary : null;
@@ -144,7 +146,7 @@ export default async function DetailAppPage({
             historique={historique}
             maintenantMs={maintenant}
           />
-          <DetailCouts usage={summary.usage} historique={historique} />
+          <DetailCouts usage={summary.usage} historique={historique} taux={change.taux} />
           {summary.details && summary.details.length > 0 && (
             <DetailPli titre="Détail publié par l’app" note={`${summary.details.length} section(s)`}>
               <DetailSections details={summary.details} />
