@@ -611,8 +611,24 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     const p1 = { ref: "p1", lvl: "tâche", leaf: true, t: "Preuve automatique", e: "prog", open: true };
     const g = { ...mission, ls: [f1, p1, t2], ce: { fus: 1, prog: 1, cours: 1 } };
     const f = faitsDe(g, { ...H, STE: { ...H.STE, fus: "fusionnée, à prouver", prog: "attend sa preuve" }, ORDRE: ["fus", "prog", "cours"] });
-    expect(f).toContain("fusionnées, preuve à poser : « Preuve de DriveAI » (fusionnée t4000000) ; « Preuve automatique »");
+    expect(f).toContain("fusionnées, preuve à poser : « Preuve de DriveAI » (t4000000) ; « Preuve automatique »");
     expect(f).not.toContain("autres à suivre : « Preuve");
+  });
+
+  it("une app chargée (7 preuves en retard, 8 fusionnées à prouver, des bloquées et des gestes) nomme tous les titres des preuves dans les 1 200 caractères", () => {
+    const mk = (e: string, i: number, extra = {}) => ({ ref: `${e}${i}`, lvl: "tâche", leaf: true, t: `Tâche ${e} numéro ${i} avec un titre assez long pour peser`, e, open: true, ...extra });
+    const ls = [
+      ...Array.from({ length: 7 }, (_, i) => mk("ret", i, { oub: {} })),
+      ...Array.from({ length: 8 }, (_, i) => mk(i % 2 ? "fus" : "prog", i, { merged: 4_000_000 + i })),
+      ...Array.from({ length: 3 }, (_, i) => mk("blk", i, { waits: [{ n: 100 + i, open: true, ref: `x#${100 + i}` }] })),
+      ...Array.from({ length: 2 }, (_, i) => mk("marc", i, { geste: { t: "valider la durée du refresh token Google" } })),
+    ];
+    const g = { ...mission, ls, ce: { ret: 7, fus: 4, prog: 4, blk: 3, marc: 2 } };
+    const f = faitsDe(g, { ...H, retTxt: () => "preuve attendue depuis trois jours, la sonde ne lit rien", STE: { ...H.STE, fus: "fusionnée, à prouver", prog: "attend sa preuve" } });
+    expect(f.length).toBeLessThanOrEqual(1200);
+    for (let i = 0; i < 7; i++) expect(f).toContain(`Tâche ret numéro ${i}`);
+    for (let i = 0; i < 8; i++) expect(f).toContain(`Tâche ${i % 2 ? "fus" : "prog"} numéro ${i}`);
+    expect(f).not.toContain("… et"); // rien n'est caché derrière un compte
   });
 
   it("sans acteur relevé, les faits le disent au lieu de se taire (LIA n'en invente pas)", () => {
