@@ -10,6 +10,12 @@
 - **Charge** : le chemin du jeton ne lit ni session ni base (moins de travail que la page). Pour la page, rien ne change : même `auth()` et même relais.
 - **Preuve à lire** : `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/lia/etat` rend 401 ; DriveAI#771 lit puis écrit l'état avec son jeton.
 
+## 28/10/2026 : la page Chantier ne dit « attend » que de ton geste, le reste est « prévu » (Hubperso#690, mission #538)
+
+- **Règle de Marc** (28/10, 20:52Z) : « ce qui n'attend pas moi directement n'est pas une tâche qui attend, c'est une tâche prévue ». Seule une tâche `qui:marc` « attend » (colonne « Attend toi » de En cours, états, légendes, fiches).
+- **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
+- **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
+
 ## 28/10/2026 : LIA lit les graphiques de la page Chantier (Hubperso#681, mission MoKarade/.github#575)
 
 - **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Dans le cadre du Chantier (`chantier/cadre.html`), le texte d'un bloc ne portait que le titre et les axes : les chiffres sont dans les infobulles (`data-tip`) de chaque barre ou point.
@@ -22,6 +28,14 @@
 Épingle `@mokarade/lia-ui` v0.47.0 (sha pelé `7f1d7bb`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « l'assistant voit toujours pas les graphes » et « l'animation de scan uniquement sur ce que je lui ai demandé ». v0.47.0 : LIA lit un graphique SVG (titre, axes, légende, valeurs écrites) sans code chez l'hôte ; les courbes du hub gardent leur résumé en mots (`data-lia-donnees`, Hubperso#675), qui prime. Les graphiques `<canvas>` restent illisibles (limite connue). v0.46.0 : le scan des nanobots ne joue que sur ce que Marc a demandé d'analyser. v0.45.1 (menu sur sa propre couche) arrive avec. Rien à brancher. Preuve : déploiement `READY` sur le commit fusionné, puis relevé du PC (question sur un graphique SVG du hub ; aucune visite spontanée ne lance l'essaim).
 
 Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant de tâche (il attend un ID du backlog comme `C28-49:` ou l'exception `HORS-BACKLOG:`) : un re-pin sans ID de backlog porte `HORS-BACKLOG:` en tête de sujet.
+
+## 28/10/2026 : l'état des tâches suit les événements GitHub sur toute la page (Hubperso#697, mission #538)
+
+- **Demande de Marc** (28/10) : « page chantier en cours, full live pas de périmé » ; coordinateur : « fais aussi vivre l'état des tâches par ces événements, la lecture GitHub ne servira qu'à rattraper le trou ».
+- **Quoi** : `avecEvenements(D, evs)` (`chantier/cadre.html`) applique à une COPIE du relevé les événements `issues` (ouverte, titre modifié, étiquette posée ou retirée, fermée, rouverte), `issue_comment` (« Acceptée » devient la preuve de la tâche) et `pull_request` (ouverte, brouillon, prête, fusionnée, fermée) dont l'heure est APRÈS `asof`. Le modèle (`model`) est recalculé sur ce résultat : En cours, Gantt, Accueil et Tâches changent à l'arrivée de l'événement, sans recharger, quel que soit l'onglet. `BASE` garde le relevé tel que reçu ; chaque nouveau relevé reprend la main et les événements d'avant son heure n'y changent rien.
+- **Ce que les événements ne disent pas** (dit, jamais inventé) : le niveau et le parent d'une issue neuve (elle apparaît sans parent, tâche dès que `niveau:tâche` est posé), la PR d'une tâche sans PR au relevé (le lien « Tâche : #n » n'est pas dans l'événement), la file `prochaines` et les attentes (calculées par le PC). Une issue fermée sans « Acceptée » reste « en retard », comme pour le relevé.
+- **Trou avant les webhooks** : les événements n'existent que depuis leur pose (28/10 vers 21 h 14 Z). Entre le dernier relevé du PC et cette heure, l'état reste celui du relevé et garde son âge affiché ; la lecture GitHub de rattrapage (jeton `Issues` et `Pull requests` en lecture, au chargement de la page) est une tâche à part.
+- **Preuve à lire** : après le déploiement, poser une étiquette sur une tâche ouverte : sa brique change de colonne sur `/chantier` en moins de 15 s, sans recharger.
 
 ## 28/10/2026 : En cours lit les événements GitHub en direct (Hubperso#694, mission #538)
 
