@@ -10,11 +10,37 @@
 - **Charge** : le chemin du jeton ne lit ni session ni base (moins de travail que la page). Pour la page, rien ne change : même `auth()` et même relais.
 - **Preuve à lire** : `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/lia/etat` rend 401 ; DriveAI#771 lit puis écrit l'état avec son jeton.
 
+## 28/10/2026 : LIA lit les graphiques de la page Chantier (Hubperso#681, mission MoKarade/.github#575)
+
+- **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Dans le cadre du Chantier (`chantier/cadre.html`), le texte d'un bloc ne portait que le titre et les axes : les chiffres sont dans les infobulles (`data-tip`) de chaque barre ou point.
+- **Ce qui change** : `mesuresDe(bloc, brut)` (pur) donne à LIA la description du graphique (`aria-label`) puis ses mesures, chacune entière ou aucune, doublons retirés, sous 1 200 caractères, avec « … et N autres mesures » pour ce qui ne tient pas. Une donnée, jamais une consigne. Un bloc sans infobulle ni description : le texte du bloc prend le relais comme avant. Les faits d'une barre du Gantt (`faitsDe`) gardent la priorité.
+- **Tests** : `tests/chantierCadreDom.test.ts` (graphique avec description et infobulles, mesure répétée dite une fois, graphique chargé borné avec le compte des omises).
+- **Preuve à lire** : le PC pose « Explique-moi ça » sur une barre d'un graphique du Chantier ; la réponse cite des valeurs lues dans les infobulles.
+
 ## 28/10/2026 : lia-ui v0.47.0, LIA lit les graphiques et ne scanne que sur demande (Hubperso#679, mission MoKarade/.github#575)
 
 Épingle `@mokarade/lia-ui` v0.47.0 (sha pelé `7f1d7bb`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « l'assistant voit toujours pas les graphes » et « l'animation de scan uniquement sur ce que je lui ai demandé ». v0.47.0 : LIA lit un graphique SVG (titre, axes, légende, valeurs écrites) sans code chez l'hôte ; les courbes du hub gardent leur résumé en mots (`data-lia-donnees`, Hubperso#675), qui prime. Les graphiques `<canvas>` restent illisibles (limite connue). v0.46.0 : le scan des nanobots ne joue que sur ce que Marc a demandé d'analyser. v0.45.1 (menu sur sa propre couche) arrive avec. Rien à brancher. Preuve : déploiement `READY` sur le commit fusionné, puis relevé du PC (question sur un graphique SVG du hub ; aucune visite spontanée ne lance l'essaim).
 
 Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant de tâche (il attend un ID du backlog comme `C28-49:` ou l'exception `HORS-BACKLOG:`) : un re-pin sans ID de backlog porte `HORS-BACKLOG:` en tête de sujet.
+
+## 28/10/2026 : En cours lit les événements GitHub en direct (Hubperso#694, mission #538)
+
+- **Demande de Marc** (28/10, 20:57Z) : « page chantier en cours, full live pas de périmé ».
+- **Quoi** : `GET /api/chantier/evenements[?depuis=<ISO>]` (session du propriétaire, comme `/api/chantier/releve`) rend les événements rangés par #684 reçus après `depuis` (sans `depuis`, les 48 dernières heures, 2000 au plus), plus `jusqua` (réception du dernier). `components/ChantierCadre.tsx` les relit toutes les 10 s, onglet visible seulement (rien de neuf : aucune ligne lue), et les poste au cadre (`chantier-evenements`).
+- **Dans le cadre** : ce qui date d'APRÈS le relevé l'emporte. Une PR fusionnée ou fermée n'est plus ouverte (sa tâche passe en « Fusionnée »), un brouillon change de colonne, une PR neuve apparaît, un contrôle ROUGE se voit, le déploiement de production d'un dépôt se suit. Un contrôle ne devient jamais vert sur un seul événement : le vert vient du relevé. `etapes` vide : la sortie du brouillon (`ready_for_review`) et la mise en ligne (déploiement réussi sur le sha de fusion) reviennent des événements.
+- **Périmé** : « en direct » ne s'affiche que si la dernière lecture a moins de 90 s, sinon « relevé du PC » ; la source « Événements GitHub » passe en retard (45 s) puis périmée (90 s) ; sans événement reçu elle dit « le webhook n'est pas encore branché ». Les sources « Tâches et PR » et « PR ouvertes » passent en retard à 12 min et périmées à 20 min.
+- **Neon** : une lecture sans rien de neuf ne rend aucune ligne ; la première rend au plus 48 h.
+- **Preuve à lire** : après la pose du secret et des webhooks par le PC, fusionner une PR : sur `/chantier`, onglet En cours, sa brique passe en « Fusionnée » en moins de 15 s sans recharger.
+
+## 28/10/2026 : le hub reçoit les événements GitHub signés, la page Chantier n'attend plus le relevé du PC (Hubperso#684, mission #538)
+
+- **Demande de Marc** (28/10, 20:49Z) : « rien ne se perd, aucun oubli, aucune erreur inconnue, tout dans les graphs de chantier, tout à jour tout le temps », sans minuteur ni dépendance au PC. Format convenu avec le fil workflow (phase 4).
+- **Quoi** : `POST /api/chantier/evenement` reçoit un webhook GitHub signé (`X-Hub-Signature-256`, HMAC SHA-256 du corps brut, secret DÉDIÉ `CHANTIER_WEBHOOK_SECRET`, comparé par `memeJeton`). `lib/chantierEvenements.ts` (pur) réduit `issues`, `pull_request`, `workflow_run`, `check_suite`, `deployment_status`, `issue_comment` (« Acceptée » seulement), `merge_group`, `dependabot_alert` et `repository_dispatch` à `{v:1, id, type, action, repo, n, sha, cle, at, etat, plus}` : `repo` est la clé COURTE du relevé (`hub`, `drive`…), `cle` vaut `repo#n`, `repo@sha` (7 caractères) ou `repo:nom`, `at` est l'heure de l'événement. `plus` ne garde que titre, lien, branche, étiquette, environnement : jamais le corps d'un commentaire.
+- **Réponses** : secret absent côté hub 503 ; signature fausse 401 (rien n'est lu) ; corps > 2 Mo 413 ; JSON illisible 400 ; événement retenu mais illisible ou dépôt hors projet 422 ; ping, type ou action non retenus 200 `ignore:true` ; retenu 200 `nouveau` (`false` = livraison déjà rangée) ; base en panne 500.
+- **Stockage** : table `chantier_evenements` (migration 0005, additive), clé primaire = identifiant de livraison GitHub, élagage à 14 jours à chaque écriture réelle. Sixième route de serveur à serveur : égalité STRICTE dans `isPublicPath`, `ROUTES_A_JETON` à jour.
+- **À poser par le PC** (jamais la valeur dans un message) : `CHANTIER_WEBHOOK_SECRET` en Production de Hubperso, puis un webhook JSON sur chacun des onze dépôts (`https://hubperso.com/api/chantier/evenement`, même secret) pour les événements ci-dessus.
+- **Hors de cette tâche** : la lecture par la page (route GET derrière la session du propriétaire) et l'affichage des échecs et des états en direct.
+- **Preuve à lire** : un `ping` du webhook GitHub rend 200 `ignore:true` ; un événement `pull_request` réel apparaît dans `chantier_evenements`.
 
 ## 28/10/2026 : LIA lit les courbes du hub (Hubperso#675, mission MoKarade/.github#575)
 
@@ -28,7 +54,7 @@ Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant 
 
 - **Décision de Marc** (carte du 28/10, 18:11Z) : « le hub pousse le chantier à MemoryAI » (le hub POUSSE, MemoryAI ne détient aucun jeton vers une app, ADR 0015).
 - **Ce qui part** : `lib/chantierSorties.ts` (pur) décode le relevé reçu du PC et fait une ligne par app (`chantier_app`) et une par mission ouverte (`chantier_mission`), niveau 1, titre ≤ 120 et résumé ≤ 600 (les bornes de la porte de MemoryAI), états lus dans les étiquettes GitHub, aucun montant ni donnée perso. La `ref` porte une empreinte de l'état : un état changé donne un événement neuf, un état identique ne se double pas. 50 événements au plus, missions les plus chargées d'abord.
-- **Quand** : `POST /api/gantt` lance l'envoi APRÈS sa réponse (`after`), une fois par heure au plus (l'envoi du PC des dix premières minutes, UTC) : aucun minuteur de plus. `lib/chantierSortiesEnvoi.ts` fait l'appel (Bearer, délai 8 s) et ne lève jamais.
+- **Quand** : `POST /api/gantt` lance l'envoi APRÈS sa réponse (`after`), à chaque relevé du PC (toutes les 10 min) : aucun minuteur de plus. Avant le 28/10 soir, seul le relevé des dix premières minutes de l'heure UTC poussait : une variable posée à 21:01Z n'avait donc rien poussé avant 22:00Z. MemoryAI écarte un renvoi identique (clé unique (app, empreinte), et la `ref` porte l'empreinte de l'état). `lib/chantierSortiesEnvoi.ts` fait l'appel (Bearer, délai 8 s) et ne lève jamais. **Et à chaque webhook** (Marc 28/10 : « rien ne dépend du PC ») : `POST /api/chantier/evenement` pousse AUSSI, après sa réponse, l'événement reçu quand la livraison est nouvelle (`nouveau:true` ; un rejeu GitHub ne repart pas). `sortieDepuisWebhook` (pur) en fait un événement `chantier_evenement` : titre/état/branche/environnement/commit court, jamais le lien ni le corps d'un commentaire ; la `ref` est `ev:<identifiant de livraison>`, donc un renvoi n'est pas doublé. Le relevé n'est PAS relu à chaque webhook (transfert Neon) ; celui du PC reste le filet.
 - **À poser par le PC** (jamais la valeur dans un message) : `MEMORYAI_SORTIES_TOKEN` en Production de Hubperso = la valeur de `MEMORYAI_TOKEN_HUBPERSO_ECRITURE` de MemoryAI, APRÈS la fusion de MemoryAI#396 (qui donne la porte à `hubperso` et ouvre `memoryai_sorties` à LIA) ; une variable ne s'applique qu'au build suivant. Sans elle : « non-configure », rien n'est poussé, rien ne casse.
 - **Preuve à lire** : `memoryai_sorties app=hubperso` rend les événements, et une question à LIA sur une mission du chantier en cite un.
 

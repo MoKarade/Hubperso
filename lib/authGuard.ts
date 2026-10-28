@@ -92,6 +92,12 @@ export function isPublicPath(pathname: string): boolean {
   // égalité STRICTE et jamais le matcher du middleware. Elle ne rend qu'un nombre, jamais un contenu.
   if (pathname === "/api/chantier/notes-lia") return true;
 
+  // POST /api/chantier/evenement : GitHub y ENVOIE ses événements (webhook : CI, déploiement, PR, issues) pour la page
+  // Chantier. Sixième route de serveur à serveur, et la seule signée par l'ÉMETTEUR : `X-Hub-Signature-256`, HMAC SHA-256 du
+  // corps avec un secret DÉDIÉ (`CHANTIER_WEBHOOK_SECRET`), comparé à temps constant ; 503 si le secret est absent, 401 si la
+  // signature est fausse (app/api/chantier/evenement/route.ts). Égalité STRICTE, jamais le matcher du middleware.
+  if (pathname === "/api/chantier/evenement") return true;
+
   // GET /api/sante : la sonde de santé de la vigie de l'Atelier (patron JobAI#49 /
   // BatchChef#154). TROISIÈME route qui traverse le garde, et la seule SANS aucune
   // authentification — délibérément : elle ne rend que `{ ok, cause }`, jamais une donnée,

@@ -160,6 +160,8 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "le PC de Marc y envoie le relevé du Gantt (tour.py), authentifié par GANTT_SECRET",
     "api/chantier/gestes/pc/route.ts":
       "le PC de Marc y lit les gestes de l'onglet « À toi » et accuse ceux qu'il a pris (reponses.py), authentifié par GANTT_SECRET",
+    "api/chantier/evenement/route.ts":
+      "GitHub y envoie ses événements (webhook : CI, déploiement, PR, issues), signés en HMAC SHA-256 avec CHANTIER_WEBHOOK_SECRET",
     "api/chantier/notes-lia/route.ts":
       "le PC de Marc y lit le nombre de notes de LIA non lues par le coordinateur (tour du PC), authentifié par GANTT_SECRET",
   };
