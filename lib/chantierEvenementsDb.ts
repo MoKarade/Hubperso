@@ -35,8 +35,8 @@ export async function ranger(e: EvenementChantier): Promise<{ nouveau: boolean }
 }
 
 /** Combien d'événements une lecture rend au plus, et jusqu'où remonte la première lecture d'une page qui s'ouvre. */
-export const LECTURE_MAX = 2000;
-export const PREMIERE_LECTURE_H = 48;
+const LECTURE_MAX = 2000;
+const PREMIERE_LECTURE_H = 48;
 
 export type LigneEvenement = EvenementChantier & { rl: string };
 
