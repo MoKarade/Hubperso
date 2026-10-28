@@ -212,6 +212,19 @@ button.pill{cursor:pointer}
 /* l'état d'une barre au fil du temps (Marc, 28/10) : pleine couleur, et une borne à la fin d'une tâche ou d'une mission fermée */
 .gl2[class*=" et-"]{height:12px;margin-top:-6px;background:var(--sc)}
 .gl2.borne{min-width:9px;border-radius:0 5px 5px 0}
+/* Ressources : une ligne par quota (Marc, 28/10) */
+.qlist{display:grid;max-width:760px}
+.qrow{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr) 4.2em;grid-template-areas:"n b v" "p p p";gap:2px 14px;align-items:center;width:100%;min-height:44px;padding:12px 0 10px;box-shadow:0 -1px 0 var(--line);text-align:left}
+.qrow:first-child{box-shadow:none}
+.qrow .n{grid-area:n;font-weight:650;font-size:15px}
+.qbar{grid-area:b;position:relative;height:10px;border-radius:5px;background:var(--line2)}
+.qbar i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--qc)}
+.qbar u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink);opacity:.75;text-decoration:none}
+.qrow .v{grid-area:v;text-align:right;font:700 18px var(--fd)}
+.qrow .p{grid-area:p;font-size:13px;color:var(--mute)}
+.qv-ok{--qc:var(--done)}.qv-vig{--qc:var(--marc)}.qv-ko{--qc:var(--now)}.qv-nd{--qc:var(--todo)}.qv-act{--qc:var(--a-mem)}
+.qmore{margin-top:14px}.qmore summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--mute);font-size:14px;font-weight:600}
+
 .gfin{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:4px;background:var(--done);box-shadow:0 0 0 2px var(--bg)}
 .gfin::after{content:"";position:absolute;left:4.5px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .gfin.sp{background:var(--fus-t)}
@@ -4451,15 +4464,32 @@ setInterval(() => { if (!document.hidden){ tickGantt(); tickAgo(); } }, 20e3);
     const pc = Math.round(g.j.pct * 100);
     return fig(esc(g.court), `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(g.court)} : ${pc} % utilisé">${s}</svg>`, `<div class="kp2"><b style="color:${col}">${pc} %</b><span>utilisé</span><span class="dash">- - rythme régulier</span></div>`).replace('<figure class="fg">', `<figure class="fg clk" data-det="${esc(g.key)}" tabindex="0" role="button" aria-label="${esc(g.court)} : ouvrir le détail">`);
   }
+  /* Ressources (Marc, 28/10 : « simple, rapide à comprendre ») : une ligne par quota, du plus pressé au plus calme ;
+     la barre montre l'utilisé, le trait où l'on devrait en être, la phrase dit ce qui arrive à ce rythme */
+  const QORD = {ko: 0, vig: 1, nd: 2, ok: 3};
+  function quotaPhrase(g){
+    const j = g.j, v = QV(g);
+    if (g.nm) return 'pas encore mesuré depuis la remise à zéro';
+    if (g.stale) return 'non mesuré depuis ' + dur(g.now - g.stale);
+    const fq = g.key === 'claude' ? freinQ() : null, frein = fq && (fq.palier === 1 || fq.palier === 2) ? ' · frein de quota, palier ' + fq.palier : '';
+    if (g.start == null || g.api) return j.mot + frein;
+    if (v === 'ko') return 'dépassé' + frein;
+    const reset = 'remise à zéro ' + jour(g.end);
+    if (j.proj > g.limit) return 'à ce rythme : ' + nfmt(Math.round(j.proj / g.limit * 100)) + ' % avant la ' + reset + frein;
+    return j.mot + ' · ' + reset + frein;
+  }
   function rings(){
     const qm = (typeof qmodel === 'function' && qmodel()) || [];
     const PC = PRL().filter(p => p.t > Date.now() - PS().ms), nC = PC.filter(p => quiDe(p, null) === 'copilot').length, shC = PC.length ? nC / PC.length : 0;
-    const tileC = `<button class="rg1" data-det="copilot" data-tip="${tipAttr('Copilot\n' + nfmt(nC) + ' PR fusionnées en ' + PS().n + (PC.length ? ' (' + Math.round(shC * 100) + ' % des fusions)' : '') + '\nreconnues à l\'auteur ou à la branche copilot/')}" aria-label="Copilot : ${nC} PR fusionnées en ${esc(PS().n)}"><span class="r">${arc(shC, 'var(--a-mem)')}<b>${nfmt(nC)}<small>PR</small></b></span><span>Copilot ${esc(PS().n)}</span></button>`;
-    return `<div class="rings">${qm.filter(g => g.j && g.used != null).slice(0, 6).map(g => {
-      const v = QV(g), col = v === 'ko' ? 'var(--now)' : v === 'vig' ? 'var(--marc)' : v === 'nd' ? 'var(--todo)' : 'var(--done)', p = g.j.pct;
-      const lab = (g.court || '').replace(/ · .*$/, '') + (/session/i.test(g.court) ? ' 5 h' : /semaine/i.test(g.court) ? ' sem.' : /24 h/.test(g.court) ? ' 24 h' : '');
-      return `<button class="rg1" data-qd="${esc(g.key)}" data-tip="${tipAttr((g.nom || g.court) + '\n' + nfmt(g.used) + (g.limit ? ' sur ' + nfmt(g.limit) : '') + ' ' + (g.unite || '') + ' · ' + Math.round(p * 100) + ' %')}" aria-label="${esc(g.court)} ${Math.round(p * 100)} %"><span class="r">${arc(p, col)}<b>${nfmt(Math.round(p * 100))}<small>%</small></b></span><span>${esc(lab)}</span></button>`;
-    }).join('')}${tileC}</div>`;
+    const rows = qm.filter(g => g.j && g.used != null).sort((x, y) => QORD[QV(x)] - QORD[QV(y)] || y.j.pct - x.j.pct).map(g => {
+      const v = QV(g), p = g.j.pct, ex = g.j.exp != null && g.limit ? Math.min(1, g.j.exp / g.limit) : null, val = g.api && !g.mois ? nfmt(Math.round(g.used)) + ' $' : nfmt(Math.round(p * 100)) + ' %';
+      return `<button class="qrow qv-${v}" data-qd="${esc(g.key)}" aria-label="${esc(g.court)} : ${esc(val)}, ${esc(quotaPhrase(g))}"><span class="n">${esc(g.court)}</span>`
+        + `<span class="qbar" aria-hidden="true"><i style="width:${Math.min(100, p * 100).toFixed(1)}%"></i>${ex != null ? `<u style="left:${(ex * 100).toFixed(1)}%"></u>` : ''}</span>`
+        + `<span class="v">${esc(val)}</span><span class="p">${esc(quotaPhrase(g))}</span></button>`;
+    });
+    // Copilot n'a pas de quota mesuré : sa part des fusions, à part
+    const cop = `<button class="qrow qv-act" data-det="copilot" aria-label="Copilot : ${nC} PR fusionnées en ${esc(PS().n)}"><span class="n">Copilot</span><span class="qbar" aria-hidden="true"><i style="width:${(shC * 100).toFixed(1)}%"></i></span><span class="v">${nfmt(nC)} PR</span><span class="p">${PC.length ? nfmt(Math.round(shC * 100)) + ' % des fusions en ' + esc(PS().n) : 'aucune fusion sur la période'} · pas de quota mesuré</span></button>`;
+    return `<div class="qlist">${rows.join('')}${cop}</div>`;
   }
   function instruments(){
     const P = PRL(), last = P.length ? Math.max(...P.map(p => p.t)) : Date.now(), endT = Math.min(Date.now(), last + 36 * 3600e3);
@@ -4471,7 +4501,7 @@ setInterval(() => { if (!document.hidden){ tickGantt(); tickAgo(); } }, 20e3);
     const W2 = colW(2), W3 = colW(3);
     return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]))
       + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]))
-      + band(BI.res, 'Ressources', rings() + grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2)))))
+      + band(BI.res, 'Ressources', rings() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''))
       + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé ce mois : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(cMoisNom(cur))}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`);
   }
 
