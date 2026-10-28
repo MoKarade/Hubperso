@@ -790,26 +790,35 @@ body.anim .card .cs i{animation:grow .7s ease both}
 .xc{display:flex;flex-direction:column;gap:26px}
 .xc-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
 .xc-live{display:inline-flex;align-items:center;gap:8px;font:700 13px var(--fm);color:var(--mute)}.xc-live i{width:9px;height:9px;border-radius:50%;background:var(--done);animation:xcp 1.6s ease-in-out infinite}
-@keyframes xcp{50%{opacity:.25}}@keyframes xcg{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--ac) 32%,transparent)}}
-#mx .xc-board{display:grid;grid-template-columns:var(--lw,104px) 1.7fr 1fr 1fr 1fr 1.2fr 1fr;gap:6px;align-items:stretch}
-.xc-h{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 8px;font-size:13px;color:var(--mute);text-align:center;min-width:0}
-.xc-h svg{width:22px;height:22px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.xc-h b{font:800 26px/1 var(--fm);color:var(--ink)}.xc-h.late b{color:var(--blk-t)}
+@keyframes xcp{50%{opacity:.25}}@keyframes xcg{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--doing) 34%,transparent)}}
+.xc-sc{overflow-x:auto;padding-bottom:4px}
+.xc-board{display:grid;grid-template-columns:var(--cols);gap:6px;align-items:stretch;min-width:var(--mw,820px)}
+.xc-h{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 8px;font-size:12.5px;line-height:1.2;color:var(--mute);text-align:center;min-width:0}
+.xc-h svg{width:22px;height:22px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.xc-h b{font:800 24px/1 var(--fm);color:var(--ink)}.xc-h.late b{color:var(--blk-t)}
+.xc-h.gh{opacity:.55}.xc-h.gh b{font-size:20px;color:var(--mute)}.xc-h.gh svg{stroke-dasharray:3 2.4}
 .xc-h+.xc-h::before{content:"";position:absolute;left:-6px;top:11px;width:6px;height:6px;border-top:2px solid var(--mute);border-right:2px solid var(--mute);transform:rotate(45deg) translate(-3px,3px);opacity:.6}
 .xc-l{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px;font-weight:600;white-space:nowrap}.xc-l i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--ac)}.xc-l span{overflow:hidden;text-overflow:ellipsis}
-.xc-pl{display:inline-flex;gap:3px;margin-left:auto}.xc-pl u{width:7px;height:7px;border-radius:2px;border:1.5px solid var(--mute);box-sizing:border-box}.xc-pl u.o{background:var(--mute)}.xc-pl u.x{background:var(--blk-t);border-color:var(--blk-t)}
-.xc-c{display:flex;flex-wrap:wrap;gap:6px;align-content:center;min-width:0;min-height:44px;padding:8px 7px;border-radius:10px;background:color-mix(in srgb,var(--line) 26%,transparent)}
-#mx .xc-b{position:relative;flex:none;display:grid;place-items:center;width:24px;height:24px;border:0;padding:0;border-radius:7px;background:var(--ac,var(--mute));color:var(--bg);font:800 10px var(--fm);cursor:pointer;text-decoration:none}
-#mx .xc-b::before{content:"";position:absolute;inset:-9px}
-#mx .xc-b.j{border-radius:50%}#mx .xc-b.c{border-radius:4px;transform:rotate(45deg) scale(.84)}#mx .xc-b.m{border-radius:0;clip-path:polygon(50% 4%,100% 96%,0 96%)}
-#mx .xc-b.big{width:40px;height:40px;border-radius:10px}#mx .xc-b.big.j{border-radius:50%}#mx .xc-b.big.c{transform:rotate(45deg) scale(.8)}
-#mx .xc-b.big .p{position:absolute;left:3px;right:3px;bottom:3px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--bg) 38%,transparent);overflow:hidden}#mx .xc-b.big .p::after{content:"";display:block;height:100%;width:var(--p,0%);background:var(--bg)}
-#mx .xc-b.on{animation:xcg 1.8s ease-in-out infinite}#mx .xc-b.r{outline:2.5px solid var(--blk-t);outline-offset:1.5px}
-#mx .xc-b.k{background:repeating-linear-gradient(135deg,var(--ac) 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 2px var(--ac)}
-#mx .xc-b.h{background:transparent;box-shadow:inset 0 0 0 2px var(--ac);border:0}
+.xc-c{display:flex;flex-wrap:wrap;gap:6px;align-content:center;min-width:0;min-height:46px;padding:8px 7px;border-radius:10px;background:color-mix(in srgb,var(--line) 26%,transparent)}
+.xc-c.gh{background:none;border:1.5px dashed var(--line)}
+#mx .xc-b{position:relative;flex:none;display:grid;place-items:center;width:28px;height:28px;border:0;padding:0;border-radius:8px;background:var(--todo);color:var(--bg);font:800 11px var(--fm);cursor:pointer;text-decoration:none;box-sizing:border-box}
+#mx .xc-b::before{content:"";position:absolute;inset:-8px}
+#mx .xc-b.big{width:40px;height:40px;border-radius:11px;font-size:13px}
+#mx .xc-b .p{position:absolute;left:4px;right:4px;bottom:3px;height:3px;border-radius:2px;background:color-mix(in srgb,var(--bg) 38%,transparent);overflow:hidden}#mx .xc-b .p::after{content:"";display:block;height:100%;width:var(--p,0%);background:var(--bg)}
+#mx .xc-b.s-idee{background:transparent;box-shadow:inset 0 0 0 2px var(--todo);color:var(--todo)}
+#mx .xc-b.s-file{background:var(--todo)}
+#mx .xc-b.s-prise,#mx .xc-b.s-rel{background:var(--doing)}
+#mx .xc-b.s-draft{background:transparent;box-shadow:inset 0 0 0 2.5px var(--doing);color:var(--doing)}
+#mx .xc-b.s-fus{background:var(--fus-t)}
+#mx .xc-b.s-prove{background:transparent;box-shadow:inset 0 0 0 2.5px var(--fus-t);color:var(--fus-t)}
+#mx .xc-b.s-acc{background:var(--done)}
+#mx .xc-b.mw{background:var(--marc);box-shadow:none;color:var(--bg)}
+#mx .xc-b.r{background:var(--blk-t);box-shadow:none;color:var(--bg)}
+#mx .xc-b.h{background:transparent;box-shadow:inset 0 0 0 2px var(--doing);border:0;border-style:dashed}
+#mx .xc-b.on{animation:xcg 1.8s ease-in-out infinite}
 #mx .xc-b:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-.xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:14px;height:14px;cursor:default;background:var(--mute)}#mx .xc-key .xc-b::before{display:none}
+.xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:20px;height:20px;border-radius:6px;font-size:10px;cursor:default}#mx .xc-key .xc-b::before{display:none}
 @media (prefers-reduced-motion:reduce){#mx .xc-b.on,.xc-live i{animation:none}}
-@media (max-width:700px){#mx .xc-board{--lw:30px;gap:4px;grid-template-columns:30px 1.5fr 1fr 1fr 1fr 1.2fr .9fr}.xc-l span,.xc-pl,.xc-h span{display:none}#mx .xc-b{width:19px;height:19px}#mx .xc-b.big{width:32px;height:32px}.xc-c{gap:5px;padding:6px 4px}.xc-h b{font-size:20px}.xc-h svg{width:18px;height:18px}}
+@media (max-width:700px){.xc-board{--mw:700px}}
 .tgh{display:flex;align-items:center;gap:8px;margin:0;color:var(--mute)}
 .tgh .si{width:20px;height:20px}
 .tgh b{font:700 15px var(--fm);color:var(--ink)}
@@ -5196,15 +5205,29 @@ function vGanttFull(){
       default: return l.fs != null ? 'prévue ' + quand(l.fs, true) : l.why || (l.q != null ? 'file : rang ' + l.q : 'pas dans la file du script');
     }
   };
-  // colonnes du process : prévue, en cours, PR prête, fusionnée, preuve, acceptée
-  const XCOL = [['todo', 'Prévue', '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'], ['cours', 'En cours', '<path d="M3 12h4l2.5-6 4 12 2.5-6H21"/>'], ['rel', 'PR prête', SVGI.pr], ['fus', 'Fusionnée', SVGI.fusion], ['prove', 'Preuve', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.4 2.4L15.8 9.6"/>'], ['acc', 'Acceptée, 24 h', SVGI.fait]];
-  const xcCol = l => l.e === 'cours' ? 'cours' : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : 'todo';   // todo comprend les bloquées et celles qui attendent Marc
+  // le process, de l'idée à la tâche acceptée ; `gh` = étape que le relevé ne donne pas encore (grisée, jamais comptée)
+  const XCOL = [
+    ['idee', 'Idée', '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4"/><path d="M12 15.6v.1"/>'],
+    ['file', 'En file', '<path d="M5 7h14M5 12h14M5 17h9"/>'],
+    ['prise', 'Prise', '<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/>'],
+    ['draft', 'PR brouillon', SVGI.pr],
+    ['rel', 'PR prête', SVGI.pr],
+    ['ci', 'Contrôles', '<path d="M12 3l7 3v5.5c0 4.2-2.8 7.6-7 9.5-4.2-1.9-7-5.3-7-9.5V6z"/>', true],
+    ['fus', 'Fusionnée', SVGI.fusion],
+    ['dep', 'En ligne', '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>', true],
+    ['prove', 'Preuve', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.4 2.4L15.8 9.6"/>'],
+    ['acc', 'Acceptée, 24 h', SVGI.fait]
+  ];
+  const xcCol = l => l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'todo' && l.q == null ? 'idee' : 'file';   // bloquée et attend Marc : en file
+  const xcWho = l => { const q = ecQui(l); return q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'; };
   const xcBrick = (l, col, now) => {
-    const big = col === 'cours' || col === 'rel', live = l.last && now - l.last < 15 * 60e3, f = ecForme(l);
-    const cls = ['xc-b', f, big ? 'big' : '', live && big ? 'on' : '', l.e === 'ret' || l.oub ? 'r' : '', l.e === 'blk' ? 'k' : ''].filter(Boolean).join(' ');
+    const big = col === 'prise' || col === 'draft' || col === 'rel', live = l.last && now - l.last < 15 * 60e3;
+    const late = l.e === 'ret' || l.e === 'blk' || !!l.oub, mw = l.e === 'marc';
+    const cls = ['xc-b', 's-' + col, big ? 'big' : '', live && big ? 'on' : '', late ? 'r' : '', mw ? 'mw' : ''].filter(Boolean).join(' ');
     const p = big && l.start && l.est && l.est.d ? Math.min(100, Math.round((now - l.start) / l.est.d * 100)) : 0;
-    const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'todo' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + '\n' + ecSuite(l);
-    return `<button class="${cls}" style="--ac:var(--a-${esc(l.k)})" data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" aria-label="${esc(l.t)}">${big ? esc(l.n) + `<span class="p" style="--p:${p}%"></span>` : ''}</button>`;
+    const lab = l.e === 'blk' ? '!' : col === 'idee' ? '' : col === 'file' && !mw ? (l.q != null ? l.q : '') : xcWho(l);
+    const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'file' && col !== 'idee' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + '\n' + ecSuite(l);
+    return `<button class="${cls}" data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" aria-label="${esc(l.t)}">${esc(lab)}${big ? `<span class="p" style="--p:${p}%"></span>` : ''}</button>`;
   };
   function xcPouls(W){
     const now = Date.now(), N = 24, t0 = Math.floor(now / H) * H - (N - 1) * H, L = 30, T = 14, B = 22, ih = 150 - T - B, iw = W - L - 4, bw = iw / N;
@@ -5232,8 +5255,8 @@ function vGanttFull(){
       const y = T + i * rh + rh / 2;
       g += `<circle cx="10" cy="${y}" r="5" fill="var(--a-${esc(r.a.k)})"/>`;
       r.it.forEach(({l, t, k}) => { const x = X(t), late = t < now, c = `var(--a-${esc(l.k)})`, tip = l.t + '\n' + (k === 'deb' ? 'début prévu ' : 'preuve due ') + quand(t, true);
-        g += k === 'deb' ? `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="${c}" style="cursor:pointer"/>`
-          : `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="none" stroke="${late ? 'var(--blk-t)' : c}" stroke-width="2.6" style="cursor:pointer"/>`; });
+        g += k === 'deb' ? `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="var(--doing)" style="cursor:pointer"/>`
+          : `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="none" stroke="${late ? 'var(--blk-t)' : 'var(--fus-t)'}" stroke-width="2.6" style="cursor:pointer"/>`; });
     });
     const key = `<div class="chips"><span><i style="background:var(--mute)"></i>début prévu</span><span><i style="background:none;border:2.5px solid var(--mute);box-sizing:border-box"></i>preuve due</span></div>`;
     return fig('Les 48 prochaines heures', `<svg class="cch" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Débuts prévus et preuves dues dans les 48 prochaines heures, une ligne par app">${g}</svg>`, key);
@@ -5241,23 +5264,22 @@ function vGanttFull(){
   function vEnCours(){
     const now = Date.now(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
     const hors = (M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : [], horsApp = h => { const a = M.apps.find(x => x.rl === String(h.repo).toLowerCase()); return a ? a.k : 'x'; };
-    const cell = (a, c) => {
-      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l) === c).sort((x, y) => c === 'todo' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
-      const hh2 = c === 'cours' || c === 'rel' ? hors.filter(h => horsApp(h) === a.k && (c === 'cours') === !!h.draft).map(h => `<a class="xc-b h" style="--ac:var(--a-${esc(a.k)})" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.bot ? 'un robot' : 'une personne') + ' · PR sans tâche')}" aria-label="${esc(h.t || '')}"></a>`).join('') : '';
-      return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'todo' : c, now)).join('')}${hh2}</div>`;
+    const cell = (a, c, ghost) => {
+      if (ghost) return `<div class="xc-c gh" data-tip="${tipAttr('Cette étape n’est pas dans le relevé : le PC doit la fournir')}"></div>`;
+      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
+      const hh2 = c === 'draft' || c === 'rel' ? hors.filter(h => horsApp(h) === a.k && (c === 'draft') === !!h.draft).map(h => `<a class="xc-b h" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.bot ? 'un robot' : 'une personne') + ' · PR sans tâche')}" aria-label="${esc(h.t || '')}"></a>`).join('') : '';
+      return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now)).join('')}${hh2}</div>`;
     };
-    const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => horsApp(h) === a.k)).map(a => {
-      const pd = M.PD && M.PD[a.rl], pl = pd && pd.d && pd.d.places, tot = pl ? Math.min(6, nbr(pl.total)) : 0, pris = pl ? nbr(pl.prises) : 0;
-      const sq = tot ? `<span class="xc-pl" aria-label="${pris} places prises sur ${nbr(pl.total)}">${Array.from({length: tot}, (_, i) => `<u class="${i < pris ? (pris > tot ? 'x' : 'o') : ''}"></u>`).join('')}</span>` : '';
-      return `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span>${sq}</div>` + XCOL.map(([c]) => cell(a, c)).join('');
-    }).join('');
+    const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => horsApp(h) === a.k)).map(a =>
+      `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span></div>` + XCOL.map(([c, , , g]) => cell(a, c, g)).join('')).join('');
     const nCol = c => c === 'acc' ? recents.length : ouv.filter(l => xcCol(l) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
-    const head = `<div></div>` + XCOL.map(([c, n, ic]) => `<div class="xc-h${c === 'prove' && nLate ? ' late' : ''}" role="columnheader" aria-label="${esc(n)}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
+    const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
+    const cols = '110px ' + XCOL.map(x => x[3] ? '58px' : 'minmax(0,1fr)').join(' ');
     const W2 = colW(2), top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(['taches'])}</div>`;
-    const sh = (cls, t) => `<span><i class="xc-b ${cls}" style="--ac:var(--mute)"></i>${t}</span>`;
-    const key = `<div class="xc-key">${sh('', 'fil Claude')}${sh('j', 'Jules')}${sh('c', 'Copilot')}${sh('m', 'Marc')}${sh('k', 'bloquée')}${sh('h', 'PR sans tâche')}<span><i class="xc-b r" style="--ac:var(--mute)"></i>en retard</span></div>`;
+    const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
+    const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard ou bloquée', '!')}${k('s-file', 'rang dans la file', '1')}${k('h', 'PR sans tâche')}</div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
-    return `<div class="xc">${top}<div class="xc-board" role="table" aria-label="Le process, de la tâche prévue à la tâche acceptée">${head}${rows}</div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
+    return `<div class="xc">${top}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
   }
   // l'onglet En cours se redessine tout seul : les âges, les pastilles et les barres avancent sans toucher la page
   setInterval(() => { if (M && ST.tab === 'cours' && !document.hidden) render(); }, 30e3);

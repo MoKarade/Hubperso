@@ -603,7 +603,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   });
 
   it("montre le process en pastilles, sans phrases : une colonne par étape, une ligne par app, le pouls et les 48 prochaines heures", () => {
-    for (const t of ["'Prévue'", "'En cours'", "'PR prête'", "'Fusionnée'", "'Preuve'", "'Acceptée, 24 h'"]) expect(DOCUMENT).toContain(t);
+    for (const t of ["'Idée'", "'En file'", "'Prise'", "'PR brouillon'", "'PR prête'", "'Contrôles'", "'Fusionnée'", "'En ligne'", "'Preuve'", "'Acceptée, 24 h'"]) expect(DOCUMENT).toContain(t);
     expect(DOCUMENT).toContain("function xcPouls(W)");
     expect(DOCUMENT).toContain("function xcSuite(W)");
     expect(DOCUMENT).toContain("const ecQui = l =>");
@@ -614,7 +614,8 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   it("reste en direct : la pastille d'âge du relevé, un redessin toutes les 30 s, la forme dit qui travaille", () => {
     expect(DOCUMENT).toContain("fraisHTML(['taches'])");
     expect(DOCUMENT).toContain("ST.tab === 'cours' && !document.hidden) render(); }, 30e3)");
-    expect(DOCUMENT).toContain("q === 'Jules' ? 'j' : q === 'Copilot' ? 'c' : q === 'Marc' ? 'm' : ''");
+    expect(DOCUMENT).toContain("q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'");
+    expect(DOCUMENT).toContain("Cette étape n’est pas dans le relevé : le PC doit la fournir");
     expect(DOCUMENT).toContain("prefers-reduced-motion:reduce){#mx .xc-b.on");
   });
 });
