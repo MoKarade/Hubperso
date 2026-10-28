@@ -228,11 +228,12 @@ button.pill{cursor:pointer}
 .qrow{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr) 4.2em;grid-template-areas:"n b v" "p p p";gap:2px 14px;align-items:center;width:100%;min-height:44px;padding:12px 0 10px;box-shadow:0 -1px 0 var(--line);text-align:left}
 .qrow:first-child{box-shadow:none}
 .qrow .n{grid-area:n;font-weight:650;font-size:15px}
-.qbar{grid-area:b;position:relative;height:10px;border-radius:5px;background:var(--line2)}
-.qbar i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--qc)}
-.qbar u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink);opacity:.75;text-decoration:none}
+.qrow .qbar{grid-area:b;grid-column:2;grid-row:1;position:relative;height:10px;border-radius:5px;background:var(--line2);overflow:visible}
+.qrow .qbar i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--qc)}
+.qrow .qbar u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink);opacity:.75;text-decoration:none}
 .qrow .v{grid-area:v;text-align:right;font:700 18px var(--fd)}
 .qrow .p{grid-area:p;font-size:13px;color:var(--mute)}
+.qrow .qdp{color:var(--ink);font-weight:700}
 .qv-ok{--qc:var(--done)}.qv-vig{--qc:var(--marc)}.qv-ko{--qc:var(--now)}.qv-nd{--qc:var(--todo)}.qv-act{--qc:var(--a-mem)}
 .qmore{margin-top:14px}.qmore summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--mute);font-size:14px;font-weight:600}
 
@@ -1093,6 +1094,8 @@ body.m .wrap{display:none}
 .bricks{display:flex;flex-wrap:wrap;gap:var(--g)}
 #mx .bk{width:var(--b);height:var(--b);border-radius:3px;flex:none;background:var(--c);padding:0;display:block;border:0}
 .bk.acc{--c:var(--done);opacity:.34}
+#mx .bk.q{opacity:.13;box-shadow:none}
+.hper{margin-top:10px;font-size:14px;color:var(--mute)}.hper b{color:var(--ink);font-weight:800}
 .bk.prove{--c:var(--vio)}
 .bk.cours{--c:var(--doing)}
 .bk.marc{--c:var(--marc);box-shadow:0 0 10px color-mix(in srgb,var(--marc) 70%,transparent)}
@@ -1132,6 +1135,7 @@ body.anim .bk.cours{animation:bp 2.4s ease-in-out infinite}
 .ctot{display:flex;align-items:baseline;gap:10px;line-height:.8}
 .ctot b{font-size:clamp(88px,17vw,172px);font-weight:800;letter-spacing:-.045em;font-variation-settings:'wdth' 82}
 .ctot small{font-size:clamp(28px,5vw,52px);color:var(--mute);font-weight:600}
+.cper{margin-top:10px;font-size:14px;color:var(--mute)}.cper b{color:var(--ink);font-weight:800}
 .cwho{display:flex;gap:3px;height:44px;margin:26px 0 0}
 .cwho div{flex:var(--w) 1 0;min-width:6px;background:var(--c);border-radius:6px;display:flex;align-items:flex-end;padding:0 10px 7px;color:#0c0e11;font-weight:700;font-size:13px;overflow:hidden;white-space:nowrap}
 .cwho div span{opacity:.85;font-weight:600}
@@ -1193,7 +1197,7 @@ body.m{--mute:#a9b0bb}
 .qa h3{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}.qa h3 i{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none}
 .qm{display:flex;align-items:center;gap:7px;min-width:0}.qm svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--mute);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.qm b{font-size:22px;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
 .qsp{grid-column:1/-1;width:100%;height:34px;margin-top:4px}
-.qbar{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}.qbar span{display:block;height:100%;border-radius:3px;background:var(--c)}
+.qvb{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}.qvb span{display:block;height:100%;border-radius:3px;background:var(--c)}
 .kp2{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:8px}
 .kp2 b{font-size:28px;font-weight:800;letter-spacing:-.03em}.kp2 span{font-size:14px;color:var(--mute);margin-right:14px}.kp2 .dash{margin-left:auto;margin-right:0}
 .qui{display:flex;align-items:center;gap:28px;flex-wrap:wrap}.qui svg{width:150px;height:150px;flex:none}.qui .chips{flex-direction:column;margin:0;gap:10px;font-size:16px}
@@ -4372,22 +4376,27 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   /* ---------- Accueil : le mur ---------- */
   const BK = {acc: 'acc', fus: 'prove', prog: 'prove', ret: 'prove', rel: 'cours', cours: 'cours', marc: 'marc', blk: 'blk2', todo: 'todo'};
   function vMur(){
-    const c = cntE(M.leaves), toi = nAToi(), total = ORDRE.reduce((s, k) => s + c[k], 0) || 1, pct = Math.round(c.acc / total * 100);
+    // la période choisie (Marc, 28/10) : les chiffres, la barre et le mur parlent des tâches ACTIVES dans la période (créées, commencées, modifiées ou
+    // acceptées depuis son début) ; les autres briques restent à leur place, effacées. « À toi » est un état d'à présent : il ne dépend pas de la période.
+    const t0P = Date.now() - PS().ms, inP = t => t != null && isFinite(t) && t >= t0P, act = l => inP(l.u) || inP(l.x) || inP(l.c) || inP(l.start);
+    const LA = M.leaves.filter(act), c = cntE(LA), cAll = cntE(M.leaves), nAll = ORDRE.reduce((s, k) => s + cAll[k], 0) || 1, pctAll = Math.round(cAll.acc / nAll * 100);
+    const toi = nAToi(), total = ORDRE.reduce((s, k) => s + c[k], 0) || 1, pct = Math.round(c.acc / total * 100);
     const G = [
       ['acc', c.acc, 'var(--done)', 'acceptées', 0], ['prove', c.fus + c.prog + c.ret, 'var(--vio)', 'à prouver', 0], ['cours', c.cours + c.rel, 'var(--doing)', 'en cours', 0],
       ['marc', c.marc, 'var(--marc)', 'pour toi', 0], ['blk', c.blk, 'var(--now)', 'bloquées', 0], ['todo', c.todo, 'var(--todo)', 'à faire', 1]
     ].filter(g => g[1]);
-    const hero = `<section class="hero2"><div class="pct" role="img" aria-label="${pct} % des tâches acceptées"><b ${cu(pct)}>${nfmt(pct)}</b><small>%</small></div>`
+    const hero = `<section class="hero2"><div class="pct" role="img" aria-label="${pct} % des ${LA.length} tâches actives en ${esc(PS().n)} sont acceptées"><b ${cu(pct)}>${nfmt(pct)}</b><small>%</small></div>`
       + `<div class="hside"><button class="toi${toi ? '' : ' zero'}" data-tab="toi" aria-label="${toi} à toi">${I.toi}<span>${toi ? nfmt(toi) : '0'}</span></button>`
-      + `<div class="leg">${G.map(g => `<div><i class="sh ${g[0] === 'blk' ? 'blk2' : g[0]}"></i><b>${nfmt(g[1])}</b>${g[3]}</div>`).join('')}</div></div></section>`
+      + `<div class="leg">${G.map(g => `<div><i class="sh ${g[0] === 'blk' ? 'blk2' : g[0]}"></i><b>${nfmt(g[1])}</b>${g[3]}</div>`).join('')}</div>`
+      + `<div class="hper" data-tip="${tipAttr('Tâches créées, commencées, modifiées ou acceptées depuis ' + PS().n + '. Sur toutes les tâches : ' + pctAll + ' % acceptées sur ' + nAll)}"><b>${nfmt(LA.length)}</b> actives en ${esc(PS().n)} · ${pctAll} % de toutes</div></div></section>`
       + `<div class="rib" role="img" aria-label="Avancement des ${total} tâches">${G.map(g => `<span class="${g[4] ? 'o' : ''}" style="flex:${g[1]};--c:${g[2]}" data-tip="${tipAttr(g[3] + ' : ' + g[1] + ' (' + Math.round(g[1] / total * 100) + ' %)')}"></span>`).join('')}</div>`;
     const W = Math.min(innerWidth, 1240) - 32, b = mobile() ? 10 : 12, g = 3, p = b + g;
     const wall = M.apps.map(a => {
       const ls = a.ls.slice().sort((x, y) => ORDRE.indexOf(x.e) - ORDRE.indexOf(y.e));
       const n = ls.length, cols = Math.max(5, Math.min(Math.floor(W / p), Math.round(Math.sqrt(n * 3.2))));
-      const done = ls.filter(l => l.e === 'acc').length;
-      return `<div class="blk" style="--ac:var(--a-${esc(a.k)})"><button data-open="${esc(a.ref)}" data-tip="${tipAttr(a.app + '\n' + done + ' acceptées sur ' + n)}" aria-label="${esc(a.app)} : ${done} sur ${n} acceptées"><i></i><b>${esc(a.app)}</b><em>${done}/${n}</em></button>`
-        + `<div class="bricks" style="--b:${b}px;--g:${g}px;width:${cols * p - g}px">${ls.map(l => `<button class="bk ${BK[l.e] || 'todo'}${l.oubli ? ' late' : ''}" data-open="${esc(l.ref)}" aria-label="${esc(l.t)} : ${esc(STE[l.e] || l.e)}" data-tip="${tipAttr(l.t + '\n' + (STE[l.e] || l.e))}"></button>`).join('')}</div></div>`;
+      const la = ls.filter(act), done = la.filter(l => l.e === 'acc').length;
+      return `<div class="blk" style="--ac:var(--a-${esc(a.k)})"><button data-open="${esc(a.ref)}" data-tip="${tipAttr(a.app + '\n' + done + ' acceptées sur ' + la.length + ' actives en ' + PS().n + ' (' + n + ' au total)')}" aria-label="${esc(a.app)} : ${done} sur ${la.length} actives acceptées"><i></i><b>${esc(a.app)}</b><em>${done}/${la.length}</em></button>`
+        + `<div class="bricks" style="--b:${b}px;--g:${g}px;width:${cols * p - g}px">${ls.map(l => `<button class="bk ${BK[l.e] || 'todo'}${l.oubli ? ' late' : ''}${act(l) ? '' : ' q'}" data-open="${esc(l.ref)}" aria-label="${esc(l.t)} : ${esc(STE[l.e] || l.e)}" data-tip="${tipAttr(l.t + '\n' + (STE[l.e] || l.e) + (act(l) ? '' : '\nrien depuis ' + PS().n))}"></button>`).join('')}</div></div>`;
     }).join('');
     return perBar('top') + hero + `<section class="wall">${wall}</section>` + sf('Graphiques', instruments);
   }
@@ -4406,7 +4415,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   const sf = (nom, f) => { try { return f(); } catch (e) { console.error(nom, e); return `<p class="soon" role="status">${esc(nom)} : indisponible (${esc(e.message)})</p>`; } };
   const tipAttr = t => esc(t).replace(/\n/g, '&#10;');
   const hit = (x, y, w, h, t) => `<rect class="hit" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1, w).toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" data-tip="${tipAttr(t)}"></rect>`;
-  const moisTip = (C, mk) => { const t = cSomme(C.paid[mk]) + cSomme(C.prevu[mk]); return cMoisNom(mk) + ' : ' + nfmt(Math.round(t)) + ' $' + CPOSTES.map(([k, nm]) => { const a = (C.paid[mk] || {})[k] || 0, b = (C.prevu[mk] || {})[k] || 0; return a + b > 0 ? '\n' + nm + ' : ' + nfmt(Math.round(a + b)) + ' $' + (b ? ' (' + (a ? 'dont ' + nfmt(Math.round(b)) + ' prévu' : 'prévu') + ')' : '') : ''; }).join(''); };
+  const moisTip = (C, mk) => { const t = cSomme(C.paid[mk]) + cSomme(C.prevu[mk]); return kNom(mk) + ' : ' + nfmt(Math.round(t)) + ' $' + CPOSTES.map(([k, nm]) => { const a = (C.paid[mk] || {})[k] || 0, b = (C.prevu[mk] || {})[k] || 0; return a + b > 0 ? '\n' + nm + ' : ' + nfmt(Math.round(a + b)) + ' $' + (b ? ' (' + (a ? 'dont ' + nfmt(Math.round(b)) + ' prévu' : 'prévu') + ')' : '') : ''; }).join(''); };
   const nice = v => { const p = Math.pow(10, Math.floor(Math.log10(Math.max(v, 1)))), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; };
   const appCol = k => `var(--a-${k}, var(--mute))`;
   const PRL = () => (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).map(x => ({...x, t: Date.parse(x.m)})).filter(x => isFinite(x.t));
@@ -4430,7 +4439,21 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   const evBins = (endT, evs, tf, kf) => { const bins = binsOf(endT), idx = Object.fromEntries(bins.map((b, i) => [b.k, i])); evs.forEach(e => { const t = typeof tf(e) === 'number' ? tf(e) : Date.parse(tf(e)), i = idx[binKey(t)]; if (i != null){ const k = kf(e), w = e.w == null ? 1 : e.w; bins[i].v[k] = (bins[i].v[k] || 0) + w; } }); return bins; };
   const appKeyOf = name => { const a = M.apps.find(x => x.rl === String(name).toLowerCase()); return a ? a.k : 'autre'; };
   const appKeys = () => M.apps.map(a => ({k: a.k, name: a.app, col: appCol(a.k)}));
-  const costMonths = C => { if (PER === '3m') return C.mois; const i = C.mois.indexOf(C.cur), k = PER === '1m' ? 4 : 3, f = PER === '1m' ? 2 : 1; return C.mois.slice(Math.max(0, i - k + 1), i + 1 + f); };
+  /* coûts de la période : le registre est daté au jour, la somme suit donc la période au jour près */
+  const coutsPer = C => {
+    const t0d = dayKey(Date.now() - PS().ms), Lp = CLIGNES.filter(l => l[0] >= t0d && l[0] <= C.auj);
+    const parPoste = CPOSTES.map(([k]) => [k, Lp.filter(l => l[1] === k).reduce((a, l) => a + cc(l[3], l[4]), 0)]);
+    return {t0d, Lp, parPoste, total: parPoste.reduce((a, p) => a + p[1], 0)};
+  };
+  /* la série des barres : un jour par barre jusqu'à 1 mois, un mois par barre au-delà (le registre est daté au jour) */
+  const kNom = k => k.length > 7 ? fd(k) : cMoisNom(k), kCourt = k => k.length > 7 ? k.slice(8) : cMoisCourt(k);
+  const coutsSerie = C => {
+    if (PER === '3m') { const m0 = dayKey(Date.now() - PS().ms).slice(0, 7); return {...C, mois: C.mois.filter(mk => mk >= m0)}; }
+    const CP = coutsPer(C), keys = [], paid = {};
+    for (let d = new Date(CP.t0d + 'T12:00:00Z'); ; d.setUTCDate(d.getUTCDate() + 1)) { const k = d.toISOString().slice(0, 10); if (k > C.auj) break; keys.push(k); }
+    CP.Lp.forEach(l => { const o = paid[l[0]] = paid[l[0]] || {}; o[l[1]] = (o[l[1]] || 0) + cc(l[3], l[4]); });
+    return {...C, mois: keys, paid, prevu: {}, cur: C.auj};
+  };
 
   /* barres empilées, une case par heure ou par jour : sert aux fusions, à Vercel, à Jules, aux minutes Actions… */
   function chStack(W, o){
@@ -4482,13 +4505,13 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   }
   /* quand le robot travaille : heure x jour de semaine */
   function chChaleur(W, P, endT, titre){
-    const L = 30, T = 4, iw = W - L - 4, cs = Math.min(26, iw / 24), H = T + 7 * cs + 24, DJ = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'], WD = {Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6};
-    const m = Array.from({length: 7}, () => Array(24).fill(0)); let mx = 1;
-    const win = Math.max(PS().ms, 7 * DAY); P.filter(p => p.t > endT - win && p.t <= endT).forEach(p => { const o = tzp(p.t), d = WD[o.weekday], h = +o.hour; if (d != null) { m[d][h]++; mx = Math.max(mx, m[d][h]); } });
+    const L = 30, T = 4, iw = W - L - 4, cs = Math.min(26, iw / 24), R = PS().ms < 7 * DAY ? 1 : 7, H = T + R * cs + 24, DJ = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'], WD = {Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6};
+    const m = Array.from({length: R}, () => Array(24).fill(0)); let mx = 1;
+    const win = PS().ms; P.filter(p => p.t > endT - win && p.t <= endT).forEach(p => { const o = tzp(p.t), d = R === 1 ? 0 : WD[o.weekday], h = +o.hour; if (d != null) { m[d][h]++; mx = Math.max(mx, m[d][h]); } });
     let s = '';
-    m.forEach((row, d) => { s += `<text x="${L - 6}" y="${(T + d * cs + cs / 2 + 4).toFixed(1)}" text-anchor="end">${DJ[d]}</text>`; row.forEach((v, h) => { s += `<rect x="${(L + h * cs + 1).toFixed(1)}" y="${(T + d * cs + 1).toFixed(1)}" width="${(cs - 2).toFixed(1)}" height="${(cs - 2).toFixed(1)}" rx="3" fill="${v ? 'var(--doing)' : 'rgba(255,255,255,.06)'}" fill-opacity="${v ? (.2 + .8 * Math.sqrt(v / mx)).toFixed(2) : 1}"><title>${DJ[d]} ${h} h : ${v}</title></rect>`; }); });
+    m.forEach((row, d) => { s += `<text x="${L - 6}" y="${(T + d * cs + cs / 2 + 4).toFixed(1)}" text-anchor="end">${R === 1 ? '' : DJ[d]}</text>`; row.forEach((v, h) => { s += `<rect x="${(L + h * cs + 1).toFixed(1)}" y="${(T + d * cs + 1).toFixed(1)}" width="${(cs - 2).toFixed(1)}" height="${(cs - 2).toFixed(1)}" rx="3" fill="${v ? 'var(--doing)' : 'rgba(255,255,255,.06)'}" fill-opacity="${v ? (.2 + .8 * Math.sqrt(v / mx)).toFixed(2) : 1}"><title>${R === 1 ? '' : DJ[d] + ' '}${h} h : ${v}</title></rect>`; }); });
     [0, 6, 12, 18, 23].forEach(h => { s += `<text x="${(L + h * cs + cs / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${h} h</text>`; });
-    return fig(titre || 'Quand ça fusionne', `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Selon le jour de la semaine et l'heure, ${esc(PS().ms < 7 * DAY ? '7 j' : PS().n)}">${s}</svg>`, PS().ms < 7 * DAY ? `<div class="kp2"><span class="dash">au moins 7 j pour que la carte soit lisible</span></div>` : '');
+    return fig(titre || 'Quand ça fusionne', `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${R === 1 ? 'Selon l\'heure' : 'Selon le jour de la semaine et l\'heure'}, ${esc(PS().n)}">${s}</svg>`);
   }
   /* durée des tâches finies */
   function chDuree(W){
@@ -4531,6 +4554,18 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   /* Ressources (Marc, 28/10 : « simple, rapide à comprendre ») : une ligne par quota, du plus pressé au plus calme ;
      la barre montre l'utilisé, le trait où l'on devrait en être, la phrase dit ce qui arrive à ce rythme */
   const QORD = {ko: 0, vig: 1, nd: 2, ok: 3};
+  /* ce que le quota a bougé sur la période choisie ; sinon on dit la fenêtre qu'il mesure, jamais un chiffre caché */
+  function quotaPer(g){
+    const ms = PS().ms, w = g.start != null && g.end != null ? g.end - g.start : null, unit = g.api && !g.mois ? ' $' : ' %';
+    if (g.nm || g.stale || g.used == null) return '';
+    const fmt = d => '+' + nfmt(Math.round(unit === ' $' ? d : d / g.limit * 100)) + unit + ' en ' + PS().n;
+    if (g.start == null || !g.hist) return w != null && w <= ms ? 'mesuré sur sa fenêtre de ' + dur(w) : 'valeur du moment, pas d\'historique';
+    const t0 = g.now - ms;
+    if (t0 <= g.start) return 'depuis la remise à zéro il y a ' + dur(g.now - g.start);
+    const before = [[g.start, 0], ...g.hist].filter(h => h[0] <= t0);
+    const ref = before[before.length - 1];
+    return ref && g.hist.length ? fmt(Math.max(0, g.used - ref[1])) : 'valeur du moment, pas d\'historique';
+  }
   function quotaPhrase(g){
     const j = g.j, v = QV(g);
     if (g.nm) return 'pas encore mesuré depuis la remise à zéro';
@@ -4549,7 +4584,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
       const v = QV(g), p = g.j.pct, ex = g.j.exp != null && g.limit ? Math.min(1, g.j.exp / g.limit) : null, val = g.api && !g.mois ? nfmt(Math.round(g.used)) + ' $' : nfmt(Math.round(p * 100)) + ' %';
       return `<button class="qrow qv-${v}" data-qd="${esc(g.key)}" aria-label="${esc(g.court)} : ${esc(val)}, ${esc(quotaPhrase(g))}"><span class="n">${esc(g.court)}</span>`
         + `<span class="qbar" aria-hidden="true"><i style="width:${Math.min(100, p * 100).toFixed(1)}%"></i>${ex != null ? `<u style="left:${(ex * 100).toFixed(1)}%"></u>` : ''}</span>`
-        + `<span class="v">${esc(val)}</span><span class="p">${esc(quotaPhrase(g))}</span></button>`;
+        + `<span class="v">${esc(val)}</span><span class="p">${(qp => qp ? `<b class="qdp">${esc(qp)}</b> · ` : '')(quotaPer(g))}${esc(quotaPhrase(g))}</span></button>`;
     });
     // Copilot n'a pas de quota mesuré : sa part des fusions, à part
     const cop = `<button class="qrow qv-act" data-det="copilot" aria-label="Copilot : ${nC} PR fusionnées en ${esc(PS().n)}"><span class="n">Copilot</span><span class="qbar" aria-hidden="true"><i style="width:${(shC * 100).toFixed(1)}%"></i></span><span class="v">${nfmt(nC)} PR</span><span class="p">${PC.length ? nfmt(Math.round(shC * 100)) + ' % des fusions en ' + esc(PS().n) : 'aucune fusion sur la période'} · pas de quota mesuré</span></button>`;
@@ -4558,15 +4593,15 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   function instruments(){
     const P = PRL(), last = P.length ? Math.max(...P.map(p => p.t)) : Date.now(), endT = Math.min(Date.now(), last + 36 * 3600e3);
     const qm = (typeof qmodel === 'function' && qmodel()) || [], qs = ['claude', 'actions'].map(k => qm.find(g => g.key === k)).filter(g => g && g.j && g.used != null);
-    const C = cModel(), cur = C.cur, paidCur = cSomme(C.paid[cur]);
-    const ms = costMonths(C), mxv = Math.max(...ms.map(mk => cSomme(C.paid[mk]) + cSomme(C.prevu[mk])), 1);
+    const C = coutsSerie(cModel()), cur = C.cur, paidCur = Math.round(coutsPer(C).total);
+    const ms = C.mois, mxv = Math.max(...ms.map(mk => cSomme(C.paid[mk]) + cSomme(C.prevu[mk])), 1);
     const cols = ms.map(mk => `<div class="${mk === cur ? 'cur' : ''}" tabindex="0" data-tip="${tipAttr(moisTip(C, mk))}" style="height:${((cSomme(C.paid[mk]) + cSomme(C.prevu[mk])) / mxv * 100).toFixed(1)}%">${CPOSTES.map(([k, , col]) => { const a = (C.paid[mk] || {})[k] || 0, b = (C.prevu[mk] || {})[k] || 0; return (a ? `<i style="flex:${a};--c:${col}"></i>` : '') + (b ? `<i class="pv" style="flex:${b};--c:${col}"></i>` : ''); }).join('')}</div>`).join('');
-    const labs = ms.map(mk => `<span class="${mk === cur ? 'cur' : ''}">${esc(cMoisCourt(mk)).slice(0, 3)}</span>`).join('');
+    const labs = ms.map(mk => `<span class="${mk === cur ? 'cur' : ''}">${esc(kCourt(mk)).slice(0, 3)}</span>`).join('');
     const W2 = colW(2), W3 = colW(3);
     return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]))
       + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]))
       + band(BI.res, 'Ressources', rings() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''))
-      + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé ce mois : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(cMoisNom(cur))}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`);
+      + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`);
   }
 
 
@@ -4891,14 +4926,14 @@ function vGanttFull(){
   function vCoutsM(){ return vAppsHub() + vCoutsRegistre(); }
   function vCoutsRegistre(){
     if (!CLIGNES.length && !VERCEL_RECUS.length && !CAVENIR.length) return `<p class="empty" role="status">Le registre des dépenses n’est pas encore transmis au hub : rien n’est inventé en attendant.</p>`;
-    const C = cModel(), tot = C.total;
-    const pp = C.parPoste.map(([k, v]) => [k, v, CPOSTES.find(p => p[0] === k)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+    const C0 = cModel(), C = coutsSerie(C0), CP = coutsPer(C0), tot = CP.total, nPR = PRL().filter(p => p.t > Date.now() - PS().ms).length;
+    const pp = CP.parPoste.map(([k, v]) => [k, v, CPOSTES.find(p => p[0] === k)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
     const SH = {abo: 'Abonnement', sur: 'Recharges', api: 'API', ver: 'Vercel', dev: 'Code', aut: 'Divers'};
-    const hero = `<section class="chero"><div class="ctot"><b ${cu(Math.round(tot))}>${nfmt(Math.round(tot))}</b><small>$ depuis ${esc(cMoisNom(C.first).toLowerCase())}</small></div>`
-      + `<div class="cwho" role="img" aria-label="Répartition par poste">${pp.map(([k, v, p]) => `<div style="--w:${v};--c:${p[2]}" title="${esc(p[1] + ' : ' + cmoney(v))}">${v / tot > (mobile() ? .3 : .11) ? esc(SH[k]) + '&nbsp;<span>' + nfmt(Math.round(v)) + '</span>' : ''}</div>`).join('')}</div>`
+    const hero = `<section class="chero"><div class="ctot"><b ${cu(Math.round(tot))}>${nfmt(Math.round(tot))}</b><small>$ payés en ${esc(PS().n)}</small></div><p class="cper">${tot > 0 && nPR ? `<b>≈ ${nfmt(tot / nPR, 2)} $</b> par PR fusionnée (${nfmt(nPR)} PR) · ` : ''}total depuis ${esc(cMoisNom(C0.first).toLowerCase())} : <b>${nfmt(Math.round(C0.total))} $</b></p>`
+      + `<div class="cwho" role="img" aria-label="Répartition par poste">${pp.map(([k, v, p]) => `<div style="--w:${v};--c:${p[2]}" title="${esc(p[1] + ' : ' + cmoney(v))}">${v / (tot || 1) > (mobile() ? .3 : .11) ? esc(SH[k]) + '&nbsp;<span>' + nfmt(Math.round(v)) + '</span>' : ''}</div>`).join('')}</div>`
       + `<div class="clist">${pp.map(([k, v, p]) => `<div style="--c:${p[2]}"><i></i>${esc(p[1])}<b>${nfmt(Math.round(v))} $</b></div>`).join('')}</div></section>`;
     // colonnes : un mois = une pile, le prévu en hachures
-    const ms = costMonths(C), msAll = C.mois, W = Math.max(320, Math.min(innerWidth, 1240) - 32), H2 = mobile() ? 230 : 300, L = 0, T = 30, B = 26, ih = H2 - T - B, cw = W / ms.length, bw = Math.min(70, cw * .68);
+    const ms = C.mois, W = Math.max(320, Math.min(innerWidth, 1240) - 32), H2 = mobile() ? 230 : 300, L = 0, T = 30, B = 26, ih = H2 - T - B, cw = W / ms.length, bw = Math.min(70, cw * .68);
     const mxv = Math.max(...ms.map(mk => cSomme(C.paid[mk]) + cSomme(C.prevu[mk])), 1), sc = ih / (Math.ceil(mxv / 100) * 100);
     let s = `<svg class="cch" viewBox="0 0 ${W} ${H2}" role="img" aria-label="Coût par mois et par poste"><defs>${CPOSTES.map(([k, , col]) => `<pattern id="h${k}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${col}" opacity=".18"/><rect width="3" height="7" fill="${col}" opacity=".9"/></pattern>`).join('')}</defs>`;
     for (let v = 0; v <= Math.ceil(mxv / 100) * 100; v += 100) { const y = T + ih - v * sc; s += `<line class="g" x1="0" x2="${W}" y1="${y}" y2="${y}"/>`; }
@@ -4911,8 +4946,8 @@ function vGanttFull(){
         });
       });
       const t = cSomme(C.paid[mk]) + cSomme(C.prevu[mk]);
-      s += `<text class="v${cur ? ' cu' : ''}" x="${(x + bw / 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" text-anchor="middle">${nfmt(Math.round(t))}</text>`;
-      s += `<text x="${(x + bw / 2).toFixed(1)}" y="${H2 - 6}" text-anchor="middle"${cur ? ' style="fill:var(--ink);font-weight:800"' : ''}>${esc(cMoisCourt(mk)).slice(0, 4)}</text>`;
+      if (t > 0) s += `<text class="v${cur ? ' cu' : ''}" x="${(x + bw / 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" text-anchor="middle">${nfmt(Math.round(t))}</text>`;
+      s += `<text x="${(x + bw / 2).toFixed(1)}" y="${H2 - 6}" text-anchor="middle"${cur ? ' style="fill:var(--ink);font-weight:800"' : ''}>${ms.length > 14 && i % 5 && i !== ms.length - 1 ? '' : esc(kCourt(mk)).slice(0, 4)}</text>`;
       s += hit(i * cw, T - 14, cw, ih + B + 10, moisTip(C, mk));
     });
     s += `</svg>`;
@@ -4926,31 +4961,31 @@ function vGanttFull(){
     // un petit graphique par poste : la forme de chaque dépense, son propre repère
     const mini = (k, nm, col) => {
       const W3 = colW(3), H3 = 150, T3 = 34, B3 = 22, ih3 = H3 - T3 - B3, cw3 = W3 / ms.length, bw3 = Math.max(6, cw3 * .66);
-      const vals = ms.map(mk => [(C.paid[mk] || {})[k] || 0, (C.prevu[mk] || {})[k] || 0]), mx3 = Math.max(...vals.map(v => v[0] + v[1]), 1), tt = C.parPoste.find(p => p[0] === k)[1];
+      const vals = ms.map(mk => [(C.paid[mk] || {})[k] || 0, (C.prevu[mk] || {})[k] || 0]), mx3 = Math.max(...vals.map(v => v[0] + v[1]), 1), tt = CP.parPoste.find(p => p[0] === k)[1];
       let q = '';
       vals.forEach(([a, b], i) => { const x = i * cw3 + (cw3 - bw3) / 2, ha = a / mx3 * ih3, hb = b / mx3 * ih3, y0 = T3 + ih3;
-        if (a) q += `<rect x="${x.toFixed(1)}" y="${(y0 - ha).toFixed(1)}" width="${bw3.toFixed(1)}" height="${Math.max(2, ha).toFixed(1)}" rx="3" fill="${col}"><title>${esc(cMoisNom(ms[i]) + ' : ' + cmoney(a, 2))}</title></rect>`;
+        if (a) q += `<rect x="${x.toFixed(1)}" y="${(y0 - ha).toFixed(1)}" width="${bw3.toFixed(1)}" height="${Math.max(2, ha).toFixed(1)}" rx="3" fill="${col}"><title>${esc(kNom(ms[i]) + ' : ' + cmoney(a, 2))}</title></rect>`;
         if (b) q += `<rect x="${x.toFixed(1)}" y="${(y0 - ha - hb).toFixed(1)}" width="${bw3.toFixed(1)}" height="${Math.max(2, hb).toFixed(1)}" rx="3" fill="url(#h${k})"/>`;
         if (a + b > 0 && (ms[i] === C.cur || a + b === mx3)) q += `<text class="v" x="${(x + bw3 / 2).toFixed(1)}" y="${(y0 - ha - hb - 6).toFixed(1)}" text-anchor="middle">${nfmt(Math.round(a + b))}</text>`;
-        q += `<text x="${(x + bw3 / 2).toFixed(1)}" y="${H3 - 5}" text-anchor="middle"${ms[i] === C.cur ? ' style="fill:var(--ink);font-weight:800"' : ''}>${esc(cMoisCourt(ms[i])).slice(0, 1).toUpperCase()}</text>`; });
+        q += `<text x="${(x + bw3 / 2).toFixed(1)}" y="${H3 - 5}" text-anchor="middle"${ms[i] === C.cur ? ' style="fill:var(--ink);font-weight:800"' : ''}>${ms.length > 14 ? '' : esc(kCourt(ms[i])).slice(0, ms[i].length > 7 ? 2 : 1).toUpperCase()}</text>`; });
       return `<figure class="fg"><figcaption><i class="sq" style="background:${col}"></i>${esc(SH[k])}<b>${nfmt(Math.round(tt))} $</b></figcaption><svg class="cch" viewBox="0 0 ${W3} ${H3}" role="img" aria-label="${esc(nm)} par mois, total ${nfmt(Math.round(tt))} $">${q}</svg></figure>`;
     };
     const multiples = sf('Postes', () => `<section class="csec"><div class="g3">${pp.map(([k, v, p]) => mini(k, p[1], p[2])).join('')}</div></section>`);
-    // le cumul : ce qui est payé, puis ce qui est déjà prévu
+    // le cumul : ce qui est payé depuis le début de la période, jour après jour (le registre est daté au jour)
     const cumul = sf('cumul', () => {
-      const ms = msAll;
-      const W = WCH(), H = mobile() ? 220 : 260, L = 44, R = 70, T = 16, B = 28, iw = W - L - R, ih = H - T - B; let c = 0; const pts = ms.map((mk, i) => { c += cSomme(C.paid[mk]); return [i, c, c + cSomme(C.prevu[mk])]; });
-      let c2 = 0; const fut = ms.map((mk, i) => { c2 += cSomme(C.paid[mk]) + cSomme(C.prevu[mk]); return [i, c2]; });
-      const top = nice(fut[fut.length - 1][1] * 1.02), X = i => L + i / (ms.length - 1) * iw, Y = v => T + ih - v / top * ih, ic = ms.indexOf(C.cur);
+      const W = WCH(), H = mobile() ? 220 : 260, L = 44, R = 70, T = 16, B = 28, iw = W - L - R, ih = H - T - B, days = [];
+      for (let d = new Date(CP.t0d + 'T12:00:00Z'); ; d.setUTCDate(d.getUTCDate() + 1)) { const k = d.toISOString().slice(0, 10); if (k > C.auj) break; days.push(k); }
+      const perDay = {}; CP.Lp.forEach(l => { perDay[l[0]] = (perDay[l[0]] || 0) + cc(l[3], l[4]); });
+      let c = 0; const pts = days.map((d, i) => { c += perDay[d] || 0; return [i, c, d]; });
+      if (pts.length < 2) return '';
+      const top = nice(Math.max(c, 1) * 1.05), X = i => L + i / (days.length - 1) * iw, Y = v => T + ih - v / top * ih;
       let s = axisY(W, L, T, ih, [0, top / 2, top], Y, v => nfmt(v));
-      const pa = pts.slice(0, ic + 1).map(p => [X(p[0]), Y(p[1])]), pf = fut.slice(ic).map(p => [X(p[0]), Y(p[1])]);
-      s += `<path d="M${pa.map(p => p.map(v => v.toFixed(1)).join(' ')).join('L')}L${X(ic).toFixed(1)} ${Y(0)}L${X(0).toFixed(1)} ${Y(0)}Z" fill="var(--vio)" fill-opacity=".16"/><path d="M${pa.map(p => p.map(v => v.toFixed(1)).join(' ')).join('L')}" fill="none" stroke="var(--vio)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
-      s += `<path d="M${pf.map(p => p.map(v => v.toFixed(1)).join(' ')).join('L')}" fill="none" stroke="var(--vio)" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>`;
-      s += `<circle cx="${X(ic)}" cy="${Y(pts[ic][1])}" r="6" fill="var(--ink)"/><text class="v" x="${X(ic) - 10}" y="${Y(pts[ic][1]) - 12}" text-anchor="end">${nfmt(Math.round(pts[ic][1]))} $</text>`;
-      s += `<text class="v" x="${W - R + 10}" y="${Y(fut[fut.length - 1][1]) + 5}">${nfmt(Math.round(fut[fut.length - 1][1]))} $</text>`;
-      ms.forEach((mk, i) => { s += `<text x="${X(i).toFixed(1)}" y="${H - 6}" text-anchor="middle"${i === ic ? ' style="fill:var(--ink);font-weight:800"' : ''}>${esc(cMoisCourt(mk)).slice(0, 4)}</text>`; });
-      ms.forEach((mk, i) => { s += hit(X(i) - iw / (ms.length - 1) / 2, T, iw / (ms.length - 1), ih, cMoisNom(mk) + '\npayé jusque-là : ' + nfmt(Math.round(pts[i][1])) + ' $\navec le prévu : ' + nfmt(Math.round(fut[i][1])) + ' $'); });
-      return `<section class="csec"><figure class="fg"><figcaption>Cumul<span class="dash">trait plein = payé · pointillé = prévu</span></figcaption><svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumul des dépenses : ${nfmt(Math.round(pts[ic][1]))} $ payés, ${nfmt(Math.round(fut[fut.length - 1][1]))} $ en fin d'année avec le prévu">${s}</svg></figure></section>`;
+      const path = pts.map(p => X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('L');
+      s += `<path d="M${path}L${X(days.length - 1).toFixed(1)} ${Y(0)}L${X(0).toFixed(1)} ${Y(0)}Z" fill="var(--vio)" fill-opacity=".16"/><path d="M${path}" fill="none" stroke="var(--vio)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+      s += `<circle cx="${X(days.length - 1)}" cy="${Y(c)}" r="6" fill="var(--ink)"/><text class="v" x="${X(days.length - 1) + 10}" y="${Y(c) + 5}">${nfmt(Math.round(c))} $</text>`;
+      s += `<text x="${X(0)}" y="${H - 6}">${esc(fd(days[0]))}</text><text x="${X(days.length - 1)}" y="${H - 6}" text-anchor="end">${esc(fd(days[days.length - 1]))}</text>`;
+      pts.forEach(p => { s += hit(X(p[0]) - iw / (days.length - 1) / 2, T, iw / (days.length - 1), ih, fd(p[2]) + '\npayé jusque-là : ' + nfmt(Math.round(p[1])) + ' $' + (perDay[p[2]] ? '\nce jour : ' + nfmt(Math.round(perDay[p[2]])) + ' $' : '')); });
+      return `<section class="csec"><figure class="fg"><figcaption>Cumul payé<span class="dash">depuis ${esc(fd(days[0]))} · ${esc(PS().n)}</span></figcaption><svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumul payé en ${esc(PS().n)} : ${nfmt(Math.round(c))} $">${s}</svg></figure></section>`;
     });
     // dollars par PR fusionnée, par mois entier de relevé
     const perPR = sf('perPR', () => {
@@ -4959,10 +4994,10 @@ function vGanttFull(){
       if (rows.length < 2) return '';
       const W = colW(2), H = 190, T = 34, B = 40, ih = H - T - B, mx2 = Math.max(...rows.map(r => r[1])), cw = W / rows.length, bw = Math.min(90, cw * .6);
       let s = ''; rows.forEach(([mk, v, n], i) => { const h = v / mx2 * ih, x = i * cw + (cw - bw) / 2; s += `<rect x="${x.toFixed(1)}" y="${(T + ih - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="6" fill="var(--doing)" data-tip="${tipAttr(cMoisNom(mk) + '\n' + nfmt(v, 2) + ' $ par PR fusionnée\n' + nfmt(n) + ' PR · ' + nfmt(Math.round(v * n)) + ' $ payés')}"/><text class="v" x="${(x + bw / 2).toFixed(1)}" y="${(T + ih - h - 8).toFixed(1)}" text-anchor="middle">${nfmt(v, 2)} $</text><text x="${(x + bw / 2).toFixed(1)}" y="${H - 20}" text-anchor="middle">${esc(cMoisNom(mk))}</text><text x="${(x + bw / 2).toFixed(1)}" y="${H - 4}" text-anchor="middle" style="fill:var(--mute)">${nfmt(n)} PR</text>`; });
-      return `<figure class="fg"><figcaption>Par PR fusionnée ${cChip('Probable')}</figcaption><svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Dollars payés par PR fusionnée, par mois">${s}</svg></figure>`;
+      return `<figure class="fg"><figcaption>Par PR fusionnée, mois entiers ${cChip('Probable')}</figcaption><svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Dollars payés par PR fusionnée, par mois">${s}</svg></figure>`;
     });
     const elec2 = `<section class="csec g2">${perPR}${elec}</section>`;
-    return perBar('top') + `<p class="pnote">Les coûts sont au mois : la fenêtre s'élargit avec la période (${esc(PER === '3m' ? 'tous les mois depuis ' + cMoisNom(C.first).toLowerCase() : PER === '1m' ? '4 mois passés + 2 prévus' : '3 mois + le prochain')}).</p>` + hero + cols + multiples + cumul + next + elec2;
+    return perBar('top') + `<p class="pnote">${PER === '3m' ? 'Barres au mois : les mois de la période et le prévu jusqu\'en décembre.' : 'Barres au jour, payé seulement : le prévu se lit sur 3 mois.'}</p>` + hero + cols + multiples + cumul + next + elec2;
   }
 
 
@@ -5003,7 +5038,7 @@ function vGanttFull(){
         + m(VI.clock, esc(mlab(med)), 'Délai médian d\'une PR, de sa création à sa fusion' + (p90 != null ? '\n9 PR sur 10 vont plus vite que ' + mlab(p90) : ''))
         + m(VI.task, T.length ? nfmt(T.length) : '—', T.length + ' tâches finies sur ' + PS().n)
         + m(VI.taskc, esc(mlab(medT)), 'Durée médiane d\'une tâche, de son début à son acceptation')
-        + `<svg class="qsp" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(QUI[k][0])} : PR fusionnées par ${esc(PS().u)}">${spark}</svg><div class="qbar" aria-hidden="true"><span style="width:${Math.max(2, mine.length / tot * 100).toFixed(1)}%"></span></div></article>`;
+        + `<svg class="qsp" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(QUI[k][0])} : PR fusionnées par ${esc(PS().u)}">${spark}</svg><div class="qvb" aria-hidden="true"><span style="width:${Math.max(2, mine.length / tot * 100).toFixed(1)}%"></span></div></article>`;
     }).join('')}</div>`;
   }
   /* un point par PR : plus il est à gauche, plus la PR a été vite fusionnée ; le trait épais est la médiane, le rond creux la limite des 90 % */
