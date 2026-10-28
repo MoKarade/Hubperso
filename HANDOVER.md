@@ -2,6 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : En cours liste les façons de travailler, avec leur état et leurs durées (Hubperso#710, mission #538)
+
+- **Règle de Marc** (28/10, 21:51Z) : « chaque changement dans la façon de travailler doit être dans la bonne page du chantier, toujours à jour, avec les durées ».
+- **Quoi** : un bloc « Façons de travailler » sur En cours (`chantier/cadre.html`). L'état (prévue, se met en place, en place) et l'âge (« depuis », « mise en place en ») viennent du relevé et des événements GitHub, pour l'issue qui porte la façon ; toute issue étiquetée `façon-de-travailler` y apparaît seule. Le registre `XFACONS` ne porte que ce que le relevé ne dit pas : la durée attendue (`att`) et la durée mesurée (`mes`), données par le fil workflow avec chaque changement ; sans mesure : « pas encore mesuré », jamais 0 ; une issue absente du relevé : « hors du relevé ». Contenu du 28/10 : boîte à événements par dépôt (.github#750, mesurée à environ 10 s le 28/10 : workflow 22:01:43Z, fil réveillé 22:01:53Z, sans relais ni PC), Réacteur dans les 9 autres dépôts (.github#748), réponse avant la fermeture d'une preuve mal écrite (.github#713), Réacteur de .github sans minuteur (#712), Jules par le Réacteur (#704), issue `boucle:erreur` (#714), « éligible depuis » (#711), envoi à MemoryAI à chaque webhook (hubperso#651), trois places par dépôt, réveil du coordinateur toutes les 10 min (provisoire).
+- **Comment ça reste à jour** : chaque changement de façon de faire s'ajoute au registre dans la PR de la tâche qui le livre (ou par l'étiquette, sans PR) ; le fil workflow envoie le changement et ses durées, `mes` se remplit dès les premiers événements mesurés.
+- **Tests** : `tests/chantierFacons.test.ts`.
+- **Preuve à lire** : sur `/chantier`, En cours, le bloc liste les façons avec leur état et « pas encore mesuré » là où rien n'est mesuré.
 
 ## 28/10/2026 : En cours montre les trois délais visés, 10 min au plus chacun (Hubperso#707, mission #538)
 
