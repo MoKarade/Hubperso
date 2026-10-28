@@ -66,6 +66,12 @@ export function isPublicPath(pathname: string): boolean {
   // (app/api/lia/ask/route.ts). Jamais dans le matcher du middleware.
   if (pathname === "/api/lia/ask") return true;
 
+  // GET|PUT /api/lia/etat : l'état partagé de LIA, relayé à MemoryAI. Même raison que /api/lia/ask : une app
+  // (DriveAI, ADR-0069) le lit et l'écrit de serveur à serveur avec son `x-hub-token`, sans cookie du hub. La
+  // route se garde TOUTE SEULE : jeton valide + `x-lia-proprietaire: 1`, ou session avec accès au hub ET propriétaire,
+  // sinon 401 / 403 (app/api/lia/etat/route.ts). Égalité STRICTE, jamais le matcher du middleware (leçon n°4).
+  if (pathname === "/api/lia/etat") return true;
+
   // POST /api/gantt : le PC de Marc y ENVOIE le relevé du Gantt (tour.py, toutes les 10 min).
   // Troisième route de serveur à serveur, même raisonnement : pas de cookie de session. Elle
   // exige `Authorization: Bearer <GANTT_SECRET>`, secret DÉDIÉ comparé à temps constant, et

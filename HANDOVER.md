@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+
+## 28/10/2026 : `/api/lia/etat` accepte le jeton d'une app, DriveAI partage l'état de LIA (Hubperso#685, mission MoKarade/.github#719)
+
+- **Ce qui change** : `GET|PUT /api/lia/etat` accepte `x-hub-token` (l'app est identifiée par `appDuJeton`, jamais par le corps) avec `x-lia-proprietaire: 1` posé par l'app après avoir vérifié SA session. Jeton connu sans l'en-tête : 403 (MemoryAI non appelée) ; jeton faux ou ambigu : 401 SANS repli sur la session ; aucun jeton : la session, comme avant. Le relais vers MemoryAI, la limite de débit, `lireCorpsEtat` et `no-store` ne changent pas.
+- **Écart avec le texte de la tâche** : « aucune exception dans `lib/authGuard.ts` » ne tenait pas, une app n'ayant pas de cookie du hub : la requête serait arrêtée par le middleware avant la route. La route est donc laissée passer en ÉGALITÉ STRICTE (comme `/api/lia/ask`), jamais dans le matcher, et se garde toute seule ; `tests/gardePages.test.ts` la range dans les routes à jeton, `tests/authGuard.test.ts` verrouille le chemin exact.
+- **Charge** : le chemin du jeton ne lit ni session ni base (moins de travail que la page). Pour la page, rien ne change : même `auth()` et même relais.
+- **Preuve à lire** : `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/lia/etat` rend 401 ; DriveAI#771 lit puis écrit l'état avec son jeton.
+
 ## 28/10/2026 : lia-ui v0.47.0, LIA lit les graphiques et ne scanne que sur demande (Hubperso#679, mission MoKarade/.github#575)
 
 Épingle `@mokarade/lia-ui` v0.47.0 (sha pelé `7f1d7bb`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « l'assistant voit toujours pas les graphes » et « l'animation de scan uniquement sur ce que je lui ai demandé ». v0.47.0 : LIA lit un graphique SVG (titre, axes, légende, valeurs écrites) sans code chez l'hôte ; les courbes du hub gardent leur résumé en mots (`data-lia-donnees`, Hubperso#675), qui prime. Les graphiques `<canvas>` restent illisibles (limite connue). v0.46.0 : le scan des nanobots ne joue que sur ce que Marc a demandé d'analyser. v0.45.1 (menu sur sa propre couche) arrive avec. Rien à brancher. Preuve : déploiement `READY` sur le commit fusionné, puis relevé du PC (question sur un graphique SVG du hub ; aucune visite spontanée ne lance l'essaim).

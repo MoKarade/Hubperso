@@ -1,9 +1,10 @@
 // tests/liaEtatPartage.test.ts — l'état partagé de LIA (Hubperso#433) : une seule LIA, un seul état, gardé par MemoryAI.
 //
-// Le module pur juge ce qui passe dans les deux sens ; la route ne fait que le relais derrière la session du hub.
+// Le module pur juge ce qui passe dans les deux sens ; la route ne fait que le relais, derrière la session du hub ou le jeton d'une app.
 // Prouve : 401 sans session (aucun appel à MemoryAI), 403 pour un invité, 503 sans jeton, relais des statuts
 // (200 / 204 / 409 / 400 / 413 / 503), corps de la page ou réponse de MemoryAI hors contrat refusés, aucun jeton dans
-// une réponse, jamais de cache, et que la route ne devient jamais publique.
+// une réponse, jamais de cache. Hubperso#685 : une app y accède par son jeton (403 sans l'en-tête propriétaire, 401 sans repli
+// sur la session si le jeton est faux) ; la route traverse le garde en égalité stricte et se garde toute seule.
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -236,10 +237,84 @@ describe("PUT /api/lia/etat", () => {
   });
 });
 
-describe("la route reste derrière le garde du hub, sans jeton côté client", () => {
-  it("n'est jamais laissée passer par le garde (ni elle ni un préfixe)", () => {
-    expect(isPublicPath("/api/lia/etat")).toBe(false);
+describe("une app y accède par son jeton (DriveAI, ADR-0069) : Hubperso#685", () => {
+  const JETON_APP = "jeton-driveai-de-test-0123456789";
+  const driveai = SOURCE_DEFS.find((d) => d.id === "driveai")!;
+  const avecJeton = (jeton: string | null, proprietaire?: string) => {
+    const entetes: Record<string, string> = {};
+    if (jeton !== null) entetes["x-hub-token"] = jeton;
+    if (proprietaire !== undefined) entetes["x-lia-proprietaire"] = proprietaire;
+    return entetes;
+  };
+  const getApp = (entetes: Record<string, string>) =>
+    GET(new Request("https://www.hubperso.com/api/lia/etat", { headers: entetes }));
+  const putApp = (entetes: Record<string, string>, corps: string) =>
+    PUT(new Request("https://www.hubperso.com/api/lia/etat", { method: "PUT", body: corps, headers: entetes }));
+
+  beforeEach(() => {
+    vi.stubEnv(driveai.tokenEnv, JETON_APP);
+    moq.auth.mockResolvedValue(null);
+  });
+
+  it("jeton connu + propriétaire : l'état est relayé, sans lire ni session ni base", async () => {
+    const r = await getApp(avecJeton(JETON_APP, "1"));
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual(ETAT);
+    expect(r.headers.get("cache-control")).toBe("no-store");
+    expect(moq.auth).not.toHaveBeenCalled();
+    expect(moq.aAcces).not.toHaveBeenCalled();
+    const [, init] = appel.mock.calls[0] as [string, RequestInit];
+    expect(init.headers).toMatchObject({ "x-hub-token": JETON, "x-lia-proprietaire": "1" });
+    expect(JSON.stringify(init.headers)).not.toContain(JETON_APP);
+  });
+
+  it("jeton connu + propriétaire : l'écriture est relayée, corps jugé comme pour la page", async () => {
+    expect((await putApp(avecJeton(JETON_APP, "1"), JSON.stringify(ETAT))).status).toBe(200);
+    expect(appel).toHaveBeenCalledTimes(1);
+    expect((await putApp(avecJeton(JETON_APP, "1"), "{pas du json")).status).toBe(400);
+    expect(appel).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([[undefined], ["0"], [""], ["true"]])(
+    "jeton connu sans « x-lia-proprietaire: 1 » (%s) : 403, MemoryAI n'est pas appelée",
+    async (valeur) => {
+      expect((await getApp(avecJeton(JETON_APP, valeur))).status).toBe(403);
+      expect((await putApp(avecJeton(JETON_APP, valeur), JSON.stringify(ETAT))).status).toBe(403);
+      expect(appel).not.toHaveBeenCalled();
+    },
+  );
+
+  it("jeton faux ou vide : 401, et la session du propriétaire ne sert PAS de repli", async () => {
+    moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
+    for (const jeton of ["jeton-faux", ""]) {
+      expect((await getApp(avecJeton(jeton, "1"))).status).toBe(401);
+      expect((await putApp(avecJeton(jeton, "1"), JSON.stringify(ETAT))).status).toBe(401);
+    }
+    expect(appel).not.toHaveBeenCalled();
+    expect(moq.auth).not.toHaveBeenCalled();
+  });
+
+  it("ni jeton ni session : 401 ; le jeton d'une app non configurée ne correspond à rien", async () => {
+    expect((await getApp(avecJeton(null, "1"))).status).toBe(401);
+    vi.stubEnv(driveai.tokenEnv, "");
+    expect((await getApp(avecJeton(JETON_APP, "1"))).status).toBe(401);
+    expect(appel).not.toHaveBeenCalled();
+  });
+
+  it("deux apps avec le MÊME jeton : refus (identité ambiguë), jamais un choix", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const autre = SOURCE_DEFS.find((d) => d.id !== "driveai" && d.id !== "memoryai")!;
+    vi.stubEnv(autre.tokenEnv, JETON_APP);
+    expect((await getApp(avecJeton(JETON_APP, "1"))).status).toBe(401);
+    expect(appel).not.toHaveBeenCalled();
+  });
+});
+
+describe("la route traverse le garde en chemin exact, sans entrer dans le matcher", () => {
+  it("est laissée passer par le garde en égalité stricte, ni préfixe ni variante", () => {
+    expect(isPublicPath("/api/lia/etat")).toBe(true);
     expect(isPublicPath("/api/lia/etat/")).toBe(false);
+    expect(isPublicPath("/api/lia/etat-tout")).toBe(false);
   });
 
   it("n'est pas dans le matcher du middleware (aucune exclusion de plus)", () => {
