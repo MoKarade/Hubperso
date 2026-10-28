@@ -18,7 +18,7 @@ import type { DescriptionElement } from "@mokarade/lia-ui";
 export const TEXTE_ELEMENT_MAX = 300;
 
 /** Longueur maximale des faits (`data-lia-donnees`, ce que dit une courbe) : la limite de lia-ui v0.45.0. */
-export const DONNEES_ELEMENT_MAX = 1200;
+const DONNEES_ELEMENT_MAX = 1200;
 
 const ATTR_DONNEES = "data-lia-donnees";
 
