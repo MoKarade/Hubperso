@@ -787,14 +787,29 @@ body.anim .card .cs i{animation:grow .7s ease both}
 /* À toi */
 .tt-toi{display:flex;flex-direction:column;gap:16px}
 .tg{display:flex;flex-direction:column;gap:8px}
-.ecsum{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin:0 0 18px}.ecsum>div{display:flex;align-items:baseline;gap:7px}.ecsum>div b{font:800 28px var(--fm);color:var(--ink)}.ecsum>div span{font-size:13.5px;color:var(--mute)}
-.ec-s{margin:0 0 26px}.ech{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;font-size:16px;font-weight:700}.ech b{font:700 14px var(--fm);color:var(--mute)}.ech small{margin-left:auto;font:500 12.5px var(--fm);color:var(--mute)}
-.ecl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:10px}
-.ecr{display:flex;flex-direction:column;gap:6px;min-width:0;min-height:44px;padding:11px 13px;border:1px solid var(--line);border-left:4px solid var(--c,var(--todo));border-radius:12px;background:var(--panel);color:inherit;font:inherit;text-align:left;cursor:pointer}
-.ect{font-size:15px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}.ecs{display:block;margin:0 0 3px;font:700 12px var(--fm);color:var(--c)}.ecs em{font-style:normal;color:var(--mute);font-weight:500;margin-left:8px}
-.ecm{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:13px;color:var(--mute)}.ecm b{color:var(--ink);font-weight:600}.ecapp{display:inline-flex;align-items:center;gap:6px}.ecapp i{width:8px;height:8px;border-radius:50%;background:var(--ac,var(--mute))}
-.ecn{font-size:13.5px;line-height:1.35;overflow-wrap:anywhere}.ecp{font-size:12.5px;color:var(--mute);overflow-wrap:anywhere}
-a.ecr{text-decoration:none}
+.xc{display:flex;flex-direction:column;gap:26px}
+.xc-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.xc-live{display:inline-flex;align-items:center;gap:8px;font:700 13px var(--fm);color:var(--mute)}.xc-live i{width:9px;height:9px;border-radius:50%;background:var(--done);animation:xcp 1.6s ease-in-out infinite}
+@keyframes xcp{50%{opacity:.25}}@keyframes xcg{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--ac) 32%,transparent)}}
+#mx .xc-board{display:grid;grid-template-columns:var(--lw,104px) 1.7fr 1fr 1fr 1fr 1.2fr 1fr;gap:6px;align-items:stretch}
+.xc-h{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 8px;font-size:13px;color:var(--mute);text-align:center;min-width:0}
+.xc-h svg{width:22px;height:22px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.xc-h b{font:800 26px/1 var(--fm);color:var(--ink)}.xc-h.late b{color:var(--blk-t)}
+.xc-h+.xc-h::before{content:"";position:absolute;left:-6px;top:11px;width:6px;height:6px;border-top:2px solid var(--mute);border-right:2px solid var(--mute);transform:rotate(45deg) translate(-3px,3px);opacity:.6}
+.xc-l{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px;font-weight:600;white-space:nowrap}.xc-l i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--ac)}.xc-l span{overflow:hidden;text-overflow:ellipsis}
+.xc-pl{display:inline-flex;gap:3px;margin-left:auto}.xc-pl u{width:7px;height:7px;border-radius:2px;border:1.5px solid var(--mute);box-sizing:border-box}.xc-pl u.o{background:var(--mute)}.xc-pl u.x{background:var(--blk-t);border-color:var(--blk-t)}
+.xc-c{display:flex;flex-wrap:wrap;gap:6px;align-content:center;min-width:0;min-height:44px;padding:8px 7px;border-radius:10px;background:color-mix(in srgb,var(--line) 26%,transparent)}
+#mx .xc-b{position:relative;flex:none;display:grid;place-items:center;width:24px;height:24px;border:0;padding:0;border-radius:7px;background:var(--ac,var(--mute));color:var(--bg);font:800 10px var(--fm);cursor:pointer;text-decoration:none}
+#mx .xc-b::before{content:"";position:absolute;inset:-9px}
+#mx .xc-b.j{border-radius:50%}#mx .xc-b.c{border-radius:4px;transform:rotate(45deg) scale(.84)}#mx .xc-b.m{border-radius:0;clip-path:polygon(50% 4%,100% 96%,0 96%)}
+#mx .xc-b.big{width:40px;height:40px;border-radius:10px}#mx .xc-b.big.j{border-radius:50%}#mx .xc-b.big.c{transform:rotate(45deg) scale(.8)}
+#mx .xc-b.big .p{position:absolute;left:3px;right:3px;bottom:3px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--bg) 38%,transparent);overflow:hidden}#mx .xc-b.big .p::after{content:"";display:block;height:100%;width:var(--p,0%);background:var(--bg)}
+#mx .xc-b.on{animation:xcg 1.8s ease-in-out infinite}#mx .xc-b.r{outline:2.5px solid var(--blk-t);outline-offset:1.5px}
+#mx .xc-b.k{background:repeating-linear-gradient(135deg,var(--ac) 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 2px var(--ac)}
+#mx .xc-b.h{background:transparent;box-shadow:inset 0 0 0 2px var(--ac);border:0}
+#mx .xc-b:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:14px;height:14px;cursor:default;background:var(--mute)}#mx .xc-key .xc-b::before{display:none}
+@media (prefers-reduced-motion:reduce){#mx .xc-b.on,.xc-live i{animation:none}}
+@media (max-width:700px){#mx .xc-board{--lw:30px;gap:4px;grid-template-columns:30px 1.5fr 1fr 1fr 1fr 1.2fr .9fr}.xc-l span,.xc-pl,.xc-h span{display:none}#mx .xc-b{width:19px;height:19px}#mx .xc-b.big{width:32px;height:32px}.xc-c{gap:5px;padding:6px 4px}.xc-h b{font-size:20px}.xc-h svg{width:18px;height:18px}}
 .tgh{display:flex;align-items:center;gap:8px;margin:0;color:var(--mute)}
 .tgh .si{width:20px;height:20px}
 .tgh b{font:700 15px var(--fm);color:var(--ink)}
@@ -5156,10 +5171,9 @@ function vGanttFull(){
     return `<section class="hero2" style="padding-bottom:18px"><div class="pct" role="img" aria-label="${n} à faire par toi"><b>${nfmt(n)}</b></div><div class="hside"><div class="leg"><div><i class="sh marc"></i>à toi</div></div></div></section>${vAToi()}`;
   }
 
-  /* ---------- En cours : tout ce qui se passe et la suite prévue (Hubperso#640, demande de Marc, 28/10/2026 : « une page en cours avec littéralement tout ce qui est en train de se passer, et ce qui est prévu pour la suite ») ----------
-     Tout vient du modèle tiré du relevé (`M.leaves`, `M.sante`, `M.PD`), avec son âge. La CI, la file Mergify et le déploiement de chaque PR
-     ne sont pas dans le relevé : la page ne les montre pas, le dit en bas, et n'en devine aucun. */
-  const ECE = {cours: ['en cours', 'var(--doing)'], rel: ['PR prête', 'var(--doing)'], fus: ['fusionnée, preuve à faire', 'var(--fus-t)'], prog: ['preuve attendue', 'var(--fus-t)'], ret: ['preuve en retard', 'var(--blk-t)'], blk: ['bloquée', 'var(--blk-t)'], marc: ['attend Marc', 'var(--marc)'], todo: ['prévue', 'var(--todo)']};
+  /* ---------- En cours : le process vu d'un coup d'œil (Hubperso#640, demande de Marc, 28/10/2026 : « une page en cours avec littéralement tout ce qui est en train de se passer, et ce qui est prévu » puis « beaucoup moins de texte, full visuel, en live, voir le process ») ----------
+     Tout vient du modèle tiré du relevé (`M.leaves`, `M.PD`, `M.sante.hors`, `prlog`), avec son âge. Une pastille = une tâche, qui avance de gauche à droite ;
+     le détail est dans l'infobulle et dans la fiche (clic). La CI, la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé : la page ne les montre pas. */
   const ECN = {Claude: 'un fil Claude', Jules: 'Jules', Copilot: 'Copilot', Marc: 'Marc'};
   const ecQui = l => {
     if (l.marc) return 'Marc';
@@ -5168,6 +5182,7 @@ function vGanttFull(){
     const a = (l.acteurs || []).filter(x => x.fin).sort((x, y) => y.fin - x.fin)[0];
     return a ? ECN[a.qui] || a.qui : l.qui === '—' ? 'personne encore' : l.qui;
   };
+  const ecForme = l => { const q = ecQui(l); return q === 'Jules' ? 'j' : q === 'Copilot' ? 'c' : q === 'Marc' ? 'm' : ''; };
   const ecSuite = l => {
     const pr = l.pr, w = (l.waits || []).filter(x => x.unknown || x.open).slice(0, 3);
     switch (l.e){
@@ -5181,35 +5196,71 @@ function vGanttFull(){
       default: return l.fs != null ? 'prévue ' + quand(l.fs, true) : l.why || (l.q != null ? 'file : rang ' + l.q : 'pas dans la file du script');
     }
   };
-  const ecRow = l => {
-    const [lab, col] = ECE[l.e] || ['', 'var(--todo)'], pr = l.pr, par = l.parent, m = [`<span class="ecapp" style="--ac:var(--a-${esc(l.k)})"><i></i>${esc(l.app)}</span>`, `<b>${esc(ecQui(l))}</b>`];
-    if (pr) m.push(`<span>PR #${esc(pr.n)} ${pr.state === 'open' ? (pr.draft ? 'brouillon' : 'prête') : l.merged ? 'fusionnée ' + esc(ago(l.merged)) : 'fermée'}</span>`);
-    if (l.start && l.e !== 'todo') m.push('<span>commencée ' + esc(ago(l.start)) + '</span>');
-    if ((l.e === 'cours' || l.e === 'rel') && l.last) m.push('<span>dernière trace ' + esc(ago(l.last)) + '</span>');
-    return `<button class="ecr" data-open="${esc(l.ref)}" style="--c:${col}"><span class="ect"><span class="ecs">${esc(lab)}<em>${esc(l.repo)}#${esc(l.n)}</em></span>${esc(l.t)}</span>`
-      + `<span class="ecm">${m.join('')}</span><span class="ecn">${esc(ecSuite(l))}${l.oubli && l.e !== 'blk' ? ' · rien de nouveau depuis longtemps' : ''}</span>`
-      + (par && par.t ? `<span class="ecp">dans « ${esc(par.t)} »</span>` : '') + `</button>`;
+  // colonnes du process : prévue, en cours, PR prête, fusionnée, preuve, acceptée
+  const XCOL = [['todo', 'Prévue', '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'], ['cours', 'En cours', '<path d="M3 12h4l2.5-6 4 12 2.5-6H21"/>'], ['rel', 'PR prête', SVGI.pr], ['fus', 'Fusionnée', SVGI.fusion], ['prove', 'Preuve', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.4 2.4L15.8 9.6"/>'], ['acc', 'Acceptée, 24 h', SVGI.fait]];
+  const xcCol = l => l.e === 'cours' ? 'cours' : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : 'todo';   // todo comprend les bloquées et celles qui attendent Marc
+  const xcBrick = (l, col, now) => {
+    const big = col === 'cours' || col === 'rel', live = l.last && now - l.last < 15 * 60e3, f = ecForme(l);
+    const cls = ['xc-b', f, big ? 'big' : '', live && big ? 'on' : '', l.e === 'ret' || l.oub ? 'r' : '', l.e === 'blk' ? 'k' : ''].filter(Boolean).join(' ');
+    const p = big && l.start && l.est && l.est.d ? Math.min(100, Math.round((now - l.start) / l.est.d * 100)) : 0;
+    const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'todo' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + '\n' + ecSuite(l);
+    return `<button class="${cls}" style="--ac:var(--a-${esc(l.k)})" data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" aria-label="${esc(l.t)}">${big ? esc(l.n) + `<span class="p" style="--p:${p}%"></span>` : ''}</button>`;
   };
-  function vEnCours(){
-    const ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), act = (b, a) => (b.last || b.start || 0) - (a.last || a.start || 0);
-    const par = (es, tri) => ouv.filter(l => es.includes(l.e)).sort(tri || ((a, b) => act(a, b) * -1));
-    const sec = (titre, l, note) => l.length ? `<section class="ec-s"><h3 class="ech">${esc(titre)}<b>${l.length}</b></h3>${note ? `<p class="qnote">${esc(note)}</p>` : ''}<div class="ecl">${l.map(ecRow).join('')}</div></section>` : '';
-    const cours = par(['cours', 'rel']), fus = par(['fus', 'prog']), ret = par(['ret']), blk = par(['blk']), marc = par(['marc']);
-    const todo = par(['todo'], (a, b) => (a.q == null) - (b.q == null) || (a.q || 0) - (b.q || 0) || (a.fs || 9e15) - (b.fs || 9e15));
-    const hors = (M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : [];
-    const suite = M.apps.map(a => {
-      const l = todo.filter(x => x.k === a.k); if (!l.length) return '';
-      const pd = M.PD && M.PD[a.rl], pl = pd && pd.d && pd.d.places;
-      return `<section class="ec-s"><h3 class="ech"><span class="ecapp" style="--ac:var(--a-${esc(a.k)})"><i></i>${esc(a.app)}</span><b>${l.length}</b>${pl ? `<small>places prises : ${nbr(pl.prises)} sur ${nbr(pl.total)}</small>` : ''}</h3><div class="ecl">${l.map(ecRow).join('')}</div></section>`;
-    }).join('');
-    const horsH = hors.length ? `<section class="ec-s"><h3 class="ech">PR sans tâche<b>${hors.length}</b></h3><div class="ecl">${hors.map(h => `<a class="ecr" style="--c:var(--todo)" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener"><span class="ect"><span class="ecs">${h.draft ? 'brouillon' : 'ouverte'}<em>${esc(h.repo)}#${esc(h.n)}</em></span>${esc(h.t || '')}</span><span class="ecm"><b>${h.bot ? 'un robot' : 'une personne'}</b>${h.c ? '<span>créée ' + esc(ago(Date.parse(h.c))) + '</span>' : ''}</span></a>`).join('')}</div></section>` : '';
-    const nb = (n, t) => `<div><b>${nfmt(n)}</b><span>${t}</span></div>`;
-    const sum = `<div class="ecsum">${nb(cours.length, 'en cours')}${nb(fus.length + ret.length, 'à prouver')}${nb(blk.length, 'bloquées')}${nb(marc.length, 'attendent Marc')}${nb(todo.length, 'prévues')}${fraisHTML(['taches'])}</div>`;
-    const q = M.PRO && M.PRO.calcule_le ? 'La file des prochaines tâches a été calculée ' + ago(Date.parse(M.PRO.calcule_le)) + '.' : 'La file des prochaines tâches est indisponible : la page ne la devine pas.';
-    const note = `<p class="qnote">${esc(q)} La CI, la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé : la page ne les montre pas plutôt que de les deviner.</p>`;
-    if (!ouv.length && !hors.length) return `<div class="ec">${sum}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p>${note}</div>`;
-    return `<div class="ec">${sum}${sf('En cours', () => sec('Travail en cours', cours))}${sf('Fusionnées', () => sec('Fusionnées, preuve à venir', fus))}${sf('Retard', () => sec('Preuve en retard', ret))}${sf('Bloquées', () => sec('Bloquées', blk))}${sf('Marc', () => sec('Attendent Marc', marc))}${suite ? `<h2 class="ech" style="font-size:19px">La suite prévue</h2>${suite}` : ''}${horsH}${note}</div>`;
+  function xcPouls(W){
+    const now = Date.now(), N = 24, t0 = Math.floor(now / H) * H - (N - 1) * H, L = 30, T = 14, B = 22, ih = 150 - T - B, iw = W - L - 4, bw = iw / N;
+    const S = [['démarrées', 'var(--doing)', M.leaves.map(l => l.start)], ['fusionnées', 'var(--fus-t)', PRL().map(x => x.t)], ['acceptées', 'var(--done)', M.leaves.filter(l => l.e === 'acc').map(l => l.end)]];
+    const bins = S.map(([, , ts]) => { const o = Array(N).fill(0); ts.forEach(t => { const i = t ? Math.floor((t - t0) / H) : -1; if (i >= 0 && i < N) o[i]++; }); return o; });
+    const mx = nice(Math.max(1, ...Array.from({length: N}, (_, i) => bins.reduce((a, b) => a + b[i], 0)))), Y = v => T + ih - v / mx * ih;
+    let g = axisY(W, L, T, ih, [0, mx / 2, mx], Y, v => nfmt(v));
+    for (let i = 0; i < N; i++){
+      let y = T + ih; const x = L + i * bw + bw * .16, w = bw * .68, tips = [];
+      bins.forEach((b, k) => { if (!b[i]) return; const h = b[i] / mx * ih; y -= h; g += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(2, h - 1.5).toFixed(1)}" rx="2.5" fill="${S[k][1]}"/>`; tips.push(b[i] + ' ' + S[k][0]); });
+      if (i % 6 === 5 || i === 0) g += `<text x="${(L + i * bw + bw / 2).toFixed(1)}" y="${150 - 6}" text-anchor="middle">${esc(hh(t0 + i * H))}</text>`;
+      g += hit(L + i * bw, T, bw, ih + 6, hh(t0 + i * H) + (tips.length ? '\n' + tips.join('\n') : '\naucune activité'));
+    }
+    const key = chips(S.map(([n, c], k) => [c, n, bins[k].reduce((a, b) => a + b, 0)]));
+    return fig('Le pouls, 24 h', `<svg class="cch" viewBox="0 0 ${W} 150" role="img" aria-label="Tâches démarrées, PR fusionnées et tâches acceptées par heure, sur 24 heures">${g}</svg>`, key);
   }
+  function xcSuite(W){
+    const now = Date.now(), R = 48 * H, L = 34, T = 8, rh = 22, iw = W - L - 8;
+    const rows = M.apps.map(a => ({a, it: M.leaves.filter(l => l.open && l.k === a.k).flatMap(l => [l.fs != null && l.e === 'todo' && l.fs - now < R ? {l, t: l.fs, k: 'deb'} : null, l.pa != null && l.pa - now < R && (l.e === 'prog' || l.e === 'fus' || l.e === 'ret') ? {l, t: l.pa, k: 'preuve'} : null].filter(Boolean))})).filter(r => r.it.length);
+    if (!rows.length) return '';
+    const Hh = T + rows.length * rh + 22, X = t => L + Math.max(0, Math.min(1, (t - now) / R)) * iw;
+    let g = '';
+    for (let h = 0; h <= 48; h += 12) g += `<line class="g" x1="${X(now + h * H).toFixed(1)}" x2="${X(now + h * H).toFixed(1)}" y1="${T - 2}" y2="${Hh - 20}"/><text x="${Math.min(W - 14, X(now + h * H)).toFixed(1)}" y="${Hh - 5}" text-anchor="${h === 0 ? 'start' : h === 48 ? 'end' : 'middle'}">${h === 0 ? 'maintenant' : h % 24 ? esc(hh(now + h * H)) : esc(quand(now + h * H, true))}</text>`;
+    rows.forEach((r, i) => {
+      const y = T + i * rh + rh / 2;
+      g += `<circle cx="10" cy="${y}" r="5" fill="var(--a-${esc(r.a.k)})"/>`;
+      r.it.forEach(({l, t, k}) => { const x = X(t), late = t < now, c = `var(--a-${esc(l.k)})`, tip = l.t + '\n' + (k === 'deb' ? 'début prévu ' : 'preuve due ') + quand(t, true);
+        g += k === 'deb' ? `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="${c}" style="cursor:pointer"/>`
+          : `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="none" stroke="${late ? 'var(--blk-t)' : c}" stroke-width="2.6" style="cursor:pointer"/>`; });
+    });
+    const key = `<div class="chips"><span><i style="background:var(--mute)"></i>début prévu</span><span><i style="background:none;border:2.5px solid var(--mute);box-sizing:border-box"></i>preuve due</span></div>`;
+    return fig('Les 48 prochaines heures', `<svg class="cch" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Débuts prévus et preuves dues dans les 48 prochaines heures, une ligne par app">${g}</svg>`, key);
+  }
+  function vEnCours(){
+    const now = Date.now(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
+    const hors = (M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : [], horsApp = h => { const a = M.apps.find(x => x.rl === String(h.repo).toLowerCase()); return a ? a.k : 'x'; };
+    const cell = (a, c) => {
+      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l) === c).sort((x, y) => c === 'todo' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
+      const hh2 = c === 'cours' || c === 'rel' ? hors.filter(h => horsApp(h) === a.k && (c === 'cours') === !!h.draft).map(h => `<a class="xc-b h" style="--ac:var(--a-${esc(a.k)})" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.bot ? 'un robot' : 'une personne') + ' · PR sans tâche')}" aria-label="${esc(h.t || '')}"></a>`).join('') : '';
+      return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'todo' : c, now)).join('')}${hh2}</div>`;
+    };
+    const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => horsApp(h) === a.k)).map(a => {
+      const pd = M.PD && M.PD[a.rl], pl = pd && pd.d && pd.d.places, tot = pl ? Math.min(6, nbr(pl.total)) : 0, pris = pl ? nbr(pl.prises) : 0;
+      const sq = tot ? `<span class="xc-pl" aria-label="${pris} places prises sur ${nbr(pl.total)}">${Array.from({length: tot}, (_, i) => `<u class="${i < pris ? (pris > tot ? 'x' : 'o') : ''}"></u>`).join('')}</span>` : '';
+      return `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span>${sq}</div>` + XCOL.map(([c]) => cell(a, c)).join('');
+    }).join('');
+    const nCol = c => c === 'acc' ? recents.length : ouv.filter(l => xcCol(l) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
+    const head = `<div></div>` + XCOL.map(([c, n, ic]) => `<div class="xc-h${c === 'prove' && nLate ? ' late' : ''}" role="columnheader" aria-label="${esc(n)}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
+    const W2 = colW(2), top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(['taches'])}</div>`;
+    const sh = (cls, t) => `<span><i class="xc-b ${cls}" style="--ac:var(--mute)"></i>${t}</span>`;
+    const key = `<div class="xc-key">${sh('', 'fil Claude')}${sh('j', 'Jules')}${sh('c', 'Copilot')}${sh('m', 'Marc')}${sh('k', 'bloquée')}${sh('h', 'PR sans tâche')}<span><i class="xc-b r" style="--ac:var(--mute)"></i>en retard</span></div>`;
+    if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
+    return `<div class="xc">${top}<div class="xc-board" role="table" aria-label="Le process, de la tâche prévue à la tâche acceptée">${head}${rows}</div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
+  }
+  // l'onglet En cours se redessine tout seul : les âges, les pastilles et les barres avancent sans toucher la page
+  setInterval(() => { if (M && ST.tab === 'cours' && !document.hidden) render(); }, 30e3);
 
   /* ---------- Coûts ---------- */
   const fd = d => +d.slice(8) + ' ' + cMoisCourt(d.slice(0, 7)).slice(0, 4).replace(/\.$/, '');

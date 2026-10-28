@@ -602,14 +602,19 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("t === 'cours' || t === 'couts'");
   });
 
-  it("montre quoi, qui, état, depuis quand, ce qui bloque et la suite, sans inventer ce que le relevé ne porte pas", () => {
-    for (const t of ["Travail en cours", "Fusionnées, preuve à venir", "Preuve en retard", "Bloquées", "Attendent Marc", "La suite prévue", "PR sans tâche"]) {
-      expect(DOCUMENT).toContain(t);
-    }
+  it("montre le process en pastilles, sans phrases : une colonne par étape, une ligne par app, le pouls et les 48 prochaines heures", () => {
+    for (const t of ["'Prévue'", "'En cours'", "'PR prête'", "'Fusionnée'", "'Preuve'", "'Acceptée, 24 h'"]) expect(DOCUMENT).toContain(t);
+    expect(DOCUMENT).toContain("function xcPouls(W)");
+    expect(DOCUMENT).toContain("function xcSuite(W)");
     expect(DOCUMENT).toContain("const ecQui = l =>");
-    expect(DOCUMENT).toContain("'<span>commencée ' + esc(ago(l.start))");
     expect(DOCUMENT).toContain("M.sante.hors");
-    expect(DOCUMENT).toContain("La CI, la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé");
-    expect(DOCUMENT).toContain("la page ne la devine pas");
+    expect(DOCUMENT).not.toContain("la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé : la page ne les montre pas plutôt");
+  });
+
+  it("reste en direct : la pastille d'âge du relevé, un redessin toutes les 30 s, la forme dit qui travaille", () => {
+    expect(DOCUMENT).toContain("fraisHTML(['taches'])");
+    expect(DOCUMENT).toContain("ST.tab === 'cours' && !document.hidden) render(); }, 30e3)");
+    expect(DOCUMENT).toContain("q === 'Jules' ? 'j' : q === 'Copilot' ? 'c' : q === 'Marc' ? 'm' : ''");
+    expect(DOCUMENT).toContain("prefers-reduced-motion:reduce){#mx .xc-b.on");
   });
 });
