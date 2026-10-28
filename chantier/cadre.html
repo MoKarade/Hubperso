@@ -1847,18 +1847,20 @@ const ETL = (n, k) => ({cours: n.j ? 'en cours (Jules)' : 'en cours', marc: 'att
   corr: 'en correction (rouverte)', pause: 'en pause, sans étiquette', file: 'dans la file', faite: 'fermée',
   acc: 'acceptée', aband: 'abandonnée', pm: 'preuve à reposer'})[k] || k;
 function etapesOf(n){
-  if (!Array.isArray(n.et) || n.start == null) return null;
+  // une tâche jamais commencée (ni PR ni modification) a pourtant des états datés : son historique part de son premier état étiqueté, rien n'est inventé avant
+  const deb = n.start != null ? n.start : Array.isArray(n.et) && n.et.length ? Date.parse(n.et[0][1]) : NaN;
+  if (!Array.isArray(n.et) || !isFinite(deb)) return null;
   const fin = n.end != null ? n.end : M.asof, out = [];
   const push = (k, a, b) => { if (b <= a) return; const p = out[out.length - 1]; if (p && p.k === k && p.b === a) p.b = b; else out.push({k, a, b}); };
   // la fermeture n'est pas une étape qui dure : elle devient la borne finale, ajoutée après coup (sinon, à quelques secondes de la fin, elle était fondue dans « en cours »)
   const ev = n.open ? n.et : n.et.filter(([k]) => k !== 'faite');
   // avant la première étape étiquetée, le travail avait déjà commencé (PR ou modification) : « en cours »
-  let cur = 'cours', t = n.start;
-  ev.forEach(([k, iso]) => { const x = Math.min(Math.max(Date.parse(iso), n.start), fin); if (!isFinite(x)) return; push(cur, t, x); t = Math.max(t, x); cur = k; });
+  let cur = 'cours', t = deb;
+  ev.forEach(([k, iso]) => { const x = Math.min(Math.max(Date.parse(iso), deb), fin); if (!isFinite(x)) return; push(cur, t, x); t = Math.max(t, x); cur = k; });
   push(cur, t, fin);
   // après la fusion de sa PR, une tâche n'est plus « en cours » : elle attend sa preuve, même si l'étiquette en-cours est restée (.github, 19/10)
   const mg = n.merged;
-  if (mg != null && mg > n.start && mg < fin) for (let i = 0; i < out.length; i++){
+  if (mg != null && mg > deb && mg < fin) for (let i = 0; i < out.length; i++){
     const x = out[i]; if (!['cours', 'rel'].includes(x.k) || x.b <= mg) continue;
     if (x.a >= mg) x.k = 'preuve'; else { out.splice(i + 1, 0, {k: 'preuve', a: mg, b: x.b}); x.b = mg; i++; }
   }
@@ -4737,7 +4739,7 @@ function vGanttFull(){
       // le projet : l'état de toutes ses tâches (une seule épaisseur), puis ce qui est PRÉVU ; sans étapes dans le relevé, les blocs d'avant
       const tout = [...new Set(M.leaves.filter(l => l.rl === n.rl).concat(n.ls || []))], hist = etatsOf(n, seg);
       bars += hist ? hist + chunkBars(tout, n, true) : chunkBars(tout, n);
-    } else if (n.start != null){
+    } else if (n.start != null || (n.leaf && etatsOf(n, seg))){
       const end = n.end || now;
       // l'état au fil du temps, jusqu'à la fin (Marc, 28/10) : une tâche acceptée ou abandonnée montre aussi son historique, une mission ou un chantier l'état de ses tâches ;
       // une seule épaisseur : les blocs de travail (hauteur selon le parallèle) ne servent que sans historique d'états
