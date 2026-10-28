@@ -80,6 +80,12 @@ export function isPublicPath(pathname: string): boolean {
   // lui, derrière la session.
   if (pathname === "/api/chantier/gestes/pc") return true;
 
+  // GET /api/chantier/notes-lia : le PC y LIT le nombre de notes de LIA que le coordinateur n'a pas lues
+  // (le hub lit le résumé de MemoryAI avec le HUB_TOKEN qu'il détient déjà). Cinquième route de serveur à
+  // serveur : même secret DÉDIÉ (`GANTT_SECRET`, Bearer, temps constant, 503 si absent, 401 si faux),
+  // égalité STRICTE et jamais le matcher du middleware. Elle ne rend qu'un nombre, jamais un contenu.
+  if (pathname === "/api/chantier/notes-lia") return true;
+
   // GET /api/sante : la sonde de santé de la vigie de l'Atelier (patron JobAI#49 /
   // BatchChef#154). TROISIÈME route qui traverse le garde, et la seule SANS aucune
   // authentification — délibérément : elle ne rend que `{ ok, cause }`, jamais une donnée,

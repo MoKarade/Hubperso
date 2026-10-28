@@ -10,6 +10,13 @@
 - **À poser par le PC** (jamais la valeur dans un message) : `MEMORYAI_SORTIES_TOKEN` en Production de Hubperso = la valeur de `MEMORYAI_TOKEN_HUBPERSO_ECRITURE` de MemoryAI, APRÈS la fusion de MemoryAI#396 (qui donne la porte à `hubperso` et ouvre `memoryai_sorties` à LIA) ; une variable ne s'applique qu'au build suivant. Sans elle : « non-configure », rien n'est poussé, rien ne casse.
 - **Preuve à lire** : `memoryai_sorties app=hubperso` rend les événements, et une question à LIA sur une mission du chantier en cite un.
 
+## 28/10/2026 : une route lue par le PC rend le nombre de notes de LIA non lues (Hubperso#664, mission MoKarade/.github#575)
+
+- **Pourquoi** : LIA peut laisser une note au coordinateur (MemoryAI, ADR 0022, choix « A » de Marc du 28/10), mais rien ne le réveillait. Le PC n'a aucun jeton MemoryAI ; son seul secret est `GANTT_SECRET`.
+- **Quoi** : `GET /api/chantier/notes-lia` (`Authorization: Bearer <GANTT_SECRET>`) rend `{ ok: true, notesLia: <entier ≥ 0 | null> }`. Le hub lit en direct le résumé de MemoryAI (`fetchSummaryLive`, `HUB_TOKEN` déjà détenu), métrique « Notes de LIA non lues » (MemoryAI#399, `lib/notesLia.ts`). `null` = inconnu (injoignable, invalide, métrique absente), jamais 0. 503 si `GANTT_SECRET` absent, 401 si faux (MemoryAI n'est alors pas interrogée), 429 au-delà de 30 appels par minute.
+- **Aucun secret neuf, aucun coût** ; le contenu des notes ne passe jamais par le hub. Cinquième route de serveur à serveur : égalité STRICTE dans `isPublicPath`, `ROUTES_A_JETON` à jour.
+- **Suite** : le tour du PC (MoKarade/.github#681) lit cette route et lance `boite-reacteur.yml` quand le nombre dépasse celui déjà signalé.
+
 ## 28/10/2026 : LIA reçoit les faits d'une barre du Gantt et les analyse elle-même (Hubperso#644, mission MoKarade/.github#575)
 
 - **Pourquoi** : clic droit sur la barre « Hubperso 30 j », LIA répondait « je ne vois pas d'ici le contenu de cette barre » (Marc, 28/10). Une barre n'a presque pas de texte visible ; dates, état, tâches et acteurs n'arrivaient pas à LIA.
