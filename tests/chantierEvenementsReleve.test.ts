@@ -126,10 +126,87 @@ describe("avecEvenements : le relevé est la base, les événements d'après le 
   });
 });
 
+describe("avecEvenements : le rattrapage GitHub (événements « snapshot », Hubperso#699)", () => {
+  const snap = (n: number, at: string, etat: string, plus: Record<string, string>, repo = "hub") => ev("issues", "snapshot", n, at, etat, plus, repo);
+  const labs = (...l: string[]) => JSON.stringify(l);
+
+  it("l'état courant d'une issue remplace celui du relevé : étiquettes, niveau, titre, ouverte ; la prise d'avant est gardée", () => {
+    const D = releve([tache(5, ["prio:2"], { s: "2026-10-28T12:00:00Z" })]);
+    const R = avecEvenements(D, [snap(5, "2026-10-28T21:00:00Z", "ouverte", { t: "autre titre", labs: labs("niveau:tâche", "en-cours", "qui:marc") })]);
+    expect(noeud(R, 5)).toMatchObject({ t: "autre titre", lb: ["niveau:tâche", "en-cours", "qui:marc"], l: "tâche", st: "open", x: null, s: "2026-10-28T12:00:00Z" });
+    expect(noeud(D, 5)!.lb).toEqual(["prio:2"]);
+  });
+
+  it("fermée : fin = celle de GitHub, avec la preuve « Acceptée » lue ; une preuve déjà au relevé n'est pas remplacée ; rouverte plus tard : ouverte", () => {
+    const D = releve([tache(5), tache(6, [], { pv: { u: "u0", c: "2026-10-28T18:00:00Z" } })]);
+    const acc = JSON.stringify({ u: "https://github.com/MoKarade/Hubperso/issues/5#issuecomment-1", c: "2026-10-28T20:30:00.000Z" });
+    const R = avecEvenements(D, [
+      snap(5, "2026-10-28T21:00:00Z", "fermee", { labs: labs("niveau:tâche"), fin: "2026-10-28T20:31:00.000Z", acc }),
+      snap(6, "2026-10-28T21:00:00Z", "fermee", { labs: labs("niveau:tâche"), fin: "2026-10-28T20:31:00.000Z", acc }),
+    ]);
+    expect(noeud(R, 5)).toMatchObject({ st: "closed", x: "2026-10-28T20:31:00.000Z", pv: { c: "2026-10-28T20:30:00.000Z" } });
+    expect(noeud(R, 6)!.pv).toEqual({ u: "u0", c: "2026-10-28T18:00:00Z" });
+    const R2 = avecEvenements(D, [snap(5, "2026-10-28T21:00:00Z", "fermee", { fin: "2026-10-28T20:31:00.000Z" }), ev("issues", "reopened", 5, "2026-10-28T21:10:00Z", "ouverte")]);
+    expect(noeud(R2, 5)).toMatchObject({ st: "open", x: null });
+    // fermée sans preuve lue : aucune preuve inventée
+    expect(noeud(avecEvenements(D, [snap(5, "2026-10-28T21:00:00Z", "fermee", { fin: "2026-10-28T20:31:00.000Z" })]), 5)!.pv).toBeUndefined();
+  });
+
+  it("une issue inconnue du relevé apparaît si elle est ouverte, jamais si elle est fermée ; un instantané d'avant le relevé n'y change rien", () => {
+    const D = releve([tache(5)]);
+    const R = avecEvenements(D, [snap(9, "2026-10-28T21:00:00Z", "ouverte", { t: "neuve", labs: labs("niveau:tâche"), cr: "2026-10-28T20:50:00.000Z" }), snap(10, "2026-10-28T21:00:00Z", "fermee", { t: "vieille" })]);
+    expect(noeud(R, 9)).toMatchObject({ n: 9, t: "neuve", l: "tâche", c: "2026-10-28T20:50:00.000Z", st: "open" });
+    expect(noeud(R, 10)).toBeUndefined();
+    expect(avecEvenements(D, [snap(5, "2026-10-28T19:00:00Z", "fermee", { fin: "2026-10-28T19:00:00.000Z" })])).toBe(D);
+  });
+
+  it("un instantané de PR change la PR de sa tâche ; un événement du webhook d'après le rejoue par-dessus", () => {
+    const pr = { n: 20, repo: "Hubperso", state: "open", draft: true, merged: null, closed: null, upd: "2026-10-28T19:00:00Z" };
+    const D = releve([tache(5, [], { pr })]);
+    const fus = avecEvenements(D, [ev("pull_request", "snapshot", 20, "2026-10-28T20:50:00Z", "fusionnee")]);
+    expect(noeud(fus, 5)!.pr).toMatchObject({ state: "closed", merged: "2026-10-28T20:50:00Z" });
+    const rouv = avecEvenements(D, [ev("pull_request", "snapshot", 20, "2026-10-28T20:50:00Z", "fusionnee"), ev("pull_request", "reopened", 20, "2026-10-28T21:00:00Z", "ouverte")]);
+    expect(noeud(rouv, 5)!.pr).toMatchObject({ state: "open", merged: null });
+  });
+
+  it("des étiquettes illisibles ne cassent rien", () => {
+    const D = releve([tache(5, ["prio:2"])]);
+    const R = avecEvenements(D, [snap(5, "2026-10-28T21:00:00Z", "ouverte", { labs: "{pas du json", acc: "oups" })]);
+    expect(noeud(R, 5)).toMatchObject({ lb: [], st: "open" });
+    expect(noeud(R, 5)!.pv).toBeUndefined();
+  });
+});
+
+describe("chantier/cadre.html : le rattrapage GitHub", () => {
+  it("le message du hub est routé vers la page, et mis en file tant qu'elle n'écoute pas", () => {
+    expect(SOURCE).toContain("m.type === 'chantier-rattrapage'");
+    expect(SOURCE).toContain("window.ratEnAttente");
+    expect(SOURCE).toContain("window.surRattrapage = m =>");
+  });
+
+  it("« Tâches et PR » ne prend l'âge des événements que si le rattrapage est complet et les événements vivants ; sinon le relevé, et la cause est dite", () => {
+    expect(SOURCE).toContain("at: M ? (ratComplet() && evVivantTop() ? Math.max(M.asof, EVS.lu) : M.asof) : NaN");
+    expect(SOURCE).toContain("rattrapage GitHub non branché (jeton de lecture absent)");
+    expect(SOURCE).toContain("rattrapage incomplet (");
+    expect(SOURCE).toContain("rattrapage tronqué (");
+  });
+
+  it("le rattrapage est complet seulement si lu, sans erreur, sans dépôt illisible ni tronqué", () => {
+    const f = new Function("RAT", `const ratComplet = () => isFinite(RAT.lu) && !RAT.err && !RAT.errs.length && !RAT.inc.length; return ratComplet();`) as (r: unknown) => boolean;
+    expect(f({ lu: Date.now(), err: "", errs: [], inc: [] })).toBe(true);
+    expect(f({ lu: NaN, err: "", errs: [], inc: [] })).toBe(false);
+    expect(f({ lu: Date.now(), err: "", errs: ["job : HTTP 403"], inc: [] })).toBe(false);
+    expect(f({ lu: Date.now(), err: "", errs: [], inc: ["fin"] })).toBe(false);
+    expect(f({ lu: Date.now(), err: "panne", errs: [], inc: [] })).toBe(false);
+    expect(SOURCE).toContain("const ratComplet = () => isFinite(RAT.lu) && !RAT.err && !RAT.errs.length && !RAT.inc.length;");
+  });
+});
+
 describe("chantier/cadre.html : le modèle est recalculé sur le relevé et les événements", () => {
   it("à chaque relevé reçu et à chaque événement nouveau, quel que soit l'onglet ; le relevé reçu est gardé tel quel", () => {
     expect(SOURCE).toContain("BASE = d; M = model(avecEvenements(d, [...EV.values()]));");
-    expect(SOURCE).toContain("if (M && BASE && EV.size !== avant){ try { M = model(avecEvenements(BASE, [...EV.values()])); render(); }");
+    expect(SOURCE).toContain("const recalculer = () => { try { M = model(avecEvenements(BASE, [...EV.values()])); render(); }");
+    expect(SOURCE).toContain("if (M && BASE && EV.size !== avant) recalculer();");
     expect(SOURCE).toContain("let CUR = EMBED, SRC = 'copie publiée', BASE = null;");
   });
 });
