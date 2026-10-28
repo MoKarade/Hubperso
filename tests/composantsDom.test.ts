@@ -27,7 +27,7 @@ import { PaletteCommandes } from "@/components/PaletteCommandes";
 import { RefreshControls } from "@/components/RefreshControls";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { BoutonTrigger } from "@/components/BoutonTrigger";
-import { commandes } from "@/lib/palette";
+import { commandes, type Commande } from "@/lib/palette";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -129,9 +129,10 @@ describe("PaletteCommandes — clavier et clic", () => {
     expect(dialogue()).toBeNull();
   });
 
-  it("clic sur une commande externe : nouvel onglet SANS opener, jamais le routeur", () => {
+  it("clic sur une commande externe tierce : nouvel onglet SANS opener, jamais le routeur", () => {
     const ouvrir = vi.spyOn(window, "open").mockImplementation(() => null);
-    monter(h(PaletteCommandes, { commandes: liste }));
+    const tierce: Commande[] = [{ id: "gh", libelle: "GitHub", genre: "externe", cible: "https://github.com/MoKarade" }];
+    monter(h(PaletteCommandes, { commandes: tierce }));
     touche(document, "k", { ctrlKey: true });
     const externe = lignes().find((l) => l.querySelector(".palette__externe"));
     expect(externe, "au moins une commande externe").toBeDefined();
@@ -139,6 +140,18 @@ describe("PaletteCommandes — clavier et clic", () => {
     expect(ouvrir).toHaveBeenCalledTimes(1);
     expect(ouvrir.mock.calls[0]![1]).toBe("_blank");
     expect(ouvrir.mock.calls[0]![2]).toContain("noopener");
+    expect(moq.push).not.toHaveBeenCalled();
+    expect(dialogue()).toBeNull();
+  });
+
+  it("clic sur « Ouvrir <app> » : navigation en place (bascule vers la PWA), jamais d'onglet ni le routeur", () => {
+    const ouvrir = vi.spyOn(window, "open").mockImplementation(() => null);
+    monter(h(PaletteCommandes, { commandes: liste }));
+    touche(document, "k", { ctrlKey: true });
+    const externe = lignes().find((l) => l.querySelector(".palette__externe"));
+    expect(externe, "au moins une commande externe").toBeDefined();
+    cliquer(externe!);
+    expect(ouvrir).not.toHaveBeenCalled();
     expect(moq.push).not.toHaveBeenCalled();
     expect(dialogue()).toBeNull();
   });
