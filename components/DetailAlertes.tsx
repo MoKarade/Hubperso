@@ -6,6 +6,7 @@
 
 import type { HubAlert } from "@mokarade/hub-contract";
 import { safeHttpUrl } from "@/lib/url";
+import { attributsLien } from "@/lib/lienApp";
 import { severityTone } from "@/lib/status";
 
 /** Gravité d'une alerte en mots simples (jamais le mot anglais du contrat). */
@@ -35,8 +36,7 @@ function AlerteDetaillee({ alerte }: { alerte: HubAlert }) {
         <a
           className="alert__link"
           href={href}
-          target="_blank"
-          rel="noreferrer noopener"
+          {...attributsLien(href)}
         >
           {contenu}
         </a>

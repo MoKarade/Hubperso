@@ -22,11 +22,10 @@
 // c'est dit plutôt que suggéré. Ce test garde la condition NÉCESSAIRE, celle qui est de notre
 // côté : la navigation reste de premier niveau.
 //
-// ⚠️ PORTÉE DÉLIBÉRÉE — les deux liens gardés ici sont ceux qui ouvrent l'APP elle-même, et
-// eux seuls. Les `href` venus du CONTRAT (alertes, actions, recommandations) gardent leur
-// `target="_blank"` : ils peuvent pointer n'importe où (le contrat ne les contraint pas à
-// l'origine de l'app), et les ouvrir en place ferait quitter le hub à chaque clic sur une
-// alerte. Si Marc veut la même bascule pour les liens profonds, c'est un lot à part.
+// ⚠️ PORTÉE — les deux liens gardés ici sont ceux qui ouvrent l'APP elle-même. Les `href` venus du
+// CONTRAT (alertes, actions, recommandations) peuvent pointer n'importe où : ils gardent leur
+// `target="_blank"` sauf quand ils visent une app du parc (`<nom>.hubperso.com`), où la bascule vers la
+// PWA installée prime (`lib/lienApp.ts`, gardé par `tests/lienApp.test.ts`, issue #483, 28/10/2026).
 
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";

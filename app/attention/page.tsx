@@ -18,6 +18,7 @@ import { CADENCE_HORLOGE_MS, continuite, etatObservation } from "@/lib/gel";
 import { lireHistoriqueTous } from "@/lib/historiqueDb";
 import { baseConfiguree } from "@/lib/db";
 import { formatDuree } from "@/lib/format";
+import { attributsLien } from "@/lib/lienApp";
 
 export const dynamic = "force-dynamic";
 
@@ -111,8 +112,7 @@ export default async function PageAttention() {
                 <a
                   className="attention__lien"
                   href={entree.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
+                  {...attributsLien(entree.href)}
                 >
                   Ouvrir ↗
                 </a>

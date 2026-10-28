@@ -19,6 +19,10 @@
 - **Tests** : `tests/chantierCadre.test.ts` (le cadre ne contient plus de rechargement ni de navigation de lui-même), `tests/chantierCadreDom.test.ts` (adresse neuve, onglet repris, onglet inventé ignoré, adresse d'ouverture conservée).
 - **Preuve à lire** : `/chantier` ouvert, un déploiement passe, le cadre se recharge seul (page cachée ou inutilisée depuis 45 s) et reste vivant, sans « unauthenticated ».
 
+## 28/10/2026 : lia-ui v0.48.0, LIA lit les barres HTML et relit l'état moins souvent (Hubperso#717, mission MoKarade/.github#719)
+
+Épingle `@mokarade/lia-ui` v0.48.0 (sha pelé `b0c8524`), seul changement (`package.json`, lock). v0.47.1 (lia-ui#162, fil Vercel : `/api/lia/etat` = 2,3 k appels/24 h, 28 % des invocations du hub) : l'état partagé n'est relu que toutes les 2 minutes et seulement quand la page est à l'écran, une page qui revient au premier plan relit tout de suite. v0.48.0 (lia-ui#164) : un clic droit sur une barre de graphique dessinée en HTML vise sa ligne et LIA lit le texte de chaque ligne et la largeur dessinée de sa barre. Preuve : déploiement `READY` sur le commit fusionné ; le fil Vercel relève `/api/lia/etat` sur 24 h après le déploiement (cible : au moins moitié moins d'appels).
+
 ## 28/10/2026 : En cours liste les façons de travailler, avec leur état et leurs durées (Hubperso#710, mission #538)
 
 - **Règle de Marc** (28/10, 21:51Z) : « chaque changement dans la façon de travailler doit être dans la bonne page du chantier, toujours à jour, avec les durées ».
@@ -40,6 +44,14 @@
 - **Règle de Marc** (28/10, 20:52Z) : « ce qui n'attend pas moi directement n'est pas une tâche qui attend, c'est une tâche prévue ». Seule une tâche `qui:marc` « attend » (colonne « Attend toi » de En cours, états, légendes, fiches).
 - **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
 - **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
+
+## 28/10/2026 : les liens du hub vers une app du parc s'ouvrent en place (Hubperso#483, mission #285)
+
+- **Avant** : seuls le titre de la carte et le bouton de la page d'app n'ouvraient pas d'onglet ; les liens du contrat (alertes, bandeau, actions, recommandations, page Attention) et la palette gardaient `_blank`, ce qui court-circuite la bascule vers la PWA installée sur Android.
+- **Après** : `lib/lienApp.ts` (`viseUneApp`, `attributsLien`) : un href `https://<nom>.hubperso.com` (hors `www` et le domaine nu) perd `_blank` ; GitHub et les sites tiers le gardent. La palette utilise `location.assign` pour une app du parc. Verrou : `tests/lienApp.test.ts`, qui complète `tests/pwaLiens.test.ts`.
+- **Ce que ça ne prouve pas** : que Chrome bascule vers l'app. La lecture se fait sur l'Android de Marc, lien par lien (tâche en `preuve-attendue`).
+- **Constat à part** : `finance.hubperso.com/manifest.webmanifest` redirige vers la connexion du hub (lu le 28/10) ; les cinq autres apps rendent un manifeste cohérent (`id`, `start_url`, `scope` = `/`).
+- **Option écartée** : `handle_links` (expérimental, non pris en charge sur Android) [À vérifier].
 
 ## 28/10/2026 : le suivi de sessions de Sentry est coupé côté serveur (Hubperso#702, mission #508)
 
