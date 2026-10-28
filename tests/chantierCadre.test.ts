@@ -236,3 +236,22 @@ describe("la barre du Gantt montre l'état au fil du temps (Hubperso#572)", () =
     expect(DOCUMENT).toContain("bars += hist || seg(n.start, end, `gl2 ${sc}`)");
   });
 });
+
+describe("les quotas se lisent d'un coup d'oeil, une ligne par ressource", () => {
+  it("chaque ressource est une ligne cliquable : nom, barre avec son repère, valeur, une phrase", () => {
+    expect(DOCUMENT).toContain("function quotaPhrase(");
+    expect(DOCUMENT).toContain("const QORD = {ko: 0, vig: 1, nd: 2, ok: 3};");
+    expect(DOCUMENT).toContain("<div class=\"qlist\">");
+    expect(DOCUMENT).toContain("data-qd=\"${esc(g.key)}\"");
+  });
+
+  it("Copilot reste une ligne à part, sans quota inventé", () => {
+    expect(DOCUMENT).toContain("pas de quota mesuré");
+    expect(DOCUMENT).toContain("data-det=\"copilot\"");
+  });
+
+  it("les courbes sont repliées sous les lignes et les cibles font au moins 44 px", () => {
+    expect(DOCUMENT).toContain("<details class=\"qmore\"><summary>Courbes réel contre rythme</summary>");
+    expect(DOCUMENT).toMatch(/\.qrow\{[^}]*min-height:44px/);
+  });
+});
