@@ -267,3 +267,16 @@ describe("une tâche jamais commencée montre aussi ses états (Hubperso#589)", 
     expect(DOCUMENT).toContain("} else if (n.start != null || (n.leaf && etatsOf(n, seg))){");
   });
 });
+
+describe("aucune projection de quota trop tôt dans la période (Hubperso#592)", () => {
+  it("sous 10 % de la période écoulée, la jauge ne projette pas et le dit", () => {
+    expect(DOCUMENT).toContain("proj = f >= .1 ? o.used / f : null;");
+    expect(DOCUMENT).toContain("else if (proj != null && proj > o.limit) {");
+    expect(DOCUMENT).toContain("début de période : trop tôt pour projeter");
+  });
+
+  it("la phrase de la ligne et le tiroir de détail ne lisent pas une projection absente", () => {
+    expect(DOCUMENT).toContain("if (j.proj != null && j.proj > g.limit) return 'à ce rythme : '");
+    expect(DOCUMENT).toContain("j.proj == null ? 'trop tôt : moins de 10 % de la période écoulée'");
+  });
+});
