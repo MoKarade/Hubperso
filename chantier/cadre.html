@@ -819,6 +819,7 @@ body.anim .card .cs i{animation:grow .7s ease both}
 #mx .xc-b.h.r{box-shadow:inset 0 0 0 2px var(--blk-t);color:var(--blk-t)}#mx .xc-b.h.ok{box-shadow:inset 0 0 0 2px var(--done);color:var(--done)}
 #mx .xc-b.on{animation:xcg 1.8s ease-in-out infinite}
 #mx .xc-b:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.xr-n{display:flex;flex-wrap:wrap;gap:8px 28px;margin:6px 0 10px}.xr-n>div{display:flex;align-items:baseline;gap:8px}.xr-n b{font:800 28px/1 var(--fm);color:var(--ink)}.xr-n span{font-size:13.5px;color:var(--mute)}.xr-n .av b{color:var(--marc)}
 .xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:20px;height:20px;border-radius:6px;font-size:10px;cursor:default}#mx .xc-key .xc-b::before{display:none}
 @media (prefers-reduced-motion:reduce){#mx .xc-b.on,.xc-live i{animation:none}}
 @media (max-width:700px){.xc-board{--mw:700px}}
@@ -3340,6 +3341,7 @@ let CLIGNES = [];
 // prochains prélèvements connus ; `mois` = revient chaque mois, `dec` = commence en décembre (hors du « fixe » d'aujourd'hui)
 let CAVENIR = [];
 let CNOTES = {};
+let RECUS_COURRIELS = null;   // bloc des reçus lus dans les courriels (couts_manuels) : {lu_le, erreur, recus[{id, date, fournisseur, type, montant, devise, devise_probable, a_verifier}]}
 const cc = (m, dev) => dev === 'USD' ? m * fxTaux() : m;
 const cmoney = (v, dec = 0) => nfmt(v, dec) + ' $';
 const ccol = k => CPOSTES.find(p => p[0] === k)[2];
@@ -4158,6 +4160,7 @@ function sources(){
     {id: 'api-mois', nom: 'API des apps, ce mois', nat: 'mes', at: t(jauge('api', 'data_as_of')), cad: 2 * H, ret: 3 * H, per: 6 * H, src: 'hubperso.com/api/cout : la date est celle de l’app la plus ancienne ; une app au repos garde sa date, ce n’est pas une panne'},
     {id: 'api-cumul', nom: 'API des apps, plus ancienne mesure', nat: 'mes', at: t(jauge('api', 'cumul_as_of')), cad: 24 * H, src: 'le cumul est daté de la mesure la plus ancienne parmi les apps : une app qui ne publie plus le fige (relevé du PC à ' + (isFinite(t(jauge('api', 'releve'))) ? hh(t(jauge('api', 'releve'))) : '—') + ')'},
     {id: 'couts-apps', nom: 'Coûts des apps', nat: 'mes', at: window.hubCoutsAt || NaN, cad: 5 * MIN, src: 'lu par le hub chez chaque app'},
+    ...(RECUS_COURRIELS ? [{id: 'recus-courriels', nom: 'Reçus lus dans les courriels', nat: 'mes', at: t(RECUS_COURRIELS.lu_le), cad: 7 * 24 * H, ret: 7 * 24 * H + 6 * H, per: 8 * 24 * H, src: 'courriels de reçus lus en lecture seule par le PC, une fois par semaine (nouvel essai toutes les 6 h après un échec)'}] : []),
     {id: 'recus', nom: 'Reçus de dépenses', nat: 'sai', at: dernier, cad: 31 * 24 * H, src: 'reçus relevés à la main dans les courriels : dernier reçu le ' + (jours.length ? cDate(jours[jours.length - 1]) : '—')},
     fxLive() ? {id: 'taux', nom: 'Taux USD → CAD', nat: 'cal', at: t(fxLive().releve), cad: 6 * H, src: 'Banque du Canada (série FXUSDCAD du ' + String(fxLive().date).slice(0, 10) + '), appliqué à tous les reçus en $ US : une conversion, pas le taux de chaque jour'}
       : {id: 'taux', nom: 'Taux USD → CAD', nat: 'est', at: NaN, cad: 0, src: 'taux fixe de ' + FX + ' (reçu du 20/05), pas un cours du jour : le relevé ne donne pas le taux de la Banque du Canada'},
@@ -4493,6 +4496,8 @@ function prive(c){
   if (Array.isArray(c.lignes)) CLIGNES = c.lignes;
   if (Array.isArray(c.avenir)) CAVENIR = c.avenir;
   if (c.notes && typeof c.notes === 'object') CNOTES = c.notes;
+  // le bloc des reçus lus dans les courriels : la clé `recus_…` de couts_manuels qui porte une liste `recus`
+  const kR = Object.keys(c).find(k => k.indexOf('recus_') === 0 && c[k] && typeof c[k] === 'object' && Array.isArray(c[k].recus)); if (kR) RECUS_COURRIELS = c[kR];
 }
 function load(d, anim){
   try { prive(d && d.couts_manuels); M = model(d); CUR = d; if (anim) ANIM = true; render(); }
@@ -5339,7 +5344,40 @@ function vGanttFull(){
       + (totaux ? `<div class="clist">${totaux}</div>` : '') + (D.note ? `<p class="qnote">${esc(D.note)}</p>` : '')
       + apps + `<p class="qnote">Les coûts sont convertis en dollars canadiens à un taux approximatif (les API LLM facturent en USD). Chaque montant vient de l’app elle-même, jamais estimé par le hub.</p></section>`;
   }
-  function vCoutsM(){ return vAppsHub() + vCoutsRegistre(); }
+  /* ---------- Reçus lus dans les courriels (Hubperso#640) : le bloc `recus_…` de `couts_manuels` = {lu_le, erreur, recus[{id, date, fournisseur, type, montant, devise, devise_probable, a_verifier}]}, lu par le PC une fois par semaine ----------
+     Un reçu à vérifier n'entre JAMAIS dans le total sûr : il est montré à part, en creux. Un montant, une devise absents ne sont pas devinés ; une devise probable est dite probable.
+     Ils ne remplacent pas le registre des dépenses : ils s'y ajoutent à l'écran, sans toucher à ses totaux. */
+  function courrielsRecus(){
+    const R = RECUS_COURRIELS; if (!R) return null;
+    const L = (Array.isArray(R.recus) ? R.recus : []).filter(r => r && /^\d{4}-\d{2}-\d{2}/.test(String(r.date || ''))).map(r => {
+      const m = r.montant != null && r.montant !== '' && Number.isFinite(+r.montant) ? +r.montant : null, dev = r.devise === 'USD' || r.devise === 'CAD' ? r.devise : null, prob = !dev && (r.devise_probable === 'USD' || r.devise_probable === 'CAD') ? r.devise_probable : null;
+      const sgn = r.type === 'remboursement' ? -1 : 1, av = !!r.a_verifier || m == null || !dev;
+      return {d: String(r.date).slice(0, 10), f: String(r.fournisseur || '—'), m, dev, prob, rem: sgn < 0, av, sur: !av, cad: m != null && (dev || prob) ? sgn * cc(m, dev || prob) : null};
+    });
+    return {err: R.erreur ? String(R.erreur) : null, L};
+  }
+  const cmTip = r => r.f + '\n' + cDate(r.d) + '\n' + (r.rem ? 'remboursement ' : '') + (r.m != null ? cDev(r.m, r.dev || r.prob || 'CAD') + (r.dev ? '' : r.prob ? ' (devise probable)' : ' (devise inconnue)') : 'montant absent') + (r.av ? '\nà vérifier' : '');
+  function vRecusCourriels(){
+    const G = courrielsRecus(); if (!G) return '';
+    const t0 = dayKey(Date.now() - PS().ms), auj = cAujourdhui(), L = G.L.filter(r => r.d >= t0 && r.d <= auj), premier = G.L.reduce((a, r) => r.d < a ? r.d : a, '9999-99-99');
+    const sur = L.filter(r => r.sur), tot = sur.reduce((a, r) => a + r.cad, 0), avs = L.filter(r => !r.sur), avCad = avs.reduce((a, r) => a + (r.cad || 0), 0), sansM = avs.filter(r => r.cad == null).length;
+    const nb = (b, t, cls) => `<div class="${cls || ''}">${b}<span>${t}</span></div>`;
+    const head = `<p class="ccap"><b>Reçus lus dans les courriels</b>${fraisHTML(['recus-courriels'])}${G.err ? ' <span class="cf" style="color:var(--blk-t)" title="' + esc(G.err) + '">lecture en erreur</span>' : ''}</p>`;
+    const nums = `<div class="xr-n">${nb('<b>' + nfmt(Math.round(tot)) + '</b> $', 'sûrs · ' + sur.length, 'ok')}${avs.length ? nb('<b>' + (avCad ? '≈ ' + nfmt(Math.round(avCad)) + ' $' : avs.length) + '</b>', 'à vérifier · ' + avs.length + (sansM ? ', ' + sansM + ' sans montant' : ''), 'av') : ''}</div>`;
+    if (!L.length) return `<section class="csec" style="margin-top:0">${head}<p class="empty" role="status">Aucun reçu lu sur ${esc(PS().n)}${premier < '9999' ? ' · le plus ancien date du ' + esc(cDate(premier)) : ''}.</p></section>`;
+    const fs = [...new Set(L.map(r => r.f))].map(f => [f, L.filter(r => r.f === f).reduce((a, r) => a + Math.abs(r.cad || 0), 0)]).sort((a, b) => b[1] - a[1]).slice(0, 8).map(x => x[0]);
+    const W = Math.max(320, Math.min(innerWidth, 1240) - 32), Lm = mobile() ? 86 : 150, rh = 26, T = 8, Hh = T + fs.length * rh + 24, iw = W - Lm - 12;
+    const dmin = Date.parse(t0 + 'T12:00:00Z'), dmax = Date.parse(auj + 'T12:00:00Z'), X = d => Lm + (dmax === dmin ? .5 : (Date.parse(d + 'T12:00:00Z') - dmin) / (dmax - dmin)) * iw, mx = Math.max(1, ...L.map(r => Math.abs(r.cad || 0)));
+    let g = fs.map((f, i) => `<text x="${Lm - 8}" y="${T + i * rh + rh / 2 + 4}" text-anchor="end">${esc(f.length > (mobile() ? 11 : 20) ? f.slice(0, mobile() ? 10 : 19) + '…' : f)}</text><line class="g" x1="${Lm}" x2="${W}" y1="${T + i * rh + rh / 2}" y2="${T + i * rh + rh / 2}"/>`).join('');
+    L.forEach(r => { const i = fs.indexOf(r.f); if (i < 0) return; const x = X(r.d), y = T + i * rh + rh / 2, rad = r.cad != null ? 4 + 7 * Math.sqrt(Math.abs(r.cad) / mx) : 4;
+      g += r.sur ? `<circle cx="${x.toFixed(1)}" cy="${y}" r="${rad.toFixed(1)}" fill="${r.rem ? 'var(--done)' : 'var(--vio)'}"/>`
+        : `<circle cx="${x.toFixed(1)}" cy="${y}" r="${rad.toFixed(1)}" fill="none" stroke="var(--marc)" stroke-width="2.4" stroke-dasharray="3 2.5"/>`; });
+    g += `<text x="${Lm}" y="${Hh - 6}">${esc(fd(t0))}</text><text x="${W - 10}" y="${Hh - 6}" text-anchor="end">${esc(fd(auj))}</text>`;
+    g += L.map(r => { const i = fs.indexOf(r.f); return i < 0 ? '' : hit(X(r.d) - 9, T + i * rh, 18, rh, cmTip(r)); }).join('');
+    const old = premier > t0 ? `<p class="qnote">relevé depuis le ${esc(cDate(premier))}</p>` : '';
+    return `<section class="csec" style="margin-top:0">${head}${nums}<svg class="cch" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Reçus lus dans les courriels, une ligne par fournisseur : ${sur.length} sûrs, ${avs.length} à vérifier">${g}</svg><div class="chips"><span><i style="background:var(--vio)"></i>sûr</span><span><i style="background:none;border:2.5px dashed var(--marc);box-sizing:border-box"></i>à vérifier</span><span><i style="background:var(--done)"></i>remboursement</span></div>${old}</section>`;
+  }
+  function vCoutsM(){ return vAppsHub() + sf('Reçus courriels', vRecusCourriels) + vCoutsRegistre(); }
   function vCoutsRegistre(){
     if (!CLIGNES.length && !VERCEL_RECUS.length && !CAVENIR.length) return `<p class="empty" role="status">Le registre des dépenses n’est pas encore transmis au hub : rien n’est inventé en attendant.</p>`;
     const C0 = cModel(), C = coutsSerie(C0), CP = coutsPer(C0), tot = CP.total, nPR = PRL().filter(p => p.t > Date.now() - PS().ms).length;
