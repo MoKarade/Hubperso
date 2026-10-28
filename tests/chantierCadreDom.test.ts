@@ -532,6 +532,25 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     expect(faitsDe({ t: "sans ref" }, H)).toBe("");
   });
 
+  it("le clic droit sur une ligne d'app ou une barre de mission lit ses faits dans le relevé (les apps sont dans M.apps, pas dans M.N)", () => {
+    const g = globalThis as Record<string, unknown>;
+    Object.assign(g, { M: { N: { m: mission, t1, t2, t3 }, apps: [app], asof: H.asof }, LV: H.LV, STE: H.STE, ORDRE: H.ORDRE, path: H.path, stLabel: H.stLabel, quand: H.quand, dur: H.dur, retTxt: H.retTxt, court: H.court });
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    Object.assign(app, { ref: "app:a", ls: [t1, t2, t3], ce: { acc: 1, cours: 1, marc: 1 }, start: 1000, fe: 9000 });
+    try {
+      document.body.innerHTML = `<main id="view"><div class="grow" data-ref="app:a"><button class="gbx" data-open="app:a">barre</button></div><div class="grow" data-ref="m"><button class="rb" data-open="m">Gantt</button></div></main>`;
+      const barreApp = clicDroitDe(document.querySelector('[data-open="app:a"]'))!;
+      expect(barreApp.genre).toBe("une barre du Gantt");
+      expect(barreApp.donnees).toContain("App « Hubperso »");
+      expect(barreApp.donnees).toContain("3 tâches : 1 acceptée, 1 en cours, 1 attend Marc");
+      expect(barreApp.donnees).toContain("fin prévue : t9000");
+      const ligneMission = clicDroitDe(document.querySelector('[data-open="m"]'))!;
+      expect(ligneMission.donnees).toContain("Mission « Gantt source de vérité »");
+    } finally {
+      for (const k of ["M", "LV", "STE", "ORDRE", "path", "stLabel", "quand", "dur", "retTxt", "court"]) delete g[k];
+    }
+  });
+
   it("le clic droit sur un élément qui n'est pas dans le relevé donne le texte du bloc en entier, au-delà du repère de 300 caractères", () => {
     if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
     document.body.innerHTML = `<main id="view"><article class="qa"><h3>Claude</h3><p>${"chiffre ".repeat(100)}</p></article></main>`;
