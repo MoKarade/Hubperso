@@ -5195,12 +5195,12 @@ function vGanttFull(){
     const a = (l.acteurs || []).filter(x => x.fin).sort((x, y) => y.fin - x.fin)[0];
     return a ? ECN[a.qui] || a.qui : l.qui === '—' ? 'personne encore' : l.qui;
   };
-  const ecForme = l => { const q = ecQui(l); return q === 'Jules' ? 'j' : q === 'Copilot' ? 'c' : q === 'Marc' ? 'm' : ''; };
   const ecSuite = l => {
     const pr = l.pr, w = (l.waits || []).filter(x => x.unknown || x.open).slice(0, 3);
     switch (l.e){
       case 'cours': return !pr || pr.state !== 'open' ? 'PR pas encore ouverte' : pr.draft ? 'PR en brouillon : elle ne fusionne qu’une fois sortie du brouillon' : 'PR ouverte';
       case 'rel': return 'PR prête : elle fusionne quand les contrôles sont verts';
+      case 'acc': return l.end ? 'acceptée ' + quand(l.end) : 'acceptée';
       case 'fus': return l.pa != null ? 'preuve due ' + quand(l.pa) : 'preuve à faire après la fusion';
       case 'prog': return l.pa != null ? 'preuve prévue ' + quand(l.pa) : l.paT ? 'preuve : ' + String(l.paT).slice(0, 110) : 'preuve attendue après un événement';
       case 'ret': return l.pa != null ? 'preuve due depuis ' + quand(l.pa) : l.pm ? 'preuve manquante' : 'preuve en retard';
