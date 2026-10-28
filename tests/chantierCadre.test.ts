@@ -593,3 +593,23 @@ describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
     }
   });
 });
+
+describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du relevé seulement (#640)", () => {
+  it("existe dans la barre et s'ouvre par ?onglet=cours", () => {
+    expect(ongletDe("cours")).toBe("cours");
+    expect(DOCUMENT).toContain("['cours', 'En cours']");
+    expect(DOCUMENT).toContain("tab === 'cours' ? vEnCours()");
+    expect(DOCUMENT).toContain("t === 'cours' || t === 'couts'");
+  });
+
+  it("montre quoi, qui, état, depuis quand, ce qui bloque et la suite, sans inventer ce que le relevé ne porte pas", () => {
+    for (const t of ["Travail en cours", "Fusionnées, preuve à venir", "Preuve en retard", "Bloquées", "Attendent Marc", "La suite prévue", "PR sans tâche"]) {
+      expect(DOCUMENT).toContain(t);
+    }
+    expect(DOCUMENT).toContain("const ecQui = l =>");
+    expect(DOCUMENT).toContain("'<span>commencée ' + esc(ago(l.start))");
+    expect(DOCUMENT).toContain("M.sante.hors");
+    expect(DOCUMENT).toContain("La CI, la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé");
+    expect(DOCUMENT).toContain("la page ne la devine pas");
+  });
+});

@@ -787,6 +787,14 @@ body.anim .card .cs i{animation:grow .7s ease both}
 /* À toi */
 .tt-toi{display:flex;flex-direction:column;gap:16px}
 .tg{display:flex;flex-direction:column;gap:8px}
+.ecsum{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin:0 0 18px}.ecsum>div{display:flex;align-items:baseline;gap:7px}.ecsum>div b{font:800 28px var(--fm);color:var(--ink)}.ecsum>div span{font-size:13.5px;color:var(--mute)}
+.ec-s{margin:0 0 26px}.ech{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;font-size:16px;font-weight:700}.ech b{font:700 14px var(--fm);color:var(--mute)}.ech small{margin-left:auto;font:500 12.5px var(--fm);color:var(--mute)}
+.ecl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:10px}
+.ecr{display:flex;flex-direction:column;gap:6px;min-width:0;min-height:44px;padding:11px 13px;border:1px solid var(--line);border-left:4px solid var(--c,var(--todo));border-radius:12px;background:var(--panel);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.ect{font-size:15px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}.ecs{display:block;margin:0 0 3px;font:700 12px var(--fm);color:var(--c)}.ecs em{font-style:normal;color:var(--mute);font-weight:500;margin-left:8px}
+.ecm{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:13px;color:var(--mute)}.ecm b{color:var(--ink);font-weight:600}.ecapp{display:inline-flex;align-items:center;gap:6px}.ecapp i{width:8px;height:8px;border-radius:50%;background:var(--ac,var(--mute))}
+.ecn{font-size:13.5px;line-height:1.35;overflow-wrap:anywhere}.ecp{font-size:12.5px;color:var(--mute);overflow-wrap:anywhere}
+a.ecr{text-decoration:none}
 .tgh{display:flex;align-items:center;gap:8px;margin:0;color:var(--mute)}
 .tgh .si{width:20px;height:20px}
 .tgh b{font:700 15px var(--fm);color:var(--ink)}
@@ -1540,8 +1548,8 @@ const saved = store.get();
 const TABS = ['toi', 'taches', 'gantt', 'rythme'];
 // anciens onglets (avant le 19/10) : Plan et Cartes = Tâches, Vitesse et Quota = Rythme
 const ANCIEN = {plan: 'taches', cartes: 'taches', quota: 'rythme'};
-// « mur », « vitesse » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
-const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' || t === 'vitesse' ? t : ANCIEN[t] || null;
+// « mur », « cours », « vitesse » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
+const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'cours' || t === 'couts' || t === 'vitesse' ? t : ANCIEN[t] || null;
 // durées de l'onglet Rythme (Marc, 21/10) et découpage des fusions : type, app, ou qui (Jules, fil Claude, autre)
 const VPS = ['24h', '7j', '30j', '90j'], VSPL = ['type', 'app', 'qui'], QSS = ['claude', 'vercel', 'actions', 'jules', 'gemini', 'api'];
 const ST = {tab: tabDe(saved.tab) || 'toi', f: saved.f && saved.f !== 'toi' ? saved.f : 'tout', z: saved.z || 'fit', open: saved.open || {}, stack: [], pan: 0, vp: VPS.includes(saved.vp) ? saved.vp : '24h', vsplit: VSPL.includes(saved.vsplit) ? saved.vsplit : 'type', vsel: null, vselm: null, cap: saved.cap === 'file' ? 'file' : 'depot', qs: QSS.includes(saved.qs) ? saved.qs : 'claude'};
@@ -4564,12 +4572,13 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   const VIEW = document.getElementById('view'); mx.appendChild(VIEW); VIEW.hidden = true;
   const I = {
     mur: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="5" rx="1.2"/><rect x="12" y="4" width="9" height="5" rx="1.2"/><rect x="3" y="11" width="10" height="5" rx="1.2"/><rect x="15" y="11" width="6" height="5" rx="1.2"/><rect x="3" y="18" width="5" height="3" rx="1"/><rect x="10" y="18" width="11" height="3" rx="1"/></svg>',
+    cours: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>',
     toi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.8"/><path d="M4.6 20.5c.8-4 3.6-6.2 7.4-6.2s6.6 2.2 7.4 6.2"/></svg>',
     gantt: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="10" height="3.6" rx="1.8"/><rect x="8" y="10.2" width="13" height="3.6" rx="1.8"/><rect x="5" y="15.9" width="9" height="3.6" rx="1.8"/></svg>',
     vitesse: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>',
     couts: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.8-1.3-2.4-2-4.4-2-2.5 0-4 1.2-4 3 0 4.2 8.6 2.2 8.6 6.6 0 1.8-1.7 3.1-4.5 3.1-2.2 0-3.9-.8-4.8-2.2"/></svg>'
   };
-  const TABS = [['mur', 'Accueil'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
+  const TABS = [['mur', 'Accueil'], ['cours', 'En cours'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
   const arc = (p, col, sz = 76, sw = 8) => { const r = (sz - sw) / 2, c = 2 * Math.PI * r, v = Math.max(0.012, Math.min(1, p)); return `<svg viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="${sw}"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(v * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${sz / 2} ${sz / 2})"/></svg>`; };
   const mobile = () => innerWidth <= 700;
 
@@ -5147,6 +5156,61 @@ function vGanttFull(){
     return `<section class="hero2" style="padding-bottom:18px"><div class="pct" role="img" aria-label="${n} à faire par toi"><b>${nfmt(n)}</b></div><div class="hside"><div class="leg"><div><i class="sh marc"></i>à toi</div></div></div></section>${vAToi()}`;
   }
 
+  /* ---------- En cours : tout ce qui se passe et la suite prévue (Hubperso#640, demande de Marc, 28/10/2026 : « une page en cours avec littéralement tout ce qui est en train de se passer, et ce qui est prévu pour la suite ») ----------
+     Tout vient du modèle tiré du relevé (`M.leaves`, `M.sante`, `M.PD`), avec son âge. La CI, la file Mergify et le déploiement de chaque PR
+     ne sont pas dans le relevé : la page ne les montre pas, le dit en bas, et n'en devine aucun. */
+  const ECE = {cours: ['en cours', 'var(--doing)'], rel: ['PR prête', 'var(--doing)'], fus: ['fusionnée, preuve à faire', 'var(--fus-t)'], prog: ['preuve attendue', 'var(--fus-t)'], ret: ['preuve en retard', 'var(--blk-t)'], blk: ['bloquée', 'var(--blk-t)'], marc: ['attend Marc', 'var(--marc)'], todo: ['prévue', 'var(--todo)']};
+  const ECN = {Claude: 'un fil Claude', Jules: 'Jules', Copilot: 'Copilot', Marc: 'Marc'};
+  const ecQui = l => {
+    if (l.marc) return 'Marc';
+    if (l.j) return 'Jules';
+    if (l.pat) return l.qui;
+    const a = (l.acteurs || []).filter(x => x.fin).sort((x, y) => y.fin - x.fin)[0];
+    return a ? ECN[a.qui] || a.qui : l.qui === '—' ? 'personne encore' : l.qui;
+  };
+  const ecSuite = l => {
+    const pr = l.pr, w = (l.waits || []).filter(x => x.unknown || x.open).slice(0, 3);
+    switch (l.e){
+      case 'cours': return !pr || pr.state !== 'open' ? 'PR pas encore ouverte' : pr.draft ? 'PR en brouillon : elle ne fusionne qu’une fois sortie du brouillon' : 'PR ouverte';
+      case 'rel': return 'PR prête : elle fusionne quand les contrôles sont verts';
+      case 'fus': return l.pa != null ? 'preuve due ' + quand(l.pa) : 'preuve à faire après la fusion';
+      case 'prog': return l.pa != null ? 'preuve prévue ' + quand(l.pa) : l.paT ? 'preuve : ' + String(l.paT).slice(0, 110) : 'preuve attendue après un événement';
+      case 'ret': return l.pa != null ? 'preuve due depuis ' + quand(l.pa) : l.pm ? 'preuve manquante' : 'preuve en retard';
+      case 'blk': return l.oub && l.oub.cause ? l.oub.cause : w.length ? 'attend ' + w.map(x => x.ref).join(', ') : 'étiquette « bloqué »';
+      case 'marc': return l.geste && l.geste.t ? 'geste : ' + l.geste.t : 'attend ton geste';
+      default: return l.fs != null ? 'prévue ' + quand(l.fs, true) : l.why || (l.q != null ? 'file : rang ' + l.q : 'pas dans la file du script');
+    }
+  };
+  const ecRow = l => {
+    const [lab, col] = ECE[l.e] || ['', 'var(--todo)'], pr = l.pr, par = l.parent, m = [`<span class="ecapp" style="--ac:var(--a-${esc(l.k)})"><i></i>${esc(l.app)}</span>`, `<b>${esc(ecQui(l))}</b>`];
+    if (pr) m.push(`<span>PR #${esc(pr.n)} ${pr.state === 'open' ? (pr.draft ? 'brouillon' : 'prête') : l.merged ? 'fusionnée ' + esc(ago(l.merged)) : 'fermée'}</span>`);
+    if (l.start && l.e !== 'todo') m.push('<span>commencée ' + esc(ago(l.start)) + '</span>');
+    if ((l.e === 'cours' || l.e === 'rel') && l.last) m.push('<span>dernière trace ' + esc(ago(l.last)) + '</span>');
+    return `<button class="ecr" data-open="${esc(l.ref)}" style="--c:${col}"><span class="ect"><span class="ecs">${esc(lab)}<em>${esc(l.repo)}#${esc(l.n)}</em></span>${esc(l.t)}</span>`
+      + `<span class="ecm">${m.join('')}</span><span class="ecn">${esc(ecSuite(l))}${l.oubli && l.e !== 'blk' ? ' · rien de nouveau depuis longtemps' : ''}</span>`
+      + (par && par.t ? `<span class="ecp">dans « ${esc(par.t)} »</span>` : '') + `</button>`;
+  };
+  function vEnCours(){
+    const ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), act = (b, a) => (b.last || b.start || 0) - (a.last || a.start || 0);
+    const par = (es, tri) => ouv.filter(l => es.includes(l.e)).sort(tri || ((a, b) => act(a, b) * -1));
+    const sec = (titre, l, note) => l.length ? `<section class="ec-s"><h3 class="ech">${esc(titre)}<b>${l.length}</b></h3>${note ? `<p class="qnote">${esc(note)}</p>` : ''}<div class="ecl">${l.map(ecRow).join('')}</div></section>` : '';
+    const cours = par(['cours', 'rel']), fus = par(['fus', 'prog']), ret = par(['ret']), blk = par(['blk']), marc = par(['marc']);
+    const todo = par(['todo'], (a, b) => (a.q == null) - (b.q == null) || (a.q || 0) - (b.q || 0) || (a.fs || 9e15) - (b.fs || 9e15));
+    const hors = (M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : [];
+    const suite = M.apps.map(a => {
+      const l = todo.filter(x => x.k === a.k); if (!l.length) return '';
+      const pd = M.PD && M.PD[a.rl], pl = pd && pd.d && pd.d.places;
+      return `<section class="ec-s"><h3 class="ech"><span class="ecapp" style="--ac:var(--a-${esc(a.k)})"><i></i>${esc(a.app)}</span><b>${l.length}</b>${pl ? `<small>places prises : ${nbr(pl.prises)} sur ${nbr(pl.total)}</small>` : ''}</h3><div class="ecl">${l.map(ecRow).join('')}</div></section>`;
+    }).join('');
+    const horsH = hors.length ? `<section class="ec-s"><h3 class="ech">PR sans tâche<b>${hors.length}</b></h3><div class="ecl">${hors.map(h => `<a class="ecr" style="--c:var(--todo)" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener"><span class="ect"><span class="ecs">${h.draft ? 'brouillon' : 'ouverte'}<em>${esc(h.repo)}#${esc(h.n)}</em></span>${esc(h.t || '')}</span><span class="ecm"><b>${h.bot ? 'un robot' : 'une personne'}</b>${h.c ? '<span>créée ' + esc(ago(Date.parse(h.c))) + '</span>' : ''}</span></a>`).join('')}</div></section>` : '';
+    const nb = (n, t) => `<div><b>${nfmt(n)}</b><span>${t}</span></div>`;
+    const sum = `<div class="ecsum">${nb(cours.length, 'en cours')}${nb(fus.length + ret.length, 'à prouver')}${nb(blk.length, 'bloquées')}${nb(marc.length, 'attendent Marc')}${nb(todo.length, 'prévues')}${fraisHTML(['taches'])}</div>`;
+    const q = M.PRO && M.PRO.calcule_le ? 'La file des prochaines tâches a été calculée ' + ago(Date.parse(M.PRO.calcule_le)) + '.' : 'La file des prochaines tâches est indisponible : la page ne la devine pas.';
+    const note = `<p class="qnote">${esc(q)} La CI, la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé : la page ne les montre pas plutôt que de les deviner.</p>`;
+    if (!ouv.length && !hors.length) return `<div class="ec">${sum}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p>${note}</div>`;
+    return `<div class="ec">${sum}${sf('En cours', () => sec('Travail en cours', cours))}${sf('Fusionnées', () => sec('Fusionnées, preuve à venir', fus))}${sf('Retard', () => sec('Preuve en retard', ret))}${sf('Bloquées', () => sec('Bloquées', blk))}${sf('Marc', () => sec('Attendent Marc', marc))}${suite ? `<h2 class="ech" style="font-size:19px">La suite prévue</h2>${suite}` : ''}${horsH}${note}</div>`;
+  }
+
   /* ---------- Coûts ---------- */
   const fd = d => +d.slice(8) + ' ' + cMoisCourt(d.slice(0, 7)).slice(0, 4).replace(/\.$/, '');
   /* ---------- Coûts des apps : ce que montrait la page Coûts du hub, reprise ici ----------
@@ -5471,7 +5535,7 @@ function vGanttFull(){
       post(false); return;
     }
     VIEW.hidden = true; VIEW.innerHTML = '';
-    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : vToiM();
+    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'cours' ? vEnCours() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : vToiM();
     countUp($('#mv'));
   }
   window.render = function(){
