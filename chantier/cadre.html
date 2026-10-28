@@ -4384,12 +4384,13 @@ function faitsDe(n, H){
     // le détail de ce qui coince, par ordre d'urgence : c'est ce que Marc demande à LIA (« je ne vois pas le détail » n'est plus une réponse)
     const t = (l, n) => '« ' + (l.t || '').slice(0, n || 34) + ' »';
     const att = l => (l.waits || []).filter(w => w.unknown || w.open).map(w => w.unknown ? w.ref : '#' + w.n).slice(0, 3).join(', ');
-    // [libellé, test, dit, combien de titres] : les preuves (le bloc le plus demandé) en nomment plus ; tout doit tenir dans FAITS_MAX
+    // [libellé, test, dit, combien de titres] : les preuves (le bloc le plus demandé) en nomment plus, chacune avec sa date de fusion, et ne disent leur cause que si le groupe est petit ; tout doit tenir dans FAITS_MAX
     const groupes = [
-      ['bloquées', l => l.e === 'blk', l => t(l, 30) + (att(l) ? ' attend ' + att(l) : ''), 4],
-      ['preuve manquante ou en retard', l => l.e === 'ret' || l.pm, (l, i) => t(l) + (l.oub && i < 2 ? ' : ' + (H.retTxt(l) || '').slice(0, 36) : ''), 8],
-      ['fusionnées, preuve à poser', l => l.e === 'fus' || l.e === 'prog', (l, i) => t(l) + (l.merged != null && i < 3 ? ' (' + H.quand(l.merged, 1) + ')' : ''), 8],
-      ['attendent Marc', l => l.e === 'marc', l => t(l) + (l.geste && l.geste.t ? ' : ' + String(l.geste.t).slice(0, 45) : ''), 4],
+      ['bloquées', l => l.e === 'blk', l => t(l, 28) + (att(l) ? ' attend ' + att(l) : ''), 4],
+      // les dates entre parenthèses sont celles de la FUSION : le libellé le dit une fois, pas à chaque titre
+      ['preuve manquante ou en retard (date = fusion)', l => l.e === 'ret' || l.pm, (l, i, L) => t(l, 26) + (l.merged != null ? ' (' + H.quand(l.merged, 1) + ')' : '') + (l.oub && L.length <= 3 ? ' : ' + (H.retTxt(l) || '').slice(0, 30) : ''), 8],
+      ['fusionnées, preuve à poser (idem)', l => l.e === 'fus' || l.e === 'prog', l => t(l, 26) + (l.merged != null ? ' (' + H.quand(l.merged, 1) + ')' : ''), 8],
+      ['attendent Marc', l => l.e === 'marc', l => t(l, 28) + (l.geste && l.geste.t ? ' : ' + String(l.geste.t).slice(0, 40) : ''), 4],
       ['oubliées', l => l.oubli, l => t(l), 4],
     ];
     const vus = new Set();
@@ -4397,7 +4398,7 @@ function faitsDe(n, H){
       const L = ls.filter(l => test(l) && !vus.has(l));
       if (!L.length) return;
       L.forEach(l => vus.add(l));
-      f.push(lib + ' : ' + L.slice(0, max).map((l, i) => dit(l, i)).join(' ; ') + (L.length > max ? ' ; … et ' + (L.length - max) + ' autres' : ''));
+      f.push(lib + ' : ' + L.slice(0, max).map((l, i) => dit(l, i, L)).join(' ; ') + (L.length > max ? ' ; … et ' + (L.length - max) + ' autres' : ''));
     });
     const ouvertes = ls.filter(l => !vus.has(l) && l.open !== false && l.e !== 'acc' && l.e !== 'aband');
     if (ouvertes.length) f.push('autres à suivre : ' + ouvertes.slice(0, 4).map(l => t(l) + ' ' + H.STE[l.e]).join(' ; ') + (ouvertes.length > 4 ? ' ; … et ' + (ouvertes.length - 4) + ' autres' : ''));
