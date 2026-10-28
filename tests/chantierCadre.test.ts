@@ -485,6 +485,21 @@ describe("chaque bloc dit d'où vient sa donnée, son âge et sa nature (#640)",
   });
 });
 
+describe("le cadre se tient à jour sans que l'on recharge la page (#640)", () => {
+  it("un relevé qui arrive est lu tout de suite, sans attendre le tour suivant de la minute", () => {
+    expect(DOCUMENT).toContain("if (typeof window.surReleve === 'function') window.surReleve();");
+    expect(DOCUMENT).toContain("window.surReleve = () => { tick().catch(() => {}); };");
+  });
+
+  it("une version neuve du document : le cadre se recharge quand la page est cachée ou inutilisée depuis 45 s, après avoir prévenu le hub", () => {
+    expect(DOCUMENT).toContain("m.type === 'chantier-version-neuve'");
+    expect(DOCUMENT).toContain("window.surVersionNeuve = () => {");
+    expect(DOCUMENT).toContain("!document.hidden && Date.now() - action < 45e3");
+    expect(DOCUMENT).toContain("portHub.postMessage({ type: 'chantier-recharge' });");
+    expect(DOCUMENT).toContain("location.reload()");
+  });
+});
+
 describe("plus de graphes, tirés du relevé seulement (#640)", () => {
   it("le chiffre du haut porte sa pastille de fraîcheur, les quotas par jour leur titre, le taux sa valeur visible", () => {
     expect(DOCUMENT).toContain("${fraisHTML(['taches'])}</div></div></section>`");

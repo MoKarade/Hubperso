@@ -13,11 +13,13 @@
 // et s'additionnerait à celle-ci) : elle pose donc elle-même TOUS ses en-têtes de sécurité, sur
 // chacune de ses réponses. Voir `lib/chantierCadre.ts` pour le pourquoi de l'isolement.
 
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { auth } from "@/auth";
 import { isAuthorizedEmail } from "@/lib/authorized";
 import { CSP_CADRE } from "@/lib/chantierCadre";
+import { etagCorrespond } from "@/lib/chantierReleve";
 
 export const dynamic = "force-dynamic";
 
@@ -37,17 +39,22 @@ function texte(corps: string, status: number): Response {
   });
 }
 
-/** Lu une fois par instance (440 Ko) ; un échec n'est pas gardé, la requête suivante réessaie. */
-let documentCadre: Promise<string> | null = null;
-function lireDocument(): Promise<string> {
-  documentCadre ??= readFile(join(process.cwd(), "chantier", "cadre.html"), "utf8").catch((erreur) => {
-    documentCadre = null;
-    throw erreur;
-  });
+/**
+ * Lu une fois par instance (440 Ko) ; un échec n'est pas gardé, la requête suivante réessaie. Son ETag est l'empreinte du texte :
+ * le hub (`ChantierCadre`) le relit toutes les 5 minutes et sait ainsi qu'un déploiement a posé une version neuve du cadre.
+ */
+let documentCadre: Promise<{ html: string; etag: string }> | null = null;
+function lireDocument(): Promise<{ html: string; etag: string }> {
+  documentCadre ??= readFile(join(process.cwd(), "chantier", "cadre.html"), "utf8")
+    .then((html) => ({ html, etag: `"${createHash("sha1").update(html).digest("hex").slice(0, 16)}"` }))
+    .catch((erreur) => {
+      documentCadre = null;
+      throw erreur;
+    });
   return documentCadre;
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(requete?: Request): Promise<Response> {
   const session = await auth();
   if (!session) return texte("Authentification requise.", 401);
   if (!isAuthorizedEmail(session.user?.email, process.env.AUTHORIZED_EMAIL)) {
@@ -55,10 +62,16 @@ export async function GET(): Promise<Response> {
   }
 
   try {
-    return new Response(await lireDocument(), {
+    const { html, etag } = await lireDocument();
+    // Même version que celle que la page connaît : ni corps, ni document renvoyé.
+    if (requete && etagCorrespond(requete.headers.get("if-none-match"), etag)) {
+      return new Response(null, { status: 304, headers: { ...ENTETES_SECURITE, ETag: etag } });
+    }
+    return new Response(html, {
       status: 200,
       headers: {
         ...ENTETES_SECURITE,
+        ETag: etag,
         "Content-Type": "text/html; charset=utf-8",
         "Content-Security-Policy": CSP_CADRE,
       },

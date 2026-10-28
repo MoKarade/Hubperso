@@ -35,6 +35,11 @@
       octets = new Uint8Array(m.octets);
       etat('');
       attente.splice(0).forEach(function (r) { r({ bytes: octets }); });
+      // un relevé neuf se lit tout de suite, sans attendre le prochain tour de la minute
+      if (typeof window.surReleve === 'function') window.surReleve();
+    } else if (m.type === 'chantier-version-neuve') {
+      // Le hub voit un document neuf (un déploiement) : la page décide quand se recharger (plus personne ne s'en sert).
+      if (typeof window.surVersionNeuve === 'function') window.surVersionNeuve();
     } else if (m.type === 'chantier-couts') {
       // Les coûts et quotas des apps (la page Coûts du hub, reprise ici) : lus par le hub, jamais par ce document.
       recu = true;
@@ -67,6 +72,13 @@
       gestes[corps.id] = { ok: ok, ko: ko, t: t };
       canalHub.postMessage({ type: 'chantier-geste', geste: corps });
     });
+  };
+  // Se recharger : le hub est prévenu d'abord (il accepte alors le canal du document neuf), l'onglet reste dans l'adresse (#onglet).
+  window.hubRecharger = function () {
+    if (!portHub) return false;
+    portHub.postMessage({ type: 'chantier-recharge' });
+    setTimeout(function () { location.reload(); }, 150);
+    return true;
   };
   // Clic droit (ou appui long) : le hub ne voit pas ce qui se passe dans ce cadre, il reçoit donc `{type, x, y, genre, texte}`
   // par le canal. Faux tant qu'aucun hub n'écoute : le menu du navigateur reste alors en place.
@@ -1545,6 +1557,20 @@ window.surOnglet = o => {
   if (!M) return;
   ANIM = true; try { history.replaceState(null, '', '#' + ST.tab); } catch(e){} persist(); render();
 };
+// une version neuve du document est servie : on se recharge dès que la page est cachée ou que personne ne s'en sert depuis 45 s
+{
+  let action = Date.now(), attend = null;
+  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(e => addEventListener(e, () => { action = Date.now(); }, {passive: true, capture: true}));
+  window.surVersionNeuve = () => {
+    if (attend) return;
+    const essai = () => {
+      if (!document.hidden && Date.now() - action < 45e3) return;
+      clearInterval(attend); attend = null;
+      window.hubRecharger();
+    };
+    attend = setInterval(essai, 5e3); essai();
+  };
+}
 const persist = () => store.set({tab: ST.tab, f: ST.f, z: ST.z, open: ST.open, vp: ST.vp, vsplit: ST.vsplit, cap: ST.cap, qs: ST.qs});
 
 /* ---------- futur : la meilleure estimation, avec ses hypothèses écrites ----------
@@ -4466,6 +4492,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     }
     return wait;
   }
+  window.surReleve = () => { tick().catch(() => {}); };
   for (;;){
     // onglet masqué : on ne lit rien, on reprend dès qu'il redevient visible
     if (document.hidden) await new Promise(res => document.addEventListener('visibilitychange', res, {once: true}));
