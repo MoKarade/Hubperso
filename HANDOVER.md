@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **`GET /api/session/moi` : une app sans session serveur demande au hub si la session est celle du propriétaire (FinanceAI#1159)**
+
+- **Route** `app/api/session/moi/route.ts` : rend `{ proprietaire: true | false }` pour la session de l'appelant (cookie du hub), 401 sans session, 429 au-delà de 300 appels par minute et par client. Ni adresse, ni liste d'invités, ni nom de variable dans la réponse ; `cache-control: no-store`. Le propriétaire se reconnaît par `AUTHORIZED_EMAIL`, sans base ni réseau ; variable absente = personne n'est propriétaire.
+- **Pourquoi** : FinanceAI (SPA Vite, Vercel) devient privée derrière la session du hub. Elle n'a ni Auth.js ni `AUTH_SECRET`, et le cookie signé ES256 (`__Secure-hub.session`, `HUB_SESSION_JWKS`) n'est PAS encore émis par le hub (phase 2 de `docs/SECURITE.md`) ; son middleware transmet donc le cookie à cette route et décide selon la réponse. Aucun secret copié dans une app de plus, rien à poser sur Vercel.
+- **Reste derrière le garde du hub** : aucune exception dans `lib/authGuard.ts`, rien dans le matcher de `middleware.ts` (verrouillé par `tests/sessionMoi.test.ts`) ; `tests/gardePages.test.ts` la compte déjà comme gardée (`auth()`).
+- ⚠️ **À viser en `www.hubperso.com`** : `hubperso.com` répond 308 vers `www`, et le `fetch` de Node/Edge retire l'en-tête `cookie` à cette redirection (même piège que `/api/lia/etat` côté BatchChef).
+- **Preuve en production** : déploiement `READY` sur le commit fusionné, puis `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/session/moi` → `401` (sans session) ; la lecture avec la session de Marc (`{"proprietaire":true}`) est faite par le PC.
+
 ## 28/10/2026 : lia-ui v0.44.2, le menu du clic droit s'ouvre toujours sous le clic (Hubperso#636, mission MoKarade/.github#575)
 
 Épingle `@mokarade/lia-ui` v0.44.2 (sha pelé `8881751`), seul changement (`package.json`, lock). Le menu d'un élément n'est plus borné à la zone de vie de LIA : il s'ouvre là où Marc a cliqué, dans la fenêtre (lia-ui#152, relevé du PC du 28/10, 15:48Z). v0.44.0 (mode atelier, inactif tant que le hub ne le demande pas) et v0.44.1 (tag automatique) arrivent avec. [À vérifier] relevé du PC (barre du Gantt, carte de la vue Vitesse) après le déploiement de production.
