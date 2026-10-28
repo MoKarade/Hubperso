@@ -6,9 +6,8 @@
 
 Marc, 28/10/2026 : les bilans (Brief du jour, rapport hebdo) se gardent tous dans Drive ; le hub les lit en direct.
 - **`GET /api/bilans`** (liste : 60 jours et 12 semaines au plus) et **`GET /api/bilans/<id>`** (le document) : propriétaire seul (404 pour un invité, 401 sans session), `no-store`. 409 « reconnecte-toi » si le droit Drive manque à la session (#575), 503 si `BILANS_DRIVE_FOLDER_ID` est absent, 502 si Google ne répond pas.
-- **Convention de nom** (`lib/bilans.ts`) : `bilan-jour-AAAA-MM-JJ.html`, `bilan-semaine-AAAA-MM-JJ.html` dans UN dossier ; tout autre nom est ignoré, la date vient du nom.
-- **Le jeton** (`lib/jetonDrive.ts`) est lu dans le cookie de session (`getToken`), renouvelé avec le `refresh_token` s'il a expiré, et ne sort jamais de la route. **Lecture bornée** (`lib/bilansDrive.ts`) : le fichier doit être dans le dossier, hors corbeille, au bon nom, ≤ 2 Mo.
-- **Le document** est servi sous une CSP en bac à sable (aucun réseau, origine opaque), comme le cadre du Chantier ; `next.config.mjs` l'exclut de la CSP globale.
+- **Convention de nom** (`lib/bilans.ts`) : `bilan-jour-AAAA-MM-JJ.html`, `bilan-semaine-AAAA-MM-JJ.html` dans UN dossier ; tout autre nom est ignoré. **Le jeton** (`lib/jetonDrive.ts`) vient du cookie de session, renouvelé avec le `refresh_token`, et ne sort jamais de la route. **Lecture bornée** (`lib/bilansDrive.ts`) : fichier dans le dossier, hors corbeille, au bon nom, ≤ 2 Mo.
+- **Le document** est servi sous une CSP en bac à sable (aucun réseau), comme le cadre du Chantier ; `next.config.mjs` l'exclut de la CSP globale.
 - **Rien dans le dépôt ni en base** : le dépôt est public. **Reste** : la page « Bilans » et son entrée sous « Gérer » (#543), la routine qui écrit dans Drive, la variable `BILANS_DRIVE_FOLDER_ID` (geste de Marc) et sa reconnexion.
 
 ## 🟦 Session 2026-10-28 — **Portées Google : la lecture de Drive entre dans la connexion partagée (Hubperso#575, pour l'onglet Bilans #543)**
