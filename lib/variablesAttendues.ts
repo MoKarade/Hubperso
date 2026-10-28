@@ -82,6 +82,11 @@ const FIXES: readonly VariableAttendue[] = [
     siAbsente: "réception du Gantt désactivée : /api/gantt répond 503, l'onglet Chantier Apps n'a rien à montrer",
   },
   {
+    nom: "CHANTIER_WEBHOOK_SECRET",
+    exigence: "optionnelle",
+    siAbsente: "réception des événements GitHub désactivée : /api/chantier/evenement répond 503, la page Chantier ne lit que le relevé du PC",
+  },
+  {
     nom: "MEMORYAI_SORTIES_TOKEN",
     exigence: "optionnelle",
     siAbsente: "le hub ne pousse pas l'état du chantier à MemoryAI : LIA ne lit que les faits envoyés avec le clic droit (jeton d'écrivain de la porte POST /api/sorties, variable serveur)",

@@ -24,6 +24,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  index,
   integer,
   jsonb,
   numeric,
@@ -210,3 +211,30 @@ export const chantierGestes = pgTable("chantier_gestes", {
   /** `null` tant que le PC ne l'a pas pris. */
   priseLe: timestamp("prise_le", { withTimezone: true }),
 });
+
+/**
+ * Les événements GitHub reçus par `POST /api/chantier/evenement` (webhooks signés), pour la page Chantier : la CI rouge,
+ * un déploiement en échec, la sortie du brouillon d'une PR arrivent à l'instant où ils se produisent, sans attendre le
+ * relevé du PC. `id` est l'identifiant de livraison GitHub (un renvoi ne crée pas de seconde ligne), `cle` suit la clé du
+ * relevé (`repo#n`, `repo@sha`, `repo:nom`), `at` est l'heure de l'événement et `recu_le` celle du hub. Élagué après 14 jours.
+ * Aucun corps de commentaire ni d'issue : un titre, un lien, quelques mots dans `plus`.
+ */
+export const chantierEvenements = pgTable(
+  "chantier_evenements",
+  {
+    id: text("id").primaryKey(),
+    cle: text("cle").notNull(),
+    type: text("type").notNull(),
+    action: text("action").notNull(),
+    repo: text("repo").notNull(),
+    n: integer("n"),
+    sha: text("sha"),
+    at: timestamp("at", { withTimezone: true }).notNull(),
+    etat: text("etat"),
+    plus: jsonb("plus"),
+    recuLe: timestamp("recu_le", { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (t) => [index("chantier_evenements_recu_le").on(t.recuLe)],
+);
