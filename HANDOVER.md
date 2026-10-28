@@ -10,6 +10,14 @@ Marc, 28/10/2026 (« le hub lit Drive en direct », puis « Oui, 4 apps quand m�
 - **Coût assumé** : portée restreinte, donc écran « application non vérifiée » possible, et jeton mort au bout de 7 jours si l'écran de consentement est en mode Test [À vérifier]. Les sessions ouvertes n'ont pas le droit : une reconnexion par app.
 - **Reste** (#543) : le lecteur de dossier Drive, la route, la page « Bilans », puis la routine qui écrit dans Drive.
 
+## 🟦 Session 2026-10-28 — **Gantt du Chantier : la barre montre l'état au fil du temps (Hubperso#572)**
+
+Demande de Marc : la barre d'une tâche, d'une mission et d'un chantier change de couleur selon son état, du début à la fin, avec plusieurs segments bleus si le travail reprend.
+- **Source** : `et` du relevé (historique d'états daté par tâche, présent sur 755 tâches sur 897 au 28/10/2026) ; une tâche sans `et` garde sa barre d'avant. Rien n'est inventé : pas d'historique, pas de segments.
+- **Code** (`chantier/cadre.html`, servi tel quel) : `etatsOf` découpe la barre en segments `.gl2.et-<état>` ; `agregOf` fait de même pour un parent en prenant, à chaque instant, l'état le plus « actif » de ses tâches (travaille > à rouvrir > à toi > attend > à prouver > rien ne travaille). Une borne verte termine une tâche ou une mission fermée. Les lignes « dépôt » gardent leurs lignes de concurrence. La prévision reste hachurée.
+- **Légende** : section « Couleur d'une barre, à chaque instant » (8 pastilles).
+- **Vérifié** : harnais Playwright avec le vrai relevé (3 niveaux : chantier 25, mission 65, tâche 115 lignes colorées). Pas de test unitaire du rendu : le cadre n'a pas de test DOM (voir `tests/chantierCadre.test.ts`).
+
 ## 🟦 Session 2026-10-27 — **Page Chantier dans le hub, étape 4a : les boutons « À toi » déposent leur geste au hub, sans Drive (Hubperso#556)**
 
 Avant, un clic (Fusionner, Fait, une réponse) déposait `reponse-<horodatage>.json` dans le dossier Drive `_Gantt` avec le connecteur Drive du lecteur ; le PC (`outils/gantt-pc/reponses.py`, MoKarade/.github) l'appliquait sur GitHub. Dans le cadre isolé il n'y a ni connecteur ni réseau : les boutons étaient des liens vers GitHub.
