@@ -29,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // rend `invalid_client` (constaté le 23/10/2026). Il faut un commit de code (Hubperso#389).
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       // ── PORTÉES IDENTIQUES DANS LES QUATRE APPS ────────────────────────────────
-      // Le hub n'appelle AUCUNE API Google. Il demande quand même la portée Tasks
+      // Le hub ne lit que Drive (les bilans, Hubperso#543) ; il demande quand même la portée Tasks
       // parce que le cookie de session est PARTAGÉ : c'est la dernière app où l'on
       // s'est connecté qui décide du contenu du jeton. Si seul BatchChef demandait
       // Tasks, se connecter par le hub la laisserait connectée mais sans droit

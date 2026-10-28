@@ -9,7 +9,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { isPublicPath, decideGuard } from "../lib/authGuard";
-import { PORTEES_GOOGLE, PORTEE_TASKS } from "../lib/jetonsGoogle";
+import { PORTEES_GOOGLE, PORTEE_DRIVE_LECTURE, PORTEE_TASKS } from "../lib/jetonsGoogle";
 
 const lire = (chemin: string) => readFileSync(chemin, "utf8");
 
@@ -69,22 +69,23 @@ describe("les deux pages existent, sont statiques et ne exigent pas de session",
 describe("le contenu de /confidentialite ne cite QUE les scopes Google réellement demandés", () => {
   const source = lire("app/confidentialite/page.tsx");
 
-  it("les portées citées dans lib/jetonsGoogle.ts sont bien openid+email+profile+tasks (contrôle anti-dérive)", () => {
+  it("les portées citées dans lib/jetonsGoogle.ts sont bien openid+email+profile+tasks+drive.readonly (contrôle anti-dérive)", () => {
     // Si ce fichier change un jour, la page /confidentialite doit être revue avec —
     // ce test le rend impossible à manquer.
-    expect(PORTEES_GOOGLE).toBe(`openid email profile ${PORTEE_TASKS}`);
+    expect(PORTEES_GOOGLE).toBe(`openid email profile ${PORTEE_TASKS} ${PORTEE_DRIVE_LECTURE}`);
     expect(PORTEE_TASKS).toBe("https://www.googleapis.com/auth/tasks");
   });
 
-  it("mentionne l'identité et Google Tasks", () => {
+  it("mentionne l'identité, Google Tasks et la lecture seule de Drive", () => {
     expect(source).toMatch(/identit/i);
     expect(source).toMatch(/tasks/i);
+    expect(source).toMatch(/lecture seule de Google Drive/i);
   });
 
   it("ne cite aucune URL de scope googleapis autre que celles réellement demandées", () => {
     // Contrôle faible mais honnête : toute URL de scope Google mentionnée dans le texte
     // doit être une sous-chaîne de PORTEES_GOOGLE (la vraie liste). Empêche de faire
-    // apparaître, par exemple, `auth/drive` ou `auth/calendar` dans le contenu.
+    // apparaître, par exemple, `auth/calendar` ou l'écriture dans Drive dans le contenu.
     for (const m of source.matchAll(/googleapis\.com\/auth\/[\w.]+/g)) {
       expect(PORTEES_GOOGLE, `${m[0]} n'est pas une portée réellement demandée`).toContain(
         m[0],

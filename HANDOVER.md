@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **Portées Google : la lecture de Drive entre dans la connexion partagée (Hubperso#575, pour l'onglet Bilans #543)**
+
+Marc, 28/10/2026 (« le hub lit Drive en direct », puis « Oui, 4 apps quand même » après avoir lu l'avertissement) : le hub doit lire les bilans que la routine range dans Drive.
+- **`lib/jetonsGoogle.ts`** : `PORTEE_DRIVE_LECTURE` (`drive.readonly`, lecture seule) ajoutée à `PORTEES_GOOGLE`. Le fichier doit rester **identique dans JobAI, CarAI et BatchChef** (cookie partagé : la dernière app connectée décide du jeton) ; ces trois dépôts reçoivent la même modification.
+- **`/confidentialite`** dit la lecture seule de Drive (test `pagesPubliques` : page = portées réellement demandées). ADR 0001 amendé (28/10) ; `docs/CONNEXION-UNIQUE.md` mis à jour.
+- **Coût assumé** : portée restreinte, donc écran « application non vérifiée » possible, et jeton mort au bout de 7 jours si l'écran de consentement est en mode Test [À vérifier]. Les sessions ouvertes n'ont pas le droit : une reconnexion par app.
+- **Reste** (#543) : le lecteur de dossier Drive, la route, la page « Bilans », puis la routine qui écrit dans Drive.
+
 ## 🟦 Session 2026-10-28 — **Gantt du Chantier : la barre montre l'état au fil du temps (Hubperso#572)**
 
 Demande de Marc : la barre d'une tâche, d'une mission et d'un chantier change de couleur selon son état, du début à la fin, avec plusieurs segments bleus si le travail reprend.
