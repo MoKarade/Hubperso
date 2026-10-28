@@ -650,6 +650,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("const xcEtapes = () =>");
     expect(DOCUMENT).toContain("E.prets[k]");
     expect(DOCUMENT).toContain("ed.termine !== false ? t(ed.pret_le)");
+    expect(DOCUMENT).toContain("(c === 'draft' || c === 'rel' || c === 'dep' ? 3 : 1)");
     expect(DOCUMENT).toContain("PR fusionnées sans déploiement, non comptées");
     expect(DOCUMENT).toContain("if (!E){ delete o.rel; delete o.dep; }");
     expect(DOCUMENT).toContain("id: 'etapes'");
