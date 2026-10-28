@@ -69,6 +69,8 @@ export const MESSAGE_COUTS = "chantier-couts";
  * `{ type, id, ok: true }` une fois déposé ou `{ type, id, ok: false, erreur }`. Le cadre n'a pas de réseau : c'est le hub qui dépose.
  */
 export const MESSAGE_GESTE = "chantier-geste";
+/** Le hub demande un onglet au cadre déjà ouvert (`/chantier?onglet=couts` sans le recharger) : `{ type, onglet }`. */
+export const MESSAGE_ONGLET = "chantier-onglet";
 
 /**
  * Les onglets de la page, dans les mots du document (`?onglet=couts` ouvre le bon : `mur` est l'accueil de la page). Une valeur inconnue
