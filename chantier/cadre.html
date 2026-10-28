@@ -1197,6 +1197,11 @@ body.m{--mute:#a9b0bb}
 .fr i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--done)}.fr.re i{background:var(--marc);border-radius:2px}.fr.pe i{background:var(--now);border-radius:2px;transform:rotate(45deg)}
 .fr.re{color:var(--ink)}.fr.pe{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--now)}.fr b{font-weight:500}
 .band h2 .fr,.gbar .fr{font-size:13px}.ccap .fr{margin-left:12px}
+.qjours{margin-top:26px}
+.olist{display:grid;gap:2px}
+.orow{display:grid;grid-template-columns:minmax(0,8.5em) minmax(0,1fr) 2.6em;gap:4px 12px;align-items:center;min-height:44px;font-size:14px;box-shadow:0 -1px 0 var(--line)}
+.orow .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.orow .v{text-align:right;font-weight:700}
+.orow .ob{display:flex;gap:2px;height:18px;width:var(--w);min-width:6px}.orow .ob i{display:block;min-width:3px;background:var(--c);border-radius:3px}
 .qage.retard{color:var(--marc)}.qage.perime{color:var(--now);font-weight:700}
 .dsl{display:grid;gap:2px}
 .dsr{display:grid;grid-template-columns:minmax(0,12em) minmax(0,1fr) 5em minmax(0,9.5em);gap:4px 14px;align-items:center;min-height:44px;padding:6px 0;box-shadow:0 -1px 0 var(--line);font-size:14px}
@@ -3255,7 +3260,10 @@ function toucheAction(k){
 
 // ---- Coûts (Marc, 26/10/2026 : « met tous les couts genre git et autre et électricité aussi, vas loin dans le détail ») ----
 // Un nouveau reçu s'ajoute à CLIGNES. L'électricité n'est jamais additionnée aux reçus : c'est une estimation, calculée plus bas.
-const FX = 1.4305;
+const FX = 1.4305;   // repli seulement (taux d'un reçu du 20/05) : le relevé porte désormais le taux de la Banque du Canada, daté
+const fxLive = () => { const x = CUR && CUR.quota && CUR.quota.taux_usd_cad; return x && typeof x === 'object' && +x.taux > .5 && +x.taux < 3 ? x : null; };
+const fxTaux = () => fxLive() ? +fxLive().taux : FX;
+const fxTxt = () => fxTaux().toString().replace('.', ',');
 // [clé, nom, couleur, ce que contient le poste]
 const CPOSTES = [
   ['abo', 'Claude · abonnement', '#9b7be0', ''],
@@ -3270,7 +3278,7 @@ let CLIGNES = [];
 // prochains prélèvements connus ; `mois` = revient chaque mois, `dec` = commence en décembre (hors du « fixe » d'aujourd'hui)
 let CAVENIR = [];
 let CNOTES = {};
-const cc = (m, dev) => dev === 'USD' ? m * FX : m;
+const cc = (m, dev) => dev === 'USD' ? m * fxTaux() : m;
 const cmoney = (v, dec = 0) => nfmt(v, dec) + ' $';
 const ccol = k => CPOSTES.find(p => p[0] === k)[2];
 const cnom = k => CPOSTES.find(p => p[0] === k)[1];
@@ -3350,7 +3358,7 @@ function cFrise(C, W){
 function cPosteHTML(k, C, W){
   const [, nom, col, sub] = CPOSTES.find(p => p[0] === k), lignes = CLIGNES.filter(l => l[1] === k).sort((a, b) => b[0].localeCompare(a[0]));
   const tot = C.parPoste.find(p => p[0] === k)[1], part = C.total ? tot / C.total : 0;
-  const rows = lignes.map(l => `<div><span>${esc(cDate(l[0]))} · ${esc(l[2])}</span><b${l[4] === 'USD' ? ` title="${esc(cDev(l[3], 'USD') + ' converti à 1 $ US = ' + FX.toString().replace('.', ',') + ' $ CA')}"` : ''}>${esc(l[4] === 'USD' ? '≈ ' + cmoney(cc(l[3], 'USD'), 2) : cmoney(l[3], 2))}</b></div>`).join('');
+  const rows = lignes.map(l => `<div><span>${esc(cDate(l[0]))} · ${esc(l[2])}</span><b${l[4] === 'USD' ? ` title="${esc(cDev(l[3], 'USD') + ' converti à 1 $ US = ' + fxTxt() + ' $ CA')}"` : ''}>${esc(l[4] === 'USD' ? '≈ ' + cmoney(cc(l[3], 'USD'), 2) : cmoney(l[3], 2))}</b></div>`).join('');
   const nx = CAVENIR.filter(it => it.p === k).map(it => `<div class="nx"><span>${esc(cDate(it.d))} · ${esc(it.lib)} (prévu)</span><b>${esc(it.dev === 'USD' ? '≈ ' + cmoney(cc(it.m, 'USD'), 2) : cmoney(it.m, 2))}</b></div>`).join('');
   const [conf, note] = CNOTES[k];
   const extra = k === 'ver' ? `<details class="cxsub"><summary>Vercel, reçu par reçu</summary>${qCoutHTML(W - 30)}</details>` : '';
@@ -3395,14 +3403,14 @@ function vCouts(){
     + `<dl class="cxst">${prevuCur ? `<div title="Prélèvements connus d'ici la fin du mois"><dt>encore prévu</dt><dd class="am">+${esc(nfmt(prevuCur))} $</dd></div>` : ''}`
     + `<div title="Abonnements qui reviennent chaque mois"><dt>fixe par mois</dt><dd>${esc(nfmt(C.fixe))} $</dd></div>`
     + (C.moy != null ? `<div title="Moyenne des mois complets : ${esc(C.pleins.map(nm).join(', '))}"><dt>moyenne ${esc(nm(C.pleins[0]))} à ${esc(nm(C.pleins[C.pleins.length - 1]))}</dt><dd>${esc(nfmt(C.moy))} $</dd></div>` : '')
-    + `<div title="Total des reçus relevés depuis ${esc(nm(C.first))}, ${esc(FX.toString().replace('.', ','))} $ CA par $ US"><dt>depuis ${esc(nm(C.first))}</dt><dd>${esc(nfmt(C.total))} $</dd></div></dl></header>${cMoisBarre(C, cur)}`;
+    + `<div title="Total des reçus relevés depuis ${esc(nm(C.first))}, ${esc(fxTxt())} $ CA par $ US"><dt>depuis ${esc(nm(C.first))}</dt><dd>${esc(nfmt(C.total))} $</dd></div></dl></header>${cMoisBarre(C, cur)}`;
   const mat = `<section class="cxs"><h3>Poste par mois <small>$ CA, taxes comprises · pointillé = prévu</small></h3>${cMatrice(C)}</section>`;
   const fr = `<section class="cxs"><h3>Prochains 60 jours <small>${esc(cmoney(CAVENIR.reduce((a, it) => { const j = cJours(it.d, C.auj); return a + (j >= 0 && j <= 30 ? cc(it.m, it.dev) : 0); }, 0)))} d'ici 30 jours</small></h3>${cFrise(C, Math.max(280, W - 4))}</section>`;
   const postes = `<section class="cxs"><h3>Reçus par poste</h3>${C.parPoste.slice().sort((a, b) => b[1] - a[1]).map(([k]) => cPosteHTML(k, C, W)).join('')}</section>`;
   const lim = `<details class="cxsub cxlim"><summary>Sources et limites</summary><p class="qnote">${cChip('Certain')} Chaque montant vient d'un reçu ou d'un courriel de paiement.</p>`
     + `<p class="qnote">${cChip('Probable')} La recherche de reçus peut en manquer : le total est un plancher.</p>`
     + `<p class="qnote">${cChip('À vérifier')} Neon, Infisical, Mergify, Sonar : aucun reçu trouvé, probablement gratuits. Minutes Actions : seuls les dépôts privés sont comptés.</p>`
-    + `<p class="qnote">${cChip('Supposition')} Les $ US sont convertis à ${esc(FX.toString().replace('.', ','))} (taux d'un reçu) ; Vercel est lu comme facturé en $ US.</p></details>`;
+    + `<p class="qnote">${cChip('Supposition')} Les $ US sont convertis à ${esc(fxTxt())} (${fxLive() ? 'taux de la Banque du Canada du ' + esc(cDate(String(fxLive().date).slice(0, 10))) + ', le même pour tous les reçus' : 'taux fixe d’un reçu : le relevé ne donne pas le taux du jour'}) ; Vercel est lu comme facturé en $ US.</p></details>`;
   return `<div class="cx">${head}${mat}${fr}<div class="cxduo">${cDirect()}${cElec()}</div>${postes}${lim}</div>`;
 }
 // ---- Rythme en trois vues (Marc, 26/10/2026 : « regroupe / fusionne plus, c'est toujours un peu le bordel ») ----
@@ -4085,10 +4093,11 @@ function sources(){
     {id: 'gemini', nom: 'Relectures Gemini', nat: 'mes', at: t(jauge('gemini', 'releve')), cad: 10 * MIN, src: 'script du PC'},
     {id: 'claude', nom: 'Semaine Claude', nat: 'mes', at: t(jauge('claude', 'mesure_utc')), cad: 15 * MIN, src: 'claude /usage lu sur le PC'},
     {id: 'api-mois', nom: 'API des apps, ce mois', nat: 'mes', at: t(jauge('api', 'data_as_of')), cad: 60 * MIN, src: 'hubperso.com/api/cout (les apps publient à leur rythme)'},
-    {id: 'api-cumul', nom: 'API des apps, cumul', nat: 'mes', at: t(jauge('api', 'cumul_as_of')), cad: 24 * H, src: 'cumul calculé par le PC'},
+    {id: 'api-cumul', nom: 'API des apps, plus ancienne mesure', nat: 'mes', at: t(jauge('api', 'cumul_as_of')), cad: 24 * H, src: 'le cumul est daté de la mesure la plus ancienne parmi les apps : une app qui ne publie plus le fige (relevé du PC à ' + (isFinite(t(jauge('api', 'releve'))) ? hh(t(jauge('api', 'releve'))) : '—') + ')'},
     {id: 'couts-apps', nom: 'Coûts des apps', nat: 'mes', at: window.hubCoutsAt || NaN, cad: 5 * MIN, src: 'lu par le hub chez chaque app'},
     {id: 'recus', nom: 'Reçus de dépenses', nat: 'sai', at: dernier, cad: 31 * 24 * H, src: 'reçus relevés à la main dans les courriels : dernier reçu le ' + (jours.length ? cDate(jours[jours.length - 1]) : '—')},
-    {id: 'taux', nom: 'Taux USD → CAD', nat: 'est', at: NaN, cad: 0, src: 'taux fixe de ' + FX + ' (reçu du 20/05), pas un cours du jour' + (jauge('api', 'taux_usd_cad') != null ? ' ; le relevé en utilise un autre (' + jauge('api', 'taux_usd_cad') + ')' : '')},
+    fxLive() ? {id: 'taux', nom: 'Taux USD → CAD', nat: 'cal', at: t(fxLive().releve), cad: 6 * H, src: 'Banque du Canada (série FXUSDCAD du ' + String(fxLive().date).slice(0, 10) + '), appliqué à tous les reçus en $ US : une conversion, pas le taux de chaque jour'}
+      : {id: 'taux', nom: 'Taux USD → CAD', nat: 'est', at: NaN, cad: 0, src: 'taux fixe de ' + FX + ' (reçu du 20/05), pas un cours du jour : le relevé ne donne pas le taux de la Banque du Canada'},
     {id: 'elec', nom: 'Électricité du PC', nat: 'est', at: NaN, cad: 0, src: 'puissance et tarif réglés par curseurs, hors reçus'}
   ];
   const now = Date.now();
@@ -4566,7 +4575,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const st = Math.max(1, Math.ceil(N / (iw / 62)));
     for (let i = N - 1; i >= 0; i -= st) s += `<text x="${(L + i * cw + cw / 2).toFixed(1)}" y="${H2 - 6}" text-anchor="middle">${esc(bins[i].lab)}</text>`;
     const sum = tots.reduce((a, b) => a + b, 0);
-    return fig(o.title, `<svg class="cch" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(o.title)} : ${nfmt(sum, o.dec || 0)} ${esc(o.unit)} sur ${esc(PS().n)}">${s}</svg>`, o.foot !== undefined ? o.foot : `<div class="kp2"><b>${nfmt(sum, o.dec || 0)}</b><span>${esc(o.unit)} en ${esc(PS().n)}</span><b>${nfmt(sum / N, sum / N < 10 ? 1 : 0)}</b><span>par ${PS().u}</span>${o.first != null ? clipNote(o.first, Date.now()) : ''}</div>`);
+    return fig(o.title, `<svg class="cch" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(o.title)} : ${nfmt(sum, o.dec || 0)} ${esc(o.unit)} sur ${esc(o.per || PS().n)}">${s}</svg>`, o.foot !== undefined ? o.foot : `<div class="kp2"><b>${nfmt(sum, o.dec || 0)}</b><span>${esc(o.unit)} en ${esc(PS().n)}</span><b>${nfmt(sum / N, sum / N < 10 ? 1 : 0)}</b><span>par ${PS().u}</span>${o.first != null ? clipNote(o.first, Date.now()) : ''}</div>`);
   }
 
   /* tâches acceptées, empilées par app, vers le plafond « toutes les tâches » */
@@ -4603,6 +4612,38 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const bins = binsOf(endT), idx = Object.fromEntries(bins.map((b, i) => [b.k, i]));
     P.forEach(p => { const i = idx[binKey(p.t)]; if (i != null) bins[i].v[p.r] = (bins[i].v[p.r] || 0) + 1; });
     return chStack(W, {title: 'Fusions par ' + PS().u, bins, keys: appKeys(), unit: 'fusions', first: P.length ? Math.min(...P.map(p => p.t)) : null});
+  }
+  /* tâches ouvertes : depuis quand, et où (l'état du moment, pas la période ; âge = depuis la création de la tâche) */
+  const OUV = [['cours', 'en cours', 'var(--doing)'], ['fus', 'à prouver', 'var(--fus-t)'], ['marc', 'à toi', 'var(--marc)'], ['blk', 'bloquées', 'var(--blk-t)'], ['todo', 'à faire', 'var(--todo)']];
+  const ouvGroupe = e => e === 'rel' ? 'cours' : e === 'prog' || e === 'ret' ? 'fus' : e;
+  const ouvertes = () => M.leaves.filter(l => l.open && l.c != null && OUV.some(o => o[0] === ouvGroupe(l.e)));
+  function chAge(W){
+    const L = ouvertes(), K = OUV.map(([k, name, col]) => ({k, name, col}));
+    const B = [['< 1 h', H], ['1 à 6 h', 6 * H], ['6 à 24 h', 24 * H], ['1 à 3 j', 3 * DAY], ['3 à 7 j', 7 * DAY], ['> 7 j', Infinity]];
+    const bins = B.map(([lab]) => ({k: lab, lab, long: 'Ouvertes depuis ' + lab, v: {}}));
+    L.forEach(l => { const a = M.asof - l.c, i = B.findIndex(b => a < b[1]), g = ouvGroupe(l.e); bins[i].v[g] = (bins[i].v[g] || 0) + 1; });
+    const ages = L.map(l => M.asof - l.c).sort((a, b) => a - b), med = ages.length ? ages[Math.floor(ages.length / 2)] : null;
+    return chStack(W, {title: 'Tâches ouvertes : depuis quand', bins, keys: K, unit: 'tâches', per: 'maintenant',
+      foot: chips(OUV.map(([k, name, col]) => [col, name, nfmt(L.filter(l => ouvGroupe(l.e) === k).length)])) + `<div class="kp2"><b>${nfmt(L.length)}</b><span>ouvertes</span>${med != null ? `<b>${esc(dur(med))}</b><span>d'âge médian</span>` : ''}</div>`});
+  }
+  /* les mêmes tâches par app : une ligne par app, des segments par état, lisible aussi au téléphone */
+  function chOuvertesApp(W){
+    const L = ouvertes(), rows = M.apps.map(a => { const v = {}; L.filter(l => l.k === a.k).forEach(l => { const g = ouvGroupe(l.e); v[g] = (v[g] || 0) + 1; }); return {nom: a.app, v, n: Object.values(v).reduce((x, y) => x + y, 0)}; }).filter(r => r.n).sort((a, b) => b.n - a.n);
+    const mx = Math.max(...rows.map(r => r.n), 1);
+    const html = rows.map(r => `<div class="orow"><span class="n">${esc(r.nom)}</span><span class="ob" role="img" aria-label="${esc(r.nom + ' : ' + r.n + ' ouvertes')}" style="--w:${(r.n / mx * 100).toFixed(1)}%">${OUV.filter(o => r.v[o[0]]).map(([k, name, col]) => `<i style="flex:${r.v[k]};--c:${col}" data-tip="${tipAttr(r.nom + ' · ' + name + ' : ' + r.v[k])}"></i>`).join('')}</span><span class="v">${nfmt(r.n)}</span></div>`).join('');
+    return fig('Tâches ouvertes : où', html ? `<div class="olist">${html}</div>` : '<p class="soon" role="status">Aucune tâche ouverte.</p>', chips(OUV.map(([k, name, col]) => [col, name, nfmt(L.filter(l => ouvGroupe(l.e) === k).length)])));
+  }
+  /* la consommation de chaque ressource, jour par jour : les 7 jours que donne le relevé (quota.jours), rien de plus ancien */
+  function chQuotaJours(W){
+    const Q = CUR && CUR.quota, J = Q && Array.isArray(Q.jours) ? Q.jours : [];
+    if (!J.length) return '';
+    const R = [['actions', 'Actions · minutes', 'min', 'var(--done)'], ['vercel', 'Vercel · déploiements', 'déploiements', 'var(--doing)'], ['jules', 'Jules · tâches', 'tâches', 'var(--marc)'], ['gemini', 'Gemini · relectures', 'relectures', 'var(--a-mem)']];
+    return R.map(([k, titre, unit, col]) => {
+      const g = Q.jauges && Q.jauges[k], pj = g && g.par_jour; if (!pj) return '';
+      const bins = J.map(d => ({k: d, lab: d.slice(8), long: dlab(Date.parse(d + 'T12:00:00Z')), v: {x: +pj[d] || 0}}));
+      const sum = bins.reduce((a, b) => a + b.v.x, 0);
+      return chStack(W, {title: titre + ' par jour', bins, keys: [{k: 'x', name: unit, col}], unit, per: '7 jours', foot: `<div class="kp2"><b>${nfmt(sum)}</b><span>${esc(unit)} en 7 j</span></div>`});
+    }).filter(Boolean);
   }
   /* quand le robot travaille : heure x jour de semaine */
   function chChaleur(W, P, endT, titre){
@@ -4704,7 +4745,8 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const W2 = colW(2), W3 = colW(3);
     return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]), ['taches'])
       + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]), ['taches'])
-      + band(BI.res, 'Ressources', rings() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
+      + band(BI.prog, 'Tâches ouvertes', grid(2, [sf('Âge des tâches', () => chAge(W2)), sf('Tâches par app', () => chOuvertesApp(W2))]) + '<p class="qnote">L’état du moment : toutes les tâches ouvertes, quelle que soit la période choisie ; l’âge compte depuis la création de la tâche.</p>', ['taches'])
+      + band(BI.res, 'Ressources', rings() + (() => { const c = chQuotaJours(W2); return c.length ? `<div class="qjours">${grid(2, c)}</div>` : ''; })() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
       + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`, ['recus', 'couts-apps', 'taux'])
       + sf('Données', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>', 'Données : d’où vient chaque chiffre', vDonnees()));
   }

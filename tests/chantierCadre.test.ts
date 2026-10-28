@@ -478,6 +478,34 @@ describe("chaque bloc dit d'où vient sa donnée, son âge et sa nature (#640)",
   });
 });
 
+describe("plus de graphes, tirés du relevé seulement (#640)", () => {
+  it("les tâches ouvertes : leur âge et leur répartition par app, avec leur légende", () => {
+    expect(DOCUMENT).toContain("function chAge(W)");
+    expect(DOCUMENT).toContain("function chOuvertesApp(W)");
+    expect(DOCUMENT).toContain("Tâches ouvertes : depuis quand");
+    expect(DOCUMENT).toContain("toutes les tâches ouvertes, quelle que soit la période choisie");
+  });
+
+  it("la consommation par jour de chaque ressource vient de quota.jours et de par_jour, jamais d'une série inventée", () => {
+    expect(DOCUMENT).toContain("function chQuotaJours(W)");
+    expect(DOCUMENT).toContain("Array.isArray(Q.jours) ? Q.jours : []");
+    expect(DOCUMENT).toContain("g.par_jour");
+    expect(DOCUMENT).toContain("per: '7 jours'");
+  });
+
+  it("le taux USD→CAD est celui du relevé (Banque du Canada) quand il existe, borné, sinon le repli est dit fixe", () => {
+    expect(DOCUMENT).toContain("CUR.quota.taux_usd_cad");
+    expect(DOCUMENT).toContain("+x.taux > .5 && +x.taux < 3");
+    expect(DOCUMENT).toContain("taux fixe d’un reçu : le relevé ne donne pas le taux du jour");
+    expect(DOCUMENT).toContain("const cc = (m, dev) => dev === 'USD' ? m * fxTaux() : m;");
+    expect(DOCUMENT).not.toContain("m * FX");
+  });
+
+  it("le cumul de l'API est présenté comme la mesure la plus ancienne des apps, pas comme la date du relevé", () => {
+    expect(DOCUMENT).toContain("API des apps, plus ancienne mesure");
+  });
+});
+
 describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
   const bon = { type: MESSAGE_CLIC_DROIT, x: 120.5, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
 
