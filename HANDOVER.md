@@ -15,6 +15,16 @@
 
 Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant de tâche (il attend un ID du backlog comme `C28-49:` ou l'exception `HORS-BACKLOG:`) : un re-pin sans ID de backlog porte `HORS-BACKLOG:` en tête de sujet.
 
+## 28/10/2026 : le hub reçoit les événements GitHub signés, la page Chantier n'attend plus le relevé du PC (Hubperso#684, mission #538)
+
+- **Demande de Marc** (28/10, 20:49Z) : « rien ne se perd, aucun oubli, aucune erreur inconnue, tout dans les graphs de chantier, tout à jour tout le temps », sans minuteur ni dépendance au PC. Format convenu avec le fil workflow (phase 4).
+- **Quoi** : `POST /api/chantier/evenement` reçoit un webhook GitHub signé (`X-Hub-Signature-256`, HMAC SHA-256 du corps brut, secret DÉDIÉ `CHANTIER_WEBHOOK_SECRET`, comparé par `memeJeton`). `lib/chantierEvenements.ts` (pur) réduit `issues`, `pull_request`, `workflow_run`, `check_suite`, `deployment_status`, `issue_comment` (« Acceptée » seulement), `merge_group`, `dependabot_alert` et `repository_dispatch` à `{v:1, id, type, action, repo, n, sha, cle, at, etat, plus}` : `repo` est la clé COURTE du relevé (`hub`, `drive`…), `cle` vaut `repo#n`, `repo@sha` (7 caractères) ou `repo:nom`, `at` est l'heure de l'événement. `plus` ne garde que titre, lien, branche, étiquette, environnement : jamais le corps d'un commentaire.
+- **Réponses** : secret absent côté hub 503 ; signature fausse 401 (rien n'est lu) ; corps > 2 Mo 413 ; JSON illisible 400 ; événement retenu mais illisible ou dépôt hors projet 422 ; ping, type ou action non retenus 200 `ignore:true` ; retenu 200 `nouveau` (`false` = livraison déjà rangée) ; base en panne 500.
+- **Stockage** : table `chantier_evenements` (migration 0005, additive), clé primaire = identifiant de livraison GitHub, élagage à 14 jours à chaque écriture réelle. Sixième route de serveur à serveur : égalité STRICTE dans `isPublicPath`, `ROUTES_A_JETON` à jour.
+- **À poser par le PC** (jamais la valeur dans un message) : `CHANTIER_WEBHOOK_SECRET` en Production de Hubperso, puis un webhook JSON sur chacun des onze dépôts (`https://hubperso.com/api/chantier/evenement`, même secret) pour les événements ci-dessus.
+- **Hors de cette tâche** : la lecture par la page (route GET derrière la session du propriétaire) et l'affichage des échecs et des états en direct.
+- **Preuve à lire** : un `ping` du webhook GitHub rend 200 `ignore:true` ; un événement `pull_request` réel apparaît dans `chantier_evenements`.
+
 ## 28/10/2026 : LIA lit les courbes du hub (Hubperso#675, mission MoKarade/.github#575)
 
 - **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Un clic droit sur une courbe envoyait « une courbe d'évolution » sans aucune valeur : le tracé n'est qu'un `<path>`.
