@@ -4352,6 +4352,7 @@ function faitsDe(n, H){
     const groupes = [
       ['bloquées', l => l.e === 'blk', l => t(l) + (att(l) ? ' attend ' + att(l) : '')],
       ['preuve manquante ou en retard', l => l.e === 'ret' || l.pm, l => t(l) + (l.oub ? ' : ' + (H.retTxt(l) || '').slice(0, 70) : '')],
+      ['fusionnées, preuve à poser', l => l.e === 'fus' || l.e === 'prog', l => t(l) + (l.merged != null ? ' (fusionnée ' + H.quand(l.merged) + ')' : '')],
       ['attendent Marc', l => l.e === 'marc', l => t(l) + (l.geste && l.geste.t ? ' : ' + String(l.geste.t).slice(0, 60) : '')],
       ['oubliées', l => l.oubli, l => t(l)],
     ];

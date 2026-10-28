@@ -606,6 +606,15 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     expect(f.indexOf("bloquées")).toBeLessThan(f.indexOf("preuve manquante")); // l'urgent d'abord
   });
 
+  it("les tâches fusionnées qui attendent leur preuve ont leurs titres et la date de fusion, pas seulement un compte", () => {
+    const f1 = { ref: "f1", lvl: "tâche", leaf: true, t: "Preuve de DriveAI", e: "fus", open: true, merged: 4_000_000 };
+    const p1 = { ref: "p1", lvl: "tâche", leaf: true, t: "Preuve automatique", e: "prog", open: true };
+    const g = { ...mission, ls: [f1, p1, t2], ce: { fus: 1, prog: 1, cours: 1 } };
+    const f = faitsDe(g, { ...H, STE: { ...H.STE, fus: "fusionnée, à prouver", prog: "attend sa preuve" }, ORDRE: ["fus", "prog", "cours"] });
+    expect(f).toContain("fusionnées, preuve à poser : « Preuve de DriveAI » (fusionnée t4000000) ; « Preuve automatique »");
+    expect(f).not.toContain("autres à suivre : « Preuve");
+  });
+
   it("sans acteur relevé, les faits le disent au lieu de se taire (LIA n'en invente pas)", () => {
     const sans = { ...mission, ls: [{ ...t2, acteurs: [] }], ce: { cours: 1 } };
     expect(faitsDe(sans, H)).toContain("acteurs : non relevés");
