@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : le hub pousse l'état du chantier à MemoryAI pour que LIA le lise elle-même (Hubperso#651, mission MoKarade/.github#575)
+
+- **Décision de Marc** (carte du 28/10, 18:11Z) : « le hub pousse le chantier à MemoryAI » (le hub POUSSE, MemoryAI ne détient aucun jeton vers une app, ADR 0015).
+- **Ce qui part** : `lib/chantierSorties.ts` (pur) décode le relevé reçu du PC et fait une ligne par app (`chantier_app`) et une par mission ouverte (`chantier_mission`), niveau 1, titre ≤ 120 et résumé ≤ 600 (les bornes de la porte de MemoryAI), états lus dans les étiquettes GitHub, aucun montant ni donnée perso. La `ref` porte une empreinte de l'état : un état changé donne un événement neuf, un état identique ne se double pas. 50 événements au plus, missions les plus chargées d'abord.
+- **Quand** : `POST /api/gantt` lance l'envoi APRÈS sa réponse (`after`), une fois par heure au plus (l'envoi du PC des dix premières minutes, UTC) : aucun minuteur de plus. `lib/chantierSortiesEnvoi.ts` fait l'appel (Bearer, délai 8 s) et ne lève jamais.
+- **À poser par le PC** (jamais la valeur dans un message) : `MEMORYAI_SORTIES_TOKEN` en Production de Hubperso = la valeur de `MEMORYAI_TOKEN_HUBPERSO_ECRITURE` de MemoryAI, APRÈS la fusion de MemoryAI#396 (qui donne la porte à `hubperso` et ouvre `memoryai_sorties` à LIA) ; une variable ne s'applique qu'au build suivant. Sans elle : « non-configure », rien n'est poussé, rien ne casse.
+- **Preuve à lire** : `memoryai_sorties app=hubperso` rend les événements, et une question à LIA sur une mission du chantier en cite un.
+
 ## 28/10/2026 : LIA reçoit les faits d'une barre du Gantt et les analyse elle-même (Hubperso#644, mission MoKarade/.github#575)
 
 - **Pourquoi** : clic droit sur la barre « Hubperso 30 j », LIA répondait « je ne vois pas d'ici le contenu de cette barre » (Marc, 28/10). Une barre n'a presque pas de texte visible ; dates, état, tâches et acteurs n'arrivaient pas à LIA.
