@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { filtrer, type Commande } from "@/lib/palette";
+import { viseUneApp } from "@/lib/lienApp";
 
 export function PaletteCommandes({ commandes }: { commandes: Commande[] }) {
   const router = useRouter();
@@ -52,6 +53,11 @@ export function PaletteCommandes({ commandes }: { commandes: Commande[] }) {
     (commande: Commande) => {
       fermer();
       if (commande.genre === "externe") {
+        // Une app du parc s'ouvre en place : un onglet court-circuite la bascule vers la PWA installée (Android).
+        if (viseUneApp(commande.cible)) {
+          window.location.assign(commande.cible);
+          return;
+        }
         // `noopener` : la page ouverte ne doit pas garder une poignée sur le hub.
         window.open(commande.cible, "_blank", "noopener,noreferrer");
         return;

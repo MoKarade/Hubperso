@@ -24,6 +24,14 @@
 - **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
 - **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
 
+## 28/10/2026 : les liens du hub vers une app du parc s'ouvrent en place (Hubperso#483, mission #285)
+
+- **Avant** : seuls le titre de la carte et le bouton de la page d'app n'ouvraient pas d'onglet ; les liens du contrat (alertes, bandeau, actions, recommandations, page Attention) et la palette gardaient `_blank`, ce qui court-circuite la bascule vers la PWA installée sur Android.
+- **Après** : `lib/lienApp.ts` (`viseUneApp`, `attributsLien`) : un href `https://<nom>.hubperso.com` (hors `www` et le domaine nu) perd `_blank` ; GitHub et les sites tiers le gardent. La palette utilise `location.assign` pour une app du parc. Verrou : `tests/lienApp.test.ts`, qui complète `tests/pwaLiens.test.ts`.
+- **Ce que ça ne prouve pas** : que Chrome bascule vers l'app. La lecture se fait sur l'Android de Marc, lien par lien (tâche en `preuve-attendue`).
+- **Constat à part** : `finance.hubperso.com/manifest.webmanifest` redirige vers la connexion du hub (lu le 28/10) ; les cinq autres apps rendent un manifeste cohérent (`id`, `start_url`, `scope` = `/`).
+- **Option écartée** : `handle_links` (expérimental, non pris en charge sur Android) [À vérifier].
+
 ## 28/10/2026 : le suivi de sessions de Sentry est coupé côté serveur (Hubperso#702, mission #508)
 
 - **Cause** (diagnostic de #595) : le SDK `@sentry/nextjs` 11.9.0 ouvre par défaut une « session » de santé des versions pour chaque requête entrante (option `sessions` de l'intégration HTTP du serveur, `true` par défaut) et l'envoie à Sentry. Sur `/login`, 3,6 k invocations par 24 h donnaient environ 2 appels sortants chacune (7,1 k vus). `tracesSampleRate` était déjà à 0 : ce n'étaient pas des traces.
