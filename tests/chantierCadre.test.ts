@@ -255,3 +255,15 @@ describe("les quotas se lisent d'un coup d'oeil, une ligne par ressource", () =>
     expect(DOCUMENT).toMatch(/\.qrow\{[^}]*min-height:44px/);
   });
 });
+
+describe("une tâche jamais commencée montre aussi ses états (Hubperso#589)", () => {
+  it("son historique part de son premier état étiqueté, jamais d'une date inventée", () => {
+    expect(DOCUMENT).toContain("const deb = n.start != null ? n.start : Array.isArray(n.et) && n.et.length ? Date.parse(n.et[0][1]) : NaN;");
+    expect(DOCUMENT).toContain("if (!Array.isArray(n.et) || !isFinite(deb)) return null;");
+    expect(DOCUMENT).toContain("let cur = 'cours', t = deb;");
+  });
+
+  it("la ligne du Gantt trace la barre d'une tâche sans début de travail quand elle a un historique", () => {
+    expect(DOCUMENT).toContain("} else if (n.start != null || (n.leaf && etatsOf(n, seg))){");
+  });
+});
