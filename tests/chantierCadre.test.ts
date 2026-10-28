@@ -403,6 +403,43 @@ describe("la période choisie commande toute la page (#621)", () => {
   });
 });
 
+describe("Vitesse et Parcours en un seul onglet : le trajet d'une tâche et la vitesse par acteur (#625)", () => {
+  it("il n'y a qu'un onglet : Vitesse porte aussi le parcours, pas d'onglet Parcours", () => {
+    expect(ongletDe("parcours")).toBeNull();
+    expect(DOCUMENT).not.toContain("['parcours', 'Parcours']");
+    expect(DOCUMENT).toContain("const P = parcoursParts()");
+    expect(DOCUMENT).toContain("P.hero + P.flow");
+  });
+
+  it("les phases viennent d'instants du relevé ; un instant absent saute la phase, jamais estimé", () => {
+    expect(DOCUMENT).toContain("[['idee', l.c], ['prise', l.start], ['pr', cr], ['fus', l.merged], ['acc', l.end]].filter(b => b[1] != null");
+    expect(DOCUMENT).toContain("ok ? PCPH[a][2] : 'var(--line2)'");
+    expect(DOCUMENT).toContain("'Non détaillé'");
+  });
+
+  it("« dans l'app » n'a pas d'instant propre : dès le relevé qui suit l'acceptation", () => {
+    expect(DOCUMENT).toContain("Visible dans cette page dès le relevé qui suit l\\'acceptation");
+  });
+
+  it("la période filtre le trajet et chaque ligne ouvre la fiche de la tâche", () => {
+    expect(DOCUMENT).toContain("const L = M.leaves.filter(act)");
+    expect(DOCUMENT).toContain('class="pcr" data-open="${esc(l.ref)}"');
+  });
+
+  it("les graphes ajoutés : où va le temps (acteur, app), bout en bout, tâches en vol, entrées et sorties", () => {
+    expect(DOCUMENT).toContain("function chPhases(W, title, groups)");
+    expect(DOCUMENT).toContain("chPhases(W2, 'Par acteur'");
+    expect(DOCUMENT).toContain("chPhases(W2, 'Par app'");
+    expect(DOCUMENT).toContain("function chBoutEnBout(W, done)");
+    expect(DOCUMENT).toContain("title: 'Tâches en vol'");
+    expect(DOCUMENT).toContain("title: 'Entrées et sorties'");
+  });
+
+  it("une tâche sans acteur connu reste « Non attribué » dans où va le temps", () => {
+    expect(DOCUMENT).toContain("phasesPar(P.done, l => quiTask(l), k => QUIT[k][0])");
+  });
+});
+
 describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
   const bon = { type: MESSAGE_CLIC_DROIT, x: 120.5, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
 
