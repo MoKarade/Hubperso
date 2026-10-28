@@ -4,7 +4,7 @@
 
 ## 28/10/2026 : lia-ui v0.44.2, le menu du clic droit s'ouvre toujours sous le clic (Hubperso#636, mission MoKarade/.github#575)
 
-Épingle `@mokarade/lia-ui` v0.44.2 (sha pelé `8881751`), seul changement (`package.json`, lock). Le menu d'un élément n'est plus borné à la zone de vie de LIA : il s'ouvre là où Marc a cliqué, dans la fenêtre (lia-ui#152, relevé du PC du 28/10, 15:48Z). v0.44.0 (mode atelier, inactif tant que le hub ne le demande pas) et v0.44.1 (tag automatique) arrivent avec. [À vérifier] relevé du PC après le déploiement de production.
+Épingle `@mokarade/lia-ui` v0.44.2 (sha pelé `8881751`), seul changement (`package.json`, lock). Le menu d'un élément n'est plus borné à la zone de vie de LIA : il s'ouvre là où Marc a cliqué, dans la fenêtre (lia-ui#152, relevé du PC du 28/10, 15:48Z). v0.44.0 (mode atelier, inactif tant que le hub ne le demande pas) et v0.44.1 (tag automatique) arrivent avec. [À vérifier] relevé du PC (barre du Gantt, carte de la vue Vitesse) après le déploiement de production.
 
 ## 28/10/2026 : le clic droit couvre toute la page Chantier, vue Vitesse et téléphone compris (Hubperso#632, mission MoKarade/.github#575)
 
