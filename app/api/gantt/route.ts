@@ -18,10 +18,11 @@
 //                                  n'est PAS touchée : seul un envoi valide remplace le dernier)
 //   sans base                    → 503 ; écriture impossible → 500 (jamais un 200 qui la cache)
 
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { decideCron } from "@/lib/cronAuth";
 import { baseConfiguree } from "@/lib/db";
 import { TAILLE_MAX_OCTETS, validerEnvoi } from "@/lib/gantt";
+import { pousserSortiesChantier } from "@/lib/chantierSortiesEnvoi";
 import { enregistrerGantt } from "@/lib/ganttDb";
 import { memeJeton } from "@/lib/jetonApp";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
@@ -86,6 +87,15 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const recu = await enregistrerGantt(validation.envoi);
+    // LIA lit le chantier dans les sorties de MemoryAI (Hubperso#651) : une poussée par heure, APRÈS la réponse au
+    // PC, et un échec ne la touche jamais (la ligne est rangée, c'est ce que le PC attend).
+    after(async () => {
+      await pousserSortiesChantier({
+        donneesGzB64: validation.envoi.donnees_gz_b64,
+        maintenant: new Date(),
+        jeton: process.env.MEMORYAI_SORTIES_TOKEN,
+      });
+    });
     return NextResponse.json({ ok: true, recu });
   } catch (err) {
     console.error("[gantt] écriture impossible", err);
