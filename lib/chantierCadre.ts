@@ -69,12 +69,46 @@ export const MESSAGE_COUTS = "chantier-couts";
  * `{ type, id, ok: true }` une fois déposé ou `{ type, id, ok: false, erreur }`. Le cadre n'a pas de réseau : c'est le hub qui dépose.
  */
 export const MESSAGE_GESTE = "chantier-geste";
+/** Le hub demande un onglet au cadre déjà ouvert (`/chantier?onglet=couts` sans le recharger) : `{ type, onglet }`. */
+export const MESSAGE_ONGLET = "chantier-onglet";
+/**
+ * Un clic droit (ou un appui long de 650 ms sans mouvement) dans le cadre : `{ type, x, y, genre, texte }`. `x`, `y` sont les coordonnées
+ * DANS le cadre ; `genre` dit ce que c'est (« une barre du Gantt »), `texte` le texte visible, coupé à 300 caractères. Le hub ne voit
+ * pas ce qui se passe dans le cadre : c'est lui qui répond (LIA). Sans hub qui écoute, le menu du navigateur reste en place.
+ */
+export const MESSAGE_CLIC_DROIT = "chantier-clic-droit";
+
+/** Ce que le hub retient d'un clic droit du cadre : la place dans le cadre et de quoi le décrire à LIA. */
+export type ClicDroitCadre = { x: number; y: number; description: { genre: string; texte?: string } };
+
+const GENRE_MAX = 80;
+const TEXTE_MAX = 300;
+const COORDONNEE_MAX = 100_000;
+
+// Le cadre est un document venu d'ailleurs, et ce qu'il dit est une DONNÉE : on garde des nombres finis et deux textes
+// bornés, sans caractère de contrôle ; tout le reste est ignoré. Jamais un nom d'outil, une adresse ou une consigne qui passe.
+const sansControle = (v: string) => v.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim();
+
+/** `{ type, x, y, genre, texte }` du cadre → ce que LIA peut recevoir, ou `null` quand le message n'a pas cette forme. */
+export function lireClicDroit(donnee: unknown): ClicDroitCadre | null {
+  if (typeof donnee !== "object" || donnee === null) return null;
+  const m = donnee as { type?: unknown; x?: unknown; y?: unknown; genre?: unknown; texte?: unknown };
+  if (m.type !== MESSAGE_CLIC_DROIT) return null;
+  const { x, y } = m;
+  if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) return null;
+  if (Math.abs(x) > COORDONNEE_MAX || Math.abs(y) > COORDONNEE_MAX) return null;
+  if (typeof m.genre !== "string") return null;
+  const genre = sansControle(m.genre).slice(0, GENRE_MAX);
+  if (!genre) return null;
+  const texte = typeof m.texte === "string" ? sansControle(m.texte).slice(0, TEXTE_MAX) : "";
+  return { x, y, description: texte ? { genre, texte } : { genre } };
+}
 
 /**
  * Les onglets de la page, dans les mots du document (`?onglet=couts` ouvre le bon : `mur` est l'accueil de la page). Une valeur inconnue
  * donne `null` : la page s'ouvre sur son onglet habituel, jamais sur un fragment inventé par l'adresse.
  */
-export const ONGLETS = ["mur", "toi", "gantt", "couts"] as const;
+export const ONGLETS = ["mur", "toi", "gantt", "vitesse", "couts"] as const;
 export function ongletDe(valeur: unknown): (typeof ONGLETS)[number] | null {
   return ONGLETS.find((o) => o === valeur) ?? null;
 }

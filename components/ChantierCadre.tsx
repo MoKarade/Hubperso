@@ -8,23 +8,27 @@
 //
 // ── CE QUI NE DOIT PAS ARRIVER ───────────────────────────────────────────────────────
 //
-//  - le cadre ne se recharge pas (l'`<iframe>` garde son `src`, la page garde son état) ;
+//  - le cadre ne se recharge pas (l'`<iframe>` garde son `src`, la page garde son état) — ni en changeant
+//    de page du hub : `ChantierPersistant` le monte dans la mise en page, il y reste caché hors de `/chantier` ;
 //  - la base n'est pas relue à chaque tour : le relevé est redemandé avec `If-None-Match`, la route
 //    répond 304 sans lire le contenu tant que le PC n'a rien envoyé de neuf (toutes les 10 min) ;
-//  - rien n'est demandé onglet caché ; au retour sur l'onglet, une lecture tout de suite.
+//  - rien n'est demandé onglet caché, ni cadre caché (hors de `/chantier`) ; au retour, une lecture tout de suite.
 //
 // Le cadre se présente avec un canal (`MessagePort`, voir `estMessagePret`) : le hub n'écrit QUE dans ce
 // canal, jamais par `postMessage(…, "*")` — l'origine du cadre est opaque et un « * » livrerait le relevé à
 // n'importe quel document qui occuperait la fenêtre. Le cadre se représente chaque seconde (le hub peut
 // n'écouter qu'après l'hydratation) jusqu'à ce que le hub lui réponde « ok » par le canal.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { erreurGeste } from "@/lib/chantierGestes";
+import { EVENEMENT_LIA_CLIC_CADRE } from "@/lib/lia";
 import {
+  MESSAGE_CLIC_DROIT,
   MESSAGE_COUTS,
   MESSAGE_ETAT,
   MESSAGE_GESTE,
   MESSAGE_OK,
+  MESSAGE_ONGLET,
   MESSAGE_RELEVE,
   SANDBOX_CADRE,
   URL_CADRE,
@@ -35,6 +39,7 @@ import {
   erreurCouts,
   estGzip,
   estMessagePret,
+  lireClicDroit,
   type ONGLETS,
 } from "@/lib/chantierCadre";
 
@@ -49,8 +54,14 @@ const INTERVALLE_MS = 60_000;
 /** Les coûts demandent un tour chez chaque app : toutes les 5 min, onglet visible seulement. */
 const INTERVALLE_COUTS_MS = 300_000;
 
-export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[number] | null }) {
+type Onglet = (typeof ONGLETS)[number];
+
+export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet | null; actif?: boolean }) {
   const cadre = useRef<HTMLIFrameElement>(null);
+  // L'adresse du cadre ne change jamais après le premier rendu : un autre `src` rechargerait le document.
+  const [src] = useState(() => (onglet ? `${URL_CADRE}#${onglet}` : URL_CADRE));
+  const actifRef = useRef(actif);
+  const actions = useRef<{ reveiller: () => void; onglet: (o: Onglet) => void } | null>(null);
 
   useEffect(() => {
     let canal: MessagePort | null = null;
@@ -141,6 +152,17 @@ export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[num
       }
     }
 
+    /**
+     * Un clic droit (ou un appui long) dans le cadre : LIA ne peut pas lire ce document, c'est donc ici qu'il lui est dit, par la
+     * fenêtre (`LiaBoot` écoute). Ce que le cadre envoie est une donnée : seule la forme validée (`lireClicDroit`) passe.
+     */
+    function relayerClicDroit(donnee: unknown) {
+      const iframe = cadre.current;
+      const clic = lireClicDroit(donnee);
+      if (!iframe || !clic || !actifRef.current) return;
+      window.dispatchEvent(new CustomEvent(EVENEMENT_LIA_CLIC_CADRE, { detail: { cadre: iframe, ...clic } }));
+    }
+
     function surMessage(evenement: MessageEvent) {
       // Seul NOTRE cadre est écouté (et son origine est opaque : « null ») ; le premier canal reçu est
       // le bon, les suivants (le cadre se représente tant qu'il n'a pas reçu « ok ») sont ignorés.
@@ -150,7 +172,9 @@ export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[num
       if (!port) return;
       canal = port;
       canal.onmessage = (m: MessageEvent) => {
-        if ((m.data as { type?: unknown } | null)?.type === MESSAGE_GESTE) void deposerGeste(m.data);
+        const type = (m.data as { type?: unknown } | null)?.type;
+        if (type === MESSAGE_GESTE) void deposerGeste(m.data);
+        else if (type === MESSAGE_CLIC_DROIT) relayerClicDroit(m.data);
       };
       canal.postMessage({ type: MESSAGE_OK, gestes: true });
       void lire();
@@ -158,11 +182,15 @@ export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[num
     }
 
     const surVisibilite = () => {
-      if (document.visibilityState !== "visible") return;
+      if (!actifRef.current || document.visibilityState !== "visible") return;
       void lire();
       if (Date.now() - coutsLusA >= INTERVALLE_COUTS_MS) void lireCouts();
     };
 
+    actions.current = {
+      reveiller: surVisibilite,
+      onglet: (o) => canal?.postMessage({ type: MESSAGE_ONGLET, onglet: o }),
+    };
     window.addEventListener("message", surMessage);
     document.addEventListener("visibilitychange", surVisibilite);
     const minuteur = setInterval(surVisibilite, INTERVALLE_MS);
@@ -170,16 +198,25 @@ export function ChantierCadre({ onglet = null }: { onglet?: (typeof ONGLETS)[num
       window.removeEventListener("message", surMessage);
       document.removeEventListener("visibilitychange", surVisibilite);
       clearInterval(minuteur);
+      actions.current = null;
       canal?.close();
     };
   }, []);
 
+  // Cadre caché → rien n'est lu ; de retour sur `/chantier` → une lecture tout de suite, et l'onglet demandé par l'adresse.
+  useEffect(() => {
+    actifRef.current = actif;
+    if (!actif) return;
+    actions.current?.reveiller();
+    if (onglet) actions.current?.onglet(onglet);
+  }, [actif, onglet]);
+
   return (
     <iframe
       ref={cadre}
-      className="chantier-cadre"
+      className={actif ? "chantier-cadre" : "chantier-cadre chantier-cadre--cache"}
       title="Chantier : suivi des tâches, Gantt et coûts"
-      src={onglet ? `${URL_CADRE}#${onglet}` : URL_CADRE}
+      src={src}
       sandbox={SANDBOX_CADRE}
       referrerPolicy="no-referrer"
     />

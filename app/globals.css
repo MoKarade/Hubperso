@@ -2798,6 +2798,10 @@ a:focus-visible,
   border: 0;
   background: var(--bg);
 }
+/* Hors de /chantier le cadre reste monté (le Gantt garde son état) mais n'occupe aucune place. */
+.chantier-cadre--cache {
+  display: none;
+}
 /* Lien d'évitement : invisible tant qu'on ne tabule pas dessus. */
 .cadre__saut {
   position: absolute;

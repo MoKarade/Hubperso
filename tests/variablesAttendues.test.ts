@@ -60,8 +60,9 @@ describe("VARIABLES_ATTENDUES", () => {
     }
   });
 
-  it("n'inclut pas HUB_SESSION_PRIVATE_JWK (hors périmètre tant que la phase 2 n'est pas fusionnée)", () => {
-    expect(noms).not.toContain("HUB_SESSION_PRIVATE_JWK");
+  it("inclut HUB_SESSION_PRIVATE_JWK en optionnelle (le hub n'émet le cookie signé que si elle est posée)", () => {
+    const v = VARIABLES_ATTENDUES.find((x) => x.nom === "HUB_SESSION_PRIVATE_JWK");
+    expect(v?.exigence).toBe("optionnelle");
   });
 
   // Le garde-fou qui empêche la liste de se périmer : toute variable LUE par le code de
