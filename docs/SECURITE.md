@@ -72,6 +72,12 @@ pendant une rotation.
 Le script n'affiche jamais la clé privée ; s'il l'affichait un jour, c'est un bug à signaler
 (un test le vérifie : `tests/cleSession.test.ts`).
 
+### Vérifier que le hub émet bien le cookie
+Connecté en propriétaire, ouvrir `https://www.hubperso.com/api/session/signee` : `{"etat":"valide","kid":"…"}`
+avec le même `kid` que celui affiché à la génération. `non-configure` = `HUB_SESSION_PUBLIC_KEYS` absente du
+hub ; `absent` = le hub n'a pas encore posé le cookie (clé privée absente, ou pas de navigation depuis la
+pose) ; `invalide` = signé par une autre clé ou pour une autre adresse. La route ne rend jamais le cookie.
+
 ### Faire tourner la clé (rotation)
 1. `npm run cle-session -- --garder '<JWKS actuel>'` : génère une NOUVELLE paire et affiche un
    JWKS à deux clés (l'ancienne + la nouvelle). Le script refuse un `kid` déjà présent et un

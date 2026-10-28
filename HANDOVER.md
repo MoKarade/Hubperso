@@ -2,6 +2,11 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **Session partagée : route de contrôle du cookie signé (Hubperso#608, mission #606)**
+
+- **`GET /api/session/signee`** (propriétaire seul, 401 sans session, 404 invité, `no-store`) : vérifie le cookie `__Secure-hub.session` reçu avec `HUB_SESSION_PUBLIC_KEYS`, comme les apps, et rend seulement `{ etat: valide | absent | invalide | non-configure, kid?, expireLe? }`. Jamais le cookie ni une clé. « invalide » aussi si le cookie porte une autre adresse que la session du hub.
+- **Sert à la preuve en production** (#609) : le cookie est `httpOnly`, cette route est le seul moyen de le lire. `HUB_SESSION_PUBLIC_KEYS` déclarée optionnelle.
+
 ## 🟦 Session 2026-10-28 — **Session partagée : le hub signe le cookie ES256 (phase 2, Hubperso#607, mission #606)**
 
 Marc, 28/10/2026 (« A ») : le hub émet le cookie signé que JobAI, CarAI, MemoryAI et FinanceAI savent déjà lire.
