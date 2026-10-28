@@ -17,6 +17,13 @@
 - **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
 - **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
 
+## 28/10/2026 : le suivi de sessions de Sentry est coupé côté serveur (Hubperso#702, mission #508)
+
+- **Cause** (diagnostic de #595) : le SDK `@sentry/nextjs` 11.9.0 ouvre par défaut une « session » de santé des versions pour chaque requête entrante (option `sessions` de l'intégration HTTP du serveur, `true` par défaut) et l'envoie à Sentry. Sur `/login`, 3,6 k invocations par 24 h donnaient environ 2 appels sortants chacune (7,1 k vus). `tracesSampleRate` était déjà à 0 : ce n'étaient pas des traces.
+- **Ce qui change** : `instrumentation.ts` passe `integrations: [Sentry.httpIntegration(OPTIONS_HTTP_SENTRY)]` à `Sentry.init` sous le runtime Node seulement (`httpIntegration` n'existe pas dans le SDK edge : le build Turbopack échoue sinon), avec `OPTIONS_HTTP_SENTRY = { sessions: false }` dans `lib/sentryConfig.ts`. Vérifié avec le SDK installé : l'intégration remplace la valeur par défaut (une seule `Http` dans la liste). Les erreurs partent toujours (`onRequestError`) et `beforeSend` retire toujours cookies, en-têtes, corps et utilisateur.
+- **Tests** : `tests/sentryConfig.test.ts` (option coupée, branchée dans `instrumentation.ts`, option présente dans les types du SDK installé, nettoyage des erreurs inchangé).
+- **Preuve à lire** (fil Vercel) : 24 h pleines après le déploiement, Vercel > Observability > `/login` > External APIs montre au moins 80 % d'appels Sentry en moins pour un nombre d'invocations comparable ; sinon la vraie cause est notée sur #702.
+
 ## 28/10/2026 : le hub rattrape par GitHub le trou entre le relevé du PC et les événements (Hubperso#699, mission #538)
 
 - **Demande de Marc** (28/10) : « page chantier en cours, full live pas de périmé » et « RIEN AVEC TIMER, TOUT ÉVÉNEMENTS, RIEN NE DÉPEND DU PC ». Les webhooks (#684) ne disent que ce qui suit leur pose ; avant, l'état restait celui du dernier relevé du PC, avec son âge (« périmé »).
