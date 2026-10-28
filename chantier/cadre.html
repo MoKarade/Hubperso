@@ -795,6 +795,14 @@ body.anim .card .cs i{animation:grow .7s ease both}
 .xc-board{display:grid;grid-template-columns:var(--cols);gap:6px;align-items:stretch;min-width:var(--mw,820px)}
 .xc-h{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 8px;font-size:12.5px;line-height:1.2;color:var(--mute);text-align:center;min-width:0}
 .xc-h svg{width:22px;height:22px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.xc-h b{font:800 24px/1 var(--fm);color:var(--ink)}.xc-h.late b{color:var(--blk-t)}
+.xc-ctl{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:2px 0 6px}.xc-ctl .per{margin:0}
+.xc-w svg{width:10px;height:10px;margin-right:5px;vertical-align:-1px;fill:currentColor}
+.xc-fl{display:inline-flex;align-items:center;gap:6px}.xc-fl svg{width:12px;height:12px;fill:var(--mute)}
+.xc-ph{margin:14px 0 4px}.xc-pht{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;font-size:13px;color:var(--mute)}.xc-pht>b{font-size:15px;color:var(--ink)}.xc-pht span b{color:var(--ink);font-variant-numeric:tabular-nums}
+.xc-phb{display:flex;gap:2px;height:34px;margin:6px 0;border-radius:8px;overflow:hidden}.xc-phb span{display:flex;align-items:center;min-width:0;padding:0 10px;background:var(--c);color:var(--bg);font:700 12.5px/1 var(--fd);white-space:nowrap;overflow:hidden}
+.xc-w{font-style:normal;font-size:12px;line-height:1.25;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--line) 55%,transparent);color:var(--mute);white-space:nowrap}
+.xc-dl{display:flex;align-items:center;font-size:12.5px;color:var(--mute);white-space:nowrap}
+.xc-d{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:2px 0 8px;font-size:12.5px;line-height:1.2}.xc-d b{font:700 13px/1.1 var(--fm);color:var(--ink);white-space:nowrap}.xc-d i{display:block;height:5px;width:var(--w);max-width:100%;border-radius:3px;background:var(--doing)}.xc-d.nd b{color:var(--mute);font-weight:500}
 .xc-h.gh{opacity:.55}.xc-h.gh b{font-size:20px;color:var(--mute)}.xc-h.gh svg{stroke-dasharray:3 2.4}
 .xc-h+.xc-h::before{content:"";position:absolute;left:-6px;top:11px;width:6px;height:6px;border-top:2px solid var(--mute);border-right:2px solid var(--mute);transform:rotate(45deg) translate(-3px,3px);opacity:.6}
 .xc-l{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px;font-weight:600;white-space:nowrap}.xc-l i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--ac)}.xc-l span{overflow:hidden;text-overflow:ellipsis}
@@ -805,7 +813,7 @@ body.anim .card .cs i{animation:grow .7s ease both}
 #mx .xc-b.big{width:40px;height:40px;border-radius:11px;font-size:13px}
 #mx .xc-b .p{position:absolute;left:4px;right:4px;bottom:3px;height:3px;border-radius:2px;background:color-mix(in srgb,var(--bg) 38%,transparent);overflow:hidden}#mx .xc-b .p::after{content:"";display:block;height:100%;width:var(--p,0%);background:var(--bg)}
 #mx .xc-b.s-idee{background:transparent;box-shadow:inset 0 0 0 2px var(--todo);color:var(--todo)}
-#mx .xc-b.s-file{background:var(--todo)}
+#mx .xc-b.s-file,#mx .xc-b.s-att{background:var(--todo)}#mx .xc-b.s-mg{background:var(--doing)}
 #mx .xc-b.s-prise,#mx .xc-b.s-rel{background:var(--doing)}
 #mx .xc-b.s-draft{background:transparent;box-shadow:inset 0 0 0 2.5px var(--doing);color:var(--doing)}
 #mx .xc-b.s-fus{background:var(--fus-t)}
@@ -822,7 +830,7 @@ body.anim .card .cs i{animation:grow .7s ease both}
 .xr-n{display:flex;flex-wrap:wrap;gap:8px 28px;margin:6px 0 10px}.xr-n>div{display:flex;align-items:baseline;gap:8px}.xr-n b{font:800 28px/1 var(--fm);color:var(--ink)}.xr-n span{font-size:13.5px;color:var(--mute)}.xr-n .av b{color:var(--marc)}
 .xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:20px;height:20px;border-radius:6px;font-size:10px;cursor:default}#mx .xc-key .xc-b::before{display:none}
 @media (prefers-reduced-motion:reduce){#mx .xc-b.on,.xc-live i{animation:none}}
-@media (max-width:700px){.xc-board{--mw:700px}}
+@media (max-width:700px){.xc-board{--mw:800px}}
 .tgh{display:flex;align-items:center;gap:8px;margin:0;color:var(--mute)}
 .tgh .si{width:20px;height:20px}
 .tgh b{font:700 15px var(--fm);color:var(--ink)}
@@ -4150,6 +4158,7 @@ function sources(){
   const S = [
     {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
     ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
+    ...(CUR && CUR.etapes && typeof CUR.etapes === 'object' ? [{id: 'etapes', nom: 'Durées des étapes : sortie du brouillon et mise en ligne', nat: 'mes', at: t(CUR.etapes.releve), cad: 15 * MIN, src: 'GitHub (sortie du brouillon et déploiement Vercel de chaque PR fusionnée), relevé du PC'}] : []),
     {id: 'sante', nom: 'Défauts et preuves', nat: 'cal', at: t(F.calcule_le), cad: 30 * MIN, src: 'calculé par le PC sur le relevé'},
     {id: 'prev', nom: 'Ce qui va se passer', nat: 'est', at: t(P.calcule_le), cad: 10 * MIN, src: 'file du script du PC : une prévision, pas un fait'},
     {id: 'actions', nom: 'Minutes Actions', nat: 'mes', at: t(jauge('actions', 'releve')), cad: 10 * MIN, perime: t(jauge('actions', 'perime')), src: 'GitHub Actions (dépôts privés)'},
@@ -5220,33 +5229,79 @@ function vGanttFull(){
   const XCOL = [
     ['idee', 'Idée', '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4"/><path d="M12 15.6v.1"/>'],
     ['file', 'En file', '<path d="M5 7h14M5 12h14M5 17h9"/>'],
+    ['att', 'Attend', '<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6M14 9v6"/>'],
     ['prise', 'Prise', '<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/>'],
     ['draft', 'PR brouillon', SVGI.pr],
     ['rel', 'PR prête', SVGI.pr],
     ['ci', 'Contrôles', '<path d="M12 3l7 3v5.5c0 4.2-2.8 7.6-7 9.5-4.2-1.9-7-5.3-7-9.5V6z"/>', 'pr'],
+    ['mg', 'File Mergify', '<path d="M4 7h10M4 12h10M4 17h6"/><path d="M17 9.5l3 2.5-3 2.5"/>', 'pr'],
     ['fus', 'Fusionnée', SVGI.fusion],
     ['dep', 'En ligne', '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>', 'dep'],
     ['prove', 'Preuve', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.4 2.4L15.8 9.6"/>'],
-    ['acc', 'Acceptée, 24 h', SVGI.fait]
+    ['acc', 'Acceptée', SVGI.fait]
   ];
+  // où chaque étape se passe : mot court sous l'étape, explication en infobulle
+  const XLIEU = {idee: ['toi', 'h', 'Une idée vient de toi ou du coordinateur, posée dans une issue GitHub'], file: ['PC', 'm', 'Le script de file du PC range et numérote les tâches'], att: ['toi / dép.', 'h', 'Un geste de ta part, ou une autre tâche à finir avant'],
+    prise: ['agent', 'ia', 'Un fil Claude, Jules ou Copilot travaille dans le nuage'], draft: ['agent', 'ia', 'L’agent pousse son code sur GitHub, la PR reste en brouillon'], rel: ['GitHub', 'm', 'PR sortie du brouillon, en attente des contrôles'],
+    ci: ['GitHub / PC', 'm', 'Contrôles sur les machines GitHub ; sur le PC de Marc pour FinanceAI et DriveAI, dépôts privés'], mg: ['Mergify', 'm', 'Mergify met la PR en file et la fusionne quand tout est vert'], fus: ['GitHub', 'm', 'Fusion en squash dans la branche principale'],
+    dep: ['Vercel', 'm', 'Vercel construit et met en ligne la branche principale'], prove: ['fil', 'ia', 'Le fil qui a livré vérifie en vrai et pose la preuve ; le garde-fou de GitHub la contrôle'], acc: ['GitHub', 'm', 'L’issue est fermée avec la preuve « Acceptée » ; on montre les 24 dernières heures']};
+  // rond = humain, losange = IA, carré = machine (même grammaire que la frise d'une tâche du fil workflow)
+  const XFORME = {h: '<circle cx="8" cy="8" r="6.5"/>', ia: '<path d="M8 1 15 8 8 15 1 8z"/>', m: '<rect x="2" y="2" width="12" height="12" rx="2"/>'};
+  // durée moyenne de chaque étape mesurée sur les 30 derniers jours : seules les étapes que le relevé date (issue, prise, PR, derniers commits, fin des contrôles, fusion, preuve, fermeture)
+  const XDUR_J = 30;
+  // ce que la ligne « durée » affiche : moyenne ou médiane, pour tous les types de tâche ou un seul (comme la frise du fil workflow)
+  let XST = 'moy', XQ = 'tous';
+  try { const a = localStorage.getItem('mxxst'), b = localStorage.getItem('mxxq'); if (a === 'moy' || a === 'med') XST = a; if (['tous', 'claude', 'jules', 'copilot'].includes(b)) XQ = b; } catch (e) {}
+  const xcDur = ms => ms < 60e3 ? '< 1 min' : dur(ms);
+  const xcType = l => l.j ? 'jules' : l.pr && /^copilot/i.test(l.pr.au || '') ? 'copilot' : 'claude';
+  const xcEtapes = () => { const E = CUR && CUR.etapes; return E && typeof E === 'object' && E.prets && typeof E.prets === 'object' ? E : null; };
+  const xcDurees = () => {
+    const now = Date.now(), t0 = now - XDUR_J * DAY, log = {}, S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}, E = xcEtapes(), sans = {n: 0}, t = v => { const x = typeof v === 'number' ? v : Date.parse(v); return isFinite(x) ? x : null; };
+    (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => { log[x.r + '#' + x.n] = x; });
+    const add = (k, a, b) => { if (a != null && b != null && b >= a && b >= t0) S[k].push(b - a); };
+    M.leaves.forEach(l => {
+      if (XQ !== 'tous' && xcType(l) !== XQ) return;
+      const pr = l.pr, cr = pr ? t(pr.created) : null, c1 = pr ? t(pr.c1) : null, mg = l.merged, pv = l.pv ? t(l.pv.c) : null, x = l.e === 'acc' ? l.end : null;
+      add('file', l.c, l.start); add('prise', l.start, cr); if (!E && c1 != null && cr != null) add('draft', cr, c1);
+      const e = pr && log[l.k + '#' + pr.n], ci = e && e.ci ? t(e.ci) : null, fin = mg != null && cr != null ? Math.max(Math.min(c1 != null ? c1 : mg, mg), cr) : null;
+      if (ci != null && fin != null && ci >= fin - 60e3 && ci <= mg + 60e3){ const cc = Math.min(Math.max(ci, fin), mg); add('ci', fin, cc); add('mg', cc, mg); }   // 60 s d'écart d'horloge : bornée, jamais perdue
+      add('prove', mg, pv); add('acc', pv, x); add('total', l.c, x);
+    });
+    // clé `etapes` du relevé (.github#689) : sortie du brouillon et mise en ligne de chaque PR fusionnée ; une PR jamais en brouillon ou sans déploiement ne compte jamais comme 0
+    if (E){
+      const cov = E.couvert_depuis && typeof E.couvert_depuis === 'object' ? E.couvert_depuis : {};
+      (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => {
+        if (x.k !== 'tache' || (XQ !== 'tous' && quiDe(x) !== XQ)) return;
+        const k = x.r + '#' + x.n, c = t(x.c), m = t(x.m); if (c == null || m == null || m < t0) return;
+        const pret = E.prets[k] ? t(E.prets[k]) : null, ed = E.en_ligne && E.en_ligne[k], el = ed && ed.termine !== false ? t(ed.pret_le) : null;
+        if (pret != null){ add('draft', c, pret); add('rel', pret, m); }
+        if (el != null) add('dep', m, el);
+        else if (E.en_ligne && !ed && !(E.restant > 0) && now - m > 30 * 60e3 && cov[x.r] && m >= t(cov[x.r])) sans.n++;
+      });
+    }
+    const o = {}; Object.keys(S).forEach(k => { const a = S[k]; o[k] = {n: a.length, mean: a.length ? a.reduce((u, v) => u + v, 0) / a.length : null, med: med(a)}; });
+    if (!E){ delete o.rel; delete o.dep; } else { o.dep.sans = sans.n; o.reste = E.restant; }
+    return o;
+  };
   // `prs_ouvertes` (relevé du PC, .github#679) : contrôles, file Mergify et agent de chaque PR ouverte, dernier déploiement de chaque dépôt ; absente = étapes grisées
   const xcData = () => { const P = CUR && CUR.prs_ouvertes; if (!P || typeof P !== 'object' || !Array.isArray(P.prs)) return null;
     const par = {}; P.prs.forEach(r => { if (r && r.repo) par[String(r.repo).toLowerCase() + '#' + r.n] = r; return r; });
     return {P, par, dep: P.deploiements && typeof P.deploiements === 'object' ? P.deploiements : {}}; };
   const xcRec = (l, D) => D && l.pr ? D.par[String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n] || null : null;
   const xcEtatCi = r => r && !r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null;
+  const xcQueue = (l, D) => { const r = xcRec(l, D); return !!r && !!r.mergify && r.mergify.file === true; };
   const xcEnCi = (l, D) => { const r = xcRec(l, D); return !!r && !r.brouillon && ((r.mergify && r.mergify.file === true) || ['en_cours', 'vert', 'rouge', 'annule'].includes(xcEtatCi(r))); };
-  const xcCol = (l, D) => (l.e === 'cours' || l.e === 'rel') && l.pr && l.pr.state === 'open' && !l.pr.draft && xcEnCi(l, D) ? 'ci' : l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'todo' && l.q == null ? 'idee' : 'file';   // bloquée et attend Marc : en file
+  const xcCol = (l, D) => (l.e === 'cours' || l.e === 'rel') && l.pr && l.pr.state === 'open' && !l.pr.draft && xcEnCi(l, D) ? (xcQueue(l, D) ? 'mg' : 'ci') : l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'marc' || l.e === 'blk' ? 'att' : l.e === 'todo' && l.q == null ? 'idee' : 'file';
   const xcWho = l => { const q = ecQui(l); return q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'; };
   const xcCiTip = r => { const c = r.ci || {}, m = r.mergify || {};
     return (c.erreur ? '\ncontrôles : lecture en panne (' + c.erreur + ')' : c.etat ? '\ncontrôles : ' + ({vert: 'verts', rouge: 'en échec', en_cours: 'en cours', annule: 'annulés', aucun: 'aucun lancé', non_lu: 'pas lus'}[c.etat] || c.etat) + (c.ok != null ? ' · ' + c.ok + ' ok' + (c.ko ? ', ' + c.ko + ' en échec' : '') + (c.en_cours ? ', ' + c.en_cours + ' en cours' : '') + (c.en_file ? ', ' + c.en_file + ' en file' : '') : '') + (c.rouges && c.rouges.length ? '\nen échec : ' + c.rouges.slice(0, 4).join(', ') : '') : '')
-      + (m.file === true ? '\nfile Mergify' + (m.position != null ? ' : n° ' + m.position : '') + (m.message ? ' · ' + m.message : '') : ''); };
+      + (m.file === true ? '\nfile Mergify' + (m.position != null ? ' : n° ' + m.position : '') + (m.entree_le && isFinite(Date.parse(m.entree_le)) ? ' · entrée ' + ago(Date.parse(m.entree_le)) : '') + (m.etape ? ' · étape ' + m.etape : '') + (m.message ? ' · ' + m.message : '') : ''); };
   const xcBrick = (l, col, now, D) => {
-    const big = col === 'prise' || col === 'draft' || col === 'rel' || col === 'ci', rec = col === 'ci' ? xcRec(l, D) : null, ce = rec ? xcEtatCi(rec) : null, live = (l.last && now - l.last < 15 * 60e3) || ce === 'en_cours';
+    const big = col === 'prise' || col === 'draft' || col === 'rel' || col === 'ci' || col === 'mg', rec = col === 'ci' || col === 'mg' ? xcRec(l, D) : null, ce = rec ? xcEtatCi(rec) : null, live = (l.last && now - l.last < 15 * 60e3) || ce === 'en_cours';
     const late = l.e === 'ret' || l.e === 'blk' || !!l.oub || ce === 'rouge' || ce === 'annule', mw = l.e === 'marc';
     const cls = ['xc-b', 's-' + col, ce === 'vert' ? 'ok' : '', big ? 'big' : '', live && big ? 'on' : '', late ? 'r' : '', mw ? 'mw' : ''].filter(Boolean).join(' ');
     const p = big && l.start && l.est && l.est.d ? Math.min(100, Math.round((now - l.start) / l.est.d * 100)) : 0;
-    const lab = l.e === 'blk' ? '!' : col === 'idee' ? '' : col === 'file' && !mw ? (l.q != null ? l.q : '') : xcWho(l);
+    const lab = l.e === 'blk' ? '!' : col === 'mg' && rec && rec.mergify && rec.mergify.position != null ? rec.mergify.position : col === 'idee' ? '' : col === 'file' && !mw ? (l.q != null ? l.q : '') : xcWho(l);
     const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'file' && col !== 'idee' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + (rec ? xcCiTip(rec) : '') + '\n' + ecSuite(l);
     return `<button class="${cls}" data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" aria-label="${esc(l.t)}">${esc(lab)}${big ? `<span class="p" style="--p:${p}%"></span>` : ''}</button>`;
   };
@@ -5291,31 +5346,50 @@ function vGanttFull(){
     const refs = new Set(M.leaves.filter(l => l.pr).map(l => String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n));
     const hors = D ? D.P.prs.filter(r => r && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r, tache: r.tache}))
       : ((M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : []).map(h => ({repo: h.repo, n: h.n, t: h.t, url: h.url, draft: !!h.draft, ag: h.bot ? '' : '', bot: h.bot}));
-    const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'ci' : 'rel';
+    const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? (xcQueue({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'mg' : 'ci') : 'rel';
+    const mgPos = l => { const r = xcRec(l, D); return r && r.mergify && r.mergify.position != null ? r.mergify.position : Infinity; };
     const cell = (a, c, g) => {
       if (g === 'dep'){
         const d = D && Object.keys(D.dep).find(k => k.toLowerCase() === a.rl), x = d ? xcDepEtat(D.dep[d]) : xcDepEtat(null), v = d ? D.dep[d] : null;
         return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, En ligne"><span class="xc-b s-dep ${x[1]}" data-tip="${tipAttr(a.app + '\n' + x[2] + (v && v.environnement ? ' · ' + v.environnement : '') + (v && v.maj_le ? '\nmis à jour ' + ago(Date.parse(v.maj_le)) : '') + (v ? '\ndernier déploiement du dépôt, pas celui d’une PR' : ''))}">${esc(x[0])}</span></div>`;
       }
       if (g && !D) return `<div class="xc-c gh" data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"></div>`;
-      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
-      const hh2 = c === 'draft' || c === 'rel' || c === 'ci' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b s-${c}${h.rec && !h.rec.tache ? ' h' : ''}${h.rec && xcEtatCi(h.rec) === 'vert' ? ' ok' : ''}${h.rec && ['rouge', 'annule'].includes(xcEtatCi(h.rec)) ? ' r' : ''}" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · ' + (h.tache ? 'tâche ' + h.tache : 'PR sans tâche') + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
+      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : c === 'mg' ? mgPos(x) - mgPos(y) : (y.last || y.start || 0) - (x.last || x.start || 0));
+      const hh2 = c === 'draft' || c === 'rel' || c === 'ci' || c === 'mg' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b s-${c}${h.rec && !h.rec.tache ? ' h' : ''}${h.rec && xcEtatCi(h.rec) === 'vert' ? ' ok' : ''}${h.rec && ['rouge', 'annule'].includes(xcEtatCi(h.rec)) ? ' r' : ''}" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · ' + (h.tache ? 'tâche ' + h.tache : 'PR sans tâche') + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
       return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now, D)).join('')}${hh2}</div>`;
     };
     const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => appOf(h.repo) === a.k)).map(a =>
       `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span></div>` + XCOL.map(([c, , , g]) => cell(a, c, g)).join('')).join('');
     const nCol = c => c === 'acc' ? recents.length : c === 'dep' ? (D ? Object.values(D.dep).filter(v => v && v.etat === 'success').length : 0) : ouv.filter(l => xcCol(l, D) === c).length + hors.filter(h => horsCol(h) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
-    const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g && !D ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g && !D ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g && !D ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
+    const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g && !D ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g && !D ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g && !D ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span><em class="xc-w" data-tip="${tipAttr(XLIEU[c][2])}"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME[XLIEU[c][1]]}</svg>${esc(XLIEU[c][0])}</em></div>`).join('');
+    const E2 = !!xcEtapes(), DU = xcDurees(), val = c => { const d = DU[c]; return d && d.n >= (c === 'draft' || c === 'rel' || c === 'dep' ? 3 : 1) ? (XST === 'med' ? d.med : d.mean) : null; }, mxd = Math.max(1, ...XCOL.map(x => val(x[0]) || 0));
+    const durRow = `<div class="xc-dl" title="Sur les ${XDUR_J} derniers jours">durée ${XST === 'med' ? 'médiane' : 'moyenne'}</div>` + XCOL.map(([c]) => { const d = DU[c];
+      if (!d) return `<div class="xc-d nd" data-tip="${tipAttr('Le relevé ne date pas cette étape : la durée reste inconnue plutôt qu’inventée')}"><b>?</b></div>`;
+      if (!d.n) return `<div class="xc-d nd" data-tip="${tipAttr('Aucune tâche passée par cette étape sur ' + XDUR_J + ' jours' + (XQ !== 'tous' ? ' pour ce type' : ''))}"><b>—</b></div>`;
+      const pr = E2 && (c === 'rel' || c === 'dep' || c === 'draft');
+      return `<div class="xc-d" data-tip="${tipAttr(XCOL.find(x => x[0] === c)[1] + '\nmoyenne ' + xcDur(d.mean) + ' · médiane ' + xcDur(d.med) + '\nsur ' + d.n + (pr ? ' PR' : ' tâche' + (d.n > 1 ? 's' : '')) + ', ' + XDUR_J + ' derniers jours' + (XQ !== 'tous' ? ', type ' + XQ : '') + (c === 'mg' ? '\nfile Mergify et relecture avant la fusion' : c === 'rel' ? '\nprête → fusion, contrôles et file Mergify compris' : c === 'dep' ? '\nfusion → mise en ligne (déploiement Vercel réussi)' + (d.sans ? '\n' + d.sans + ' PR fusionnées sans déploiement, non comptées' : '') : c === 'draft' && E2 ? '\ncréation → sortie du brouillon' : '') + (DU.reste && (c === 'rel' || c === 'dep' || c === 'draft') ? '\n' + DU.reste + ' PR pas encore lues par le PC' : ''))}"><b>${esc(xcDur(val(c)))}</b><i style="--w:${Math.max(6, Math.round(Math.sqrt(val(c) / mxd) * 100))}%"></i></div>`; }).join('');
+    // où va le temps : avant la PR, pendant la PR, après la fusion ; somme des étapes mesurées, pas le total
+    const pv = k => val(k) || 0, PH = [['Avant la PR', pv('file') + pv('prise'), 'var(--vio)', 'attente en file puis travail avant l’ouverture de la PR'], ['Dans la PR', pv('draft') + (E2 ? pv('rel') : pv('ci') + pv('mg')), 'var(--doing)', 'brouillon, contrôles et file Mergify'], ['Après la fusion', pv('prove') + pv('acc'), 'var(--done)', 'preuve en production puis acceptation']], ptot = PH.reduce((u, x) => u + x[1], 0);
+    const ph = ptot > 0 ? `<div class="xc-ph"><div class="xc-pht"><b>Où va le temps</b>${DU.total && DU.total.n ? `<span data-tip="${tipAttr('Création de l’issue → acceptée, mesuré à part : la somme des étapes n’est pas le total\nsur ' + DU.total.n + ' tâches, ' + XDUR_J + ' derniers jours')}">créée → acceptée : <b>${esc(xcDur(XST === 'med' ? DU.total.med : DU.total.mean))}</b></span>` : ''}</div>
+      <div class="xc-phb" role="img" aria-label="${esc(PH.map(x => x[0] + ' ' + xcDur(x[1])).join(', '))}">${PH.filter(x => x[1] > 0).map(x => `<span style="flex:${x[1]};--c:${x[2]}" data-tip="${tipAttr(x[0] + ' : ' + xcDur(x[1]) + ' (' + Math.round(x[1] / ptot * 100) + ' %)\n' + x[3] + '\nsomme des étapes ' + (XST === 'med' ? 'médianes' : 'moyennes') + ', pas le total mesuré')}">${esc(x[0])} · ${esc(xcDur(x[1]))}</span>`).join('')}</div></div>` : '';
+    const seg = (attr, cur, items) => `<div class="per" role="group">${items.map(([k, n]) => `<button ${attr}="${k}" aria-pressed="${cur === k}">${n}</button>`).join('')}</div>`;
+    const ctl = `<div class="xc-ctl" role="group" aria-label="Réglages des durées">${seg('data-xst', XST, [['moy', 'Moyenne'], ['med', 'Médiane']])}${seg('data-xq', XQ, [['tous', 'Tous'], ['claude', 'Claude'], ['jules', 'Jules'], ['copilot', 'Copilot']])}</div>`;
     const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
     const W2 = colW(2), pe = D && (D.P.incomplet || (Array.isArray(D.P.erreurs) && D.P.erreurs.length)) ? `<span class="cf" style="color:var(--blk-t)" title="${esc((D.P.erreurs || []).join('\n'))}">lecture des PR incomplète</span>` : '';
-    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(D ? ['taches', 'prs'] : ['taches'])}${pe}</div>`;
+    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : [])])}${pe}</div>${ctl}`;
     const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
-    const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('h', 'PR sans tâche')}</div>`;
+    const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('s-mg', 'rang chez Mergify', '1')}${k('h', 'PR sans tâche')}<span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.h}</svg>humain</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.ia}</svg>IA</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.m}</svg>machine</span></div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
-    return `<div class="xc">${top}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
+    return `<div class="xc">${top}${ph}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${durRow}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
   }
   // l'onglet En cours se redessine tout seul : les âges, les pastilles et les barres avancent sans toucher la page
   setInterval(() => { if (M && ST.tab === 'cours' && !document.hidden) render(); }, 30e3);
+  document.addEventListener('click', ev => {
+    const a = ev.target.closest && ev.target.closest('[data-xst],[data-xq]'); if (!a) return;
+    if (a.dataset.xst) XST = a.dataset.xst === 'med' ? 'med' : 'moy'; else if (['tous', 'claude', 'jules', 'copilot'].includes(a.dataset.xq)) XQ = a.dataset.xq;
+    try { localStorage.setItem('mxxst', XST); localStorage.setItem('mxxq', XQ); } catch (e) {}
+    render();
+  });
 
   /* ---------- Coûts ---------- */
   const fd = d => +d.slice(8) + ' ' + cMoisCourt(d.slice(0, 7)).slice(0, 4).replace(/\.$/, '');
