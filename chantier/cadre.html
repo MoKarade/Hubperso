@@ -4336,7 +4336,8 @@ function clicDroitDe(el){
   let donnees = '';
   const lie = el.closest('[data-ref],[data-open],[data-gref]');
   const ref = lie && (lie.getAttribute('data-ref') || lie.getAttribute('data-open') || lie.getAttribute('data-gref'));
-  const n = ref && typeof M !== 'undefined' && M && M.N ? M.N[ref] : null;
+  // les tâches et les missions sont dans M.N ; les apps (ref « app:… ») sont dans M.apps, pas dans M.N
+  const n = ref && typeof M !== 'undefined' && M ? (M.N && M.N[ref]) || (M.apps || []).find(a => a.ref === ref) || null : null;
   if (n) donnees = faitsDe(n, {LV, STE, ORDRE, path, stLabel, quand, dur, retTxt, court, asof: M.asof});
   if (!donnees && brut.length > 300) donnees = brut.slice(0, FAITS_MAX);
   return {genre: g[1], texte, donnees};
