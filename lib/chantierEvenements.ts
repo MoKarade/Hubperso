@@ -19,7 +19,7 @@ export const TAILLE_MAX_EVENEMENT = 2_000_000;
 export const JOURS_CONSERVES = 14;
 
 /** Nom GitHub du dépôt (minuscules) → clé courte du relevé. Un dépôt absent de la table est refusé. */
-const DEPOTS: Record<string, string> = {
+export const DEPOTS: Record<string, string> = {
   ".github": "eco",
   financeai: "fin",
   jobai: "job",

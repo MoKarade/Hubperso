@@ -3,18 +3,36 @@
 > État courant synthétique : voir `docs/ETAT.md`.
 
 
-## 28/10/2026 : `/api/lia/etat` accepte le jeton d'une app, DriveAI partage l'état de LIA (Hubperso#685, mission MoKarade/.github#719)
+## 28/10/2026 : En cours montre les trois délais visés, 10 min au plus chacun (Hubperso#707, mission #538)
 
-- **Ce qui change** : `GET|PUT /api/lia/etat` accepte `x-hub-token` (l'app est identifiée par `appDuJeton`, jamais par le corps) avec `x-lia-proprietaire: 1` posé par l'app après avoir vérifié SA session. Jeton connu sans l'en-tête : 403 (MemoryAI non appelée) ; jeton faux ou ambigu : 401 SANS repli sur la session ; aucun jeton : la session, comme avant. Le relais vers MemoryAI, la limite de débit, `lireCorpsEtat` et `no-store` ne changent pas.
-- **Écart avec le texte de la tâche** : « aucune exception dans `lib/authGuard.ts` » ne tenait pas, une app n'ayant pas de cookie du hub : la requête serait arrêtée par le middleware avant la route. La route est donc laissée passer en ÉGALITÉ STRICTE (comme `/api/lia/ask`), jamais dans le matcher, et se garde toute seule ; `tests/gardePages.test.ts` la range dans les routes à jeton, `tests/authGuard.test.ts` verrouille le chemin exact.
-- **Charge** : le chemin du jeton ne lit ni session ni base (moins de travail que la page). Pour la page, rien ne change : même `auth()` et même relais.
-- **Preuve à lire** : `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/lia/etat` rend 401 ; DriveAI#771 lit puis écrit l'état avec son jeton.
+- **Demande** (coordinateur, relayant la cible de Marc du 29/10 : file, prise et preuve en 10 min au plus chacune, comptées depuis « éligible depuis », dépassements affichés).
+- **Quoi** : un bloc « Cible 10 min » sur En cours (`chantier/cadre.html`) : pour File, Prise et Preuve, la moyenne ou la médiane (selon le réglage de la page), le nombre de tâches des 30 derniers jours au-dessus de 10 min sur le nombre mesuré, en rouge quand il y en a. File = « éligible → prise » : `xcEligible(l)` prend le plus tard de la création et de la fermeture de chaque dépendance du relevé (une dépendance inconnue ne se date pas) ; Prise = prise → PR ouverte ; Preuve = fusion → « Acceptée ». Une étape sans mesure dit « rien à mesurer », jamais 0.
+- **Limite dite** : « éligible depuis » est ici calculé par la page à partir du relevé (création, fermeture des dépendances) ; l'heure exacte où une place se libère n'y est pas, seul `file-depot.mjs` du fil workflow la connaît.
+- **Tests** : `tests/chantierCibles.test.ts`, `tests/chantierCadre.test.ts` (la liste des étapes).
+- **Preuve à lire** : sur `/chantier`, En cours, le bloc « Cible 10 min » affiche les trois délais avec leurs dépassements.
 
 ## 28/10/2026 : la page Chantier ne dit « attend » que de ton geste, le reste est « prévu » (Hubperso#690, mission #538)
 
 - **Règle de Marc** (28/10, 20:52Z) : « ce qui n'attend pas moi directement n'est pas une tâche qui attend, c'est une tâche prévue ». Seule une tâche `qui:marc` « attend » (colonne « Attend toi » de En cours, états, légendes, fiches).
 - **Ce qui change** (affichage seulement, `chantier/cadre.html`) : une tâche `bloqué` quitte la colonne « Attend toi » pour « En file » ; « bloquée », « attend autre chose », « attend sa preuve », « attend une tâche sans date » deviennent « prévue : dépend d'autre chose », « preuve prévue », « dépend d'une tâche sans date » ; les rubriques « Attend » et « Elle attend » des fiches deviennent « Dépend de ». Les identifiants d'étiquettes (`bloqué`, `preuve-attendue`…) ne changent pas : onze dépôts les lisent.
 - **Preuve à lire** : sur `/chantier`, onglet En cours, la colonne « Attend toi » ne contient que des tâches `qui:marc`.
+
+## 28/10/2026 : le hub rattrape par GitHub le trou entre le relevé du PC et les événements (Hubperso#699, mission #538)
+
+- **Demande de Marc** (28/10) : « page chantier en cours, full live pas de périmé » et « RIEN AVEC TIMER, TOUT ÉVÉNEMENTS, RIEN NE DÉPEND DU PC ». Les webhooks (#684) ne disent que ce qui suit leur pose ; avant, l'état restait celui du dernier relevé du PC, avec son âge (« périmé »).
+- **Quoi** : `GET /api/chantier/rattrapage[?depuis=<ISO>]` (session du propriétaire, 14 jours au plus, gardé 5 minutes en mémoire) lit chez GitHub, avec `CHANTIER_GITHUB_TOKEN` (lecture seule : Issues, Pull requests, Metadata), les issues et les PR des 11 dépôts touchées et rend leur état courant sous forme d'événements `action: "snapshot"` (`lib/chantierRattrapage.ts`, fonctions pures + `rattraper` avec l'API injectée ; la preuve « Acceptée » d'une tâche fermée est lue dans ses commentaires : lien et heure, jamais le corps). Le composant `ChantierCadre` la demande UNE fois à l'ouverture (jamais sur minuterie ; redemandée au retour sur l'onglet seulement après un échec, au plus toutes les 5 minutes, jamais après un « non branché ») et la poste au cadre (`chantier-rattrapage`).
+- **Dans le cadre** : les instantanés se rangent comme les événements du webhook (`avecEvenements` : étiquettes, niveau, titre, ouverte ou fermée avec la fin de GitHub, preuve lue ; une issue inconnue n'apparaît que si elle est ouverte ; l'heure gagne). La source « Tâches et PR » ne prend l'âge des événements en direct que si le rattrapage est COMPLET (tous les dépôts lus, rien tronqué) et les événements vivants (< 90 s) ; sinon elle garde l'âge du relevé et dit pourquoi (non branché, dépôt illisible, tronqué).
+- **Sans jeton** : la route répond 503 « Non branché » sans aucun appel réseau ; la page l'écrit dans le détail de la source ; rien n'est inventé. `CHANTIER_GITHUB_TOKEN` est optionnelle (`lib/variablesAttendues.ts`).
+- **Geste de Marc attendu** : créer le jeton (fine-grained, Issues et Pull requests en lecture, Metadata, les 11 dépôts), groupé avec RELECTURE_PAT (.github#654), puis le poser dans Vercel (appliqué au build suivant ; le PC le pose, jamais dans un message).
+- **Tests** : `tests/chantierRattrapage.test.ts`, `tests/chantierRattrapageRoute.test.ts`, `tests/chantierEvenementsReleve.test.ts` (instantanés), `tests/chantierCadreDom.test.ts` (une lecture, 503 jamais relu, échec redemandé après 5 minutes).
+- **Preuve à lire** : une fois le jeton posé et déployé, ouvrir `/chantier` : « Tâches et PR » passe à « à jour » sans relevé du PC, et le détail de la source dit « rattrapé chez GitHub à l'ouverture ».
+
+## 28/10/2026 : `/api/lia/etat` accepte le jeton d'une app, DriveAI partage l'état de LIA (Hubperso#685, mission MoKarade/.github#719)
+
+- **Ce qui change** : `GET|PUT /api/lia/etat` accepte `x-hub-token` (l'app est identifiée par `appDuJeton`, jamais par le corps) avec `x-lia-proprietaire: 1` posé par l'app après avoir vérifié SA session. Jeton connu sans l'en-tête : 403 (MemoryAI non appelée) ; jeton faux ou ambigu : 401 SANS repli sur la session ; aucun jeton : la session, comme avant. Le relais vers MemoryAI, la limite de débit, `lireCorpsEtat` et `no-store` ne changent pas.
+- **Écart avec le texte de la tâche** : « aucune exception dans `lib/authGuard.ts` » ne tenait pas, une app n'ayant pas de cookie du hub : la requête serait arrêtée par le middleware avant la route. La route est donc laissée passer en ÉGALITÉ STRICTE (comme `/api/lia/ask`), jamais dans le matcher, et se garde toute seule ; `tests/gardePages.test.ts` la range dans les routes à jeton, `tests/authGuard.test.ts` verrouille le chemin exact.
+- **Charge** : le chemin du jeton ne lit ni session ni base (moins de travail que la page). Pour la page, rien ne change : même `auth()` et même relais.
+- **Preuve à lire** : `curl -s -o /dev/null -w "%{http_code}" https://www.hubperso.com/api/lia/etat` rend 401 ; DriveAI#771 lit puis écrit l'état avec son jeton.
 
 ## 28/10/2026 : LIA lit les graphiques de la page Chantier (Hubperso#681, mission MoKarade/.github#575)
 
