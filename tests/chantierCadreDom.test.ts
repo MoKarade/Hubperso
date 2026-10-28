@@ -25,6 +25,8 @@ const gestesMoq = vi.fn();
 const versionMoq = vi.fn();
 /** Les événements GitHub en direct : une cinquième route, lue toutes les 10 s ; ici rien de neuf, sauf test qui dit le contraire. */
 const evenementsMoq = vi.fn();
+/** Le rattrapage GitHub : une sixième route, lue UNE fois à l'ouverture ; ici « non branché » (503), sauf test qui dit le contraire. */
+const rattrapageMoq = vi.fn();
 const COUTS = { suivies: 1, apps: 2, alertes: 0, totaux: [], note: null, detail: [] };
 
 beforeEach(() => {
@@ -33,8 +35,11 @@ beforeEach(() => {
   gestesMoq.mockResolvedValue({ ok: true, status: 201 });
   versionMoq.mockResolvedValue({ status: 200, headers: { get: () => '"v1"' } });
   evenementsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [], jusqua: null }) });
+  rattrapageMoq.mockResolvedValue({ ok: false, status: 503, json: async () => ({ error: "unavailable" }) });
   vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
-    url === "/api/chantier/couts"
+    url === "/api/chantier/rattrapage"
+      ? rattrapageMoq(url, init)
+      : url === "/api/chantier/couts"
       ? coutsMoq(url, init)
       : url === "/api/chantier/gestes"
         ? gestesMoq(url, init)
@@ -57,6 +62,7 @@ afterEach(() => {
   gestesMoq.mockReset();
   versionMoq.mockReset();
   evenementsMoq.mockReset();
+  rattrapageMoq.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -95,7 +101,7 @@ async function presenter(source: Window | null, port: FaussePort | null, donnee:
 function donnees(port: FaussePort) {
   return port.postMessage.mock.calls
     .map((c) => c[0] as { type: string; message?: string; octets?: ArrayBuffer })
-    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve" && m.type !== "chantier-evenements");
+    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve" && m.type !== "chantier-evenements" && m.type !== "chantier-rattrapage");
 }
 
 /** Les réponses aux gestes écrites dans le canal. */
@@ -156,7 +162,7 @@ describe("ChantierCadre", () => {
     expect(donnees(port)[0]).toMatchObject({ type: "chantier-releve" });
     expect(donnees(port)[0]!.octets).toBeInstanceOf(ArrayBuffer);
     // les octets sont TRANSFÉRÉS au canal (pas copiés), et rien ne passe par la fenêtre
-    expect(port.postMessage.mock.calls[1]![1]).toHaveLength(1);
+    expect(port.postMessage.mock.calls.find((c) => (c[0] as { type: string }).type === "chantier-releve")![1]).toHaveLength(1);
     expect(direct).not.toHaveBeenCalled();
   });
 
@@ -181,6 +187,45 @@ describe("ChantierCadre", () => {
     expect(evts()[1]!.evenements).toBeUndefined();
     await avancer(10_000);
     expect(evts()[2]).toMatchObject({ evenements: [] });
+  });
+
+  it("rattrape GitHub UNE fois à l'ouverture et l'écrit dans le canal ; « non branché » (503) n'est jamais redemandé ; un échec l'est, au retour sur l'onglet", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    const rats = () =>
+      port.postMessage.mock.calls
+        .map((c) => c[0] as { type: string; evenements?: unknown[]; incomplets?: string[]; erreurs?: string[]; erreur?: string; nonBranche?: boolean })
+        .filter((m) => m.type === "chantier-rattrapage");
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    expect(rattrapageMoq).toHaveBeenCalledTimes(1);
+    expect(rattrapageMoq.mock.calls[0]![0]).toBe("/api/chantier/rattrapage");
+    expect(rats()).toHaveLength(1);
+    expect(rats()[0]).toMatchObject({ nonBranche: true });
+    expect(rats()[0]!.erreur).toBeTruthy();
+    await avancer(600_000);
+    expect(rattrapageMoq).toHaveBeenCalledTimes(1);
+  });
+
+  it("le rattrapage lu est posté tel quel (événements, dépôts tronqués, erreurs) et ne se relit plus ; sa panne se redemande après 5 minutes", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    const rats = () =>
+      port.postMessage.mock.calls
+        .map((c) => c[0] as { type: string; evenements?: unknown[]; incomplets?: string[]; erreurs?: string[]; erreur?: string; nonBranche?: boolean })
+        .filter((m) => m.type === "chantier-rattrapage");
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    rattrapageMoq
+      .mockResolvedValueOnce({ ok: false, status: 502, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [{ id: "snap:hub#1:x" }], incomplets: ["fin"], erreurs: ["job : HTTP 403"] }) });
+    await presenter(cadre.contentWindow, port);
+    expect(rats()[0]!.erreur).toContain("502");
+    expect(rats()[0]!.nonBranche).toBeUndefined();
+    await avancer(300_000);
+    expect(rattrapageMoq).toHaveBeenCalledTimes(2);
+    expect(rats()[1]).toMatchObject({ evenements: [{ id: "snap:hub#1:x" }], incomplets: ["fin"], erreurs: ["job : HTTP 403"] });
+    await avancer(600_000);
+    expect(rattrapageMoq).toHaveBeenCalledTimes(2);
   });
 
   it("relit chaque minute avec If-None-Match ; 304 : rien n'est réécrit", async () => {
