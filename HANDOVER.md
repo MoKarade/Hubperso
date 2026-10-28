@@ -2,10 +2,18 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 2 : la page « Bilans » et son entrée sous « Gérer » (Hubperso#543)**
+
+- **Entrée « Bilans »** sous « Gérer » (`lib/navigation.ts`, icône `bilans`), donc dans « Plus » au téléphone ; propriétaire seul (un invité ne la voit pas), la barre du bas la range sous « Plus ».
+- **`/bilans`** (`app/bilans/page.tsx`, `exigerProprietaire`) : `components/BilansVue.tsx` lit `/api/bilans` avec la session et montre le bilan du jour ou de la semaine (onglets), les précédents à relire, dans un cadre isolé (`SANDBOX_BILAN`, jamais inséré dans la page). Aucune relecture automatique : un bilan se dépose une fois par jour, « Actualiser » suffit.
+- **États honnêtes** (`lib/bilansVue.ts`) : « Aucun bilan du jour pour l'instant » si le dossier est vide ; une phrase par échec (droit Drive manquant : reconnecte-toi ; dossier non branché ; Google ne répond pas) ; une réponse hors contrat n'est jamais réparée.
+- **Dossier** : « Bilans » (id dans `lib/bilans.ts`, privé : l'identifiant ne donne aucun accès) ; `BILANS_DRIVE_FOLDER_ID` le remplace, rien à poser sur Vercel.
+- **Reste** : la routine qui écrit les bilans dans Drive (`bilan-jour-AAAA-MM-JJ.html`, `bilan-semaine-AAAA-MM-JJ.html`) et ne notifie plus que l'urgent, `BILANS_DRIVE_FOLDER_ID` dans Vercel, la reconnexion de Marc, puis la preuve en production.
+
 ## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 1 : le hub lit les bilans gardés dans Drive (Hubperso#578, pour #543)**
 
 Marc, 28/10/2026 : les bilans (Brief du jour, rapport hebdo) se gardent dans Drive ; le hub les lit en direct.
-- **`GET /api/bilans`** (60 jours et 12 semaines au plus) et **`GET /api/bilans/<id>`** : propriétaire seul (404 invité, 401 sans session, 409 sans droit Drive, 503 sans `BILANS_DRIVE_FOLDER_ID`, 502 si Google ne répond pas), `no-store`. Noms reconnus : `bilan-jour-` / `bilan-semaine-AAAA-MM-JJ.html`, dans UN dossier.
+- **`GET /api/bilans`** (60 jours et 12 semaines au plus) et **`GET /api/bilans/<id>`** : propriétaire seul (404 invité, 401 sans session, 409 sans droit Drive, 502 si Google ne répond pas), `no-store`. Noms reconnus : `bilan-jour-` / `bilan-semaine-AAAA-MM-JJ.html`, dans UN dossier.
 - **Jeton** (`lib/jetonDrive.ts`) lu dans le cookie de session, jamais hors de la route ; lecture bornée au dossier (`lib/bilansDrive.ts`) ; document servi en bac à sable sans réseau. Rien dans le dépôt ni en base (public). **Reste** : la page (#543), la routine, la variable (geste de Marc).
 
 ## 🟦 Session 2026-10-28 — **Portées Google : la lecture de Drive entre dans la connexion partagée (Hubperso#575, pour l'onglet Bilans #543)**

@@ -22,6 +22,9 @@ export interface Bilan {
 export const GARDES: Record<GenreBilan, number> = { jour: 60, semaine: 12 };
 
 /** Taille maximale d'un bilan lu : au-delà, refusé plutôt que tronqué. */
+/** Le dossier Drive « Bilans » (privé, propriétaire seul : l'identifiant ne donne aucun accès). `BILANS_DRIVE_FOLDER_ID` le remplace. */
+export const DOSSIER_BILANS = "1H_vE3KAmPtGcEIcrYI0KuykTl8-4ylRl";
+
 export const TAILLE_MAX_BILAN = 2 * 1024 * 1024;
 
 const NOM_BILAN = /^bilan-(jour|semaine)-(\d{4})-(\d{2})-(\d{2})\.html$/;

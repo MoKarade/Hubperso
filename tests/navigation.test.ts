@@ -59,7 +59,7 @@ describe("modeleNavigation", () => {
 
   it("Gérer (graphes, administration) n'existe que pour le propriétaire ; la page Coûts n'existe plus", () => {
     expect(modeleNavigation(APPS, false).gerer).toEqual([]);
-    expect(modeleNavigation(APPS, true).gerer.map((e) => e.href)).toEqual(["/graphes", "/administration"]);
+    expect(modeleNavigation(APPS, true).gerer.map((e) => e.href)).toEqual(["/bilans", "/graphes", "/administration"]);
     for (const proprietaire of [false, true]) {
       const m = modeleNavigation(APPS, proprietaire);
       expect([...m.vue, ...m.gerer].some((e) => e.href === "/couts")).toBe(false);
@@ -92,6 +92,7 @@ describe("page active", () => {
     expect(rangBarre("/app/carai")).toBe("accueil");
     expect(rangBarre("/attention")).toBe("attention");
     expect(rangBarre("/chantier")).toBe("chantier");
+    expect(rangBarre("/bilans")).toBe("plus");
     expect(rangBarre("/graphes")).toBe("plus");
     expect(rangBarre("/administration")).toBe("plus");
   });
@@ -138,6 +139,8 @@ describe("Cadre (rendu serveur)", () => {
   it("n'offre graphes, chantier et administration qu'au propriétaire", () => {
     expect(rendre("/", false)).not.toContain('href="/graphes"');
     expect(rendre("/", false)).not.toContain('href="/administration"');
+    expect(rendre("/", false)).not.toContain('href="/bilans"');
+    expect(rendre("/", true)).toContain('href="/bilans"');
     expect(rendre("/", true)).toContain('href="/graphes"');
     expect(rendre("/", true)).toContain('href="/administration"');
   });
@@ -198,7 +201,7 @@ describe("NavigationMontee (garde serveur)", () => {
     const el = (await NavigationMontee({ children: enfants })) as ReactElement<{
       modele: ReturnType<typeof modeleNavigation>;
     }>;
-    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["graphes", "administration"]);
+    expect(el.props.modele.gerer.map((e) => e.id)).toEqual(["bilans", "graphes", "administration"]);
     expect(el.props.modele.vue.map((e) => e.id)).toContain("chantier");
   });
 
