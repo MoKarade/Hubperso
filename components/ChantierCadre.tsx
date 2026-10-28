@@ -21,7 +21,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { erreurGeste } from "@/lib/chantierGestes";
+import { EVENEMENT_LIA_CLIC_CADRE } from "@/lib/lia";
 import {
+  MESSAGE_CLIC_DROIT,
   MESSAGE_COUTS,
   MESSAGE_ETAT,
   MESSAGE_GESTE,
@@ -37,6 +39,7 @@ import {
   erreurCouts,
   estGzip,
   estMessagePret,
+  lireClicDroit,
   type ONGLETS,
 } from "@/lib/chantierCadre";
 
@@ -149,6 +152,17 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
       }
     }
 
+    /**
+     * Un clic droit (ou un appui long) dans le cadre : LIA ne peut pas lire ce document, c'est donc ici qu'il lui est dit, par la
+     * fenêtre (`LiaBoot` écoute). Ce que le cadre envoie est une donnée : seule la forme validée (`lireClicDroit`) passe.
+     */
+    function relayerClicDroit(donnee: unknown) {
+      const iframe = cadre.current;
+      const clic = lireClicDroit(donnee);
+      if (!iframe || !clic || !actifRef.current) return;
+      window.dispatchEvent(new CustomEvent(EVENEMENT_LIA_CLIC_CADRE, { detail: { cadre: iframe, ...clic } }));
+    }
+
     function surMessage(evenement: MessageEvent) {
       // Seul NOTRE cadre est écouté (et son origine est opaque : « null ») ; le premier canal reçu est
       // le bon, les suivants (le cadre se représente tant qu'il n'a pas reçu « ok ») sont ignorés.
@@ -158,7 +172,9 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
       if (!port) return;
       canal = port;
       canal.onmessage = (m: MessageEvent) => {
-        if ((m.data as { type?: unknown } | null)?.type === MESSAGE_GESTE) void deposerGeste(m.data);
+        const type = (m.data as { type?: unknown } | null)?.type;
+        if (type === MESSAGE_GESTE) void deposerGeste(m.data);
+        else if (type === MESSAGE_CLIC_DROIT) relayerClicDroit(m.data);
       };
       canal.postMessage({ type: MESSAGE_OK, gestes: true });
       void lire();

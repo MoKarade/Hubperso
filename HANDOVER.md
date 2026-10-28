@@ -2,6 +2,10 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : le clic droit du cadre Chantier arrive à LIA (Hubperso#616, mission MoKarade/.github#575)
+
+Le cadre Chantier (iframe `sandbox` sans `allow-same-origin`) poste déjà `{ type: "chantier-clic-droit", x, y, genre, texte }` dans son canal (#610). `components/ChantierCadre.tsx` le lit maintenant par `lireClicDroit` (`lib/chantierCadre.ts` : nombres finis, `genre` 80 caractères, `texte` 300, sans caractère de contrôle ; tout le reste est ignoré, c'est une donnée du cadre), puis la fenêtre reçoit `hub:lia-clic-cadre` (`lib/lia.ts`) et `LiaBoot` appelle `lia.menuExterne({ cadre, x, y, description })` : le menu de LIA s'ouvre à la bonne place, cible = l'iframe. Rien n'est relayé cadre caché (hors de `/chantier`). Tests : `tests/chantierCadre.test.ts`, `tests/chantierCadreDom.test.ts`. Preuve : déploiement de production `READY`, puis relevé du PC (clic droit et appui long sur une barre du Gantt de `/chantier`).
+
 ## 28/10/2026 : lia-ui v0.43.0, le clic droit de LIA marche partout (Hubperso#603, mission MoKarade/.github#575)
 
 Épingle `@mokarade/lia-ui` v0.43.0 (sha pelé `c0f1ff7`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « faut qu'il marche partout ». Le clic droit (et l'appui long) de LIA s'ouvre maintenant sur le fond de page, dans une fenêtre modale `<dialog>.showModal()`, et même quand un gestionnaire de la page bloque le menu natif ; les champs de saisie gardent le menu du navigateur. Rien à brancher. Preuve : déploiement de production `READY` sur le commit fusionné, puis relevé du PC (lia-ui#147). Reste à faire, dans une PR à part : le relais du cadre Chantier (iframe sandbox sans `allow-same-origin`, donc origine opaque) ; l'hôte appellera `lia.menuExterne` sur un message du cadre, le côté `cadre.html` est au fil Page chantier.

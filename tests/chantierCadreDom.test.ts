@@ -364,3 +364,52 @@ describe("ChantierCadre", () => {
     expect(port.postMessage).toHaveBeenCalledWith({ type: "chantier-onglet", onglet: "couts" });
   });
 });
+
+describe("ChantierCadre : le clic droit du cadre est relayé à LIA", () => {
+  const clic = { type: "chantier-clic-droit", x: 120, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
+
+  /** Ce que `LiaBoot` recevrait : les événements de la fenêtre. */
+  function ecouter() {
+    const recus: Array<{ cadre: unknown; x: number; y: number; description: { genre: string; texte?: string } }> = [];
+    const ecouteur = (e: Event) => recus.push((e as CustomEvent).detail);
+    window.addEventListener("hub:lia-clic-cadre", ecouteur);
+    return { recus, arreter: () => window.removeEventListener("hub:lia-clic-cadre", ecouteur) };
+  }
+
+  it("un clic droit conforme part vers LIA avec le cadre, la place et la description", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    const { recus, arreter } = ecouter();
+    await geste(port, clic);
+    arreter();
+    expect(recus).toEqual([{ cadre, x: 120, y: 48, description: { genre: "une barre du Gantt", texte: "Hubperso#604" } }]);
+  });
+
+  it("un message mal formé, ou venu d'un autre type, n'envoie rien à LIA ni n'écrit un geste", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    const { recus, arreter } = ecouter();
+    for (const donnee of [null, "clic", { ...clic, x: "1" }, { ...clic, genre: "" }, { ...clic, y: Infinity }, { type: "autre", x: 1, y: 1, genre: "g" }]) {
+      await geste(port, donnee);
+    }
+    arreter();
+    expect(recus).toEqual([]);
+    expect(gestesMoq).not.toHaveBeenCalled();
+  });
+
+  it("cadre caché (hors de /chantier) : rien n'est relayé", async () => {
+    act(() => racine.render(h(ChantierCadre, { actif: false })));
+    const cadre = conteneur.querySelector("iframe")!;
+    vi.spyOn(cadre.contentWindow!, "postMessage").mockImplementation(() => {});
+    const port = faussePort();
+    await presenter(cadre.contentWindow, port);
+    const { recus, arreter } = ecouter();
+    await geste(port, clic);
+    arreter();
+    expect(recus).toEqual([]);
+  });
+});
