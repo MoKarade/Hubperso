@@ -16,13 +16,19 @@
 // TOTAL en dollars : le détail par app ne sort pas (oui de Marc : les totaux seulement).
 
 import type { Releve } from "@/lib/historique";
-import { toCad, USD_TO_CAD } from "@/lib/usage";
+import { TAUX_PAR_DEFAUT, type TauxChange } from "@/lib/tauxChange";
+import { toCad } from "@/lib/usage";
 
 export interface CoutCumule {
   periode: "total";
   devise: "CAD";
   /** Taux USD→CAD appliqué : le chiffre est une ESTIMATION en CAD (voir `toCad`). */
   tauxUsdCad: number;
+  /** Le jour de la série de la Banque du Canada, ou `null` au repli. */
+  tauxDate: string | null;
+  tauxSource: string | null;
+  /** Vrai quand le taux est le repli (le relevé du PC n'en donnait pas de lisible) et non un taux du jour. */
+  tauxRepli: boolean;
   /** Somme des apps lisibles, ou `null` si aucune ne l'est. Jamais 0 faute de mesure. */
   cumulCad: number | null;
   /**
@@ -40,8 +46,9 @@ export interface CoutCumule {
 /**
  * @param appIds les apps du hub (l'ensemble qu'on cherche à couvrir)
  * @param derniers le relevé le PLUS RÉCENT portant un coût, par app (au plus un par app)
+ * @param change le taux USD→CAD du relevé du PC (`lib/tauxChange.ts`) ; à défaut, le repli, dit
  */
-export function cumulerCouts(appIds: readonly string[], derniers: readonly Releve[]): CoutCumule {
+export function cumulerCouts(appIds: readonly string[], derniers: readonly Releve[], change: TauxChange = TAUX_PAR_DEFAUT): CoutCumule {
   const parApp = new Map(derniers.map((r) => [r.appId, r]));
   let somme = 0;
   let lues = 0;
@@ -55,7 +62,7 @@ export function cumulerCouts(appIds: readonly string[], derniers: readonly Relev
       nonLisibles.push(id);
       continue;
     }
-    somme += toCad(cout.montant, cout.devise);
+    somme += toCad(cout.montant, cout.devise, change.taux);
     lues += 1;
     const mesure = releve.dataAsOf ?? releve.releveLe;
     plusAncien = plusAncien === null ? mesure : Math.min(plusAncien, mesure);
@@ -64,7 +71,10 @@ export function cumulerCouts(appIds: readonly string[], derniers: readonly Relev
   return {
     periode: "total",
     devise: "CAD",
-    tauxUsdCad: USD_TO_CAD,
+    tauxUsdCad: change.taux,
+    tauxDate: change.date,
+    tauxSource: change.source,
+    tauxRepli: change.repli,
     cumulCad: lues === 0 ? null : Math.round(somme * 100) / 100,
     dataAsOf: plusAncien === null ? null : new Date(plusAncien).toISOString(),
     apps: { lues, nonLisibles },

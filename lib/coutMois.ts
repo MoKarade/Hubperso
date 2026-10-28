@@ -16,6 +16,7 @@
 
 import { FUSEAU } from "@/lib/fuseau";
 import type { Releve } from "@/lib/historique";
+import { TAUX_REPLI } from "@/lib/tauxChange";
 import { toCad } from "@/lib/usage";
 
 /** Instant (ms) du minuit du 1er du mois en cours, à l'heure de Marc. */
@@ -76,6 +77,7 @@ export function depenseDuMois(
   derniers: readonly Releve[],
   avant: readonly Releve[],
   apres: readonly Releve[],
+  taux: number = TAUX_REPLI,
 ) {
   const parApp = (liste: readonly Releve[]) => new Map(liste.map((r) => [r.appId, r]));
   const dernier = parApp(derniers);
@@ -102,7 +104,7 @@ export function depenseDuMois(
       nonLisibles.push(id);
       continue;
     }
-    const cad = toCad(fin.cout.montant, fin.cout.devise) - toCad(depart.cout.montant, depart.cout.devise);
+    const cad = toCad(fin.cout.montant, fin.cout.devise, taux) - toCad(depart.cout.montant, depart.cout.devise, taux);
     if (cad < 0) {
       nonLisibles.push(id);
       continue;

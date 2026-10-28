@@ -11,6 +11,7 @@
 import Link from "next/link";
 import { formatCad } from "@/lib/format";
 import { ditCouts } from "@/lib/liaParole";
+import { direTaux } from "@/lib/tauxChange";
 import {
   appsSansCout,
   blocsCouts,
@@ -22,8 +23,8 @@ import {
   type UsageDigest,
 } from "@/lib/usage";
 
-const NOTE_DEVISE =
-  "Montants en dollars canadiens ; les coûts en USD sont convertis à un taux fixe (environ 1,38).";
+/** La note de devise : le taux appliqué, dit en mots (taux du relevé du PC, ou repli et sa cause). */
+const noteDevise = (digest: UsageDigest) => `Montants en dollars canadiens ; les coûts en USD sont convertis (${direTaux(digest.change)}).`;
 
 function Bloc({ bloc }: { bloc: BlocCout }) {
   return (
@@ -107,7 +108,7 @@ export function CostsCard({
   const blocs = blocsCouts(digest);
   const sansCout = appsSansCout(digest);
   const quotas = jauges(digest);
-  const note = pourquoiPasDeTotalUnique(digest.totalsByPeriod) ?? NOTE_DEVISE;
+  const note = pourquoiPasDeTotalUnique(digest.totalsByPeriod) ?? noteDevise(digest);
 
   return (
     <section

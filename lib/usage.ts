@@ -12,12 +12,16 @@
 import type { HubUsage } from "@mokarade/hub-contract";
 import type { SummaryResult } from "@/lib/fetchSummary";
 import { formatDuree } from "@/lib/format";
+import { TAUX_PAR_DEFAUT, TAUX_REPLI, type TauxChange } from "@/lib/tauxChange";
 
-/** Taux de conversion approximatif : les coûts d'API LLM sont facturés en USD, Marc raisonne en CAD. */
-export const USD_TO_CAD = 1.38;
+/**
+ * Le taux de REPLI (`lib/tauxChange.ts`) : les coûts d'API LLM sont facturés en USD, Marc raisonne en CAD. Le taux du jour vient du
+ * relevé du PC (Hubperso#642) et se passe en paramètre ; ce repli ne sert que quand le relevé n'en donne pas de lisible, et c'est dit.
+ */
+export const USD_TO_CAD = TAUX_REPLI;
 
-export function toCad(amount: number, currency: "USD" | "CAD"): number {
-  return currency === "USD" ? amount * USD_TO_CAD : amount;
+export function toCad(amount: number, currency: "USD" | "CAD", taux: number = USD_TO_CAD): number {
+  return currency === "USD" ? amount * taux : amount;
 }
 
 /** Ratio d'un quota (0..1+), ou null si le plafond est inconnu. */
@@ -65,13 +69,15 @@ export interface UsageDigest {
    * être honnête tant que les apps ne s'accordent pas sur la période.
    */
   totalsByPeriod: PeriodTotal[];
+  /** Le taux USD→CAD appliqué à ces montants, avec sa date, sa source ou son repli dit. */
+  change: TauxChange;
   /** Nombre d'apps qui publient un bloc usage exploitable. */
   trackedCount: number;
   /** Quotas à ≥ 80 % de leur plafond connu. */
   quotaWarnings: number;
 }
 
-export function aggregateUsage(results: SummaryResult[]): UsageDigest {
+export function aggregateUsage(results: SummaryResult[], change: TauxChange = TAUX_PAR_DEFAUT): UsageDigest {
   const apps: AppUsage[] = results.map((r) => {
     const online = r.state === "ok";
     const usage = online ? r.summary.usage : undefined;
@@ -84,7 +90,7 @@ export function aggregateUsage(results: SummaryResult[]): UsageDigest {
       online,
       tracked: Boolean(cost || quotas.length > 0),
       cost,
-      costCad: cost ? Math.round(toCad(cost.amount, cost.currency) * 100) / 100 : null,
+      costCad: cost ? Math.round(toCad(cost.amount, cost.currency, change.taux) * 100) / 100 : null,
       quotas,
     };
   });
@@ -115,7 +121,7 @@ export function aggregateUsage(results: SummaryResult[]): UsageDigest {
     0,
   );
 
-  return { apps, totalsByPeriod, trackedCount, quotaWarnings };
+  return { apps, totalsByPeriod, change, trackedCount, quotaWarnings };
 }
 
 /** Étiquette lisible d'une période — partagée par la carte et la page de détail. */

@@ -11,6 +11,7 @@
 //  - un quota sans plafond publié n'a pas de jauge (`pct: null`), jamais un plafond deviné ;
 //  - chaque montant vient de l'app elle-même, jamais estimé par le hub (seule la conversion USD -> CAD l'est).
 
+import { direTaux } from "./tauxChange";
 import {
   PERIOD_LABEL,
   pourquoiPasDeTotalUnique,
@@ -49,6 +50,8 @@ export interface CoutsCadre {
   totaux: { periode: string; cad: number; apps: number }[];
   /** Pourquoi il n'y a pas un seul total (plusieurs périodes), ou `null`. */
   note: string | null;
+  /** Le taux USD→CAD appliqué à ces montants, avec sa date et sa source, ou le repli dit. */
+  taux: { valeur: number; date: string | null; source: string | null; repli: boolean; texte: string };
   detail: AppCoutCadre[];
 }
 
@@ -64,13 +67,20 @@ export function coutsPourCadre(digest: UsageDigest, maintenant: number): CoutsCa
     alertes: digest.quotaWarnings,
     totaux: digest.totalsByPeriod.map((t) => ({ periode: PERIOD_LABEL[t.period], cad: t.cad, apps: t.appCount })),
     note: pourquoiPasDeTotalUnique(digest.totalsByPeriod),
+    taux: {
+      valeur: digest.change.taux,
+      date: digest.change.date,
+      source: digest.change.source,
+      repli: digest.change.repli,
+      texte: direTaux(digest.change),
+    },
     detail: digest.apps.map((a) => ({
       nom: a.name,
       enLigne: a.online,
       suivie: a.tracked,
       cout: a.cost
         ? {
-            cad: Math.round(toCad(a.cost.amount, a.cost.currency) * 100) / 100,
+            cad: Math.round(toCad(a.cost.amount, a.cost.currency, digest.change.taux) * 100) / 100,
             brut: a.cost.amount,
             devise: a.cost.currency,
             periode: PERIOD_LABEL[a.cost.period],

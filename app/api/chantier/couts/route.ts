@@ -19,6 +19,7 @@ import { fetchAllSummaries } from "@/lib/fetchSummary";
 import { maintenantMs } from "@/lib/horloge";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 import { getSources } from "@/lib/sources";
+import { lireTauxCourant } from "@/lib/tauxChangeDb";
 import { aggregateUsage } from "@/lib/usage";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,6 @@ export async function GET(request: Request): Promise<Response> {
     return erreur(404, "not_found", "Introuvable.");
   }
 
-  const resultats = await fetchAllSummaries(getSources());
-  return Response.json(coutsPourCadre(aggregateUsage(resultats), maintenantMs()), { headers: ENTETES });
+  const [resultats, change] = await Promise.all([fetchAllSummaries(getSources()), lireTauxCourant()]);
+  return Response.json(coutsPourCadre(aggregateUsage(resultats, change), maintenantMs()), { headers: ENTETES });
 }
