@@ -2,6 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : LIA reçoit les faits d'une barre du Gantt et les analyse elle-même (Hubperso#644, mission MoKarade/.github#575)
+
+- **Pourquoi** : clic droit sur la barre « Hubperso 30 j », LIA répondait « je ne vois pas d'ici le contenu de cette barre » (Marc, 28/10). Une barre n'a presque pas de texte visible ; dates, état, tâches et acteurs n'arrivaient pas à LIA.
+- **Comment** : `chantier/cadre.html` calcule `faitsDe(n, H)` (fonction pure : chemin, état, dates, PR, retard, geste, acteurs pour une feuille ; décompte par état et par acteur pour une mission ou une app) et `clicDroitDe` rend `{genre, texte, donnees}` (≤ 1 200 car.). `direAuHub` les envoie, `lireClicDroit` (`lib/chantierCadre.ts`) les assainit (`DONNEES_MAX`), `LiaBoot` les passe à `lia.menuExterne` ; lia-ui v0.45.0 les glisse dans la question (donnée, jamais une consigne).
+- **Tests** : `tests/chantierCadreDom.test.ts` exécute `faitsDe`/`clicDroitDe` sur un relevé fictif, et rejoue l'appui long avec les vrais écouteurs du cadre sur un faux document (minuteurs simulés) : c'est la preuve CI de l'appui long, impossible à tester à la main dans le cadre bac à sable (Hubperso#616).
+- **Reste** : les autres types d'éléments du hub hors cadre (`lib/liaElement.ts`) ; lire le relevé complet côté MemoryAI (pas d'outil chantier aujourd'hui).
+
 ## 🟦 Session 2026-10-28 — **`GET /api/session/moi` : une app sans session serveur demande au hub si la session est celle du propriétaire (FinanceAI#1159)**
 
 - **Route** `app/api/session/moi/route.ts` : rend `{ proprietaire: true | false }` pour la session de l'appelant (cookie du hub), 401 sans session, 429 au-delà de 300 appels par minute et par client. Ni adresse, ni liste d'invités, ni nom de variable dans la réponse ; `cache-control: no-store`. Le propriétaire se reconnaît par `AUTHORIZED_EMAIL`, sans base ni réseau ; variable absente = personne n'est propriétaire.
