@@ -612,10 +612,24 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   });
 
   it("reste en direct : la pastille d'âge du relevé, un redessin toutes les 30 s, la forme dit qui travaille", () => {
-    expect(DOCUMENT).toContain("fraisHTML(['taches'])");
+    expect(DOCUMENT).toContain("fraisHTML(D ? ['taches', 'prs'] : ['taches'])");
     expect(DOCUMENT).toContain("ST.tab === 'cours' && !document.hidden) render(); }, 30e3)");
     expect(DOCUMENT).toContain("q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'");
-    expect(DOCUMENT).toContain("Cette étape n’est pas dans le relevé : le PC doit la fournir");
     expect(DOCUMENT).toContain("prefers-reduced-motion:reduce){#mx .xc-b.on");
+  });
+
+  it("branche Contrôles et En ligne sur prs_ouvertes, grisées avec « ? » quand la clé manque, jamais vertes sans preuve", () => {
+    expect(DOCUMENT).toContain("CUR.prs_ouvertes");
+    expect(DOCUMENT).toContain("const xcData = () =>");
+    expect(DOCUMENT).toContain("Pas dans le relevé pour l’instant");
+    // une PR brouillon ou sans contrôle lu ne passe jamais en Contrôles ; « aucun » et « non_lu » ne sont pas du vert
+    expect(DOCUMENT).toContain("!r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null");
+    expect(DOCUMENT).toContain("['en_cours', 'vert', 'rouge', 'annule'].includes(xcEtatCi(r))");
+    expect(DOCUMENT).toContain("ce === 'vert' ? 'ok' : ''");
+    expect(DOCUMENT).toContain("ce === 'rouge' || ce === 'annule'");
+    // le déploiement est celui du dépôt, pas celui d'une PR, et le dit
+    expect(DOCUMENT).toContain("dernier déploiement du dépôt, pas celui d’une PR");
+    expect(DOCUMENT).toContain("lecture des PR incomplète");
+    expect(DOCUMENT).toContain("id: 'prs'");
   });
 });

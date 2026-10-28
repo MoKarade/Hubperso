@@ -811,6 +811,8 @@ body.anim .card .cs i{animation:grow .7s ease both}
 #mx .xc-b.s-fus{background:var(--fus-t)}
 #mx .xc-b.s-prove{background:transparent;box-shadow:inset 0 0 0 2.5px var(--fus-t);color:var(--fus-t)}
 #mx .xc-b.s-acc{background:var(--done)}
+#mx .xc-b.s-ci{background:var(--doing)}#mx .xc-b.s-ci.ok{background:var(--done)}
+#mx .xc-b.s-dep{cursor:default;width:34px;background:var(--todo);color:var(--bg);font-size:12px}#mx .xc-b.s-dep::before{display:none}#mx .xc-b.s-dep.ok{background:var(--done)}#mx .xc-b.s-dep.r{background:var(--blk-t)}#mx .xc-b.s-dep.on{background:var(--doing)}#mx .xc-b.s-dep.rien{background:transparent;box-shadow:inset 0 0 0 2px var(--line);color:var(--mute)}
 #mx .xc-b.mw{background:var(--marc);box-shadow:none;color:var(--bg)}
 #mx .xc-b.r{background:var(--blk-t);box-shadow:none;color:var(--bg)}
 #mx .xc-b.h{background:transparent;box-shadow:inset 0 0 0 2px var(--doing);border:0;border-style:dashed}
@@ -4144,6 +4146,7 @@ function sources(){
   const jours = CLIGNES.map(l => l[0]).sort(), dernier = jours.length ? t(jours[jours.length - 1] + 'T12:00:00Z') : NaN;
   const S = [
     {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
+    ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
     {id: 'sante', nom: 'Défauts et preuves', nat: 'cal', at: t(F.calcule_le), cad: 30 * MIN, src: 'calculé par le PC sur le relevé'},
     {id: 'prev', nom: 'Ce qui va se passer', nat: 'est', at: t(P.calcule_le), cad: 10 * MIN, src: 'file du script du PC : une prévision, pas un fait'},
     {id: 'actions', nom: 'Minutes Actions', nat: 'mes', at: t(jauge('actions', 'releve')), cad: 10 * MIN, perime: t(jauge('actions', 'perime')), src: 'GitHub Actions (dépôts privés)'},
@@ -5205,28 +5208,38 @@ function vGanttFull(){
       default: return l.fs != null ? 'prévue ' + quand(l.fs, true) : l.why || (l.q != null ? 'file : rang ' + l.q : 'pas dans la file du script');
     }
   };
-  // le process, de l'idée à la tâche acceptée ; `gh` = étape que le relevé ne donne pas encore (grisée, jamais comptée)
+  // le process, de l'idée à la tâche acceptée ; 4e valeur = étape qui vient de `prs_ouvertes` (contrôles, déploiements) : grisée avec « ? » quand le relevé n'en a pas
   const XCOL = [
     ['idee', 'Idée', '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4"/><path d="M12 15.6v.1"/>'],
     ['file', 'En file', '<path d="M5 7h14M5 12h14M5 17h9"/>'],
     ['prise', 'Prise', '<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/>'],
     ['draft', 'PR brouillon', SVGI.pr],
     ['rel', 'PR prête', SVGI.pr],
-    ['ci', 'Contrôles', '<path d="M12 3l7 3v5.5c0 4.2-2.8 7.6-7 9.5-4.2-1.9-7-5.3-7-9.5V6z"/>', true],
+    ['ci', 'Contrôles', '<path d="M12 3l7 3v5.5c0 4.2-2.8 7.6-7 9.5-4.2-1.9-7-5.3-7-9.5V6z"/>', 'pr'],
     ['fus', 'Fusionnée', SVGI.fusion],
-    ['dep', 'En ligne', '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>', true],
+    ['dep', 'En ligne', '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>', 'dep'],
     ['prove', 'Preuve', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.4 2.4L15.8 9.6"/>'],
     ['acc', 'Acceptée, 24 h', SVGI.fait]
   ];
-  const xcCol = l => l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'todo' && l.q == null ? 'idee' : 'file';   // bloquée et attend Marc : en file
+  // `prs_ouvertes` (relevé du PC, .github#679) : contrôles, file Mergify et agent de chaque PR ouverte, dernier déploiement de chaque dépôt ; absente = étapes grisées
+  const xcData = () => { const P = CUR && CUR.prs_ouvertes; if (!P || typeof P !== 'object' || !Array.isArray(P.prs)) return null;
+    const par = {}; P.prs.forEach(r => { if (r && r.repo) par[String(r.repo).toLowerCase() + '#' + r.n] = r; return r; });
+    return {P, par, dep: P.deploiements && typeof P.deploiements === 'object' ? P.deploiements : {}}; };
+  const xcRec = (l, D) => D && l.pr ? D.par[String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n] || null : null;
+  const xcEtatCi = r => r && !r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null;
+  const xcEnCi = (l, D) => { const r = xcRec(l, D); return !!r && !r.brouillon && ((r.mergify && r.mergify.file === true) || ['en_cours', 'vert', 'rouge', 'annule'].includes(xcEtatCi(r))); };
+  const xcCol = (l, D) => (l.e === 'cours' || l.e === 'rel') && l.pr && l.pr.state === 'open' && !l.pr.draft && xcEnCi(l, D) ? 'ci' : l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'todo' && l.q == null ? 'idee' : 'file';   // bloquée et attend Marc : en file
   const xcWho = l => { const q = ecQui(l); return q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'; };
-  const xcBrick = (l, col, now) => {
-    const big = col === 'prise' || col === 'draft' || col === 'rel', live = l.last && now - l.last < 15 * 60e3;
-    const late = l.e === 'ret' || l.e === 'blk' || !!l.oub, mw = l.e === 'marc';
-    const cls = ['xc-b', 's-' + col, big ? 'big' : '', live && big ? 'on' : '', late ? 'r' : '', mw ? 'mw' : ''].filter(Boolean).join(' ');
+  const xcCiTip = r => { const c = r.ci || {}, m = r.mergify || {};
+    return (c.erreur ? '\ncontrôles : lecture en panne (' + c.erreur + ')' : c.etat ? '\ncontrôles : ' + ({vert: 'verts', rouge: 'en échec', en_cours: 'en cours', annule: 'annulés', aucun: 'aucun lancé', non_lu: 'pas lus'}[c.etat] || c.etat) + (c.ok != null ? ' · ' + c.ok + ' ok' + (c.ko ? ', ' + c.ko + ' en échec' : '') + (c.en_cours ? ', ' + c.en_cours + ' en cours' : '') + (c.en_file ? ', ' + c.en_file + ' en file' : '') : '') + (c.rouges && c.rouges.length ? '\nen échec : ' + c.rouges.slice(0, 4).join(', ') : '') : '')
+      + (m.file === true ? '\nfile Mergify' + (m.position != null ? ' : n° ' + m.position : '') + (m.message ? ' · ' + m.message : '') : ''); };
+  const xcBrick = (l, col, now, D) => {
+    const big = col === 'prise' || col === 'draft' || col === 'rel' || col === 'ci', rec = col === 'ci' ? xcRec(l, D) : null, ce = rec ? xcEtatCi(rec) : null, live = (l.last && now - l.last < 15 * 60e3) || ce === 'en_cours';
+    const late = l.e === 'ret' || l.e === 'blk' || !!l.oub || ce === 'rouge' || ce === 'annule', mw = l.e === 'marc';
+    const cls = ['xc-b', 's-' + col, ce === 'vert' ? 'ok' : '', big ? 'big' : '', live && big ? 'on' : '', late ? 'r' : '', mw ? 'mw' : ''].filter(Boolean).join(' ');
     const p = big && l.start && l.est && l.est.d ? Math.min(100, Math.round((now - l.start) / l.est.d * 100)) : 0;
     const lab = l.e === 'blk' ? '!' : col === 'idee' ? '' : col === 'file' && !mw ? (l.q != null ? l.q : '') : xcWho(l);
-    const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'file' && col !== 'idee' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + '\n' + ecSuite(l);
+    const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'file' && col !== 'idee' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + (rec ? xcCiTip(rec) : '') + '\n' + ecSuite(l);
     return `<button class="${cls}" data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" aria-label="${esc(l.t)}">${esc(lab)}${big ? `<span class="p" style="--p:${p}%"></span>` : ''}</button>`;
   };
   function xcPouls(W){
@@ -5261,23 +5274,35 @@ function vGanttFull(){
     const key = `<div class="chips"><span><i style="background:var(--mute)"></i>début prévu</span><span><i style="background:none;border:2.5px solid var(--mute);box-sizing:border-box"></i>preuve due</span></div>`;
     return fig('Les 48 prochaines heures', `<svg class="cch" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Débuts prévus et preuves dues dans les 48 prochaines heures, une ligne par app">${g}</svg>`, key);
   }
+  const xcAg = a => a === 'Jules' ? 'J' : a === 'Copilot' ? 'Cp' : a === 'Marc' ? 'M' : a === 'Claude' ? 'C' : a === 'Dependabot' ? 'D' : '';
+  const xcDepEtat = d => !d ? ['—', 'rien', 'aucun déploiement'] : d.erreur ? ['!', 'r', 'lecture en panne'] : d.etat === 'success' ? ['', 'ok', 'en ligne'] : ['failure', 'error'].includes(d.etat) ? ['!', 'r', 'en échec'] : ['pending', 'in_progress', 'queued', 'waiting'].includes(d.etat) ? ['', 'on', 'en cours'] : ['', 'rien', String(d.etat || '—')];
   function vEnCours(){
-    const now = Date.now(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
-    const hors = (M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : [], horsApp = h => { const a = M.apps.find(x => x.rl === String(h.repo).toLowerCase()); return a ? a.k : 'x'; };
-    const cell = (a, c, ghost) => {
-      if (ghost) return `<div class="xc-c gh" data-tip="${tipAttr('Cette étape n’est pas dans le relevé : le PC doit la fournir')}"></div>`;
-      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
-      const hh2 = c === 'draft' || c === 'rel' ? hors.filter(h => horsApp(h) === a.k && (c === 'draft') === !!h.draft).map(h => `<a class="xc-b h" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.bot ? 'un robot' : 'une personne') + ' · PR sans tâche')}" aria-label="${esc(h.t || '')}"></a>`).join('') : '';
-      return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now)).join('')}${hh2}</div>`;
+    const now = Date.now(), D = xcData(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
+    const appOf = repo => { const a = M.apps.find(x => x.rl === String(repo).toLowerCase()); return a ? a.k : 'x'; };
+    // PR sans tâche : celles de `prs_ouvertes` quand le relevé les donne, sinon les PR hors tâche du relevé des défauts
+    const refs = new Set(M.leaves.filter(l => l.pr).map(l => String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n));
+    const hors = D ? D.P.prs.filter(r => r && (!r.tache || !M.N[r.tache]) && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r}))
+      : ((M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : []).map(h => ({repo: h.repo, n: h.n, t: h.t, url: h.url, draft: !!h.draft, ag: h.bot ? '' : '', bot: h.bot}));
+    const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'ci' : 'rel';
+    const cell = (a, c, g) => {
+      if (g === 'dep'){
+        const d = D && Object.keys(D.dep).find(k => k.toLowerCase() === a.rl), x = d ? xcDepEtat(D.dep[d]) : xcDepEtat(null), v = d ? D.dep[d] : null;
+        return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, En ligne"><span class="xc-b s-dep ${x[1]}" data-tip="${tipAttr(a.app + '\n' + x[2] + (v && v.environnement ? ' · ' + v.environnement : '') + (v && v.maj_le ? '\nmis à jour ' + ago(Date.parse(v.maj_le)) : '') + (v ? '\ndernier déploiement du dépôt, pas celui d’une PR' : ''))}">${esc(x[0])}</span></div>`;
+      }
+      if (g && !D) return `<div class="xc-c gh" data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"></div>`;
+      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
+      const hh2 = c === 'draft' || c === 'rel' || c === 'ci' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b h" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · PR sans tâche' + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
+      return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now, D)).join('')}${hh2}</div>`;
     };
-    const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => horsApp(h) === a.k)).map(a =>
+    const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => appOf(h.repo) === a.k)).map(a =>
       `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span></div>` + XCOL.map(([c, , , g]) => cell(a, c, g)).join('')).join('');
-    const nCol = c => c === 'acc' ? recents.length : ouv.filter(l => xcCol(l) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
-    const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
-    const cols = '110px ' + XCOL.map(x => x[3] ? '58px' : 'minmax(0,1fr)').join(' ');
-    const W2 = colW(2), top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(['taches'])}</div>`;
+    const nCol = c => c === 'acc' ? recents.length : c === 'dep' ? (D ? Object.values(D.dep).filter(v => v && v.etat === 'success').length : 0) : ouv.filter(l => xcCol(l, D) === c).length + hors.filter(h => horsCol(h) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
+    const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g && !D ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g && !D ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g && !D ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
+    const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
+    const W2 = colW(2), pe = D && (D.P.incomplet || (Array.isArray(D.P.erreurs) && D.P.erreurs.length)) ? `<span class="cf" style="color:var(--blk-t)" title="${esc((D.P.erreurs || []).join('\n'))}">lecture des PR incomplète</span>` : '';
+    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(D ? ['taches', 'prs'] : ['taches'])}${pe}</div>`;
     const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
-    const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard ou bloquée', '!')}${k('s-file', 'rang dans la file', '1')}${k('h', 'PR sans tâche')}</div>`;
+    const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('h', 'PR sans tâche')}</div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
     return `<div class="xc">${top}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
   }
