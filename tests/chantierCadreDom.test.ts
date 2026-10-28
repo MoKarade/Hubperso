@@ -681,6 +681,29 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     }
   });
 
+  it("un graphique donne à LIA ses mesures (les infobulles de ses barres et points) et sa description, pas seulement son titre et ses axes", () => {
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    document.body.innerHTML = `<main id="view"><figure class="fg"><figcaption>Durée d'une tâche</figcaption>
+      <svg class="cch" role="img" aria-label="Durée des 12 tâches finies, médiane 3,5 h"><rect class="hit" data-tip="&lt; 1 h : 2 tâches (17 %)"></rect><rect class="hit" data-tip="1–6 h : 7 tâches (58 %)&#10;dont 2 prévues"></rect><rect class="hit" data-tip="1–6 h : 7 tâches (58 %)&#10;dont 2 prévues"></rect></svg>
+      <div class="kp2"><b>3,5 h</b><span>médiane</span></div></figure></main>`;
+    const r = clicDroitDe(document.querySelector(".hit"))!;
+    expect(r.genre).toBe("un graphique");
+    expect(r.donnees).toContain("graphique : Durée des 12 tâches finies, médiane 3,5 h");
+    expect(r.donnees).toContain("mesures : < 1 h : 2 tâches (17 %) ; 1–6 h : 7 tâches (58 %), dont 2 prévues");
+    expect(r.donnees.match(/1–6 h : 7 tâches/g)).toHaveLength(1); // une mesure répétée n'est dite qu'une fois
+  });
+
+  it("un graphique chargé garde chaque mesure entière sous 1 200 caractères et compte celles qu'il ne peut pas dire", () => {
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    const tips = Array.from({ length: 80 }, (_, i) => `<rect class="hit" data-tip="jour ${i} : ${i * 3} tâches acceptées"></rect>`).join("");
+    document.body.innerHTML = `<main id="view"><figure class="fg"><figcaption>Acceptées par jour</figcaption><svg role="img" aria-label="Acceptées par jour">${tips}</svg></figure></main>`;
+    const r = clicDroitDe(document.querySelector(".hit"))!;
+    expect(r.donnees.length).toBeLessThanOrEqual(1200);
+    expect(r.donnees).toContain("jour 0 : 0 tâches acceptées");
+    expect(r.donnees).toMatch(/… et \d+ autres mesures$/);
+    expect(r.donnees).not.toMatch(/jour \d+ : \d+ tâches acceptée$/); // jamais une mesure coupée en deux
+  });
+
   it("le clic droit sur un élément qui n'est pas dans le relevé donne le texte du bloc en entier, au-delà du repère de 300 caractères", () => {
     if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
     document.body.innerHTML = `<main id="view"><article class="qa"><h3>Claude</h3><p>${"chiffre ".repeat(100)}</p></article></main>`;
