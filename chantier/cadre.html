@@ -806,6 +806,12 @@ body.anim .card .cs i{animation:grow .7s ease both}
 .xc-ctl{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:2px 0 6px}.xc-ctl .per{margin:0}
 .xc-w svg{width:10px;height:10px;margin-right:5px;vertical-align:-1px;fill:currentColor}
 .xc-fl{display:inline-flex;align-items:center;gap:6px}.xc-fl svg{width:12px;height:12px;fill:var(--mute)}
+.xc-fz{margin:12px 0 6px;display:flex;flex-direction:column;gap:6px}.xc-fzt{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;font-size:13px;color:var(--mute)}.xc-fzt b{font-size:15px;color:var(--ink)}
+.xc-fzr{padding:8px 12px;border-radius:10px;background:var(--panel);box-shadow:inset 3px 0 0 var(--todo)}.xc-fzr.ok{box-shadow:inset 3px 0 0 var(--done)}.xc-fzr.en{box-shadow:inset 3px 0 0 var(--doing)}
+.xc-fzh>a,.xc-fzh>div{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto auto;gap:4px 12px;align-items:center;min-height:44px;color:var(--ink);text-decoration:none;font-size:14px}.xc-fzh i{width:8px;height:8px;border-radius:50%;background:var(--todo)}
+.xc-fzr.ok i{background:var(--done)}.xc-fzr.en i{background:var(--doing)}.xc-fzh span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.xc-fzh em{font-style:normal;font-size:12px;color:var(--mute)}.xc-fzh b{font-size:12.5px}.xc-fzh small{font-size:12.5px;color:var(--mute);font-variant-numeric:tabular-nums}
+.xc-fzd{display:flex;flex-wrap:wrap;gap:2px 18px;padding:0 0 2px 22px;font-size:12.5px;color:var(--mute)}.xc-fzd p{margin:0}.xc-fzd b{color:var(--ink);font-weight:600;margin-right:4px}.xc-fzd .nd{font-style:italic}
+@media (max-width:640px){.xc-fzh>a,.xc-fzh>div{grid-template-columns:10px minmax(0,1fr) auto}.xc-fzh em,.xc-fzh small{grid-column:2/4}.xc-fzd{padding-left:0}}
 .xc-cb{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:10px 0 4px}.xc-cb>b{align-self:center;font-size:13px;color:var(--mute);margin-right:4px}
 .xc-ci{display:flex;flex-direction:column;gap:2px;min-width:132px;flex:1 1 132px;padding:8px 12px;border-radius:10px;background:var(--panel);box-shadow:inset 3px 0 0 var(--done)}.xc-ci.ko{box-shadow:inset 3px 0 0 var(--blk-t)}.xc-ci.nd{box-shadow:inset 3px 0 0 var(--todo)}
 .xc-ci span{font-size:12.5px;color:var(--mute)}.xc-ci b{font:700 20px/1.1 var(--fd);color:var(--ink);font-variant-numeric:tabular-nums}.xc-ci em{font-style:normal;font-size:12px;color:var(--mute)}.xc-ci.ko em{color:var(--blk-t)}
@@ -5340,6 +5346,22 @@ function vGanttFull(){
   const XDUR_J = 30;
   // la cible du 29/10 (Marc) : file, prise et preuve en 10 min au plus chacune, comptées depuis « éligible depuis »
   const XCIBLE = 10 * 60e3;
+  // l'étiquette qui dit « ceci change la façon de travailler » : posée par le fil qui change la façon, jamais par la page
+  const XFACON = 'façon-de-travailler';
+  // Registre des façons de travailler : `ref` = l'issue qui la porte (état et âge lus dans le relevé), `att` = durée attendue, `mes` = durée mesurée (null tant que rien n'est mesuré), `regle` = date d'une règle sans issue.
+  // Le fil workflow donne chaque changement avec ses durées ; un changement s'ajoute ici dans la même PR que la tâche qui le livre.
+  const XFACONS = [
+    {ref: '.github#750', t: 'Une boîte à événements par dépôt : le fil de l’app se réveille seul', att: 'moins de 1 min entre « tâche prête » et le réveil du fil', mes: 'environ 10 s le 28/10 (workflow 22:01:43Z, fil réveillé 22:01:53Z), sans relais ni PC ; avant : minutes par le coordinateur, jusqu’à 3 h 30 par le PC'},
+    {ref: '.github#748', t: 'Le Réacteur dans les 9 autres dépôts, sans minuteur', att: 'quelques secondes pour une tâche prête, au lieu de la passe du PC (jusqu’à 3 h 30 mesuré)', mes: null},
+    {ref: '.github#713', t: 'Une preuve « Acceptée » mal écrite reçoit une réponse avant la fermeture', att: 'réponse sous 2 min, au lieu de découvrir l’erreur à la réouverture', mes: null},
+    {ref: '.github#712', t: 'Le Réacteur de .github écoute les événements et n’a plus aucun minuteur', att: null, mes: null},
+    {ref: '.github#704', t: 'Jules reçoit sa tâche du Réacteur, sur l’événement', att: null, mes: null},
+    {ref: '.github#714', t: 'Un échec de pilotage ouvre seul une issue « boucle:erreur »', att: null, mes: null},
+    {ref: '.github#711', t: '« Éligible depuis » mesuré par tâche', att: null, mes: null},
+    {ref: 'hubperso#651', t: 'Le hub envoie à MemoryAI à chaque webhook reçu', att: null, mes: null},
+    {regle: '28/10', t: '3 places par dépôt ; « preuve-attendue » ne prend pas de place', att: null, mes: null},
+    {regle: '28/10', t: 'Réveil du coordinateur toutes les 10 min, provisoire jusqu’à ce que les boîtes par dépôt marchent', att: 'au plus 10 min', mes: null}
+  ];
   // ce que la ligne « durée » affiche : moyenne ou médiane, pour tous les types de tâche ou un seul (comme la frise du fil workflow)
   let XST = 'moy', XQ = 'tous';
   try { const a = localStorage.getItem('mxxst'), b = localStorage.getItem('mxxq'); if (a === 'moy' || a === 'med') XST = a; if (['tous', 'claude', 'jules', 'copilot'].includes(b)) XQ = b; } catch (e) {}
@@ -5504,6 +5526,21 @@ function vGanttFull(){
       return `<div class="xc-ci${hors ? ' ko' : ''}" data-tip="${tipAttr(n + ' : ' + def + '\n' + (XST === 'med' ? 'médiane ' : 'moyenne ') + xcDur(v) + ' · cible ' + xcDur(XCIBLE) + '\n' + d.dans + ' sur ' + d.n + ' dans la cible, ' + hors + ' au-dessus (' + XDUR_J + ' derniers jours)')}"><span>${esc(n)}</span><b>${esc(xcDur(v))}</b><em>${hors ? nfmt(hors) + ' sur ' + nfmt(d.n) + ' au-dessus de ' + xcDur(XCIBLE) : 'tous sous ' + xcDur(XCIBLE)}</em></div>`;
     }).join('');
     const cibleHtml = `<div class="xc-cb" role="group" aria-label="Délais visés : ${xcDur(XCIBLE)} au plus chacun"><b>Cible ${esc(xcDur(XCIBLE))}</b>${cibles}</div>`;
+    // les façons de travailler (Marc 28/10 : chaque changement de façon de faire va sur la page, à jour, avec ses durées). L'ÉTAT et l'ÂGE de chacune viennent du relevé
+    // (suivi par les événements) : l'issue qui la porte, ou toute issue étiquetée `façon-de-travailler`. Le registre XFACONS ne porte que ce que le relevé ne dit pas :
+    // la durée attendue et la durée mesurée, que le fil workflow donne avec chaque changement ; une durée absente se lit « pas encore mesuré », jamais 0.
+    const fzRef = new Set(XFACONS.map(f => f.ref).filter(Boolean));
+    const fzNodes = Object.values(M.N).filter(n => n && Array.isArray(n.lb) && n.lb.includes(XFACON) && !fzRef.has(n.ref)).map(n => ({ref: n.ref, t: null}));
+    const fzListe = [...XFACONS, ...fzNodes].map(f => ({...f, n: f.ref ? M.N[f.ref] || null : null}));
+    const fzDuree = n => { const clos = n.leaf ? !n.open : !!n.fini; return clos ? (n.end != null && n.c ? 'mise en place en ' + xcDur(Math.max(0, n.end - n.c)) : 'en place') : 'depuis ' + xcDur(Math.max(0, now - (n.c || now))); };
+    const facHtml = `<div class="xc-fz"><div class="xc-fzt"><b>Façons de travailler</b><span>${fzListe.length ? nfmt(fzListe.length) + ' suivie' + (fzListe.length > 1 ? 's' : '') : ''}</span></div>${fzListe.map(f => {
+      const n = f.n, clos = n ? (n.leaf ? !n.open : !!n.fini) : f.regle != null, etat = f.regle != null ? 'règle du ' + f.regle : !n ? 'hors du relevé' : clos ? 'en place' : n.lb.includes('en-cours') || n.start != null ? 'se met en place' : 'prévue';
+      const titre = f.t || (n && n.t) || f.ref, duree = n ? fzDuree(n) : '', cls = clos ? 'ok' : n && etat === 'prévue' ? 'pr' : n ? 'en' : 'nd';
+      const att = f.att ? `<p><b>attendu</b> ${esc(f.att)}</p>` : '', mes = `<p class="${f.mes ? '' : 'nd'}"><b>mesuré</b> ${esc(f.mes || 'pas encore mesuré')}</p>`;
+      const tete = `<i></i><span>${esc(titre)}</span>${f.ref ? `<em>${esc(f.ref)}</em>` : '<em></em>'}<b>${esc(etat)}</b><small>${esc(duree)}</small>`, tip = tipAttr(titre + '\n' + (f.ref || '') + ' · ' + etat + (duree ? '\n' + duree : ''));
+      const href = f.ref && /^[\w.-]+#\d+$/.test(f.ref) ? 'https://github.com/MoKarade/' + f.ref.replace('#', '/issues/') : '';
+      return `<div class="xc-fzr ${cls}" data-tip="${tip}"><div class="xc-fzh">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${tete}</a>` : `<div>${tete}</div>`}</div><div class="xc-fzd">${att}${mes}</div></div>`;
+    }).join('')}</div>`;
     const seg = (attr, cur, items) => `<div class="per" role="group">${items.map(([k, n]) => `<button ${attr}="${k}" aria-pressed="${cur === k}">${n}</button>`).join('')}</div>`;
     const ctl = `<div class="xc-ctl" role="group" aria-label="Réglages des durées">${seg('data-xst', XST, [['moy', 'Moyenne'], ['med', 'Médiane']])}${seg('data-xq', XQ, [['tous', 'Tous'], ['claude', 'Claude'], ['jules', 'Jules'], ['copilot', 'Copilot']])}</div>`;
     const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
@@ -5512,7 +5549,7 @@ function vGanttFull(){
     const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
     const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('s-mg', 'rang chez Mergify', '1')}${k('h', 'PR sans tâche')}<span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.h}</svg>humain</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.ia}</svg>IA</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.m}</svg>machine</span></div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
-    return `<div class="xc">${top}${ph}${cibleHtml}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${durRow}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
+    return `<div class="xc">${top}${ph}${cibleHtml}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${durRow}${rows}</div></div>${key}${facHtml}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
   }
   // l'onglet En cours se redessine tout seul : les âges, les pastilles et les barres avancent sans toucher la page
   setInterval(() => { if (M && ST.tab === 'cours' && !document.hidden) render(); }, 30e3);
