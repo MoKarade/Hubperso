@@ -440,6 +440,44 @@ describe("Vitesse et Parcours en un seul onglet : le trajet d'une tâche et la v
   });
 });
 
+describe("chaque bloc dit d'où vient sa donnée, son âge et sa nature (#640)", () => {
+  it("un registre des sources : mesuré, calculé, saisi à la main ou estimé, avec leur cadence", () => {
+    expect(DOCUMENT).toContain("function sources()");
+    for (const nature of ["mesuré", "calculé", "saisi à la main", "estimé"]) expect(DOCUMENT).toContain(`'${nature}'`);
+    for (const id of ["taches", "actions", "vercel", "jules", "gemini", "claude", "api-mois", "api-cumul", "couts-apps", "recus", "taux", "elec"]) {
+      expect(DOCUMENT, id).toContain(`id: '${id}'`);
+    }
+  });
+
+  it("une source sans instant lisible est « fixe », jamais « à jour » ; une jauge dite périmée par le PC l'est aussi", () => {
+    expect(DOCUMENT).toContain("!isFinite(age) ? 'fixe'");
+    expect(DOCUMENT).toContain("isFinite(s.perime) && now > s.perime");
+    expect(DOCUMENT).not.toContain("!isFinite(age) ? 'ok'");
+  });
+
+  it("les reçus sont dits saisis à la main et le taux est dit estimé : rien ne se rafraîchit en douce", () => {
+    expect(DOCUMENT).toContain("nat: 'sai'");
+    expect(DOCUMENT).toContain("pas un cours du jour");
+    expect(DOCUMENT).toContain("ne se rafraîchit jamais seul");
+  });
+
+  it("chaque bloc porte sa pastille et elle avance avec l'horloge", () => {
+    expect(DOCUMENT).toContain("const band = (ico, title, inner, ids)");
+    expect(DOCUMENT).toContain("fraisHTML(ids)");
+    expect(DOCUMENT).toContain("majFrais(); }");
+    expect(DOCUMENT).toContain("fraisHTML(['taches', 'prev'])");
+    expect(DOCUMENT).toContain("['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois']");
+    expect(DOCUMENT).toContain("fraisHTML(['recus', 'taux'])");
+    expect(DOCUMENT).toContain("window.hubCoutsAt = window.hubCouts ? Date.now() : NaN");
+  });
+
+  it("le bloc « Données » liste les sources avec leur âge, et chaque jauge dit le sien", () => {
+    expect(DOCUMENT).toContain("function vDonnees()");
+    expect(DOCUMENT).toContain("d’où vient chaque chiffre");
+    expect(DOCUMENT).toContain("mesuré <span class=\"qage");
+  });
+});
+
 describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
   const bon = { type: MESSAGE_CLIC_DROIT, x: 120.5, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
 

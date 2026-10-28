@@ -39,6 +39,7 @@
       // Les coûts et quotas des apps (la page Coûts du hub, reprise ici) : lus par le hub, jamais par ce document.
       recu = true;
       window.hubCouts = m.couts && typeof m.couts === 'object' ? m.couts : null;
+      window.hubCoutsAt = window.hubCouts ? Date.now() : NaN;
       window.hubCoutsErreur = typeof m.erreur === 'string' ? m.erreur : '';
       if (typeof window.surCouts === 'function') window.surCouts();
     } else if (m.type === 'chantier-etat') {
@@ -1192,6 +1193,22 @@ body.m{--mute:#a9b0bb}
 .sq{width:11px;height:11px;border-radius:3px;display:inline-block;align-self:center}
 .chips{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:14px;color:var(--mute)}
 .chips span{display:inline-flex;align-items:center;gap:7px}.chips i{width:11px;height:11px;border-radius:3px;display:inline-block}.chips b{color:var(--ink)}
+.fr{display:inline-flex;align-items:center;gap:7px;margin-left:auto;padding:5px 11px;min-height:28px;border-radius:14px;font:500 13px var(--f);color:var(--mute);background:var(--panel2);box-shadow:inset 0 0 0 1px var(--line)}
+.fr i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--done)}.fr.re i{background:var(--marc);border-radius:2px}.fr.pe i{background:var(--now);border-radius:2px;transform:rotate(45deg)}
+.fr.re{color:var(--ink)}.fr.pe{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--now)}.fr b{font-weight:500}
+.band h2 .fr,.gbar .fr{font-size:13px}.ccap .fr{margin-left:12px}
+.qage.retard{color:var(--marc)}.qage.perime{color:var(--now);font-weight:700}
+.dsl{display:grid;gap:2px}
+.dsr{display:grid;grid-template-columns:minmax(0,12em) minmax(0,1fr) 5em minmax(0,9.5em);gap:4px 14px;align-items:center;min-height:44px;padding:6px 0;box-shadow:0 -1px 0 var(--line);font-size:14px}
+.dsr .dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dsr .db{position:relative;height:10px;border-radius:5px;background:var(--panel2);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.dsr .db::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line)}
+.dsr .db i{display:block;height:100%;border-radius:5px;background:var(--done)}.dsr.retard .db i{background:var(--marc)}.dsr.perime .db i{background:var(--now)}.dsr.fixe .db i{width:0}
+.dsr .dv{text-align:right;font-weight:700}.dsr.perime .dv{color:var(--now)}
+.dsr .dk{display:inline-flex;align-items:center;gap:7px;color:var(--mute)}.dsr .dk i{flex:none;width:10px;height:10px;box-sizing:border-box;background:var(--done);border-radius:50%}
+.dsr .dk.cal i{background:linear-gradient(90deg,var(--done) 50%,transparent 50%);box-shadow:inset 0 0 0 1.5px var(--done)}
+.dsr .dk.est i{background:transparent;border:1.5px dashed var(--marc)}.dsr .dk.sai i{background:var(--marc);border-radius:2px}
+@media(max-width:720px){.dsr{grid-template-columns:minmax(0,1fr) 5em;grid-template-areas:"n v" "b b" "k k"}.dsr .dn{grid-area:n}.dsr .dv{grid-area:v}.dsr .db{grid-area:b}.dsr .dk{grid-area:k}.band h2{flex-wrap:wrap}.fr{margin-left:0}}
 /* Parcours : le trajet d'une tâche, de l'idée à l'affichage dans l'app (Marc 28/10) */
 .pcf{display:flex;align-items:flex-start;margin:6px 0 4px}
 .pcs{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:clamp(48px,9vw,86px);text-align:center}
@@ -4050,6 +4067,71 @@ function fresh(){
   el.title = `Relevé GitHub à ${hh(a)} (heure du Québec), source : ${SRC}. Rouge si le relevé a plus de 2 h.`;
   majBannieres();
 }
+/* ---------- d'où vient chaque chiffre : source, âge, nature (Marc 28/10, #640) ----------
+   Rien n'est complété ni rafraîchi en douce : une source sans instant lisible est dite « fixe » (estimée ou saisie), jamais « à jour ».
+   Cadence = ce que la source promet ; en retard au-delà de 1,5 cadence, périmée au-delà de 3 (la jauge Actions l'est aussi quand le PC le dit). */
+const NATURE = {mes: 'mesuré', cal: 'calculé', sai: 'saisi à la main', est: 'estimé'}, NAT_RANG = ['mes', 'cal', 'sai', 'est'];
+function sources(){
+  const Q = (CUR && CUR.quota) || {}, G = Q.jauges || {}, P = (CUR && CUR.prochaines) || {}, F = (CUR && CUR.fiabilite) || {};
+  const t = s => s ? Date.parse(s) : NaN, jauge = (k, f) => (G[k] ? G[k][f] : null);
+  const jours = CLIGNES.map(l => l[0]).sort(), dernier = jours.length ? t(jours[jours.length - 1] + 'T12:00:00Z') : NaN;
+  const S = [
+    {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
+    {id: 'sante', nom: 'Défauts et preuves', nat: 'cal', at: t(F.calcule_le), cad: 30 * MIN, src: 'calculé par le PC sur le relevé'},
+    {id: 'prev', nom: 'Ce qui va se passer', nat: 'est', at: t(P.calcule_le), cad: 10 * MIN, src: 'file du script du PC : une prévision, pas un fait'},
+    {id: 'actions', nom: 'Minutes Actions', nat: 'mes', at: t(jauge('actions', 'releve')), cad: 10 * MIN, perime: t(jauge('actions', 'perime')), src: 'GitHub Actions (dépôts privés)'},
+    {id: 'vercel', nom: 'Déploiements Vercel', nat: 'mes', at: t(jauge('vercel', 'releve')), cad: 10 * MIN, src: 'statuts de commit GitHub'},
+    {id: 'jules', nom: 'Tâches Jules', nat: 'mes', at: t(jauge('jules', 'releve')), cad: 10 * MIN, src: 'étiquettes posées dans GitHub'},
+    {id: 'gemini', nom: 'Relectures Gemini', nat: 'mes', at: t(jauge('gemini', 'releve')), cad: 10 * MIN, src: 'script du PC'},
+    {id: 'claude', nom: 'Semaine Claude', nat: 'mes', at: t(jauge('claude', 'mesure_utc')), cad: 15 * MIN, src: 'claude /usage lu sur le PC'},
+    {id: 'api-mois', nom: 'API des apps, ce mois', nat: 'mes', at: t(jauge('api', 'data_as_of')), cad: 60 * MIN, src: 'hubperso.com/api/cout (les apps publient à leur rythme)'},
+    {id: 'api-cumul', nom: 'API des apps, cumul', nat: 'mes', at: t(jauge('api', 'cumul_as_of')), cad: 24 * H, src: 'cumul calculé par le PC'},
+    {id: 'couts-apps', nom: 'Coûts des apps', nat: 'mes', at: window.hubCoutsAt || NaN, cad: 5 * MIN, src: 'lu par le hub chez chaque app'},
+    {id: 'recus', nom: 'Reçus de dépenses', nat: 'sai', at: dernier, cad: 31 * 24 * H, src: 'reçus relevés à la main dans les courriels : dernier reçu le ' + (jours.length ? cDate(jours[jours.length - 1]) : '—')},
+    {id: 'taux', nom: 'Taux USD → CAD', nat: 'est', at: NaN, cad: 0, src: 'taux fixe de ' + FX + ' (reçu du 20/05), pas un cours du jour' + (jauge('api', 'taux_usd_cad') != null ? ' ; le relevé en utilise un autre (' + jauge('api', 'taux_usd_cad') + ')' : '')},
+    {id: 'elec', nom: 'Électricité du PC', nat: 'est', at: NaN, cad: 0, src: 'puissance et tarif réglés par curseurs, hors reçus'}
+  ];
+  const now = Date.now();
+  return S.map(s => {
+    const age = isFinite(s.at) ? Math.max(0, now - s.at) : NaN;
+    const etat = !isFinite(age) ? 'fixe' : (isFinite(s.perime) && now > s.perime) || age > 3 * s.cad ? 'perime' : age > 1.5 * s.cad ? 'retard' : 'ok';
+    return {...s, age, etat};
+  });
+}
+const ETAT_RANG = {ok: 0, fixe: 1, retard: 2, perime: 3}, ETAT_LAB = {ok: 'à jour', fixe: 'fixe', retard: 'en retard', perime: 'périmé'};
+/* la pastille d'un bloc : la source la plus vieille, et toutes les natures en jeu (la plus douteuse en dernier) */
+function fraisStat(ids){
+  const S = sources().filter(s => ids.includes(s.id));
+  if (!S.length) return null;
+  const etat = S.reduce((e, s) => ETAT_RANG[s.etat] > ETAT_RANG[e] ? s.etat : e, 'ok');
+  const datees = S.filter(s => isFinite(s.age)), pires = datees.filter(s => s.etat === etat);
+  const vieux = (pires.length ? pires : datees).sort((a, b) => b.age - a.age)[0];   // l'âge affiché est celui de la source qui motive l'état
+  const noms = NAT_RANG.filter(n => S.some(s => s.nat === n)).map(n => NATURE[n]).join(', ');
+  const age = vieux ? 'il y a ' + dur(vieux.age) : '';
+  const cls = etat === 'perime' ? 'pe' : etat === 'retard' ? 're' : '';
+  const title = S.map(s => s.nom + ' : ' + (isFinite(s.age) ? 'il y a ' + dur(s.age) : 'sans date') + ' · ' + NATURE[s.nat] + (s.etat === 'retard' || s.etat === 'perime' ? ' · ' + ETAT_LAB[s.etat] : '') + ' · ' + s.src).join('\n');
+  return {cls, txt: (etat === 'perime' ? 'périmé · ' : etat === 'retard' ? 'en retard · ' : '') + (age ? age + ' · ' : '') + noms, title};
+}
+const fraisHTML = ids => { const f = fraisStat(ids); return f ? `<span class="fr ${f.cls}" data-fr="${ids.join(',')}" title="${esc(f.title)}"><i></i><b>${esc(f.txt)}</b></span>` : ''; };
+function majFrais(){
+  document.querySelectorAll('[data-fr]').forEach(el => {
+    const f = fraisStat(el.dataset.fr.split(',')); if (!f) return;
+    el.className = 'fr ' + f.cls; el.title = f.title; el.lastChild.textContent = f.txt;
+  });
+}
+/* le bloc « Données » : une barre par source, de « à jour » (gauche) à « périmé » (droite) ; le trait marque le début du retard */
+function vDonnees(){
+  const S = sources().sort((a, b) => ETAT_RANG[b.etat] - ETAT_RANG[a.etat] || (b.age || 0) - (a.age || 0));
+  const n = k => S.filter(s => s.etat === k).length;
+  const row = s => {
+    const w = !isFinite(s.age) ? 0 : Math.max(2, Math.min(100, s.age / (3 * s.cad) * 100));
+    return `<div class="dsr ${s.etat}" title="${esc(s.nom + ' : ' + s.src)}"><span class="dn">${esc(s.nom)}</span><span class="db" role="img" aria-label="${esc(s.nom + ' : ' + ETAT_LAB[s.etat])}"><i style="width:${w.toFixed(1)}%"></i></span>`
+      + `<span class="dv">${isFinite(s.age) ? esc(dur(s.age)) : 'sans date'}</span><span class="dk ${s.nat}"><i></i>${esc(NATURE[s.nat])}</span></div>`;
+  };
+  return `<p class="qnote">${S.length} sources : <b>${n('ok')}</b> à jour · <b>${n('retard')}</b> en retard · <b>${n('perime')}</b> périmée${n('perime') > 1 ? 's' : ''} · <b>${n('fixe')}</b> sans date (estimées ou fixes). Le PC envoie le relevé environ toutes les 10 min ; cette page le relit chaque minute.</p>`
+    + `<div class="dsl" role="list">${S.map(row).join('')}</div>`
+    + `<p class="qnote">La barre va de « à jour » (vide) à « périmé » (pleine) ; le trait du milieu est le début du retard. Un chiffre « estimé » ou « saisi à la main » ne se rafraîchit jamais seul : c'est écrit à côté.</p>`;
+}
 // en-tête : l'anneau d'avancement et le pouls (dernière fusion, tâches actives), puis les cinq nombres
 function heroHTML(){
   const c = cntE(M.leaves), toi = nAToi();
@@ -4079,7 +4161,7 @@ function tickGantt(){
   const lab = document.querySelector('#view .gax .nowt span'); if (lab) lab.textContent = hh(now);
   fitTicks();
 }
-function tickAgo(){ document.querySelectorAll('[data-ago]').forEach(el => { el.textContent = ago(+el.dataset.ago); }); }
+function tickAgo(){ document.querySelectorAll('[data-ago]').forEach(el => { el.textContent = ago(+el.dataset.ago); }); majFrais(); }
 // Gantt : les lignes s'étirent pour remplir la hauteur de l'écran quand la fenêtre est haute (jamais sous 40 px, jamais au-delà de 64 px)
 function fitGantt(){
   const gw = document.querySelector('.gw'); if (!gw) return;
@@ -4423,7 +4505,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   /* ---------- briques communes ---------- */
   const WCH = () => Math.min(innerWidth, 1240) - 32;
   const colW = n => mobile() || n === 1 ? WCH() : Math.floor((WCH() - 44 * (n - 1)) / n);
-  const band = (ico, title, inner) => `<section class="band"><h2>${ico}<span>${title}</span></h2>${inner}</section>`;
+  const band = (ico, title, inner, ids) => `<section class="band"><h2>${ico}<span>${title}</span>${ids ? fraisHTML(ids) : ''}</h2>${inner}</section>`;
   const fig = (title, svg, foot) => `<figure class="fg"><figcaption>${title}</figcaption>${svg}${foot || ''}</figure>`;
   const grid = (n, items) => `<div class="g${n}">${items.join('')}</div>`;
   const BI = {
@@ -4599,11 +4681,14 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   function rings(){
     const qm = (typeof qmodel === 'function' && qmodel()) || [];
     const PC = PRL().filter(p => p.t > Date.now() - PS().ms), nC = PC.filter(p => quiDe(p, null) === 'copilot').length, shC = PC.length ? nC / PC.length : 0;
+    const SR = Object.fromEntries(sources().map(x => [x.id, x])), SRDE = {api: 'api-mois', gemini: 'gemini', actions: 'actions', claude: 'claude', session: 'claude', jules: 'jules', vercel: 'vercel'};
+    // l'âge de CHAQUE jauge, à côté de sa phrase : le bloc entier ne dit que la plus vieille
+    const age = g => { const x = SR[SRDE[g.key]]; return x && isFinite(x.at) ? ` · mesuré <span class="qage ${x.etat}" data-ago="${x.at}">${esc(ago(x.at))}</span>` : ''; };
     const rows = qm.filter(g => g.j && g.used != null).sort((x, y) => QORD[QV(x)] - QORD[QV(y)] || y.j.pct - x.j.pct).map(g => {
       const v = QV(g), p = g.j.pct, ex = g.j.exp != null && g.limit ? Math.min(1, g.j.exp / g.limit) : null, val = g.api && !g.mois ? nfmt(Math.round(g.used)) + ' $' : nfmt(Math.round(p * 100)) + ' %';
       return `<button class="qrow qv-${v}" data-qd="${esc(g.key)}" aria-label="${esc(g.court)} : ${esc(val)}, ${esc(quotaPhrase(g))}"><span class="n">${esc(g.court)}</span>`
         + `<span class="qbar" aria-hidden="true"><i style="width:${Math.min(100, p * 100).toFixed(1)}%"></i>${ex != null ? `<u style="left:${(ex * 100).toFixed(1)}%"></u>` : ''}</span>`
-        + `<span class="v">${esc(val)}</span><span class="p">${(qp => qp ? `<b class="qdp">${esc(qp)}</b> · ` : '')(quotaPer(g))}${esc(quotaPhrase(g))}</span></button>`;
+        + `<span class="v">${esc(val)}</span><span class="p">${(qp => qp ? `<b class="qdp">${esc(qp)}</b> · ` : '')(quotaPer(g))}${esc(quotaPhrase(g))}${age(g)}</span></button>`;
     });
     // Copilot n'a pas de quota mesuré : sa part des fusions, à part
     const cop = `<button class="qrow qv-act" data-det="copilot" aria-label="Copilot : ${nC} PR fusionnées en ${esc(PS().n)}"><span class="n">Copilot</span><span class="qbar" aria-hidden="true"><i style="width:${(shC * 100).toFixed(1)}%"></i></span><span class="v">${nfmt(nC)} PR</span><span class="p">${PC.length ? nfmt(Math.round(shC * 100)) + ' % des fusions en ' + esc(PS().n) : 'aucune fusion sur la période'} · pas de quota mesuré</span></button>`;
@@ -4617,10 +4702,11 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const cols = ms.map(mk => `<div class="${mk === cur ? 'cur' : ''}" tabindex="0" data-tip="${tipAttr(moisTip(C, mk))}" style="height:${((cSomme(C.paid[mk]) + cSomme(C.prevu[mk])) / mxv * 100).toFixed(1)}%">${CPOSTES.map(([k, , col]) => { const a = (C.paid[mk] || {})[k] || 0, b = (C.prevu[mk] || {})[k] || 0; return (a ? `<i style="flex:${a};--c:${col}"></i>` : '') + (b ? `<i class="pv" style="flex:${b};--c:${col}"></i>` : ''); }).join('')}</div>`).join('');
     const labs = ms.map(mk => `<span class="${mk === cur ? 'cur' : ''}">${esc(kCourt(mk)).slice(0, 3)}</span>`).join('');
     const W2 = colW(2), W3 = colW(3);
-    return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]))
-      + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]))
-      + band(BI.res, 'Ressources', rings() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''))
-      + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`);
+    return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]), ['taches'])
+      + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]), ['taches'])
+      + band(BI.res, 'Ressources', rings() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
+      + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`, ['recus', 'couts-apps', 'taux'])
+      + sf('Données', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>', 'Données : d’où vient chaque chiffre', vDonnees()));
   }
 
 
@@ -4908,7 +4994,7 @@ function vGanttFull(){
   }
   function ganttCtl(){
     const Z = [['fit', 'Ajusté'], ['6', '6 h']].concat(Object.values(PERS).map(p => [p.z, p.n]));
-    return `<div class="gbar">` + gFil() + `<div class="gctl"><div class="seg2" role="group" aria-label="Période">${Z.map(([k, n]) => `<button data-z="${k}" aria-pressed="${ST.z === k}">${n}</button>`).join('')}</div><div class="seg2" role="group" aria-label="Se déplacer"><button data-pan="-1" aria-label="Plus tôt">‹</button><button data-pan="0" aria-label="Maintenant" aria-pressed="${!ST.pan}">●</button><button data-pan="1" aria-label="Plus tard">›</button></div><div class="seg2" role="group" aria-label="Façon de planifier le futur"><button data-cap="depot" aria-pressed="${ST.cap !== 'file'}">Par dépôt</button><button data-cap="file" aria-pressed="${ST.cap === 'file'}">1 à la fois</button></div><div class="seg2"><button id="fold" type="button">${anyOpen() ? 'Tout replier' : 'Tout déplier'}</button><button data-legende type="button">Légende</button></div></div></div>`;
+    return `<div class="gbar">` + gFil() + fraisHTML(['taches', 'prev']) + `<div class="gctl"><div class="seg2" role="group" aria-label="Période">${Z.map(([k, n]) => `<button data-z="${k}" aria-pressed="${ST.z === k}">${n}</button>`).join('')}</div><div class="seg2" role="group" aria-label="Se déplacer"><button data-pan="-1" aria-label="Plus tôt">‹</button><button data-pan="0" aria-label="Maintenant" aria-pressed="${!ST.pan}">●</button><button data-pan="1" aria-label="Plus tard">›</button></div><div class="seg2" role="group" aria-label="Façon de planifier le futur"><button data-cap="depot" aria-pressed="${ST.cap !== 'file'}">Par dépôt</button><button data-cap="file" aria-pressed="${ST.cap === 'file'}">1 à la fois</button></div><div class="seg2"><button id="fold" type="button">${anyOpen() ? 'Tout replier' : 'Tout déplier'}</button><button data-legende type="button">Légende</button></div></div></div>`;
   }
   function vToiM(){
     const its = aToiItems(), n = its.length;
@@ -4924,7 +5010,7 @@ function vGanttFull(){
   window.surCouts = () => { if (M && ST.tab === 'couts') render(); };
   const nbr = v => Number.isFinite(+v) ? +v : 0;
   function vAppsHub(){
-    const D = window.hubCouts, titre = `<p class="ccap"><b>Coûts des apps</b></p>`;
+    const D = window.hubCouts, titre = `<p class="ccap"><b>Coûts des apps</b>${fraisHTML(['couts-apps'])}</p>`;
     if (D === undefined) return `<section class="csec" style="margin-top:0">${titre}<p class="empty" role="status">En attente des coûts des apps…</p></section>`;
     if (!D || !Array.isArray(D.detail)) return `<section class="csec" style="margin-top:0">${titre}<p class="empty" role="status">${esc(window.hubCoutsErreur || 'Les coûts des apps sont indisponibles.')}</p></section>`;
     const totaux = (D.totaux || []).map(t => `<div><i style="--c:var(--doing)"></i>${esc(t.periode)} · ${nbr(t.apps)} app${nbr(t.apps) > 1 ? 's' : ''}<b>≈ ${nfmt(nbr(t.cad), 2)} $</b></div>`).join('');
@@ -4948,7 +5034,7 @@ function vGanttFull(){
     const C0 = cModel(), C = coutsSerie(C0), CP = coutsPer(C0), tot = CP.total, nPR = PRL().filter(p => p.t > Date.now() - PS().ms).length;
     const pp = CP.parPoste.map(([k, v]) => [k, v, CPOSTES.find(p => p[0] === k)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
     const SH = {abo: 'Abonnement', sur: 'Recharges', api: 'API', ver: 'Vercel', dev: 'Code', aut: 'Divers'};
-    const hero = `<section class="chero"><div class="ctot"><b ${cu(Math.round(tot))}>${nfmt(Math.round(tot))}</b><small>$ payés en ${esc(PS().n)}</small></div><p class="cper">${tot > 0 && nPR ? `<b>≈ ${nfmt(tot / nPR, 2)} $</b> par PR fusionnée (${nfmt(nPR)} PR) · ` : ''}total depuis ${esc(cMoisNom(C0.first).toLowerCase())} : <b>${nfmt(Math.round(C0.total))} $</b></p>`
+    const hero = `<section class="chero"><p class="ccap"><b>Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p><div class="ctot"><b ${cu(Math.round(tot))}>${nfmt(Math.round(tot))}</b><small>$ payés en ${esc(PS().n)}</small></div><p class="cper">${tot > 0 && nPR ? `<b>≈ ${nfmt(tot / nPR, 2)} $</b> par PR fusionnée (${nfmt(nPR)} PR) · ` : ''}total depuis ${esc(cMoisNom(C0.first).toLowerCase())} : <b>${nfmt(Math.round(C0.total))} $</b></p>`
       + `<div class="cwho" role="img" aria-label="Répartition par poste">${pp.map(([k, v, p]) => `<div style="--w:${v};--c:${p[2]}" title="${esc(p[1] + ' : ' + cmoney(v))}">${v / (tot || 1) > (mobile() ? .3 : .11) ? esc(SH[k]) + '&nbsp;<span>' + nfmt(Math.round(v)) + '</span>' : ''}</div>`).join('')}</div>`
       + `<div class="clist">${pp.map(([k, v, p]) => `<div style="--c:${p[2]}"><i></i>${esc(p[1])}<b>${nfmt(Math.round(v))} $</b></div>`).join('')}</div></section>`;
     // colonnes : un mois = une pile, le prévu en hachures
@@ -5161,11 +5247,11 @@ function vGanttFull(){
     const P = parcoursParts(), W2 = colW(2), clock = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>';
     const ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>';
     return perBar('top') + P.hero + P.flow
-      + sf('Où va le temps', () => band(clock, 'Où va le temps', grid(2, [chPhases(W2, 'Par acteur', phasesPar(P.done, l => quiTask(l), k => QUIT[k][0])), chPhases(W2, 'Par app', phasesPar(P.done, l => l.k, k => D.repos[k] || k))].filter(Boolean))))
-      + sf('Vitesse', () => band(ico, 'Qui va vite', vCartesQui(D)))
-      + sf('Délais', () => band(clock, 'Délais', grid(1, [chDelais(colW(1), D), chLentes(colW(1), D)])))
-      + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(W2, D), chTachesQui(W2, D)]) + grid(2, [chBoutEnBout(W2, P.done)])))
-      + sf('Flux', () => band(BI.prog, 'Flux', chFlux(W2, D)))
+      + sf('Où va le temps', () => band(clock, 'Où va le temps', grid(2, [chPhases(W2, 'Par acteur', phasesPar(P.done, l => quiTask(l), k => QUIT[k][0])), chPhases(W2, 'Par app', phasesPar(P.done, l => l.k, k => D.repos[k] || k))].filter(Boolean)), ['taches']))
+      + sf('Vitesse', () => band(ico, 'Qui va vite', vCartesQui(D), ['taches']))
+      + sf('Délais', () => band(clock, 'Délais', grid(1, [chDelais(colW(1), D), chLentes(colW(1), D)]), ['taches']))
+      + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(W2, D), chTachesQui(W2, D)]) + grid(2, [chBoutEnBout(W2, P.done)]), ['taches']))
+      + sf('Flux', () => band(BI.prog, 'Flux', chFlux(W2, D), ['taches']))
       + P.rows;
   }
 
@@ -5211,8 +5297,8 @@ function vGanttFull(){
     }).join('');
     const key = chips(Object.values(PCPH).map(h => [h[2], h[1]]));
     return {L, done, hero, ico,
-      flow: sf('Trajet', () => band(ico, 'Le trajet', `<div class="pcf" role="img" aria-label="Idée, prise, PR, fusion, acceptée, dans l'app">${flow}</div>`)),
-      rows: sf('Tâches', () => band(BI.prog, 'Chaque tâche', rows ? `${key}<div class="pcrows">${rows}</div>` : '<p class="soon" role="status">Aucune tâche sur cette période.</p>'))};
+      flow: sf('Trajet', () => band(ico, 'Le trajet', `<div class="pcf" role="img" aria-label="Idée, prise, PR, fusion, acceptée, dans l'app">${flow}</div>`, ['taches'])),
+      rows: sf('Tâches', () => band(BI.prog, 'Chaque tâche', rows ? `${key}<div class="pcrows">${rows}</div>` : '<p class="soon" role="status">Aucune tâche sur cette période.</p>', ['taches']))};
   }
 
   let MEXC = false, GINIT = false;
