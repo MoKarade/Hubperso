@@ -71,6 +71,12 @@ export const MESSAGE_COUTS = "chantier-couts";
 export const MESSAGE_GESTE = "chantier-geste";
 /** Le hub demande un onglet au cadre déjà ouvert (`/chantier?onglet=couts` sans le recharger) : `{ type, onglet }`. */
 export const MESSAGE_ONGLET = "chantier-onglet";
+/**
+ * Un clic droit (ou un appui long de 650 ms sans mouvement) dans le cadre : `{ type, x, y, genre, texte }`. `x`, `y` sont les coordonnées
+ * DANS le cadre ; `genre` dit ce que c'est (« une barre du Gantt »), `texte` le texte visible, coupé à 300 caractères. Le hub ne voit
+ * pas ce qui se passe dans le cadre : c'est lui qui répond (LIA). Sans hub qui écoute, le menu du navigateur reste en place.
+ */
+export const MESSAGE_CLIC_DROIT = "chantier-clic-droit";
 
 /**
  * Les onglets de la page, dans les mots du document (`?onglet=couts` ouvre le bon : `mur` est l'accueil de la page). Une valeur inconnue
