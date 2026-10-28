@@ -479,6 +479,14 @@ describe("chaque bloc dit d'où vient sa donnée, son âge et sa nature (#640)",
 });
 
 describe("plus de graphes, tirés du relevé seulement (#640)", () => {
+  it("le chiffre du haut porte sa pastille de fraîcheur, les quotas par jour leur titre, le taux sa valeur visible", () => {
+    expect(DOCUMENT).toContain("${fraisHTML(['taches'])}</div></div></section>`");
+    expect(DOCUMENT).toContain('<h3 class="qjh">Quotas par jour');
+    expect(DOCUMENT).toContain('const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b>');
+    expect(DOCUMENT).toContain("Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p>${fxLigne()}");
+    expect(DOCUMENT).toContain("taux fixe, estimé : le relevé ne donne pas encore le taux du jour");
+  });
+
   it("les tâches ouvertes : leur âge et leur répartition par app, avec leur légende", () => {
     expect(DOCUMENT).toContain("function chAge(W)");
     expect(DOCUMENT).toContain("function chOuvertesApp(W)");
