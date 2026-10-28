@@ -54,6 +54,7 @@ export const GENRES_HUB: ReadonlyArray<{ selecteur: string; genre: string }> = [
   { selecteur: ".couts-panneau__quota, .couts-panneau__jauge", genre: "une jauge de quota" },
   { selecteur: ".couts-panneau__bloc", genre: "un bloc de coûts" },
   { selecteur: ".widget", genre: "la carte d’une app" },
+  { selecteur: ".carte-graphe", genre: "la carte du graphe de code d’un dépôt" },
   { selecteur: ".nav, .barre", genre: "la navigation" },
 ];
 
@@ -100,7 +101,7 @@ function donneesDe(proche: LecteurElement): string | undefined {
 }
 
 /** Les grands conteneurs : y viser un détail qu'on ne sait pas nommer, c'est viser CE détail, pas tout le conteneur. */
-const CONTENEURS = ".widget, .couts-panneau__bloc, .nav, .barre";
+const CONTENEURS = ".widget, .carte-graphe, .couts-panneau__bloc, .nav, .barre";
 
 /**
  * La description de `el` pour LIA. Le hub nomme ses blocs connus (chiffre, mesure, alerte, jauge, courbe…) ; pour un
