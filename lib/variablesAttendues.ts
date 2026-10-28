@@ -28,8 +28,8 @@
 // Rechargés ainsi le 23/10/2026 (Hubperso#392) : GITHUB_GRAPHES_TOKEN, HUB_TOKEN_BATCHCHEF, HUB_TOKEN_CARAI, HUB_TOKEN_DRIVEAI, HUB_TOKEN_FINANCEAI, GANTT_SECRET.
 // Rechargés ainsi le 24/10/2026 (Hubperso#488) : SENTRY_DSN (jeton Sentry révoqué, vrai DSN du hub et de JobAI), HUB_TOKEN_JOBAI.
 //
-// ⚠️ `HUB_SESSION_PRIVATE_JWK` n'y est PAS : elle appartient à la phase 2 de la session
-// asymétrique, pas encore fusionnée. Elle entrera avec la branche qui la lit.
+// `HUB_SESSION_PRIVATE_JWK` (phase 2 de la session asymétrique, lib/sessionSignee.ts) est
+// optionnelle : absente, le hub n'émet pas le cookie signé et rien d'autre ne change.
 
 import { SOURCE_DEFS } from "./sources";
 
@@ -90,6 +90,16 @@ const FIXES: readonly VariableAttendue[] = [
     nom: "AUTH_COOKIE_DOMAIN",
     exigence: "optionnelle",
     siAbsente: "session limitée à hubperso.com, non partagée avec les sous-domaines des apps",
+  },
+  {
+    nom: "HUB_SESSION_PRIVATE_JWK",
+    exigence: "optionnelle",
+    siAbsente: "le hub n'émet pas le cookie de session signé (__Secure-hub.session) ; la connexion actuelle n'est pas touchée",
+  },
+  {
+    nom: "HUB_SESSION_PUBLIC_KEYS",
+    exigence: "optionnelle",
+    siAbsente: "la route de contrôle /api/session/signee répond « non-configure » (clés publiques de la session signée, JWKS)",
   },
   {
     nom: "SENTRY_DSN",

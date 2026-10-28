@@ -37,15 +37,18 @@ Choix documenté dans `next.config.mjs` : aucune ressource externe, `connect-src
 généralisera. Rien de changé ici.
 
 ## Clé de signature de la session (chantier auth-asym)
-Plan : `plan-auth-asym-hubperso.md` (Option A). Le cookie de session partagé sera un JWS
-**ES256** : Hubperso SEUL détient la clé privée et signe ; JobAI, CarAI, MemoryAI et BatchChef
-ne reçoivent que la clé publique et vérifient, sans pouvoir fabriquer de session. Ce document
-décrit uniquement la clé et sa procédure ; le code qui signe et vérifie vient dans des PR
-séparées (une par app). **Rien n'est encore branché** : générer la clé ne change aucun
-comportement de production.
+Plan : `plan-auth-asym-hubperso.md` (Option A). Le cookie de session partagé est un JWS
+**ES256** `__Secure-hub.session` : Hubperso SEUL détient la clé privée et signe
+(`lib/sessionSignee.ts`, posé par `middleware.ts`) ; JobAI, CarAI, MemoryAI et FinanceAI ne
+reçoivent que la clé publique et vérifient, sans pouvoir fabriquer de session. **Sans
+`HUB_SESSION_PRIVATE_JWK` (et `AUTH_COOKIE_DOMAIN`), le hub n'émet rien** : le cookie chiffré
+d'Auth.js reste la référence. Une fois émis : durée 30 jours, re-signé à mi-vie ou à la
+rotation de clé, effacé à la déconnexion du hub et dès que sa session n'est plus valide.
+⚠️ Une app qui accepte ce cookie doit l'effacer à SA déconnexion aussi, sinon elle reste
+ouverte jusqu'à son expiration.
 
 ### Où va chaque clé
-| Clé | Où | Variable (noms lus par les apps : `HUB_SESSION_PUBLIC_KEYS` ; la privée reste un nom proposé, à confirmer par la PR de signature) | Type Vercel |
+| Clé | Où | Variable | Type Vercel |
 |---|---|---|---|
 | PRIVÉE (JWK, champ `d`) | projet `hubperso` UNIQUEMENT | `HUB_SESSION_PRIVATE_JWK` | Sensible, Production seulement |
 | PUBLIQUE (JWKS d'une ou deux clés) | hub ET les satellites | `HUB_SESSION_PUBLIC_KEYS` | Normale, Production seulement |
@@ -68,6 +71,12 @@ pendant une rotation.
    (`build-necessaire.sh`, BACKLOG H-18) : forcer un déploiement.
 Le script n'affiche jamais la clé privée ; s'il l'affichait un jour, c'est un bug à signaler
 (un test le vérifie : `tests/cleSession.test.ts`).
+
+### Vérifier que le hub émet bien le cookie
+Connecté en propriétaire, ouvrir `https://www.hubperso.com/api/session/signee` : `{"etat":"valide","kid":"…"}`
+avec le même `kid` que celui affiché à la génération. `non-configure` = `HUB_SESSION_PUBLIC_KEYS` absente du
+hub ; `absent` = le hub n'a pas encore posé le cookie (clé privée absente, ou pas de navigation depuis la
+pose) ; `invalide` = signé par une autre clé ou pour une autre adresse. La route ne rend jamais le cookie.
 
 ### Faire tourner la clé (rotation)
 1. `npm run cle-session -- --garder '<JWKS actuel>'` : génère une NOUVELLE paire et affiche un
