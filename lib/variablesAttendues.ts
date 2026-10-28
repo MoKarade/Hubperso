@@ -84,7 +84,7 @@ const FIXES: readonly VariableAttendue[] = [
   {
     nom: "MEMORYAI_SORTIES_TOKEN",
     exigence: "optionnelle",
-    siAbsente: "le hub ne pousse pas l'état du chantier à MemoryAI : LIA ne lit que les faits envoyés avec le clic droit (jeton d'écrivain de la porte POST /api/sorties, variable serveur)",
+    siAbsente: "le hub ne pousse pas l'état du chantier à MemoryAI : LIA ne lit que les faits envoyés avec le clic droit (jeton d'écrivain de la porte POST /api/sorties, variable serveur, lue au build)",
   },
   {
     nom: "BILANS_DRIVE_FOLDER_ID",
