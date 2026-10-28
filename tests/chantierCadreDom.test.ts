@@ -23,6 +23,8 @@ const coutsMoq = vi.fn();
 const gestesMoq = vi.fn();
 /** Le document du cadre lui-même : le hub n'en lit que l'ETag (HEAD), pour savoir qu'un déploiement l'a changé. */
 const versionMoq = vi.fn();
+/** Les événements GitHub en direct : une cinquième route, lue toutes les 10 s ; ici rien de neuf, sauf test qui dit le contraire. */
+const evenementsMoq = vi.fn();
 const COUTS = { suivies: 1, apps: 2, alertes: 0, totaux: [], note: null, detail: [] };
 
 beforeEach(() => {
@@ -30,6 +32,7 @@ beforeEach(() => {
   coutsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => COUTS });
   gestesMoq.mockResolvedValue({ ok: true, status: 201 });
   versionMoq.mockResolvedValue({ status: 200, headers: { get: () => '"v1"' } });
+  evenementsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [], jusqua: null }) });
   vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
     url === "/api/chantier/couts"
       ? coutsMoq(url, init)
@@ -37,7 +40,9 @@ beforeEach(() => {
         ? gestesMoq(url, init)
         : url === "/api/chantier/cadre"
           ? versionMoq(url, init)
-          : fetchMoq(url, init),
+          : url.startsWith("/api/chantier/evenements")
+            ? evenementsMoq(url, init)
+            : fetchMoq(url, init),
   );
   conteneur = document.createElement("div");
   document.body.appendChild(conteneur);
@@ -51,6 +56,7 @@ afterEach(() => {
   coutsMoq.mockReset();
   gestesMoq.mockReset();
   versionMoq.mockReset();
+  evenementsMoq.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -89,7 +95,7 @@ async function presenter(source: Window | null, port: FaussePort | null, donnee:
 function donnees(port: FaussePort) {
   return port.postMessage.mock.calls
     .map((c) => c[0] as { type: string; message?: string; octets?: ArrayBuffer })
-    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve");
+    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve" && m.type !== "chantier-evenements");
 }
 
 /** Les réponses aux gestes écrites dans le canal. */
@@ -152,6 +158,29 @@ describe("ChantierCadre", () => {
     // les octets sont TRANSFÉRÉS au canal (pas copiés), et rien ne passe par la fenêtre
     expect(port.postMessage.mock.calls[1]![1]).toHaveLength(1);
     expect(direct).not.toHaveBeenCalled();
+  });
+
+  it("lit les événements GitHub toutes les 10 s depuis le dernier reçu, les écrit dans le canal, dit une panne en clair", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    const evts = () =>
+      port.postMessage.mock.calls
+        .map((c) => c[0] as { type: string; evenements?: unknown[]; erreur?: string })
+        .filter((m) => m.type === "chantier-evenements");
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    evenementsMoq
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [{ id: "a" }], jusqua: "2026-10-28T21:00:00.000Z" }) })
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ ok: false }) })
+      .mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, evenements: [], jusqua: "2026-10-28T21:00:00.000Z" }) });
+    await presenter(cadre.contentWindow, port);
+    expect(evenementsMoq.mock.calls[0]![0]).toBe("/api/chantier/evenements");
+    expect(evts()[0]).toMatchObject({ evenements: [{ id: "a" }] });
+    await avancer(10_000);
+    expect(evenementsMoq.mock.calls[1]![0]).toBe("/api/chantier/evenements?depuis=" + encodeURIComponent("2026-10-28T21:00:00.000Z"));
+    expect(evts()[1]!.erreur).toBeTruthy();
+    expect(evts()[1]!.evenements).toBeUndefined();
+    await avancer(10_000);
+    expect(evts()[2]).toMatchObject({ evenements: [] });
   });
 
   it("relit chaque minute avec If-None-Match ; 304 : rien n'est réécrit", async () => {
@@ -679,6 +708,29 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     } finally {
       for (const k of ["M", "LV", "STE", "ORDRE", "path", "stLabel", "quand", "dur", "retTxt", "court"]) delete g[k];
     }
+  });
+
+  it("un graphique donne à LIA ses mesures (les infobulles de ses barres et points) et sa description, pas seulement son titre et ses axes", () => {
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    document.body.innerHTML = `<main id="view"><figure class="fg"><figcaption>Durée d'une tâche</figcaption>
+      <svg class="cch" role="img" aria-label="Durée des 12 tâches finies, médiane 3,5 h"><rect class="hit" data-tip="&lt; 1 h : 2 tâches (17 %)"></rect><rect class="hit" data-tip="1–6 h : 7 tâches (58 %)&#10;dont 2 prévues"></rect><rect class="hit" data-tip="1–6 h : 7 tâches (58 %)&#10;dont 2 prévues"></rect></svg>
+      <div class="kp2"><b>3,5 h</b><span>médiane</span></div></figure></main>`;
+    const r = clicDroitDe(document.querySelector(".hit"))!;
+    expect(r.genre).toBe("un graphique");
+    expect(r.donnees).toContain("graphique : Durée des 12 tâches finies, médiane 3,5 h");
+    expect(r.donnees).toContain("mesures : < 1 h : 2 tâches (17 %) ; 1–6 h : 7 tâches (58 %), dont 2 prévues");
+    expect(r.donnees.match(/1–6 h : 7 tâches/g)).toHaveLength(1); // une mesure répétée n'est dite qu'une fois
+  });
+
+  it("un graphique chargé garde chaque mesure entière sous 1 200 caractères et compte celles qu'il ne peut pas dire", () => {
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    const tips = Array.from({ length: 80 }, (_, i) => `<rect class="hit" data-tip="jour ${i} : ${i * 3} tâches acceptées"></rect>`).join("");
+    document.body.innerHTML = `<main id="view"><figure class="fg"><figcaption>Acceptées par jour</figcaption><svg role="img" aria-label="Acceptées par jour">${tips}</svg></figure></main>`;
+    const r = clicDroitDe(document.querySelector(".hit"))!;
+    expect(r.donnees.length).toBeLessThanOrEqual(1200);
+    expect(r.donnees).toContain("jour 0 : 0 tâches acceptées");
+    expect(r.donnees).toMatch(/… et \d+ autres mesures$/);
+    expect(r.donnees).not.toMatch(/jour \d+ : \d+ tâches acceptée$/); // jamais une mesure coupée en deux
   });
 
   it("le clic droit sur un élément qui n'est pas dans le relevé donne le texte du bloc en entier, au-delà du repère de 300 caractères", () => {

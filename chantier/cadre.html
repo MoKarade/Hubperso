@@ -40,6 +40,10 @@
     } else if (m.type === 'chantier-version-neuve') {
       // Le hub voit un document neuf (un déploiement) : la page décide quand se recharger (plus personne ne s'en sert).
       if (typeof window.surVersionNeuve === 'function') window.surVersionNeuve();
+    } else if (m.type === 'chantier-evenements') {
+      // Les événements GitHub reçus par le hub (webhooks signés) : l'état à l'instant, avant le relevé du PC.
+      recu = true;
+      if (typeof window.surEvenements === 'function') window.surEvenements(m); else (window.evEnAttente = window.evEnAttente || []).push(m);
     } else if (m.type === 'chantier-couts') {
       // Les coûts et quotas des apps (la page Coûts du hub, reprise ici) : lus par le hub, jamais par ce document.
       recu = true;
@@ -789,7 +793,7 @@ body.anim .card .cs i{animation:grow .7s ease both}
 .tg{display:flex;flex-direction:column;gap:8px}
 .xc{display:flex;flex-direction:column;gap:26px}
 .xc-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
-.xc-live{display:inline-flex;align-items:center;gap:8px;font:700 13px var(--fm);color:var(--mute)}.xc-live i{width:9px;height:9px;border-radius:50%;background:var(--done);animation:xcp 1.6s ease-in-out infinite}
+.xc-live{display:inline-flex;align-items:center;gap:8px;font:700 13px var(--fm);color:var(--mute)}.xc-live i{width:9px;height:9px;border-radius:50%;background:var(--done);animation:xcp 1.6s ease-in-out infinite}.xc-live.off i{background:var(--mute);animation:none}
 @keyframes xcp{50%{opacity:.25}}@keyframes xcg{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--doing) 34%,transparent)}}
 .xc-sc{overflow-x:auto;padding-bottom:4px}
 .xc-board{display:grid;grid-template-columns:var(--cols);gap:6px;align-items:stretch;min-width:var(--mw,820px)}
@@ -1623,6 +1627,8 @@ const persist = () => store.set({tab: ST.tab, f: ST.f, z: ST.z, open: ST.open, v
    la moyenne des relais des 72 dernières heures (plafonnée à 6 h), jamais au-delà du réveil quotidien de 6 h. Deux modes : deux places par dépôt depuis le 21/10 (le réel),
    ou une seule tâche à la fois pour tout le projet (le scénario de Marc, borne haute). */
 const H = 3600e3, MIN = 60e3;
+/* événements GitHub (webhooks signés → hub, Hubperso#684) : EV par identifiant de livraison ; EVS = la dernière lecture réussie, l'erreur, le dernier reçu */
+const EV = new Map(), EVS = {lu: NaN, err: '', der: NaN};
 const wallT = (t, z) => Date.parse(new Date(t).toLocaleString('en-US', {timeZone: z}));
 // places par dépôt : une seule jusqu'à la décision de Marc du 21/10 (13:21Z), deux ensuite, ou ce que dit la file du script
 const PLACES_DEPUIS = Date.parse('2026-10-21T13:21:03Z');
@@ -4156,8 +4162,9 @@ function sources(){
   const t = s => s ? Date.parse(s) : NaN, jauge = (k, f) => (G[k] ? G[k][f] : null);
   const jours = CLIGNES.map(l => l[0]).sort(), dernier = jours.length ? t(jours[jours.length - 1] + 'T12:00:00Z') : NaN;
   const S = [
-    {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
-    ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
+    {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, ret: 12 * MIN, per: 20 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
+    ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, ret: 12 * MIN, per: 20 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
+    ...(isFinite(EVS.lu) || EVS.err ? [{id: 'evenements', nom: 'Événements GitHub en direct', nat: 'mes', at: EVS.lu, cad: 15e3, ret: 45e3, per: 90e3, src: EVS.err || (EV.size ? EV.size + ' événements reçus du webhook GitHub, le dernier ' + ago(EVS.der) + ' : ils passent avant le relevé du PC' : 'aucun événement reçu : le webhook GitHub n\'est pas encore branché, seul le relevé du PC alimente la page')}] : []),
     ...(CUR && CUR.etapes && typeof CUR.etapes === 'object' ? [{id: 'etapes', nom: 'Durées des étapes : sortie du brouillon et mise en ligne', nat: 'mes', at: t(CUR.etapes.releve), cad: 15 * MIN, src: 'GitHub (sortie du brouillon et déploiement Vercel de chaque PR fusionnée), relevé du PC'}] : []),
     {id: 'sante', nom: 'Défauts et preuves', nat: 'cal', at: t(F.calcule_le), cad: 30 * MIN, src: 'calculé par le PC sur le relevé'},
     {id: 'prev', nom: 'Ce qui va se passer', nat: 'est', at: t(P.calcule_le), cad: 10 * MIN, src: 'file du script du PC : une prévision, pas un fait'},
@@ -4417,6 +4424,25 @@ function faitsDe(n, H){
   }
   return f.join(' | ').replace(/\s+/g, ' ').slice(0, FAITS_MAX);
 }
+/* Les MESURES d'un graphique (Marc, 28/10 : « l'assistant voit toujours pas les graphes, il devrait »). Chaque barre, point ou part
+   porte déjà sa valeur dans son infobulle (`data-tip`) ; le texte visible n'a que le titre et les axes. On les donne à LIA, avec la
+   description du graphique (`aria-label`), pour qu'elle lise les chiffres au lieu de deviner. Pur : un bloc du DOM entre, un texte sort.
+   Une DONNÉE pour LIA, jamais une consigne. Rend '' quand le bloc n'a ni infobulle ni description : le texte entier prend alors le relais. */
+function mesuresDe(bloc, brut){
+  if (!bloc || !bloc.querySelectorAll) return '';
+  const propre = t => String(t || '').replace(/\s*\n\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  const descr = [], vu = new Set(), tips = [];
+  bloc.querySelectorAll('[role="img"][aria-label]').forEach(n => { const t = propre(n.getAttribute('aria-label')); if (t && !vu.has(t)){ vu.add(t); descr.push(t); } });
+  bloc.querySelectorAll('[data-tip]').forEach(n => { const t = propre(n.getAttribute('data-tip')); if (t && !vu.has(t)){ vu.add(t); tips.push(t); } });
+  if (!descr.length && !tips.length) return '';
+  const tete = [propre(brut).slice(0, 300)];
+  if (descr.length) tete.push('graphique : ' + descr.join(' ; ').slice(0, 300));
+  const debut = tete.filter(Boolean).join(' | ') + ' | mesures : ';
+  let place = FAITS_MAX - debut.length, i = 0, mes = '';
+  // chaque mesure entière ou aucune ; ce qui ne tient pas est compté, jamais coupé en deux
+  while (i < tips.length && mes.length + tips[i].length + 3 <= place - 40){ mes += (mes ? ' ; ' : '') + tips[i]; i++; }
+  return (debut + mes + (i < tips.length ? ' ; … et ' + (tips.length - i) + ' autres mesures' : '')).slice(0, FAITS_MAX);
+}
 function clicDroitDe(el){
   if (!el || !el.closest) return null;
   const g = GENRES.find(([sel]) => el.closest(sel));
@@ -4431,6 +4457,8 @@ function clicDroitDe(el){
   // les tâches et les missions sont dans M.N ; les apps (ref « app:… ») sont dans M.apps, pas dans M.N
   const n = ref && typeof M !== 'undefined' && M ? (M.N && M.N[ref]) || (M.apps || []).find(a => a.ref === ref) || null : null;
   if (n) donnees = faitsDe(n, {LV, STE, ORDRE, path, stLabel, quand, dur, retTxt, court, asof: M.asof});
+  // un graphique : ses mesures (infobulles) avant le simple texte du bloc
+  if (!donnees) donnees = mesuresDe(bloc, brut);
   if (!donnees && brut.length > 300) donnees = brut.slice(0, FAITS_MAX);
   return {genre: g[1], texte, donnees};
 }
@@ -5254,7 +5282,7 @@ function vGanttFull(){
   try { const a = localStorage.getItem('mxxst'), b = localStorage.getItem('mxxq'); if (a === 'moy' || a === 'med') XST = a; if (['tous', 'claude', 'jules', 'copilot'].includes(b)) XQ = b; } catch (e) {}
   const xcDur = ms => ms < 60e3 ? '< 1 min' : dur(ms);
   const xcType = l => l.j ? 'jules' : l.pr && /^copilot/i.test(l.pr.au || '') ? 'copilot' : 'claude';
-  const xcEtapes = () => { const E = CUR && CUR.etapes; return E && typeof E === 'object' && E.prets && typeof E.prets === 'object' ? E : null; };
+  const xcEtapes = () => { const E = CUR && CUR.etapes; return E && typeof E === 'object' && E.prets && typeof E.prets === 'object' ? E : EV.size ? {prets: {}, en_ligne: {}, couvert_depuis: {}, restant: 0} : null; };
   const xcDurees = () => {
     const now = Date.now(), t0 = now - XDUR_J * DAY, log = {}, S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}, E = xcEtapes(), sans = {n: 0}, t = v => { const x = typeof v === 'number' ? v : Date.parse(v); return isFinite(x) ? x : null; };
     (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => { log[x.r + '#' + x.n] = x; });
@@ -5270,10 +5298,11 @@ function vGanttFull(){
     // clé `etapes` du relevé (.github#689) : sortie du brouillon et mise en ligne de chaque PR fusionnée ; une PR jamais en brouillon ou sans déploiement ne compte jamais comme 0
     if (E){
       const cov = E.couvert_depuis && typeof E.couvert_depuis === 'object' ? E.couvert_depuis : {};
+      const ix = evIdx();
       (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => {
         if (x.k !== 'tache' || (XQ !== 'tous' && quiDe(x) !== XQ)) return;
         const k = x.r + '#' + x.n, c = t(x.c), m = t(x.m); if (c == null || m == null || m < t0) return;
-        const pret = E.prets[k] ? t(E.prets[k]) : null, ed = E.en_ligne && E.en_ligne[k], el = ed && ed.termine !== false ? t(ed.pret_le) : null;
+        const ep = ix.pret.get(k), ok = ix.ok.get(x.r + '@' + String(x.ms || '').slice(0, 7)), pret = E.prets[k] ? t(E.prets[k]) : ep ? t(ep.at) : null, ed = E.en_ligne && E.en_ligne[k], el = ed ? (ed.termine !== false ? t(ed.pret_le) : null) : ok ? t(ok.at) : null;
         if (pret != null){ add('draft', c, pret); add('rel', pret, m); }
         if (el != null) add('dep', m, el);
         else if (E.en_ligne && !ed && !(E.restant > 0) && now - m > 30 * 60e3 && cov[x.r] && m >= t(cov[x.r])) sans.n++;
@@ -5284,9 +5313,39 @@ function vGanttFull(){
     return o;
   };
   // `prs_ouvertes` (relevé du PC, .github#679) : contrôles, file Mergify et agent de chaque PR ouverte, dernier déploiement de chaque dépôt ; absente = étapes grisées
+  // les événements GitHub rangés par ce qu'ils disent : l'état d'une PR (le plus récent), les contrôles rouges d'une PR, le dernier déploiement de production d'un dépôt
+  const evFull = e => { const a = M && M.apps.find(x => x.k === e.repo); return a ? a.rl : String(e.repo).toLowerCase(); };
+  const evIdx = () => {
+    const pr = new Map(), rouge = new Map(), dep = new Map(), ok = new Map(), pret = new Map();
+    [...EV.values()].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).forEach(e => {
+      const k = evFull(e) + '#' + e.n;
+      if (e.type === 'pull_request' && e.n) pr.set(k, e);
+      else if ((e.type === 'workflow_run' || e.type === 'check_suite') && e.n && ['failure', 'timed_out', 'startup_failure'].includes(e.etat)) rouge.set(k, e);
+      else if (e.type === 'deployment_status' && /production/i.test((e.plus && e.plus.env) || '') && e.etat !== 'inactive') dep.set(evFull(e), e);
+      if (e.type === 'deployment_status' && e.etat === 'success' && e.sha && !ok.has(e.cle)) ok.set(e.cle, e);
+      if (e.type === 'pull_request' && e.action === 'ready_for_review' && !pret.has(e.repo + '#' + e.n)) pret.set(e.repo + '#' + e.n, e);
+    });
+    return {pr, rouge, dep, ok, pret};
+  };
+  const evVivant = () => isFinite(EVS.lu) && !EVS.err && Date.now() - EVS.lu < 90e3;
+  const evDep = e => ({environnement: (e.plus && e.plus.env) || 'Production', etat: ['success', 'failure', 'error'].includes(e.etat) ? e.etat : 'pending', maj_le: e.at, live: true});
   const xcData = () => { const P = CUR && CUR.prs_ouvertes; if (!P || typeof P !== 'object' || !Array.isArray(P.prs)) return null;
-    const par = {}; P.prs.forEach(r => { if (r && r.repo) par[String(r.repo).toLowerCase() + '#' + r.n] = r; return r; });
-    return {P, par, dep: P.deploiements && typeof P.deploiements === 'object' ? P.deploiements : {}}; };
+    const par = {}; P.prs.forEach(r => { if (r && r.repo) par[String(r.repo).toLowerCase() + '#' + r.n] = {...r}; });
+    const dep = {...(P.deploiements && typeof P.deploiements === 'object' ? P.deploiements : {})}, rel = Date.parse(P.releve);
+    // ce que les événements disent APRÈS le relevé l'emporte : une PR fusionnée ou fermée n'est plus ouverte, un brouillon change d'état, une PR neuve apparaît, un contrôle rouge se voit, un déploiement se suit
+    const ix = evIdx(), apres = e => !isFinite(rel) || Date.parse(e.at) > rel;
+    ix.pr.forEach((e, k) => { if (!apres(e)) return;
+      if (e.etat === 'fusionnee' || e.etat === 'fermee') delete par[k];
+      else par[k] = {...(par[k] || {repo: evFull(e), n: e.n, titre: e.plus && e.plus.t, url: e.plus && e.plus.u, tache: null, agent: null, ci: {etat: 'non_lu'}, mergify: null}), brouillon: e.etat === 'brouillon', live: true}; });
+    ix.rouge.forEach((e, k) => { if (apres(e) && par[k] && !par[k].brouillon && par[k].ci && !par[k].ci.erreur) par[k].ci = {...par[k].ci, etat: 'rouge', live: true}; });
+    ix.dep.forEach((e, k) => { const o = Object.keys(dep).find(x => x.toLowerCase() === k) || k, v = dep[o], t = v && v.maj_le ? Date.parse(v.maj_le) : rel; if (!isFinite(t) || Date.parse(e.at) > t) dep[o] = evDep(e); });
+    return {P, par, prs: Object.values(par), dep}; };
+  // une PR d'une tâche vue par les événements : fusionnée ou fermée, la tâche n'est plus « en cours » ; brouillon ou prête, la colonne suit
+  const xcLeaf = l => { if (!l.pr) return l;
+    const e = evIdx().pr.get(String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n);
+    if (!e || !(Date.parse(e.at) > M.asof)) return l;
+    const fin = e.etat === 'fusionnee' || e.etat === 'fermee';
+    return Object.assign(Object.create(l), {pr: {...l.pr, state: fin ? (e.etat === 'fusionnee' ? 'merged' : 'closed') : 'open', draft: e.etat === 'brouillon'}, e: fin && e.etat === 'fusionnee' && (l.e === 'cours' || l.e === 'rel') ? 'fus' : l.e, live: true}); };
   const xcRec = (l, D) => D && l.pr ? D.par[String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n] || null : null;
   const xcEtatCi = r => r && !r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null;
   const xcQueue = (l, D) => { const r = xcRec(l, D); return !!r && !!r.mergify && r.mergify.file === true; };
@@ -5340,11 +5399,11 @@ function vGanttFull(){
   const xcAg = a => a === 'Jules' ? 'J' : a === 'Copilot' ? 'Cp' : a === 'Marc' ? 'M' : a === 'Claude' ? 'C' : a === 'Dependabot' ? 'D' : '';
   const xcDepEtat = d => !d ? ['—', 'rien', 'aucun déploiement'] : d.erreur ? ['!', 'r', 'lecture en panne'] : d.etat === 'success' ? ['', 'ok', 'en ligne'] : ['failure', 'error'].includes(d.etat) ? ['!', 'r', 'en échec'] : ['pending', 'in_progress', 'queued', 'waiting'].includes(d.etat) ? ['', 'on', 'en cours'] : ['', 'rien', String(d.etat || '—')];
   function vEnCours(){
-    const now = Date.now(), D = xcData(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
+    const now = Date.now(), D = xcData(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband').map(xcLeaf), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
     const appOf = repo => { const a = M.apps.find(x => x.rl === String(repo).toLowerCase()); return a ? a.k : 'x'; };
     // PR sans tâche : celles de `prs_ouvertes` quand le relevé les donne, sinon les PR hors tâche du relevé des défauts
     const refs = new Set(M.leaves.filter(l => l.pr).map(l => String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n));
-    const hors = D ? D.P.prs.filter(r => r && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r, tache: r.tache}))
+    const hors = D ? D.prs.filter(r => r && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r, tache: r.tache}))
       : ((M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : []).map(h => ({repo: h.repo, n: h.n, t: h.t, url: h.url, draft: !!h.draft, ag: h.bot ? '' : '', bot: h.bot}));
     const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? (xcQueue({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'mg' : 'ci') : 'rel';
     const mgPos = l => { const r = xcRec(l, D); return r && r.mergify && r.mergify.position != null ? r.mergify.position : Infinity; };
@@ -5376,7 +5435,7 @@ function vGanttFull(){
     const ctl = `<div class="xc-ctl" role="group" aria-label="Réglages des durées">${seg('data-xst', XST, [['moy', 'Moyenne'], ['med', 'Médiane']])}${seg('data-xq', XQ, [['tous', 'Tous'], ['claude', 'Claude'], ['jules', 'Jules'], ['copilot', 'Copilot']])}</div>`;
     const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
     const W2 = colW(2), pe = D && (D.P.incomplet || (Array.isArray(D.P.erreurs) && D.P.erreurs.length)) ? `<span class="cf" style="color:var(--blk-t)" title="${esc((D.P.erreurs || []).join('\n'))}">lecture des PR incomplète</span>` : '';
-    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : [])])}${pe}</div>${ctl}`;
+    const top = `<div class="xc-top"><span class="xc-live${evVivant() ? '' : ' off'}"><i></i>${evVivant() ? 'en direct' : 'relevé du PC'}</span>${fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : []), ...(isFinite(EVS.lu) || EVS.err ? ['evenements'] : [])])}${pe}</div>${ctl}`;
     const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
     const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('s-mg', 'rang chez Mergify', '1')}${k('h', 'PR sans tâche')}<span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.h}</svg>humain</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.ia}</svg>IA</span><span class="xc-fl"><svg viewBox="0 0 16 16" aria-hidden="true">${XFORME.m}</svg>machine</span></div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
@@ -5398,6 +5457,17 @@ function vGanttFull(){
      Un total PAR période, jamais fusionnés ; une app sans coût est nommée, jamais comptée pour 0 ; un quota sans plafond
      publié n'a pas de jauge. */
   window.surCouts = () => { if (M && ST.tab === 'couts') render(); };
+  // le hub relit les événements toutes les 10 s : on range par identifiant de livraison (un renvoi ne compte pas deux fois), on oublie ce qui a plus de 14 jours
+  window.surEvenements = m => {
+    const etait = isFinite(EVS.lu) + '|' + EVS.err;
+    if (typeof m.erreur === 'string' && m.erreur) EVS.err = m.erreur; else { EVS.err = ''; EVS.lu = Date.now(); }
+    const avant = EV.size;
+    (Array.isArray(m.evenements) ? m.evenements : []).forEach(e => { if (e && typeof e.id === 'string' && typeof e.cle === 'string' && typeof e.repo === 'string' && isFinite(Date.parse(e.at))) EV.set(e.id, e); });
+    EV.forEach((e, id) => { if (Date.now() - Date.parse(e.at) > 14 * DAY) EV.delete(id); });
+    EVS.der = [...EV.values()].reduce((a, e) => Math.max(a, Date.parse(e.at)), NaN) || NaN;
+    if (M && ST.tab === 'cours' && (EV.size !== avant || etait !== isFinite(EVS.lu) + '|' + EVS.err)) render();
+  };
+  (window.evEnAttente || []).splice(0).forEach(window.surEvenements);
   const nbr = v => Number.isFinite(+v) ? +v : 0;
   function vAppsHub(){
     const D = window.hubCouts, titre = `<p class="ccap"><b>Coûts des apps</b>${fraisHTML(['couts-apps'])}</p>`;
