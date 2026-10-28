@@ -93,9 +93,10 @@ demandent donc les mêmes portées et capturent les mêmes jetons, via `lib/jeto
 dépendre le bon fonctionnement de l'app par laquelle on est passé : le pire genre de bogue,
 celui qui n'arrive qu'une fois sur quatre et ne se reproduit jamais.
 
-Les portées restent **`openid email profile` + `tasks`**. Ni Drive, ni Agenda, ni Gmail :
-DriveAI et FinanceAI n'utilisent pas ce cookie, leur ajouter leurs portées ici n'apporterait
-rien et multiplierait par quatre les portes vers un Drive complet. Un test le verrouille.
+Les portées sont **`openid email profile` + `tasks` + `drive.readonly`** (la lecture de Drive
+a été ajoutée le 28/10/2026, décision de Marc, pour l'onglet Bilans du hub : voir l'amendement
+de l'ADR 0001). Ni écriture dans Drive, ni Agenda, ni Gmail : DriveAI et FinanceAI n'utilisent
+pas ce cookie, leur ajouter leurs portées ici n'apporterait rien. Un test le verrouille.
 
 Conséquence à assumer : Hubperso, JobAI et CarAI **afficheront « accéder à vos tâches »**
 dans l'écran de consentement Google alors qu'aucune des trois n'y touche. C'est le prix

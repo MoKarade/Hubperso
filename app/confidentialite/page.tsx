@@ -20,7 +20,7 @@ export const metadata = {
 
 export default function ConfidentialitePage() {
   return (
-    <PagePublique titre="Confidentialité" maj="28 septembre 2026">
+    <PagePublique titre="Confidentialité" maj="28 octobre 2026">
       <p>
         Ce site (hubperso.com) est un tableau de bord à <strong>usage strictement
         personnel</strong>. Il n&apos;a qu&apos;un seul utilisateur — la personne qui l&apos;a
@@ -30,7 +30,7 @@ export default function ConfidentialitePage() {
 
       <h2>Ce que ce site lit auprès de Google</h2>
       <p>
-        La connexion se fait exclusivement par Google. En te connectant, ce site demande deux
+        La connexion se fait exclusivement par Google. En te connectant, ce site demande trois
         choses :
       </p>
       <ul>
@@ -47,10 +47,17 @@ export default function ConfidentialitePage() {
           l&apos;autorisation Google à chaque fois. Ce site lui-même ne lit ni n&apos;écrit
           aucune tâche.
         </li>
+        <li>
+          <strong>La lecture seule de Google Drive</strong> — pour afficher, dans ce site, les
+          bilans (du jour et de la semaine) que le propriétaire y range. Le site ne peut rien
+          écrire, modifier ni supprimer dans Drive, et ne lit que le dossier des bilans. Le
+          droit est demandé à chaque connexion pour la même raison que Tasks : la connexion est
+          partagée entre les applications personnelles du même domaine.
+        </li>
       </ul>
       <p>
-        Rien de plus : ni Google Drive, ni l&apos;agenda, ni les feuilles de calcul, ni la
-        messagerie ne sont demandés par ce site.
+        Rien de plus : ni l&apos;écriture dans Drive, ni l&apos;agenda, ni les feuilles de
+        calcul, ni la messagerie ne sont demandés par ce site.
       </p>
 
       <h2>Ce que ce site conserve</h2>
