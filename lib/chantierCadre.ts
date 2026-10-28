@@ -51,6 +51,9 @@ export const CSP_CADRE = [
   "frame-ancestors 'self'",
 ].join("; ");
 
+/** Où le hub relit les événements GitHub reçus (`app/api/chantier/evenements/route.ts`), pour l'état en direct de En cours. */
+export const URL_EVENEMENTS = "/api/chantier/evenements";
+
 /** Où le hub lit les coûts et quotas des apps (`app/api/chantier/couts/route.ts`), pour l'onglet Coûts. */
 export const URL_COUTS = "/api/chantier/couts";
 
@@ -62,6 +65,8 @@ export const MESSAGE_PRET = "chantier-pret";
 export const MESSAGE_OK = "chantier-ok";
 export const MESSAGE_RELEVE = "chantier-releve";
 export const MESSAGE_ETAT = "chantier-etat";
+/** Les événements GitHub : `{ type, evenements, jusqua }` (ceux reçus depuis la dernière lecture), ou `{ type, erreur }`. */
+export const MESSAGE_EVENEMENTS = "chantier-evenements";
 /** Les coûts des apps : `{ type, couts }` (`lib/chantierCouts.ts`), ou `{ type, erreur }` quand ils ne se lisent pas. */
 export const MESSAGE_COUTS = "chantier-couts";
 /**

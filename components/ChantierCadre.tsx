@@ -26,6 +26,7 @@ import {
   MESSAGE_CLIC_DROIT,
   MESSAGE_COUTS,
   MESSAGE_ETAT,
+  MESSAGE_EVENEMENTS,
   MESSAGE_GESTE,
   MESSAGE_OK,
   MESSAGE_ONGLET,
@@ -35,6 +36,7 @@ import {
   SANDBOX_CADRE,
   URL_CADRE,
   URL_COUTS,
+  URL_EVENEMENTS,
   URL_GESTES,
   URL_RELEVE,
   consigneDeReponse,
@@ -52,6 +54,9 @@ async function decompresser(gzip: ArrayBuffer): Promise<ArrayBuffer> {
 
 /** Le PC envoie toutes les 10 min ; relire chaque minute suffit, et 304 ne coûte pas la lecture en base. */
 const INTERVALLE_MS = 60_000;
+
+/** Les événements GitHub arrivent à l'instant : une lecture toutes les 10 s, onglet visible seulement (rien de neuf = aucune ligne rendue). */
+const INTERVALLE_EVENEMENTS_MS = 10_000;
 
 /** Les coûts demandent un tour chez chaque app : toutes les 5 min, onglet visible seulement. */
 const INTERVALLE_COUTS_MS = 300_000;
@@ -74,6 +79,8 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
     let bandeau = false;
     let enCours = false;
     let coutsEnCours = false;
+    let evenementsEnCours = false;
+    let depuisEvenements: string | null = null;
     let coutsLusA = 0;
     let versionLueA = 0;
     let versionCadre: string | null = null;
@@ -109,6 +116,30 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
         dire("Le relevé est indisponible : le hub ne répond pas.");
       } finally {
         enCours = false;
+      }
+    }
+
+    /** Les événements reçus depuis la dernière lecture : le curseur est l'instant de réception du dernier, jamais l'horloge d'ici. */
+    async function lireEvenements() {
+      const sortie = canal;
+      if (!sortie || evenementsEnCours) return;
+      evenementsEnCours = true;
+      try {
+        const reponse = await fetch(depuisEvenements ? `${URL_EVENEMENTS}?depuis=${encodeURIComponent(depuisEvenements)}` : URL_EVENEMENTS, {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        if (reponse.ok) {
+          const corps = (await reponse.json()) as { evenements?: unknown; jusqua?: unknown };
+          if (typeof corps.jusqua === "string") depuisEvenements = corps.jusqua;
+          sortie.postMessage({ type: MESSAGE_EVENEMENTS, evenements: Array.isArray(corps.evenements) ? corps.evenements : [] });
+        } else {
+          sortie.postMessage({ type: MESSAGE_EVENEMENTS, erreur: `Les événements GitHub ne se lisent pas (HTTP ${reponse.status}).` });
+        }
+      } catch {
+        sortie.postMessage({ type: MESSAGE_EVENEMENTS, erreur: "Les événements GitHub sont indisponibles : le hub ne répond pas." });
+      } finally {
+        evenementsEnCours = false;
       }
     }
 
@@ -206,17 +237,20 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
           canal?.close();
           canal = null;
           etag = null;
+          depuisEvenements = null;
           bandeau = false;
         }
       };
       canal.postMessage({ type: MESSAGE_OK, gestes: true });
       void lire();
+      void lireEvenements();
       void lireCouts();
     }
 
     const surVisibilite = () => {
       if (!actifRef.current || document.visibilityState !== "visible") return;
       void lire();
+      void lireEvenements();
       if (Date.now() - coutsLusA >= INTERVALLE_COUTS_MS) void lireCouts();
       if (Date.now() - versionLueA >= INTERVALLE_VERSION_MS) void verifierVersion();
     };
@@ -228,10 +262,14 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
     window.addEventListener("message", surMessage);
     document.addEventListener("visibilitychange", surVisibilite);
     const minuteur = setInterval(surVisibilite, INTERVALLE_MS);
+    const minuteurEvenements = setInterval(() => {
+      if (actifRef.current && document.visibilityState === "visible") void lireEvenements();
+    }, INTERVALLE_EVENEMENTS_MS);
     return () => {
       window.removeEventListener("message", surMessage);
       document.removeEventListener("visibilitychange", surVisibilite);
       clearInterval(minuteur);
+      clearInterval(minuteurEvenements);
       actions.current = null;
       canal?.close();
     };
