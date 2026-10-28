@@ -30,6 +30,7 @@ import {
   MESSAGE_GESTE,
   MESSAGE_OK,
   MESSAGE_ONGLET,
+  MESSAGE_RATTRAPAGE,
   MESSAGE_RECHARGE,
   MESSAGE_RELEVE,
   MESSAGE_VERSION_NEUVE,
@@ -38,6 +39,7 @@ import {
   URL_COUTS,
   URL_EVENEMENTS,
   URL_GESTES,
+  URL_RATTRAPAGE,
   URL_RELEVE,
   consigneDeReponse,
   erreurCouts,
@@ -60,6 +62,8 @@ const INTERVALLE_EVENEMENTS_MS = 10_000;
 
 /** Les coûts demandent un tour chez chaque app : toutes les 5 min, onglet visible seulement. */
 const INTERVALLE_COUTS_MS = 300_000;
+/** Un rattrapage GitHub qui a échoué se redemande au plus toutes les 5 minutes, au retour sur l'onglet (jamais « non branché »). */
+const INTERVALLE_RATTRAPAGE_MS = 300_000;
 
 /** La version du document du cadre (son ETag, sans lire la base) : toutes les 5 min, onglet visible seulement. */
 const INTERVALLE_VERSION_MS = 300_000;
@@ -80,6 +84,10 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
     let enCours = false;
     let coutsEnCours = false;
     let evenementsEnCours = false;
+    // le rattrapage GitHub : une lecture à l'ouverture, redemandée au retour sur l'onglet seulement si elle a échoué (jamais sur minuterie)
+    let rattrapageEnCours = false;
+    let rattrapageFait = false;
+    let rattrapageEssaiA = 0;
     let depuisEvenements: string | null = null;
     let coutsLusA = 0;
     let versionLueA = 0;
@@ -140,6 +148,36 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
         sortie.postMessage({ type: MESSAGE_EVENEMENTS, erreur: "Les événements GitHub sont indisponibles : le hub ne répond pas." });
       } finally {
         evenementsEnCours = false;
+      }
+    }
+
+    /** Ce qui s'est passé depuis le relevé du PC, lu chez GitHub par le hub : une fois, puis seulement après un échec (jamais « non branché »). */
+    async function lireRattrapage() {
+      const sortie = canal;
+      if (!sortie || rattrapageEnCours || rattrapageFait) return;
+      rattrapageEnCours = true;
+      rattrapageEssaiA = Date.now();
+      try {
+        const reponse = await fetch(URL_RATTRAPAGE, { cache: "no-store", credentials: "same-origin" });
+        if (reponse.ok) {
+          const corps = (await reponse.json()) as { evenements?: unknown; incomplets?: unknown; erreurs?: unknown };
+          rattrapageFait = true;
+          sortie.postMessage({
+            type: MESSAGE_RATTRAPAGE,
+            evenements: Array.isArray(corps.evenements) ? corps.evenements : [],
+            incomplets: Array.isArray(corps.incomplets) ? corps.incomplets : [],
+            erreurs: Array.isArray(corps.erreurs) ? corps.erreurs : [],
+          });
+        } else if (reponse.status === 503) {
+          rattrapageFait = true; // pas de jeton : rien à redemander tant que le hub n'est pas redéployé
+          sortie.postMessage({ type: MESSAGE_RATTRAPAGE, erreur: "Rattrapage GitHub non branché : le hub n'a pas de jeton de lecture.", nonBranche: true });
+        } else {
+          sortie.postMessage({ type: MESSAGE_RATTRAPAGE, erreur: `Le rattrapage GitHub ne se lit pas (HTTP ${reponse.status}).` });
+        }
+      } catch {
+        sortie.postMessage({ type: MESSAGE_RATTRAPAGE, erreur: "Le rattrapage GitHub est indisponible : le hub ne répond pas." });
+      } finally {
+        rattrapageEnCours = false;
       }
     }
 
@@ -239,11 +277,13 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
           etag = null;
           depuisEvenements = null;
           bandeau = false;
+          rattrapageFait = false;
         }
       };
       canal.postMessage({ type: MESSAGE_OK, gestes: true });
       void lire();
       void lireEvenements();
+      void lireRattrapage();
       void lireCouts();
     }
 
@@ -251,6 +291,7 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
       if (!actifRef.current || document.visibilityState !== "visible") return;
       void lire();
       void lireEvenements();
+      if (Date.now() - rattrapageEssaiA >= INTERVALLE_RATTRAPAGE_MS) void lireRattrapage();
       if (Date.now() - coutsLusA >= INTERVALLE_COUTS_MS) void lireCouts();
       if (Date.now() - versionLueA >= INTERVALLE_VERSION_MS) void verifierVersion();
     };

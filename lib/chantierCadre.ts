@@ -54,6 +54,9 @@ export const CSP_CADRE = [
 /** Où le hub relit les événements GitHub reçus (`app/api/chantier/evenements/route.ts`), pour l'état en direct de En cours. */
 export const URL_EVENEMENTS = "/api/chantier/evenements";
 
+/** Où le hub rattrape, une fois à l'ouverture, ce qui s'est passé entre le relevé du PC et les premiers événements (`app/api/chantier/rattrapage/route.ts`). */
+export const URL_RATTRAPAGE = "/api/chantier/rattrapage";
+
 /** Où le hub lit les coûts et quotas des apps (`app/api/chantier/couts/route.ts`), pour l'onglet Coûts. */
 export const URL_COUTS = "/api/chantier/couts";
 
@@ -67,6 +70,11 @@ export const MESSAGE_RELEVE = "chantier-releve";
 export const MESSAGE_ETAT = "chantier-etat";
 /** Les événements GitHub : `{ type, evenements, jusqua }` (ceux reçus depuis la dernière lecture), ou `{ type, erreur }`. */
 export const MESSAGE_EVENEMENTS = "chantier-evenements";
+/**
+ * Le rattrapage GitHub : `{ type, evenements, incomplets, erreurs }` (l'état courant des issues et PR touchées, sous forme d'événements
+ * `snapshot`), ou `{ type, erreur, nonBranche }` quand il ne se lit pas (`nonBranche` : le hub n'a pas de jeton de lecture).
+ */
+export const MESSAGE_RATTRAPAGE = "chantier-rattrapage";
 /** Les coûts des apps : `{ type, couts }` (`lib/chantierCouts.ts`), ou `{ type, erreur }` quand ils ne se lisent pas. */
 export const MESSAGE_COUTS = "chantier-couts";
 /**
