@@ -167,13 +167,14 @@ if (typeof window !== "undefined") {
   /**
    * L'état de LIA, en LECTURE SEULE, sous `window.__liaEtat()` : ce qu'elle a fait (`journal`), ce qu'elle
    * ressent, ses envies, et les faits qu'elle lit sur les cartes. Sans lui, personne ne pouvait dire en
-   * production pourquoi elle se taisait (le PC ne trouvait aucun `window.lia`, 23/10/2026). Ce n'est pas la
+   * production pourquoi elle se taisait (le PC ne trouvait aucun `window.lia`, 23/10/2026). `nanobots` (Hubperso#728)
+   * dit si son balayage d'analyse est sorti : `actif` faux et `sortis` à 0 pendant une visite spontanée. Ce n'est pas la
    * poignée : on ne peut ni la faire parler ni la déplacer d'ici. Lu à l'appel, donc valable même si elle s'est
    * montée après le chargement de la page ; `null` tant qu'elle n'est pas là.
    */
   (window as unknown as { __liaEtat?: () => unknown }).__liaEtat = () => {
     const h = demarrage.poignee();
-    return h ? { journal: h.journal(), ressent: h.ressent(), envies: h.envies(), faits: lireFaits() } : null;
+    return h ? { journal: h.journal(), ressent: h.ressent(), envies: h.envies(), faits: lireFaits(), nanobots: h.nanobots() } : null;
   };
   // Un seul écouteur, même si le module est évalué deux fois (rechargement à chaud) : `voir` est la même
   // fonction tant que le module est le même, et `addEventListener` ignore un doublon identique.

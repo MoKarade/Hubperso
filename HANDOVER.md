@@ -23,6 +23,12 @@
 
 Épingle `@mokarade/lia-ui` v0.48.0 (sha pelé `b0c8524`), seul changement (`package.json`, lock). v0.47.1 (lia-ui#162, fil Vercel : `/api/lia/etat` = 2,3 k appels/24 h, 28 % des invocations du hub) : l'état partagé n'est relu que toutes les 2 minutes et seulement quand la page est à l'écran, une page qui revient au premier plan relit tout de suite. v0.48.0 (lia-ui#164) : un clic droit sur une barre de graphique dessinée en HTML vise sa ligne et LIA lit le texte de chaque ligne et la largeur dessinée de sa barre. Preuve : déploiement `READY` sur le commit fusionné ; le fil Vercel relève `/api/lia/etat` sur 24 h après le déploiement (cible : au moins moitié moins d'appels).
 
+## 28/10/2026 : `window.__liaEtat()` dit si les nanobots de LIA sont sortis (Hubperso#728, mission MoKarade/.github#575)
+
+- **Avant** : la preuve de #679 (« aucun essaim sur une visite spontanée ») ne se lisait qu'à l'œil ; le relevé du PC voyait des points dispersés et ne pouvait pas dire si c'étaient les nanobots ou le corps de LIA en mouvement.
+- **Après** : `__liaEtat()` (lecture seule, `components/LiaBoot.tsx`) rend aussi `nanobots` = `lia.nanobots()` de lia-ui (`actif`, `total`, `sortis`, `surCible`, `forme`…). Verrou : `tests/liaBootEtat.test.ts` (clé présente, anciennes clés gardées, jamais la poignée).
+- **Preuve à lire** (PC, production) : pendant une visite spontanée, plusieurs échantillons de `window.__liaEtat().nanobots` avec `actif === false` et `sortis === 0` ; sur « Explique-moi ça », `actif === true`.
+
 ## 28/10/2026 : En cours liste les façons de travailler, avec leur état et leurs durées (Hubperso#710, mission #538)
 
 - **Règle de Marc** (28/10, 21:51Z) : « chaque changement dans la façon de travailler doit être dans la bonne page du chantier, toujours à jour, avec les durées ».
