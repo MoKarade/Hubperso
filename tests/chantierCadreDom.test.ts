@@ -328,4 +328,39 @@ describe("ChantierCadre", () => {
     await presenter(cadre.contentWindow, faussePort());
     expect(fetchMoq).not.toHaveBeenCalled();
   });
+
+  it("caché (hors de /chantier) : rien n'est lu ; de retour : une lecture tout de suite, et le document n'est pas rechargé", async () => {
+    act(() => racine.render(h(ChantierCadre, { actif: true })));
+    const cadre = conteneur.querySelector("iframe")!;
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    fetchMoq.mockClear();
+
+    act(() => racine.render(h(ChantierCadre, { actif: false })));
+    expect(conteneur.querySelector("iframe")).toBe(cadre);
+    expect(cadre.className).toContain("chantier-cadre--cache");
+    await avancer(60_000 * 5);
+    expect(fetchMoq).not.toHaveBeenCalled();
+
+    act(() => racine.render(h(ChantierCadre, { actif: true })));
+    await avancer(0);
+    expect(conteneur.querySelector("iframe")).toBe(cadre);
+    expect(cadre.className).not.toContain("cache");
+    expect(fetchMoq).toHaveBeenCalledTimes(1);
+  });
+
+  it("l'adresse du cadre ne change jamais (un autre src le rechargerait) ; l'onglet demandé passe par le canal", async () => {
+    act(() => racine.render(h(ChantierCadre, { actif: true, onglet: "gantt" })));
+    const cadre = conteneur.querySelector("iframe")!;
+    expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre#gantt");
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+
+    act(() => racine.render(h(ChantierCadre, { actif: false, onglet: null })));
+    act(() => racine.render(h(ChantierCadre, { actif: true, onglet: "couts" })));
+    expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre#gantt");
+    expect(port.postMessage).toHaveBeenCalledWith({ type: "chantier-onglet", onglet: "couts" });
+  });
 });

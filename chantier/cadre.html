@@ -43,6 +43,9 @@
     } else if (m.type === 'chantier-etat') {
       recu = true;
       etat(typeof m.message === 'string' ? m.message : '');
+    } else if (m.type === 'chantier-onglet' && typeof m.onglet === 'string') {
+      // Le cadre reste ouvert d'une page du hub à l'autre : `/chantier?onglet=couts` lui demande l'onglet, sans le recharger.
+      if (typeof window.surOnglet === 'function') window.surOnglet(m.onglet);
     }
   }
   // Le hub peut écouter APRÈS notre premier appel (l'hydratation vient après le document) : on se
@@ -1477,6 +1480,14 @@ const ST = {tab: tabDe(saved.tab) || 'toi', f: saved.f && saved.f !== 'toi' ? sa
 // fenêtre du dernier Gantt dessiné : sert au glisser du doigt et à faire avancer la ligne « maintenant »
 const GW = {span: 0, t0: 0};
 { const h = tabDe(location.hash.replace('#', '')); if (h) ST.tab = h; }
+// le hub garde ce cadre monté (caché hors de /chantier) et lui demande un onglet par son canal : même effet qu'un clic sur l'onglet
+window.surOnglet = o => {
+  const t = tabDe(o);
+  if (!t || t === ST.tab) return;
+  ST.tab = t;
+  if (!M) return;
+  ANIM = true; try { history.replaceState(null, '', '#' + ST.tab); } catch(e){} persist(); render();
+};
 const persist = () => store.set({tab: ST.tab, f: ST.f, z: ST.z, open: ST.open, vp: ST.vp, vsplit: ST.vsplit, cap: ST.cap, qs: ST.qs});
 
 /* ---------- futur : la meilleure estimation, avec ses hypothèses écrites ----------
@@ -4205,7 +4216,8 @@ const hasClaude = !!(window.claude && typeof window.claude.use === 'function');
 function start(d){ if (started || !d) return; started = true; load(d, true); }
 if (hasClaude) setTimeout(() => start(EMBED), 900); else start(EMBED);
 setInterval(fresh, 30e3);
-setInterval(() => { if (!document.hidden){ tickGantt(); tickAgo(); } }, 20e3);
+// caché par le hub (cadre sans taille) : rien à mesurer, la graduation ne doit pas être retirée faute de place
+setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo(); } }, 20e3);
 (async function live(){
   if (!hasClaude) return;
   let files = null; try { files = await window.claude.use('files'); } catch(e){}

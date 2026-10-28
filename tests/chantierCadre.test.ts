@@ -8,6 +8,7 @@ import {
   CSP_CADRE,
   MESSAGE_COUTS,
   MESSAGE_GESTE,
+  MESSAGE_ONGLET,
   MESSAGE_PRET,
   ONGLETS,
   SANDBOX_CADRE,
@@ -278,5 +279,39 @@ describe("aucune projection de quota trop tôt dans la période (Hubperso#592)",
   it("la phrase de la ligne et le tiroir de détail ne lisent pas une projection absente", () => {
     expect(DOCUMENT).toContain("if (j.proj != null && j.proj > g.limit) return 'à ce rythme : '");
     expect(DOCUMENT).toContain("j.proj == null ? 'trop tôt : moins de 10 % de la période écoulée'");
+  });
+});
+
+describe("le cadre ne se recharge pas quand on change de page du hub (#596)", () => {
+  const lire = (f: string) => readFileSync(resolve(process.cwd(), f), "utf8");
+
+  it("le cadre vit dans la mise en page, réservé à qui a l'entrée Chantier, monté à la première visite", () => {
+    const nav = lire("components/Navigation.tsx");
+    expect(nav).toContain("<ChantierPersistant />");
+    expect(nav).toMatch(/modele\.vue\.some\(\(e\) => e\.id === "chantier"\)/);
+    const persistant = lire("components/ChantierPersistant.tsx");
+    expect(persistant).toContain('chemin === "/chantier"');
+    expect(persistant).toContain("useState(actif)");
+    expect(persistant).toContain("if (actif && !visite) setVisite(true)");
+  });
+
+  it("la page garde l'accès et n'affiche rien : un cadre dans la page serait détruit à chaque départ", () => {
+    const page = lire("app/chantier/page.tsx");
+    expect(page).toContain("await exigerProprietaire()");
+    expect(page).toContain("return null");
+    expect(page).not.toContain("<ChantierCadre");
+  });
+
+  it("caché, le cadre n'occupe aucune place (le sélecteur est APRÈS la règle qui lui donne sa taille)", () => {
+    const css = lire("app/globals.css");
+    const cache = css.indexOf(".chantier-cadre--cache {");
+    expect(cache).toBeGreaterThan(css.indexOf(".chantier-cadre {"));
+    expect(css.slice(cache, cache + 60)).toContain("display: none");
+  });
+
+  it("le document change d'onglet à la demande du hub, sans se recharger, et ne mesure rien tant qu'il est caché", () => {
+    expect(DOCUMENT).toContain(`m.type === '${MESSAGE_ONGLET}'`);
+    expect(DOCUMENT).toContain("window.surOnglet = o =>");
+    expect(DOCUMENT).toContain("if (!document.hidden && innerWidth){ tickGantt(); tickAgo(); }");
   });
 });
