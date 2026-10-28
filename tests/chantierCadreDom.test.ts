@@ -512,6 +512,24 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     expect(f).not.toContain("« Barres par état » acceptée"); // une tâche acceptée n'est plus « à suivre »
   });
 
+  it("une app ou une mission dit le détail de ce qui coince : tâches bloquées et ce qu'elles attendent, preuves en retard, gestes de Marc", () => {
+    const b1 = { ref: "b1", n: 12, lvl: "tâche", leaf: true, t: "Brancher la réparation", e: "blk", open: true, waits: [{ n: 9, open: true, ref: "x#9" }, { unknown: true, ref: "y#3" }] };
+    const r1 = { ref: "r1", lvl: "tâche", leaf: true, t: "Poser le jeton", e: "ret", open: true, oub: {} };
+    const r2 = { ref: "r2", lvl: "tâche", leaf: true, t: "Autre preuve", e: "ret", open: true };
+    const g = { ...mission, ls: [b1, r1, r2, t3, t2], ce: { blk: 1, ret: 2, marc: 1, cours: 1 } };
+    const f = faitsDe(g, H);
+    expect(f).toContain("bloquées : « Brancher la réparation » attend #9, y#3");
+    expect(f).toContain("preuve manquante ou en retard : « Poser le jeton » : attend ton geste ; « Autre preuve »");
+    expect(f).toContain("attendent Marc : « Relais mobile » : choisir");
+    expect(f).toContain("autres à suivre : « Page chantier » en cours");
+    expect(f.indexOf("bloquées")).toBeLessThan(f.indexOf("preuve manquante")); // l'urgent d'abord
+  });
+
+  it("sans acteur relevé, les faits le disent au lieu de se taire (LIA n'en invente pas)", () => {
+    const sans = { ...mission, ls: [{ ...t2, acteurs: [] }], ce: { cours: 1 } };
+    expect(faitsDe(sans, H)).toContain("acteurs : non relevés");
+  });
+
   it("une tâche : son état, sa durée, sa PR, ses acteurs, un geste attendu et un retard", () => {
     const f = faitsDe(t1, H);
     expect(f).toContain("Tâche « Barres par état » (dans Hubperso › Gantt source de vérité)");
