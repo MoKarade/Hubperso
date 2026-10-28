@@ -636,3 +636,22 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("id: 'prs'");
   });
 });
+
+describe("les reçus lus dans Gmail s'ajoutent à l'onglet Coûts sans jamais passer pour sûrs (#640)", () => {
+  it("se lisent dans couts_manuels.recus_gmail, avec leur âge et la cadence hebdomadaire du PC", () => {
+    expect(DOCUMENT).toContain("k.indexOf('recus_') === 0");
+    expect(DOCUMENT).toContain("RECUS_COURRIELS = c[kR]");
+    expect(DOCUMENT).toContain("id: 'recus-courriels'");
+    expect(DOCUMENT).toContain("cad: 7 * 24 * H");
+    expect(DOCUMENT).toContain("tot = sur.reduce(");
+  });
+
+  it("un reçu à vérifier est montré à part, une devise probable est dite probable, un montant absent n'est pas deviné", () => {
+    expect(DOCUMENT).toContain("av = !!r.a_verifier || m == null || !dev");
+    expect(DOCUMENT).toContain("sur: !av");
+    expect(DOCUMENT).toContain("(devise probable)");
+    expect(DOCUMENT).toContain("montant absent");
+    expect(DOCUMENT).toContain("à vérifier · ");
+    expect(DOCUMENT).toContain("vAppsHub() + sf('Reçus courriels', vRecusCourriels) + vCoutsRegistre()");
+  });
+});
