@@ -639,9 +639,9 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("const XLIEU = {");
     for (const l of ["'Mergify'", "'Vercel'", "'GitHub / PC'", "'agent'"]) expect(DOCUMENT).toContain(l);
     // seules les étapes datées par le relevé ont une durée ; les autres montrent « ? »
-    expect(DOCUMENT).toContain("S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: []}");
+    expect(DOCUMENT).toContain("S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}");
     expect(DOCUMENT).toContain("Le relevé ne date pas cette étape : la durée reste inconnue plutôt qu’inventée");
-    expect(DOCUMENT).toContain("moyenne ' + dur(d.mean) + ' · médiane ' + dur(d.med)");
+    expect(DOCUMENT).toContain("moyenne ' + xcDur(d.mean) + ' · médiane ' + xcDur(d.med)");
     // la file Mergify est son étape, séparée des contrôles
     expect(DOCUMENT).toContain("(xcQueue(l, D) ? 'mg' : 'ci')");
     expect(DOCUMENT).toContain("const cc = Math.min(Math.max(ci, fin), mg)");
@@ -653,6 +653,20 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("PR fusionnées sans déploiement, non comptées");
     expect(DOCUMENT).toContain("if (!E){ delete o.rel; delete o.dep; }");
     expect(DOCUMENT).toContain("id: 'etapes'");
+  });
+
+  it("laisse choisir moyenne ou médiane et le type (Claude, Jules, Copilot), montre où va le temps, avec rond / losange / carré pour qui agit", () => {
+    expect(DOCUMENT).toContain("let XST = 'moy', XQ = 'tous';");
+    expect(DOCUMENT).toContain("data-xst");
+    expect(DOCUMENT).toContain("['copilot', 'Copilot']");
+    expect(DOCUMENT).toContain("const xcType = l => l.j ? 'jules'");
+    expect(DOCUMENT).toContain("x.k !== 'tache' || (XQ !== 'tous' && quiDe(x) !== XQ)");
+    expect(DOCUMENT).toContain("['Avant la PR'");
+    expect(DOCUMENT).toContain("['Dans la PR'");
+    expect(DOCUMENT).toContain("['Après la fusion'");
+    expect(DOCUMENT).toContain("la somme des étapes n’est pas le total");
+    expect(DOCUMENT).toContain("const XFORME = {h: '<circle");
+    expect(DOCUMENT).toContain("const xcDur = ms => ms < 60e3 ? '< 1 min' : dur(ms);");
     expect(DOCUMENT).toContain("case 'acc': return l.end ? 'acceptée ' + quand(l.end)");
     expect(DOCUMENT).toContain("id: 'prs'");
   });
