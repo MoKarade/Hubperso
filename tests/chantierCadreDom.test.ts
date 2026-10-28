@@ -509,6 +509,8 @@ describe("ChantierCadre : le cadre se met à jour sans que l'on recharge la page
       ancien.onmessage?.({ data: { type: "chantier-recharge" } });
     });
     expect(ancien.close).toHaveBeenCalled();
+    // c'est le hub qui recharge le cadre : une adresse neuve, sur l'onglet donné par la page
+    expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre?r=1");
     // le relevé n'est plus écrit dans l'ancien canal
     ancien.postMessage.mockClear();
     await avancer(60_000);
@@ -519,6 +521,39 @@ describe("ChantierCadre : le cadre se met à jour sans que l'on recharge la page
     expect(neuf.postMessage.mock.calls[0]![0]).toEqual({ type: "chantier-ok", gestes: true });
     // l'ETag d'avant est oublié : le document neuf reçoit le relevé en entier, pas un 304
     expect(fetchMoq.mock.calls.at(-1)![1].headers).toEqual({});
+  });
+});
+
+describe("ChantierCadre : le hub recharge le cadre sur l'onglet que le cadre donne (Hubperso#719)", () => {
+  it("l'onglet connu du cadre est repris dans l'adresse, une valeur inconnue ne change rien, chaque rechargement a son adresse", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    await act(async () => {
+      port.onmessage?.({ data: { type: "chantier-recharge", onglet: "gantt" } });
+    });
+    expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre?r=1#gantt");
+
+    const suivant = faussePort();
+    await presenter(cadre.contentWindow, suivant);
+    await act(async () => {
+      suivant.onmessage?.({ data: { type: "chantier-recharge", onglet: "<script>" } });
+    });
+    // l'onglet inventé est ignoré : le dernier onglet connu reste
+    expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre?r=2#gantt");
+  });
+
+  it("sans onglet donné, l'adresse reste celle de l'ouverture", async () => {
+    act(() => racine.render(h(ChantierCadre, { onglet: "couts" })));
+    const cadre = conteneur.querySelector("iframe")!;
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    await act(async () => {
+      port.onmessage?.({ data: { type: "chantier-recharge" } });
+    });
+    expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre?r=1#couts");
   });
 });
 
