@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : En cours montre les trois délais visés, 10 min au plus chacun (Hubperso#707, mission #538)
+
+- **Demande** (coordinateur, relayant la cible de Marc du 29/10 : file, prise et preuve en 10 min au plus chacune, comptées depuis « éligible depuis », dépassements affichés).
+- **Quoi** : un bloc « Cible 10 min » sur En cours (`chantier/cadre.html`) : pour File, Prise et Preuve, la moyenne ou la médiane (selon le réglage de la page), le nombre de tâches des 30 derniers jours au-dessus de 10 min sur le nombre mesuré, en rouge quand il y en a. File = « éligible → prise » : `xcEligible(l)` prend le plus tard de la création et de la fermeture de chaque dépendance du relevé (une dépendance inconnue ne se date pas) ; Prise = prise → PR ouverte ; Preuve = fusion → « Acceptée ». Une étape sans mesure dit « rien à mesurer », jamais 0.
+- **Limite dite** : « éligible depuis » est ici calculé par la page à partir du relevé (création, fermeture des dépendances) ; l'heure exacte où une place se libère n'y est pas, seul `file-depot.mjs` du fil workflow la connaît.
+- **Tests** : `tests/chantierCibles.test.ts`, `tests/chantierCadre.test.ts` (la liste des étapes).
+- **Preuve à lire** : sur `/chantier`, En cours, le bloc « Cible 10 min » affiche les trois délais avec leurs dépassements.
+
 ## 28/10/2026 : LIA lit les graphiques de la page Chantier (Hubperso#681, mission MoKarade/.github#575)
 
 - **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Dans le cadre du Chantier (`chantier/cadre.html`), le texte d'un bloc ne portait que le titre et les axes : les chiffres sont dans les infobulles (`data-tip`) de chaque barre ou point.

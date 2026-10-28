@@ -660,7 +660,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("const XLIEU = {");
     for (const l of ["'Mergify'", "'Vercel'", "'GitHub / PC'", "'agent'"]) expect(DOCUMENT).toContain(l);
     // seules les étapes datées par le relevé ont une durée ; les autres montrent « ? »
-    expect(DOCUMENT).toContain("S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}");
+    expect(DOCUMENT).toContain("S = {file: [], fileEl: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: [], total: []}");
     expect(DOCUMENT).toContain("Le relevé ne date pas cette étape : la durée reste inconnue plutôt qu’inventée");
     expect(DOCUMENT).toContain("moyenne ' + xcDur(d.mean) + ' · médiane ' + xcDur(d.med)");
     // la file Mergify est son étape, séparée des contrôles
