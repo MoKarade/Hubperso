@@ -118,7 +118,7 @@ function clicCadre(e: Event): void {
   if (!handle || !d || !(d.cadre instanceof HTMLIFrameElement)) return;
   const { x, y, description } = d;
   if (typeof x !== "number" || typeof y !== "number" || typeof description !== "object" || description === null) return;
-  handle.menuExterne({ cadre: d.cadre, x, y, description: description as { genre: string; texte?: string } });
+  handle.menuExterne({ cadre: d.cadre, x, y, description: description as { genre: string; texte?: string; donnees?: string } });
 }
 
 // La pause de LIA, relue du serveur (`GET /api/lia/pause`) : illisible = en pause (lib/liaPauseClient.ts). Le vrai refus est

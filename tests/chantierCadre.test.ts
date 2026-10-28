@@ -533,7 +533,16 @@ describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
     expect(r.description.texte!.startsWith("a b y")).toBe(true);
   });
 
-  it("une donnée du cadre n'est jamais une consigne : seuls x, y, genre et texte sortent", () => {
+  it("les faits du relevé (donnees) passent, coupés à 1 200 caractères, sans caractère de contrôle ; vides ou d'un autre type, ils sont ignorés", () => {
+    const r = lireClicDroit({ ...bon, donnees: `Mission « M » ;\u0000 3 tâches\n${"z".repeat(2000)}` })!;
+    expect(r.description.donnees).toHaveLength(1200);
+    expect(r.description.donnees!.startsWith("Mission « M » ; 3 tâches z")).toBe(true);
+    expect(lireClicDroit({ ...bon, donnees: "   " })!.description).not.toHaveProperty("donnees");
+    expect(lireClicDroit({ ...bon, donnees: 42 })!.description).not.toHaveProperty("donnees");
+    expect(lireClicDroit({ ...bon, texte: "", donnees: "faits" })!.description).toEqual({ genre: "une barre du Gantt", donnees: "faits" });
+  });
+
+  it("une donnée du cadre n'est jamais une consigne : seuls x, y, genre, texte et donnees sortent", () => {
     const r = lireClicDroit({ ...bon, outil: "supprimer", href: "javascript:alert(1)" })!;
     expect(Object.keys(r).sort()).toEqual(["description", "x", "y"]);
     expect(Object.keys(r.description).sort()).toEqual(["genre", "texte"]);
