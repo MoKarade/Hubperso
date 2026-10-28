@@ -1192,6 +1192,22 @@ body.m{--mute:#a9b0bb}
 .sq{width:11px;height:11px;border-radius:3px;display:inline-block;align-self:center}
 .chips{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:14px;color:var(--mute)}
 .chips span{display:inline-flex;align-items:center;gap:7px}.chips i{width:11px;height:11px;border-radius:3px;display:inline-block}.chips b{color:var(--ink)}
+/* Parcours : le trajet d'une tâche, de l'idée à l'affichage dans l'app (Marc 28/10) */
+.pcf{display:flex;align-items:flex-start;margin:6px 0 4px}
+.pcs{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:clamp(48px,9vw,86px);text-align:center}
+.pcd{display:grid;place-items:center;width:clamp(40px,7vw,60px);aspect-ratio:1;border-radius:50%;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:inset 0 0 0 2px var(--c)}
+.pcd svg{width:52%;height:52%;fill:none;stroke:var(--c);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pcs b{font:800 clamp(20px,3.4vw,30px) var(--fd);line-height:1}.pcs small{font-size:12px;color:var(--mute);line-height:1.2}
+.pcl{flex:1;min-width:14px;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:clamp(12px,2.4vw,22px)}
+.pcl i{display:block;width:100%;height:8px;border-radius:4px;background:var(--c)}.pcl.nd i{background:repeating-linear-gradient(90deg,var(--line2) 0 5px,transparent 5px 10px)}
+.pcl span{font:700 clamp(12px,1.8vw,15px) var(--fd);white-space:nowrap}
+.pcr{display:grid;grid-template-columns:minmax(0,15em) minmax(0,1fr) 5.2em;gap:4px 14px;align-items:center;width:100%;min-height:44px;padding:6px 0;text-align:left;box-shadow:0 -1px 0 var(--line)}
+.pcr .t{display:flex;align-items:center;gap:8px;min-width:0;font-size:14px}.pcr .t i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--c)}.pcr .t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcb{display:flex;gap:2px;height:14px}.pcb i{display:block;min-width:4px;border-radius:3px;background:var(--c)}.pcb i.mix{background:var(--line2)}.pcb i.op{background:repeating-linear-gradient(135deg,var(--c) 0 3px,transparent 3px 6px);outline:1.5px solid var(--c);outline-offset:-1.5px}
+.pcr .v{text-align:right;font:700 15px var(--fd)}
+@media(max-width:720px){.pcr{grid-template-columns:minmax(0,1fr) 4.6em}.pcr .pcb{grid-column:1/-1;grid-row:2}
+.pcf{flex-direction:column;align-items:stretch;gap:0}.pcs{flex-direction:row;width:auto;gap:14px;text-align:left;align-items:center}.pcs b{min-width:2.2em}
+.pcl{flex:none;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:14px;padding:0 0 0 16px;min-height:30px}.pcl i{width:8px;height:30px;flex:none}.pcl.nd i{background:repeating-linear-gradient(180deg,var(--line2) 0 5px,transparent 5px 10px)}}
 .qas{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px 22px}
 .qa{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;align-content:start;padding:18px 18px 16px;border-radius:20px;background:rgba(255,255,255,.04);box-shadow:inset 0 3px 0 var(--c)}
 .qa h3{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}.qa h3 i{width:14px;height:14px;border-radius:50%;background:var(--c);flex:none}
@@ -5087,13 +5103,113 @@ function vGanttFull(){
       s += `<text x="0" y="${y + 19}" style="fill:var(--ink)">#${x.p.n} · ${esc(String(nom).slice(0, mobile() ? 11 : 20))}</text><rect x="${lw}" y="${y + 4}" width="${w.toFixed(1)}" height="${RH - 10}" rx="6" fill="${QUI[x.q][1]}" data-tip="${tipAttr('#' + x.p.n + ' · ' + nom + ' · ' + QUI[x.q][0] + '\n' + mlab(x.d))}"/><text class="v" x="${(lw + w + 8).toFixed(1)}" y="${y + 19}">${esc(mlab(x.d))}</text>`; });
     return fig('Les plus lentes', `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Les ${L.length} PR les plus lentes de la période">${s}</svg>`);
   }
+  /* où va le temps : une barre par groupe (acteur, app), les médianes de chaque phase mises bout à bout */
+  function chPhases(W, title, groups){
+    const G = groups.filter(g => g.n).sort((a, b) => b.tot - a.tot);
+    if (!G.length) return '';
+    const RH = 34, T = 4, lw = mobile() ? 86 : 120, rw = 74, mx = Math.max(...G.map(g => g.tot), 1), H = T + G.length * RH + 6;
+    let s = '';
+    G.forEach((g, i) => { const y = T + i * RH; let x = lw;
+      s += `<text x="0" y="${y + 20}" style="fill:var(--ink)">${esc(g.nm)}</text>`;
+      Object.values(PCPH).forEach(([k, nm, col]) => { const v = g.v[k]; if (!v) return; const w = Math.max(3, v / mx * (W - lw - rw));
+        s += `<rect x="${x.toFixed(1)}" y="${y + 5}" width="${(w - 1.5).toFixed(1)}" height="${RH - 12}" rx="4" fill="${col}" data-tip="${tipAttr(g.nm + ' · ' + nm + ' : médiane ' + mlab(v) + ' · ' + nfmt(g.n) + ' tâche' + (g.n > 1 ? 's' : ''))}"/>`; x += w; });
+      s += `<text class="v" x="${(x + 6).toFixed(1)}" y="${y + 20}">${esc(mlab(g.tot))}</text>`; });
+    return fig(title, `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)} : ${G.map(g => g.nm + ' ' + mlab(g.tot)).join(', ')}">${s}</svg>`, chips(Object.values(PCPH).map(h => [h[2], h[1]])));
+  }
+  const phasesPar = (done, keyOf, nameOf, order) => { const m = {};
+    done.forEach(x => { const k = keyOf(x.l); (m[k] = m[k] || []).push(x); });
+    return Object.keys(m).map(k => { const v = {}; Object.values(PCPH).forEach(([ph]) => { const a = m[k].map(x => x.p.ph.filter(h => h.k === ph).reduce((t, h) => t + h.d, 0)).filter((d, i) => m[k][i].p.ph.some(h => h.k === ph)); const q = quant(a, .5); if (q != null) v[ph] = q; });
+      return {k, nm: nameOf(k), v, n: m[k].length, tot: Object.values(v).reduce((a, b) => a + b, 0)}; }); };
+  /* de l'idée à l'acceptation, de bout en bout */
+  function chBoutEnBout(W, done){
+    const d = done.map(x => x.p.total / 6e4).filter(v => v >= 0);
+    if (!d.length) return '';
+    const B_ = [['< 1 h', 60], ['1–6 h', 360], ['6–24 h', 1440], ['1–3 j', 4320], ['> 3 j', 1e9]], cnt = B_.map(() => 0);
+    d.forEach(v => { cnt[B_.findIndex(b => v < b[1])]++; });
+    const H = mobile() ? 200 : 230, T = 28, B = 34, ih = H - T - B, bw = W / B_.length, mx = Math.max(...cnt, 1);
+    let s = ''; cnt.forEach((c, i) => { const h = c / mx * ih, x = i * bw + bw * .16, w = bw * .68;
+      s += `<rect x="${x.toFixed(1)}" y="${(T + ih - h).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(2, h).toFixed(1)}" rx="5" fill="var(--vio)" fill-opacity="${i === cnt.indexOf(mx) ? 1 : .6}" data-tip="${tipAttr(B_[i][0] + ' : ' + c + ' tâche' + (c > 1 ? 's' : '') + ' (' + Math.round(c / d.length * 100) + ' %)')}"/><text class="v" x="${(x + w / 2).toFixed(1)}" y="${(T + ih - h - 6).toFixed(1)}" text-anchor="middle">${c}</text><text x="${(x + w / 2).toFixed(1)}" y="${H - 10}" text-anchor="middle">${B_[i][0]}</text>`; });
+    return fig('De l\'idée à l\'acceptation', `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Durée de bout en bout de ${d.length} tâches, médiane ${esc(mlab(quant(d, .5)))}">${s}</svg>`, `<div class="kp2"><b>${esc(mlab(quant(d, .5)))}</b><span>médiane</span><b>${esc(mlab(quant(d, .9)))}</b><span>9 sur 10</span></div>`);
+  }
+  /* lignes sur les cases de la période (tâches en vol, entrées et sorties) */
+  function chLignes(W, o){
+    const bins = o.bins, N = bins.length, H2 = mobile() ? 190 : 220, L = 36, R = 12, T = 16, B = 28, iw = W - L - R, ih = H2 - T - B;
+    const top = nice(Math.max(...o.series.flatMap(x => x.v), 4)), Y = v => T + ih - v / top * ih, X = i => L + (N > 1 ? i / (N - 1) : .5) * iw;
+    let s = axisY(W, L, T, ih, [0, top / 2, top], Y);
+    o.series.forEach(x => { s += `<path d="M${x.v.map((v, i) => X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join('L')}" fill="none" stroke="${x.col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${x.dash ? ' stroke-dasharray="2 6"' : ''}/><circle cx="${X(N - 1).toFixed(1)}" cy="${Y(x.v[N - 1]).toFixed(1)}" r="4.5" fill="${x.col}" stroke="var(--bg)" stroke-width="2"/>`; });
+    bins.forEach((b, i) => { s += hit(X(i) - iw / Math.max(1, N - 1) / 2, T, iw / Math.max(1, N - 1), ih, b.long + o.series.map(x => '\n' + x.name + ' : ' + nfmt(x.v[i]))); });
+    const st = Math.max(1, Math.ceil(N / (iw / 62)));
+    for (let i = N - 1; i >= 0; i -= st) s += `<text x="${X(i).toFixed(1)}" y="${H2 - 6}" text-anchor="middle">${esc(bins[i].lab)}</text>`;
+    return fig(o.title, `<svg class="cch" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(o.title)} sur ${esc(PS().n)}">${s}</svg>`, chips(o.series.map(x => [x.col, x.name, nfmt(x.v[N - 1])])));
+  }
+  function chFlux(W, D){
+    const bins = binsOf(D.endT), idx = Object.fromEntries(bins.map((b, i) => [b.k, i])), lv = M.leaves.filter(l => l.c != null);
+    const ouv = t => lv.filter(l => l.c <= t && (l.end == null || l.end > t)), at = (arr, f) => arr.filter(f).length;
+    const entrees = bins.map(() => 0), sorties = bins.map(() => 0);
+    lv.forEach(l => { const i = idx[binKey(l.c)]; if (i != null) entrees[i]++; if (l.end != null){ const j = idx[binKey(l.end)]; if (j != null) sorties[j]++; } });
+    const vol = bins.map(b => { const o = ouv(Math.min(b.t, Date.now())); return {ouv: o.length, trav: at(o, l => l.start != null && l.start <= b.t && !(l.merged != null && l.merged <= b.t)), pre: at(o, l => l.merged != null && l.merged <= b.t)}; });
+    return grid(2, [
+      chLignes(W, {title: 'Tâches en vol', bins, series: [{name: 'Ouvertes', col: 'var(--todo)', v: vol.map(x => x.ouv)}, {name: 'Au travail', col: 'var(--doing)', v: vol.map(x => x.trav)}, {name: 'En preuve', col: 'var(--vio)', v: vol.map(x => x.pre)}]}),
+      chLignes(W, {title: 'Entrées et sorties', bins, series: [{name: 'Créées', col: 'var(--todo)', v: entrees}, {name: 'Acceptées', col: 'var(--done)', v: sorties}]})]);
+  }
+
   function vVitesseM(){
     const D = vitesseData(); D.repos = Object.fromEntries((CUR.repos || []).map(r => [r.k, r.name]));
+    const P = parcoursParts(), W2 = colW(2), clock = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>';
     const ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>';
-    return perBar('top')
+    return perBar('top') + P.hero + P.flow
+      + sf('Où va le temps', () => band(clock, 'Où va le temps', grid(2, [chPhases(W2, 'Par acteur', phasesPar(P.done, l => quiTask(l), k => QUIT[k][0])), chPhases(W2, 'Par app', phasesPar(P.done, l => l.k, k => D.repos[k] || k))].filter(Boolean))))
       + sf('Vitesse', () => band(ico, 'Qui va vite', vCartesQui(D)))
-      + sf('Délais', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>', 'Délais', grid(1, [chDelais(colW(1), D), chLentes(colW(1), D)])))
-      + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(colW(2), D), chTachesQui(colW(2), D)])));
+      + sf('Délais', () => band(clock, 'Délais', grid(1, [chDelais(colW(1), D), chLentes(colW(1), D)])))
+      + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(W2, D), chTachesQui(W2, D)]) + grid(2, [chBoutEnBout(W2, P.done)])))
+      + sf('Flux', () => band(BI.prog, 'Flux', chFlux(W2, D)))
+      + P.rows;
+  }
+
+  /* ---------- Parcours : de l'idée à l'affichage dans l'app (Marc 28/10) ----------
+     Les instants viennent du relevé : issue créée (idée), premier signal (prise), PR ouverte, fusion, acceptation. Rien n'est estimé :
+     un instant absent saute la phase au lieu de l'inventer. « Affichée » n'a pas d'instant propre : la page montre la tâche dès le
+     relevé qui suit son acceptation. */
+  const PCPH = {idee: ['att', 'Attente', 'var(--todo)'], prise: ['eco', 'Écriture', 'var(--doing)'], pr: ['rel', 'Relecture', 'var(--fus)'], fus: ['pre', 'Preuve', 'var(--vio)']};
+  const PCNEXT = {idee: 'prise', prise: 'pr', pr: 'fus', fus: 'acc'};
+  function parcoursOf(l){
+    const cr = l.pr && l.pr.created ? Date.parse(l.pr.created) : null, now = Math.max(Date.now(), M.asof || 0);
+    let prev = -Infinity; const B = [['idee', l.c], ['prise', l.start], ['pr', cr], ['fus', l.merged], ['acc', l.end]].filter(b => b[1] != null && isFinite(b[1])).map(b => { prev = Math.max(prev, b[1]); return [b[0], prev]; });
+    const ph = [];
+    for (let i = 0; i + 1 < B.length; i++){ const [a, ta] = B[i], [b, tb] = B[i + 1], ok = PCNEXT[a] === b; ph.push({k: ok ? PCPH[a][0] : 'mix', c: ok ? PCPH[a][2] : 'var(--line2)', a: ta, b: tb, d: (tb - ta) / 6e4, nm: ok ? PCPH[a][1] : 'Non détaillé'}); }
+    const last = B[B.length - 1];
+    if (l.open && last && last[0] !== 'acc') ph.push({k: PCPH[last[0]] ? PCPH[last[0]][0] : 'mix', c: PCPH[last[0]] ? PCPH[last[0]][2] : 'var(--line2)', a: last[1], b: now, d: (now - last[1]) / 6e4, nm: PCPH[last[0]] ? PCPH[last[0]][1] : 'En cours', op: true});
+    return {ph, B, total: B.length ? (l.open ? now : B[B.length - 1][1]) - B[0][1] : 0, at: last ? last[0] : null};
+  }
+  function parcoursParts(){
+    const ms = PS().ms, t0 = Date.now() - ms, inP = t => t != null && isFinite(t) && t >= t0, act = l => inP(l.u) || inP(l.x) || inP(l.c) || inP(l.start);
+    const L = M.leaves.filter(act), ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/></svg>';
+    const done = L.filter(l => l.e === 'acc' && inP(l.x)).map(l => ({l, p: parcoursOf(l)})).filter(x => x.p.ph.length);
+    const med = k => { const a = done.map(x => x.p.ph.filter(h => h.k === k).reduce((s, h) => s + h.d, 0)).filter((v, i) => done[i].p.ph.some(h => h.k === k)); return quant(a, .5); };
+    const where = {idee: 0, prise: 0, pr: 0, fus: 0, acc: 0};
+    L.forEach(l => { const pr = l.pr; where[l.e === 'acc' ? 'acc' : l.merged ? 'fus' : pr && pr.created && pr.state === 'open' ? 'pr' : l.start ? 'prise' : l.open ? 'idee' : 'acc']++; });
+    const ND = [['idee', 'Idée', 'var(--todo)', '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.7.6 1 1.3 1 2.1h5c0-.8.3-1.5 1-2.1A6 6 0 0 0 12 3z"/>'], ['prise', 'Prise', 'var(--doing)', '<path d="M8 5l11 7-11 7z"/>'], ['pr', 'PR', 'var(--fus)', VI.pr.replace(/^<svg[^>]*>|<\/svg>$/g, '')], ['fus', 'Fusion', 'var(--vio)', '<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M6 8.5v7M8.4 6h2a4 4 0 0 1 4 4v0M15.6 12H9"/>'], ['acc', 'Acceptée', 'var(--done)', VI.task.replace(/^<svg[^>]*>|<\/svg>$/g, '')], ['aff', 'Dans l\'app', 'var(--ink)', '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>']];
+    const LK = ['att', 'eco', 'rel', 'pre'];
+    let flow = '';
+    ND.forEach((n, i) => {
+      const cnt = n[0] === 'aff' ? where.acc : where[n[0]];
+      flow += `<div class="pcs" style="--c:${n[2]}" data-tip="${tipAttr(n[1] + ' : ' + nfmt(cnt) + ' tâche' + (cnt > 1 ? 's' : '') + ' en ' + PS().n)}"><span class="pcd"><svg viewBox="0 0 24 24" aria-hidden="true">${n[3]}</svg></span><b>${nfmt(cnt)}</b><small>${esc(n[1])}</small></div>`;
+      if (i < ND.length - 1){
+        const k = LK[i], v = k ? med(k) : null, nd = !k;
+        flow += `<div class="pcl${nd ? ' nd' : ''}" style="--c:${k ? PCPH[ND[i][0]][2] : 'var(--line2)'}" data-tip="${tipAttr(nd ? 'Visible dans cette page dès le relevé qui suit l\'acceptation' : (PCPH[ND[i][0]][1] + ' : médiane ' + mlab(v)))}"><span>${nd ? '≤ 1 relevé' : v == null ? '—' : mlab(v)}</span><i></i></div>`;
+      }
+    });
+    const tot = quant(done.map(x => x.p.total / 6e4), .5);
+    const hero = `<section class="hero2" style="padding-bottom:10px"><div class="pct" role="img" aria-label="Médiane de l'idée à l'acceptation : ${esc(mlab(tot))}"><b style="font-size:clamp(56px,11vw,120px)">${esc(mlab(tot))}</b></div><div class="hside"><div class="leg"><div>de l'idée à l'acceptation, médiane</div><div><b>${nfmt(done.length)}</b> tâche${done.length > 1 ? 's' : ''} finie${done.length > 1 ? 's' : ''} en ${esc(PS().n)}</div></div></div></section>`;
+    const rows = L.map(l => ({l, p: parcoursOf(l)})).filter(x => x.p.ph.length).sort((a, b) => (b.l.last || 0) - (a.l.last || 0)).slice(0, 30).map(({l, p}) => {
+      const mx = p.ph.reduce((s, h) => s + Math.max(h.d, .5), 0) || 1;
+      const bar = p.ph.map(h => `<i class="${h.k === 'mix' ? 'mix' : ''}${h.op ? ' op' : ''}" style="--c:${h.c};flex:${(Math.max(h.d, .5) / mx).toFixed(4)}" data-tip="${tipAttr(h.nm + (h.op ? ' (en cours)' : '') + ' : ' + mlab(h.d))}"></i>`).join('');
+      return `<button class="pcr" data-open="${esc(l.ref)}" aria-label="${esc(l.t)} : ${esc(mlab(p.total / 6e4))}"><span class="t" style="--c:${appCol(l.k)}"><i></i><span>${esc(l.t)}</span></span><span class="pcb" aria-hidden="true">${bar}</span><span class="v">${esc(mlab(p.total / 6e4))}</span></button>`;
+    }).join('');
+    const key = chips(Object.values(PCPH).map(h => [h[2], h[1]]));
+    return {L, done, hero, ico,
+      flow: sf('Trajet', () => band(ico, 'Le trajet', `<div class="pcf" role="img" aria-label="Idée, prise, PR, fusion, acceptée, dans l'app">${flow}</div>`)),
+      rows: sf('Tâches', () => band(BI.prog, 'Chaque tâche', rows ? `${key}<div class="pcrows">${rows}</div>` : '<p class="soon" role="status">Aucune tâche sur cette période.</p>'))};
   }
 
   let MEXC = false, GINIT = false;
