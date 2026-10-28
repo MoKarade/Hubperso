@@ -1197,7 +1197,8 @@ body.m{--mute:#a9b0bb}
 .fr i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--done)}.fr.re i{background:var(--marc);border-radius:2px}.fr.pe i{background:var(--now);border-radius:2px;transform:rotate(45deg)}
 .fr.re{color:var(--ink)}.fr.pe{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--now)}.fr b{font-weight:500}
 .band h2 .fr,.gbar .fr{font-size:13px}.ccap .fr{margin-left:12px}
-.qjours{margin-top:26px}
+.qjours{margin-top:26px}.qjh{margin:0 0 12px;font-size:16px;font-weight:700}.qjh small{margin-left:10px;font-size:12.5px;font-weight:500;color:var(--mute)}
+.hper .fr{margin-left:10px}.cxfx{margin:6px 0 10px}.cxfx b{color:var(--ink);font-weight:800}
 .olist{display:grid;gap:2px}
 .orow{display:grid;grid-template-columns:minmax(0,8.5em) minmax(0,1fr) 2.6em;gap:4px 12px;align-items:center;min-height:44px;font-size:14px;box-shadow:0 -1px 0 var(--line)}
 .orow .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.orow .v{text-align:right;font-weight:700}
@@ -3264,6 +3265,7 @@ const FX = 1.4305;   // repli seulement (taux d'un reçu du 20/05) : le relevé 
 const fxLive = () => { const x = CUR && CUR.quota && CUR.quota.taux_usd_cad; return x && typeof x === 'object' && +x.taux > .5 && +x.taux < 3 ? x : null; };
 const fxTaux = () => fxLive() ? +fxLive().taux : FX;
 const fxTxt = () => fxTaux().toString().replace('.', ',');
+const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b> · ${fxLive() ? 'taux de la Banque du Canada du ' + esc(cDate(String(fxLive().date).slice(0, 10))) : 'taux fixe, estimé : le relevé ne donne pas encore le taux du jour'}</p>`;
 // [clé, nom, couleur, ce que contient le poste]
 const CPOSTES = [
   ['abo', 'Claude · abonnement', '#9b7be0', ''],
@@ -3403,7 +3405,7 @@ function vCouts(){
     + `<dl class="cxst">${prevuCur ? `<div title="Prélèvements connus d'ici la fin du mois"><dt>encore prévu</dt><dd class="am">+${esc(nfmt(prevuCur))} $</dd></div>` : ''}`
     + `<div title="Abonnements qui reviennent chaque mois"><dt>fixe par mois</dt><dd>${esc(nfmt(C.fixe))} $</dd></div>`
     + (C.moy != null ? `<div title="Moyenne des mois complets : ${esc(C.pleins.map(nm).join(', '))}"><dt>moyenne ${esc(nm(C.pleins[0]))} à ${esc(nm(C.pleins[C.pleins.length - 1]))}</dt><dd>${esc(nfmt(C.moy))} $</dd></div>` : '')
-    + `<div title="Total des reçus relevés depuis ${esc(nm(C.first))}, ${esc(fxTxt())} $ CA par $ US"><dt>depuis ${esc(nm(C.first))}</dt><dd>${esc(nfmt(C.total))} $</dd></div></dl></header>${cMoisBarre(C, cur)}`;
+    + `<div title="Total des reçus relevés depuis ${esc(nm(C.first))}, ${esc(fxTxt())} $ CA par $ US"><dt>depuis ${esc(nm(C.first))}</dt><dd>${esc(nfmt(C.total))} $</dd></div></dl></header>${cMoisBarre(C, cur)}${fxLigne()}`;
   const mat = `<section class="cxs"><h3>Poste par mois <small>$ CA, taxes comprises · pointillé = prévu</small></h3>${cMatrice(C)}</section>`;
   const fr = `<section class="cxs"><h3>Prochains 60 jours <small>${esc(cmoney(CAVENIR.reduce((a, it) => { const j = cJours(it.d, C.auj); return a + (j >= 0 && j <= 30 ? cc(it.m, it.dev) : 0); }, 0)))} d'ici 30 jours</small></h3>${cFrise(C, Math.max(280, W - 4))}</section>`;
   const postes = `<section class="cxs"><h3>Reçus par poste</h3>${C.parPoste.slice().sort((a, b) => b[1] - a[1]).map(([k]) => cPosteHTML(k, C, W)).join('')}</section>`;
@@ -4498,7 +4500,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const hero = `<section class="hero2"><div class="pct" role="img" aria-label="${pct} % des ${LA.length} tâches actives en ${esc(PS().n)} sont acceptées"><b ${cu(pct)}>${nfmt(pct)}</b><small>%</small></div>`
       + `<div class="hside"><button class="toi${toi ? '' : ' zero'}" data-tab="toi" aria-label="${toi} à toi">${I.toi}<span>${toi ? nfmt(toi) : '0'}</span></button>`
       + `<div class="leg">${G.map(g => `<div><i class="sh ${g[0] === 'blk' ? 'blk2' : g[0]}"></i><b>${nfmt(g[1])}</b>${g[3]}</div>`).join('')}</div>`
-      + `<div class="hper" data-tip="${tipAttr('Tâches créées, commencées, modifiées ou acceptées depuis ' + PS().n + '. Sur toutes les tâches : ' + pctAll + ' % acceptées sur ' + nAll)}"><b>${nfmt(LA.length)}</b> actives en ${esc(PS().n)} · ${pctAll} % de toutes</div></div></section>`
+      + `<div class="hper" data-tip="${tipAttr('Tâches créées, commencées, modifiées ou acceptées depuis ' + PS().n + '. Sur toutes les tâches : ' + pctAll + ' % acceptées sur ' + nAll)}"><b>${nfmt(LA.length)}</b> actives en ${esc(PS().n)} · ${pctAll} % de toutes${fraisHTML(['taches'])}</div></div></section>`
       + `<div class="rib" role="img" aria-label="Avancement des ${total} tâches">${G.map(g => `<span class="${g[4] ? 'o' : ''}" style="flex:${g[1]};--c:${g[2]}" data-tip="${tipAttr(g[3] + ' : ' + g[1] + ' (' + Math.round(g[1] / total * 100) + ' %)')}"></span>`).join('')}</div>`;
     const W = Math.min(innerWidth, 1240) - 32, b = mobile() ? 10 : 12, g = 3, p = b + g;
     const wall = M.apps.map(a => {
@@ -4746,7 +4748,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]), ['taches'])
       + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]), ['taches'])
       + band(BI.prog, 'Tâches ouvertes', grid(2, [sf('Âge des tâches', () => chAge(W2)), sf('Tâches par app', () => chOuvertesApp(W2))]) + '<p class="qnote">L’état du moment : toutes les tâches ouvertes, quelle que soit la période choisie ; l’âge compte depuis la création de la tâche.</p>', ['taches'])
-      + band(BI.res, 'Ressources', rings() + (() => { const c = chQuotaJours(W2); return c.length ? `<div class="qjours">${grid(2, c)}</div>` : ''; })() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
+      + band(BI.res, 'Ressources', rings() + (() => { const c = chQuotaJours(W2); return c.length ? `<div class="qjours"><h3 class="qjh">Quotas par jour<small>les 7 derniers jours du relevé</small></h3>${grid(2, c)}</div>` : ''; })() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
       + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`, ['recus', 'couts-apps', 'taux'])
       + sf('Données', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>', 'Données : d’où vient chaque chiffre', vDonnees()));
   }
@@ -5076,7 +5078,7 @@ function vGanttFull(){
     const C0 = cModel(), C = coutsSerie(C0), CP = coutsPer(C0), tot = CP.total, nPR = PRL().filter(p => p.t > Date.now() - PS().ms).length;
     const pp = CP.parPoste.map(([k, v]) => [k, v, CPOSTES.find(p => p[0] === k)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
     const SH = {abo: 'Abonnement', sur: 'Recharges', api: 'API', ver: 'Vercel', dev: 'Code', aut: 'Divers'};
-    const hero = `<section class="chero"><p class="ccap"><b>Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p><div class="ctot"><b ${cu(Math.round(tot))}>${nfmt(Math.round(tot))}</b><small>$ payés en ${esc(PS().n)}</small></div><p class="cper">${tot > 0 && nPR ? `<b>≈ ${nfmt(tot / nPR, 2)} $</b> par PR fusionnée (${nfmt(nPR)} PR) · ` : ''}total depuis ${esc(cMoisNom(C0.first).toLowerCase())} : <b>${nfmt(Math.round(C0.total))} $</b></p>`
+    const hero = `<section class="chero"><p class="ccap"><b>Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p>${fxLigne()}<div class="ctot"><b ${cu(Math.round(tot))}>${nfmt(Math.round(tot))}</b><small>$ payés en ${esc(PS().n)}</small></div><p class="cper">${tot > 0 && nPR ? `<b>≈ ${nfmt(tot / nPR, 2)} $</b> par PR fusionnée (${nfmt(nPR)} PR) · ` : ''}total depuis ${esc(cMoisNom(C0.first).toLowerCase())} : <b>${nfmt(Math.round(C0.total))} $</b></p>`
       + `<div class="cwho" role="img" aria-label="Répartition par poste">${pp.map(([k, v, p]) => `<div style="--w:${v};--c:${p[2]}" title="${esc(p[1] + ' : ' + cmoney(v))}">${v / (tot || 1) > (mobile() ? .3 : .11) ? esc(SH[k]) + '&nbsp;<span>' + nfmt(Math.round(v)) + '</span>' : ''}</div>`).join('')}</div>`
       + `<div class="clist">${pp.map(([k, v, p]) => `<div style="--c:${p[2]}"><i></i>${esc(p[1])}<b>${nfmt(Math.round(v))} $</b></div>`).join('')}</div></section>`;
     // colonnes : un mois = une pile, le prévu en hachures
