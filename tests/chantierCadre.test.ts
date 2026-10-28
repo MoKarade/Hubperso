@@ -8,6 +8,7 @@ import {
   CSP_CADRE,
   MESSAGE_CLIC_DROIT,
   MESSAGE_COUTS,
+  MESSAGE_EVENEMENTS,
   MESSAGE_GESTE,
   MESSAGE_ONGLET,
   MESSAGE_PRET,
@@ -612,7 +613,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   });
 
   it("reste en direct : la pastille d'âge du relevé, un redessin toutes les 30 s, la forme dit qui travaille", () => {
-    expect(DOCUMENT).toContain("fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : [])])");
+    expect(DOCUMENT).toContain("fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : []), ...(isFinite(EVS.lu) || EVS.err ? ['evenements'] : [])])");
     expect(DOCUMENT).toContain("ST.tab === 'cours' && !document.hidden) render(); }, 30e3)");
     expect(DOCUMENT).toContain("q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'");
     expect(DOCUMENT).toContain("prefers-reduced-motion:reduce){#mx .xc-b.on");
@@ -631,7 +632,27 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("dernier déploiement du dépôt, pas celui d’une PR");
     expect(DOCUMENT).toContain("lecture des PR incomplète");
     // une PR que la fiche de sa tâche ne porte pas (2e PR d'une tâche, PR sans tâche) reste visible, au bon étage
-    expect(DOCUMENT).toContain("D.P.prs.filter(r => r && !refs.has(");
+    expect(DOCUMENT).toContain("D.prs.filter(r => r && !refs.has(");
+  });
+
+  it("lit les événements GitHub en direct : ils passent avant le relevé, et rien n'est dit « en direct » sans lecture récente (Hubperso#684)", () => {
+    expect(MESSAGE_EVENEMENTS).toBe("chantier-evenements");
+    expect(DOCUMENT).toContain(`m.type === '${MESSAGE_EVENEMENTS}'`);
+    expect(DOCUMENT).toContain("window.surEvenements = m =>");
+    expect(DOCUMENT).toContain("const evIdx = () =>");
+    // une PR fusionnée ou fermée n'est plus ouverte, un brouillon change d'état, un déploiement se suit : seulement ce qui date d'APRÈS le relevé
+    expect(DOCUMENT).toContain("if (e.etat === 'fusionnee' || e.etat === 'fermee') delete par[k];");
+    expect(DOCUMENT).toContain("const xcLeaf = l =>");
+    // un contrôle ne devient jamais vert sur un seul événement (les autres peuvent courir encore) : seul le rouge est définitif
+    expect(DOCUMENT).toContain("['failure', 'timed_out', 'startup_failure'].includes(e.etat)");
+    expect(DOCUMENT).not.toContain("ci = {...par[k].ci, etat: 'vert'");
+    // la pastille dit « en direct » seulement après une lecture réussie de moins de 90 s ; sinon « relevé du PC », et la source passe en retard puis périmée
+    expect(DOCUMENT).toContain("const evVivant = () => isFinite(EVS.lu) && !EVS.err && Date.now() - EVS.lu < 90e3;");
+    expect(DOCUMENT).toContain("id: 'evenements'");
+    expect(DOCUMENT).toContain("ret: 12 * MIN, per: 20 * MIN");
+    // la sortie du brouillon et la mise en ligne reviennent des événements quand `etapes` ne les date pas
+    expect(DOCUMENT).toContain("ix.pret.get(k)");
+    expect(DOCUMENT).toContain("ix.ok.get(x.r + '@'");
   });
 
   it("donne la durée moyenne de chaque étape mesurée et dit où elle se passe, sans inventer celles que le relevé ne date pas", () => {
