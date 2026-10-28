@@ -600,7 +600,7 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     const g = { ...mission, ls: [b1, r1, r2, t3, t2], ce: { blk: 1, ret: 2, marc: 1, cours: 1 } };
     const f = faitsDe(g, H);
     expect(f).toContain("bloquées : « Brancher la réparation » attend #9, y#3");
-    expect(f).toContain("preuve manquante ou en retard : « Poser le jeton » : attend ton geste ; « Autre preuve »");
+    expect(f).toContain("preuve manquante ou en retard (date = fusion) : « Poser le jeton » : attend ton geste ; « Autre preuve »");
     expect(f).toContain("attendent Marc : « Relais mobile » : choisir");
     expect(f).toContain("autres à suivre : « Page chantier » en cours");
     expect(f.indexOf("bloquées")).toBeLessThan(f.indexOf("preuve manquante")); // l'urgent d'abord
@@ -611,22 +611,28 @@ describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () =
     const p1 = { ref: "p1", lvl: "tâche", leaf: true, t: "Preuve automatique", e: "prog", open: true };
     const g = { ...mission, ls: [f1, p1, t2], ce: { fus: 1, prog: 1, cours: 1 } };
     const f = faitsDe(g, { ...H, STE: { ...H.STE, fus: "fusionnée, à prouver", prog: "attend sa preuve" }, ORDRE: ["fus", "prog", "cours"] });
-    expect(f).toContain("fusionnées, preuve à poser : « Preuve de DriveAI » (t4000000) ; « Preuve automatique »");
+    expect(f).toContain("fusionnées, preuve à poser (idem) : « Preuve de DriveAI » (t4000000) ; « Preuve automatique »");
     expect(f).not.toContain("autres à suivre : « Preuve");
   });
 
   it("une app chargée (7 preuves en retard, 8 fusionnées à prouver, des bloquées et des gestes) nomme tous les titres des preuves dans les 1 200 caractères", () => {
     const mk = (e: string, i: number, extra = {}) => ({ ref: `${e}${i}`, lvl: "tâche", leaf: true, t: `Tâche ${e} numéro ${i} avec un titre assez long pour peser`, e, open: true, ...extra });
     const ls = [
-      ...Array.from({ length: 7 }, (_, i) => mk("ret", i, { oub: {} })),
+      ...Array.from({ length: 7 }, (_, i) => mk("ret", i, { oub: {}, merged: 3_000_000 + i })),
       ...Array.from({ length: 8 }, (_, i) => mk(i % 2 ? "fus" : "prog", i, { merged: 4_000_000 + i })),
       ...Array.from({ length: 3 }, (_, i) => mk("blk", i, { waits: [{ n: 100 + i, open: true, ref: `x#${100 + i}` }] })),
       ...Array.from({ length: 2 }, (_, i) => mk("marc", i, { geste: { t: "valider la durée du refresh token Google" } })),
     ];
     const g = { ...mission, ls, ce: { ret: 7, fus: 4, prog: 4, blk: 3, marc: 2 } };
-    const f = faitsDe(g, { ...H, retTxt: () => "preuve attendue depuis trois jours, la sonde ne lit rien", STE: { ...H.STE, fus: "fusionnée, à prouver", prog: "attend sa preuve" } });
+    // longueur d'une vraie date courte (« ven. 17/10 », « hier 14:10 ») ; les autres dates (relevé, début…) gardent la forme du banc d'essai
+    const quand = (t: number) => t < 3_000_000 || t >= 5_000_000 ? H.quand(t) : `mar. 27/10 ${t < 4_000_000 ? "r" + (t - 3_000_000) : "f" + (t - 4_000_000)}`;
+    const f = faitsDe(g, { ...H, quand, retTxt: () => "preuve attendue depuis trois jours, la sonde ne lit rien", STE: { ...H.STE, fus: "fusionnée, à prouver", prog: "attend sa preuve" } });
     expect(f.length).toBeLessThanOrEqual(1200);
     for (let i = 0; i < 7; i++) expect(f).toContain(`Tâche ret numéro ${i}`);
+    // chaque preuve en retard et chaque fusionnée dit quand elle a été fusionnée
+    for (let i = 0; i < 7; i++) expect(f).toContain(`(mar. 27/10 r${i})`);
+    for (let i = 0; i < 8; i++) expect(f).toContain(`(mar. 27/10 f${i})`);
+    expect(f).toContain("attendent Marc : « Tâche marc numéro 0"); // les gestes de Marc ne sont pas coupés
     for (let i = 0; i < 8; i++) expect(f).toContain(`Tâche ${i % 2 ? "fus" : "prog"} numéro ${i}`);
     expect(f).not.toContain("… et"); // rien n'est caché derrière un compte
   });
