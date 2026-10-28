@@ -4153,6 +4153,7 @@ function sources(){
   const S = [
     {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
     ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
+    ...(CUR && CUR.etapes && typeof CUR.etapes === 'object' ? [{id: 'etapes', nom: 'Durées des étapes : sortie du brouillon et mise en ligne', nat: 'mes', at: t(CUR.etapes.releve), cad: 15 * MIN, src: 'GitHub (sortie du brouillon et déploiement Vercel de chaque PR fusionnée), relevé du PC'}] : []),
     {id: 'sante', nom: 'Défauts et preuves', nat: 'cal', at: t(F.calcule_le), cad: 30 * MIN, src: 'calculé par le PC sur le relevé'},
     {id: 'prev', nom: 'Ce qui va se passer', nat: 'est', at: t(P.calcule_le), cad: 10 * MIN, src: 'file du script du PC : une prévision, pas un fait'},
     {id: 'actions', nom: 'Minutes Actions', nat: 'mes', at: t(jauge('actions', 'releve')), cad: 10 * MIN, perime: t(jauge('actions', 'perime')), src: 'GitHub Actions (dépôts privés)'},
@@ -5241,18 +5242,31 @@ function vGanttFull(){
     dep: ['Vercel', 'Vercel construit et met en ligne la branche principale'], prove: ['fil', 'Le fil qui a livré vérifie en vrai et pose la preuve ; le garde-fou de GitHub la contrôle'], acc: ['GitHub', 'L’issue est fermée avec la preuve « Acceptée » ; on montre les 24 dernières heures']};
   // durée moyenne de chaque étape mesurée sur les 30 derniers jours : seules les étapes que le relevé date (issue, prise, PR, derniers commits, fin des contrôles, fusion, preuve, fermeture)
   const XDUR_J = 30;
+  const xcEtapes = () => { const E = CUR && CUR.etapes; return E && typeof E === 'object' && E.prets && typeof E.prets === 'object' ? E : null; };
   const xcDurees = () => {
-    const now = Date.now(), t0 = now - XDUR_J * DAY, log = {}, S = {file: [], prise: [], draft: [], ci: [], mg: [], prove: [], acc: []}, t = v => { const x = typeof v === 'number' ? v : Date.parse(v); return isFinite(x) ? x : null; };
+    const now = Date.now(), t0 = now - XDUR_J * DAY, log = {}, S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: []}, E = xcEtapes(), sans = {n: 0}, t = v => { const x = typeof v === 'number' ? v : Date.parse(v); return isFinite(x) ? x : null; };
     (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => { log[x.r + '#' + x.n] = x; });
+    const add = (k, a, b) => { if (a != null && b != null && b >= a && b >= t0) S[k].push(b - a); };
     M.leaves.forEach(l => {
       const pr = l.pr, cr = pr ? t(pr.created) : null, c1 = pr ? t(pr.c1) : null, mg = l.merged, pv = l.pv ? t(l.pv.c) : null, x = l.e === 'acc' ? l.end : null;
-      const add = (k, a, b) => { if (a != null && b != null && b >= a && b >= t0) S[k].push(b - a); };
-      add('file', l.c, l.start); add('prise', l.start, cr); if (c1 != null && cr != null) add('draft', cr, c1);
+      add('file', l.c, l.start); add('prise', l.start, cr); if (!E && c1 != null && cr != null) add('draft', cr, c1);
       const e = pr && log[l.k + '#' + pr.n], ci = e && e.ci ? t(e.ci) : null, fin = mg != null && cr != null ? Math.max(Math.min(c1 != null ? c1 : mg, mg), cr) : null;
       if (ci != null && fin != null && ci >= fin - 60e3 && ci <= mg + 60e3){ const cc = Math.min(Math.max(ci, fin), mg); add('ci', fin, cc); add('mg', cc, mg); }   // 60 s d'écart d'horloge : bornée, jamais perdue
       add('prove', mg, pv); add('acc', pv, x);
     });
+    // clé `etapes` du relevé (.github#689) : sortie du brouillon et mise en ligne de chaque PR fusionnée ; une PR jamais en brouillon ou sans déploiement ne compte jamais comme 0
+    if (E){
+      const cov = E.couvert_depuis && typeof E.couvert_depuis === 'object' ? E.couvert_depuis : {};
+      (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => {
+        const k = x.r + '#' + x.n, c = t(x.c), m = t(x.m); if (c == null || m == null || m < t0) return;
+        const pret = E.prets[k] ? t(E.prets[k]) : null, el = E.en_ligne && E.en_ligne[k] ? t(E.en_ligne[k].pret_le) : null;
+        if (pret != null){ add('draft', c, pret); add('rel', pret, m); }
+        if (el != null) add('dep', m, el);
+        else if (E.en_ligne && now - m > 30 * 60e3 && cov[x.r] && m >= t(cov[x.r])) sans.n++;
+      });
+    }
     const o = {}; Object.keys(S).forEach(k => { const a = S[k]; o[k] = {n: a.length, mean: a.length ? a.reduce((u, v) => u + v, 0) / a.length : null, med: med(a)}; });
+    if (!E){ delete o.rel; delete o.dep; } else { o.dep.sans = sans.n; o.reste = E.restant; }
     return o;
   };
   // `prs_ouvertes` (relevé du PC, .github#679) : contrôles, file Mergify et agent de chaque PR ouverte, dernier déploiement de chaque dépôt ; absente = étapes grisées
@@ -5334,14 +5348,14 @@ function vGanttFull(){
       `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span></div>` + XCOL.map(([c, , , g]) => cell(a, c, g)).join('')).join('');
     const nCol = c => c === 'acc' ? recents.length : c === 'dep' ? (D ? Object.values(D.dep).filter(v => v && v.etat === 'success').length : 0) : ouv.filter(l => xcCol(l, D) === c).length + hors.filter(h => horsCol(h) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
     const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g && !D ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g && !D ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g && !D ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span><em class="xc-w" data-tip="${tipAttr(XLIEU[c][1])}">${esc(XLIEU[c][0])}</em></div>`).join('');
-    const DU = xcDurees(), mxd = Math.max(1, ...Object.values(DU).map(d => d.mean || 0));
+    const E2 = !!xcEtapes(), DU = xcDurees(), mxd = Math.max(1, ...Object.values(DU).map(d => d.mean || 0));
     const durRow = `<div class="xc-dl" title="Moyenne sur les ${XDUR_J} derniers jours">durée moy.</div>` + XCOL.map(([c]) => { const d = DU[c];
       if (!d) return `<div class="xc-d nd" data-tip="${tipAttr('Le relevé ne date pas cette étape : la durée reste inconnue plutôt qu’inventée')}"><b>?</b></div>`;
       if (!d.n) return `<div class="xc-d nd" data-tip="${tipAttr('Aucune tâche passée par cette étape sur ' + XDUR_J + ' jours')}"><b>—</b></div>`;
-      return `<div class="xc-d" data-tip="${tipAttr(XCOL.find(x => x[0] === c)[1] + '\nmoyenne ' + dur(d.mean) + ' · médiane ' + dur(d.med) + '\nsur ' + d.n + ' tâche' + (d.n > 1 ? 's' : '') + ', ' + XDUR_J + ' derniers jours' + (c === 'mg' ? '\nfile Mergify et relecture avant la fusion' : ''))}"><b>${esc(dur(d.mean))}</b><i style="--w:${Math.max(6, Math.round(Math.sqrt(d.mean / mxd) * 100))}%"></i></div>`; }).join('');
+      return `<div class="xc-d" data-tip="${tipAttr(XCOL.find(x => x[0] === c)[1] + '\nmoyenne ' + dur(d.mean) + ' · médiane ' + dur(d.med) + '\nsur ' + d.n + (E2 && (c === 'rel' || c === 'dep' || c === 'draft') ? ' PR' : ' tâche' + (d.n > 1 ? 's' : '')) + ', ' + XDUR_J + ' derniers jours' + (c === 'mg' ? '\nfile Mergify et relecture avant la fusion' : c === 'rel' ? '\nprête → fusion, contrôles et file Mergify compris' : c === 'dep' ? '\nfusion → mise en ligne (déploiement Vercel réussi)' + (d.sans ? '\n' + d.sans + ' PR fusionnées sans déploiement, non comptées' : '') : c === 'draft' && xcEtapes() ? '\ncréation → sortie du brouillon' : '') + (DU.reste && (c === 'rel' || c === 'dep' || c === 'draft') ? '\n' + DU.reste + ' PR pas encore lues par le PC' : ''))}"><b>${esc(dur(d.mean))}</b><i style="--w:${Math.max(6, Math.round(Math.sqrt(d.mean / mxd) * 100))}%"></i></div>`; }).join('');
     const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
     const W2 = colW(2), pe = D && (D.P.incomplet || (Array.isArray(D.P.erreurs) && D.P.erreurs.length)) ? `<span class="cf" style="color:var(--blk-t)" title="${esc((D.P.erreurs || []).join('\n'))}">lecture des PR incomplète</span>` : '';
-    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(D ? ['taches', 'prs'] : ['taches'])}${pe}</div>`;
+    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : [])])}${pe}</div>`;
     const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
     const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('s-mg', 'rang chez Mergify', '1')}${k('h', 'PR sans tâche')}</div>`;
     if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;

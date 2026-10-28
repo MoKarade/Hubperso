@@ -612,7 +612,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   });
 
   it("reste en direct : la pastille d'âge du relevé, un redessin toutes les 30 s, la forme dit qui travaille", () => {
-    expect(DOCUMENT).toContain("fraisHTML(D ? ['taches', 'prs'] : ['taches'])");
+    expect(DOCUMENT).toContain("fraisHTML([...(D ? ['taches', 'prs'] : ['taches']), ...(xcEtapes() ? ['etapes'] : [])])");
     expect(DOCUMENT).toContain("ST.tab === 'cours' && !document.hidden) render(); }, 30e3)");
     expect(DOCUMENT).toContain("q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'");
     expect(DOCUMENT).toContain("prefers-reduced-motion:reduce){#mx .xc-b.on");
@@ -639,13 +639,20 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("const XLIEU = {");
     for (const l of ["'Mergify'", "'Vercel'", "'GitHub / PC'", "'agent'"]) expect(DOCUMENT).toContain(l);
     // seules les étapes datées par le relevé ont une durée ; les autres montrent « ? »
-    expect(DOCUMENT).toContain("S = {file: [], prise: [], draft: [], ci: [], mg: [], prove: [], acc: []}");
+    expect(DOCUMENT).toContain("S = {file: [], prise: [], draft: [], rel: [], ci: [], mg: [], dep: [], prove: [], acc: []}");
     expect(DOCUMENT).toContain("Le relevé ne date pas cette étape : la durée reste inconnue plutôt qu’inventée");
     expect(DOCUMENT).toContain("moyenne ' + dur(d.mean) + ' · médiane ' + dur(d.med)");
     // la file Mergify est son étape, séparée des contrôles
     expect(DOCUMENT).toContain("(xcQueue(l, D) ? 'mg' : 'ci')");
     expect(DOCUMENT).toContain("const cc = Math.min(Math.max(ci, fin), mg)");
     expect(DOCUMENT).toContain("c === 'mg' ? mgPos(x) - mgPos(y)");
+    // PR prête et En ligne : clé optionnelle `etapes` (.github#689) ; une PR jamais en brouillon ou sans déploiement n'est jamais comptée comme 0
+    expect(DOCUMENT).toContain("const xcEtapes = () =>");
+    expect(DOCUMENT).toContain("E.prets[k]");
+    expect(DOCUMENT).toContain("E.en_ligne[k].pret_le");
+    expect(DOCUMENT).toContain("PR fusionnées sans déploiement, non comptées");
+    expect(DOCUMENT).toContain("if (!E){ delete o.rel; delete o.dep; }");
+    expect(DOCUMENT).toContain("id: 'etapes'");
     expect(DOCUMENT).toContain("case 'acc': return l.end ? 'acceptée ' + quand(l.end)");
     expect(DOCUMENT).toContain("id: 'prs'");
   });
