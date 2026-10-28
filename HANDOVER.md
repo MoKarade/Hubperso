@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : le hub recharge le cadre de /chantier, plus le cadre lui-même (Hubperso#719, mission #538)
+
+- **Constat** (PC, 22:13:20Z, production) : page ouverte depuis ~7 min, après le déploiement de #713, le cadre affichait `{"error":"unauthenticated","message":"Authentification requise."}` : la page n'était plus vivante.
+- **Cause** : sur une version neuve du document, le cadre se rechargeait lui-même (`location.reload()`). Il est en bac à sable sans `allow-same-origin` (origine opaque) : le navigateur n'envoie pas le cookie de session (SameSite=Lax) pour ce rechargement, le middleware répond 401 et le cadre l'affiche. Reproduit avec Chromium : le rechargement du cadre part sans cookie, une navigation lancée par la page parente part avec.
+- **Correction** : le cadre dit `chantier-recharge` avec son onglet (celui de son adresse) et ne fait plus rien d'autre ; `ChantierCadre` valide l'onglet (`ongletDe`), ferme le canal et navigue l'`<iframe>` vers `/api/chantier/cadre?r=<n>#<onglet>` (`urlCadreRecharge`, `lib/chantierCadre.ts`). `?r=` change à chaque rechargement, sinon le navigateur ne ferait qu'une navigation de fragment. Une valeur d'onglet inconnue est ignorée.
+- **Tests** : `tests/chantierCadre.test.ts` (le cadre ne contient plus de rechargement ni de navigation de lui-même), `tests/chantierCadreDom.test.ts` (adresse neuve, onglet repris, onglet inventé ignoré, adresse d'ouverture conservée).
+- **Preuve à lire** : `/chantier` ouvert, un déploiement passe, le cadre se recharge seul (page cachée ou inutilisée depuis 45 s) et reste vivant, sans « unauthenticated ».
+
 ## 28/10/2026 : En cours liste les façons de travailler, avec leur état et leurs durées (Hubperso#710, mission #538)
 
 - **Règle de Marc** (28/10, 21:51Z) : « chaque changement dans la façon de travailler doit être dans la bonne page du chantier, toujours à jour, avec les durées ».

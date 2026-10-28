@@ -83,8 +83,9 @@ export const MESSAGE_COUTS = "chantier-couts";
  */
 export const MESSAGE_GESTE = "chantier-geste";
 /**
- * Une version neuve du document du cadre est servie (le hub le voit à son ETag) : le hub le dit au cadre, qui se recharge de lui-même
- * quand plus personne ne s'en sert, et dit `chantier-recharge` au hub juste avant, pour qu'il accepte le canal du document neuf.
+ * Une version neuve du document du cadre est servie (le hub le voit à son ETag) : le hub le dit au cadre, qui dit `chantier-recharge`
+ * (avec son onglet) quand plus personne ne s'en sert : le HUB recharge alors l'`<iframe>` (voir `urlCadreRecharge`) et accepte le canal du document neuf.
+ * Le cadre ne se recharge jamais lui-même : un `location.reload()` lancé depuis son origine opaque part sans cookie de session (401, Hubperso#719).
  */
 export const MESSAGE_VERSION_NEUVE = "chantier-version-neuve";
 export const MESSAGE_RECHARGE = "chantier-recharge";
@@ -134,6 +135,15 @@ export function lireClicDroit(donnee: unknown): ClicDroitCadre | null {
 export const ONGLETS = ["mur", "cours", "toi", "gantt", "vitesse", "couts"] as const;
 export function ongletDe(valeur: unknown): (typeof ONGLETS)[number] | null {
   return ONGLETS.find((o) => o === valeur) ?? null;
+}
+
+/**
+ * L'adresse que le hub donne à l'`<iframe>` pour la recharger (Hubperso#719). `?r=<n>` : un autre `src` que le précédent, sinon le navigateur
+ * ne ferait qu'une navigation de fragment sans recharger. Une navigation lancée par la page du hub part avec le cookie de session ; un
+ * rechargement lancé depuis le cadre (origine opaque) part sans, et le cadre afficherait le 401 du middleware.
+ */
+export function urlCadreRecharge(numero: number, onglet: (typeof ONGLETS)[number] | null): string {
+  return `${URL_CADRE}?r=${numero}${onglet ? `#${onglet}` : ""}`;
 }
 
 /** Pourquoi les coûts ne se lisent pas, dit au cadre en clair (le reste du relevé n'en souffre pas). */
