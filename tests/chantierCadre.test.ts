@@ -220,6 +220,18 @@ describe("la barre du Gantt montre l'état au fil du temps (Hubperso#572)", () =
     expect(DOCUMENT).toContain("const hist = etatsOf(n, seg);");
   });
 
+  it("un projet, un chantier et une mission prennent l'état de leurs tâches, le travail mesuré en bleu", () => {
+    expect(DOCUMENT).toContain("function fondre(");
+    expect(DOCUMENT).toContain("const travailDe = l =>");
+    expect(DOCUMENT).toContain("const app = n.lvl === 'app'");
+  });
+
+  it("une seule épaisseur : les blocs à hauteur variable ne servent que sans historique d'états", () => {
+    expect(DOCUMENT).toContain("if (!hist && !n.leaf && n.ls) bars += chunkBars(n.ls, n);");
+    expect(DOCUMENT).toContain("if (n.leaf && !hist) bars += chunkBars([n], n);");
+    expect(DOCUMENT).toContain(".gl2[class*=\" et-\"]{height:12px;margin-top:-6px;background:var(--sc)}");
+  });
+
   it("une tâche sans historique d'états garde sa barre d'avant : aucune couleur inventée", () => {
     expect(DOCUMENT).toContain("bars += hist || seg(n.start, end, `gl2 ${sc}`)");
   });

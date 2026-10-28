@@ -210,7 +210,7 @@ button.pill{cursor:pointer}
 .ets i,.etl i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--sc);flex:none}
 .etl{font-size:13px;padding:3px 0;border-top:1px solid var(--line)}.etl span:first-of-type{color:var(--mute);min-width:9.5em}.etl b{margin-left:auto;font:600 12.5px var(--fm)}
 /* l'état d'une barre au fil du temps (Marc, 28/10) : pleine couleur, et une borne à la fin d'une tâche ou d'une mission fermée */
-.gl2[class*=" et-"]{height:8px;margin-top:-4px;background:var(--sc)}
+.gl2[class*=" et-"]{height:12px;margin-top:-6px;background:var(--sc)}
 .gl2.borne{min-width:9px;border-radius:0 5px 5px 0}
 .gfin{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:4px;background:var(--done);box-shadow:0 0 0 2px var(--bg)}
 .gfin::after{content:"";position:absolute;left:4.5px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
@@ -1310,6 +1310,7 @@ body.m #view .gbk{bottom:auto;top:50%;transform:translateY(-50%);border-radius:7
 .mb{width:72px}
 body.m #view .gb.agg{height:5px;margin-top:-2.5px;opacity:.45}
 body.m #view .grow:not(.l-app):not(.e-todo) .gl2:not(.gw2){opacity:.5}
+body.m #view .grow:not(.l-app):not(.e-todo) .gl2[class*=" et-"]{opacity:1}
 body.m #view .gbk{z-index:2}
 body.m #view .grow.calme .gl{opacity:.5}
 
@@ -1861,27 +1862,45 @@ function etapesOf(n){
   return out;
 }
 const etapesC = n => n._et !== undefined ? n._et : (n._et = etapesOf(n));
-/* barre d'une mission ou d'un chantier (Marc, 28/10) : à chaque instant, l'état le plus actif de ses tâches (qui travaille passe avant qui attend) ;
-   sans tâche en étape, la barre est grise (rien ne travaille) ; fermée, elle finit par sa borne verte */
 const ORDAG = ['cours', 'rel', 'corr', 'pm', 'marc', 'blk', 'preuve', 'file', 'pause'];
 const ETLP = {cours: 'des tâches travaillent', rel: 'des tâches travaillent', corr: 'une tâche en correction (rouverte)', pm: 'une preuve à reposer', marc: 'attend ton geste', blk: 'attend autre chose', preuve: 'attend des preuves', file: 'rien ne travaille', pause: 'rien ne travaille'};
+/* des événements d'état qui se recouvrent, fondus en une suite : à chaque instant, l'état le plus actif ; sans événement, `defaut` (null = rien) */
+function fondre(ev, deb, fin, defaut){
+  const out = [], cuts = [...new Set([deb, fin, ...ev.flatMap(x => [x.a, x.b])])].filter(t => t >= deb && t <= fin).sort((a, b) => a - b);
+  for (let i = 0; i + 1 < cuts.length; i++){
+    const a = cuts[i], b = cuts[i + 1], ks = ev.filter(x => x.a <= a && x.b >= b).map(x => x.k), k = ORDAG.find(o => ks.includes(o)) || (ks[0] || defaut), z = out[out.length - 1];
+    if (!k) continue;
+    if (z && z.k === k && z.b === a) z.b = b; else out.push({k, a, b});
+  }
+  return out;
+}
+/* le travail MESURÉ (plages de modifications de la PR) compte comme « en cours » même quand l'étiquette dit autre chose : plusieurs bleus si ça travaille à des moments différents */
+const travailDe = l => (l.work || []).map(w => ({k: 'cours', a: w[0], b: Math.max(w[1], w[0] + 10 * 60e3)}));
+const evDe = l => { const es = etapesC(l); return (es ? es.filter(x => !x.borne && x.b > x.a) : []).concat(travailDe(l)); };
+/* une tâche : ses étapes, avec en bleu les plages où elle a vraiment travaillé ; sans étapes dans le relevé, rien (la barre d'avant reste) */
+function etapesTravail(n){
+  if (n._ew !== undefined) return n._ew;
+  const es = etapesC(n);
+  if (!es) return n._ew = null;
+  const ev = evDe(n);
+  if (!ev.length) return n._ew = es;
+  const out = fondre(ev, Math.min(...ev.map(x => x.a)), Math.max(...ev.map(x => x.b)), null), bo = es.find(x => x.borne);
+  if (bo) out.push(bo);
+  return n._ew = out;
+}
+/* barre d'un projet, d'un chantier ou d'une mission (Marc, 28/10) : à chaque instant, l'état le plus actif de ses tâches (qui travaille passe avant qui attend) ;
+   sans tâche en étape, la barre est grise (rien ne travaille) ; fermée, elle finit par sa borne verte */
 function agregOf(n){
   if (n._ag !== undefined) return n._ag;
-  const ev = [];
-  (n.ls || []).forEach(l => { const es = l.leaf && etapesC(l); if (es) es.forEach(x => { if (!x.borne && x.b > x.a) ev.push(x); }); });
-  if (!ev.length || n.start == null) return n._ag = null;
-  const fin = n.end != null ? n.end : M.asof, out = [];
-  const cuts = [...new Set([n.start, fin, ...ev.flatMap(x => [x.a, x.b])])].filter(t => t >= n.start && t <= fin).sort((a, b) => a - b);
-  for (let i = 0; i + 1 < cuts.length; i++){
-    const a = cuts[i], b = cuts[i + 1], ks = ev.filter(x => x.a <= a && x.b >= b).map(x => x.k), k = ORDAG.find(o => ks.includes(o)) || 'file', z = out[out.length - 1];
-    if (z && z.k === k) z.b = b; else out.push({k, a, b});
-  }
+  const app = n.lvl === 'app', ev = (app ? [...new Set(M.leaves.filter(l => l.rl === n.rl).concat(n.ls || []))] : n.ls || []).filter(l => l.leaf).flatMap(evDe);
+  if (!ev.length || (!app && n.start == null)) return n._ag = null;
+  const deb = app ? Math.min(...ev.map(x => x.a)) : n.start, fin = n.end != null ? n.end : M.asof, out = fondre(ev, deb, fin, 'file');
   if (n.fini && n.end != null) out.push({k: 'acc', a: fin, b: fin, borne: true});
   return n._ag = out;
 }
-/* les segments d'état d'une ligne du Gantt : une tâche (même acceptée ou abandonnée) montre son historique, une mission ou un chantier l'état de ses tâches ; les dépôts gardent leurs traits de places */
+/* les segments d'état d'une ligne du Gantt : une tâche (même acceptée ou abandonnée) montre son historique, un projet, un chantier ou une mission l'état de ses tâches */
 function etatsOf(n, seg){
-  const es = n.syn || n.lvl === 'app' ? null : n.leaf ? etapesC(n) : agregOf(n);
+  const es = n.syn ? null : n.leaf ? etapesTravail(n) : agregOf(n);
   if (!es || !es.length) return '';
   return es.map(x => seg(x.a, x.borne ? x.a + 60e3 : Math.max(x.b, x.a + 60e3), `gl2 et-${x.k}${x.borne ? ' borne' : ''}`,
     ` title="${esc((n.leaf ? ETL(n, x.k) : ETLP[x.k] || ETL(n, x.k)) + (x.borne ? '' : ' · ' + dur(x.b - x.a)))}"`)).join('');
@@ -3765,7 +3784,7 @@ function legendeHTML(){
     + B('<rect x="1.5" y="6" width="17" height="8" rx="3" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="1.5 2"/>', 'trou : la tâche était prête, rien ne tournait pour elle')
     + B('<rect x="1.5" y="5" width="17" height="10" rx="3" fill="color-mix(in srgb,var(--vio) 28%,transparent)" stroke="var(--vio)" stroke-width="1.5" stroke-dasharray="3 2"/>', 'silence d\'une tâche en retard')
     + B('<path d="M2 15C9 15 11 5 17 5" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="3 2.4"/><path d="M14.5 2.8L18 5l-3.5 2.2z" fill="var(--mute)"/>', 'attend : de la tâche attendue vers celle qui attend') + `</div>`
-    + `<div class="sec"><small>Couleur d'une barre, à chaque instant</small>` + [['doing', 'travaille (plusieurs bleus : le travail a repris)'], ['vio', 'retravail : rouverte après sa fermeture'], ['marc', 'attend ton geste'], ['blk', 'attend autre chose'], ['fus', 'attend sa preuve'], ['todo', 'dans la file, en pause, ou rien ne travaille'], ['done', 'finie, preuve reçue'], ['now', 'fermée sans preuve']].map(([c, t]) => B(`<rect x="1.5" y="6" width="17" height="8" rx="3" fill="var(--${c})"/>`, t)).join('') + `<p class="txt">Une mission ou un chantier montre l'état le plus actif de ses tâches : bleu dès que l'une travaille, gris quand rien ne travaille.</p></div>`;
+    + `<div class="sec"><small>Couleur d'une barre, à chaque instant</small>` + [['doing', 'travaille (plusieurs bleus : le travail a repris)'], ['vio', 'retravail : rouverte après sa fermeture'], ['marc', 'attend ton geste'], ['blk', 'attend autre chose'], ['fus', 'attend sa preuve'], ['todo', 'dans la file, en pause, ou rien ne travaille'], ['done', 'finie, preuve reçue'], ['now', 'fermée sans preuve']].map(([c, t]) => B(`<rect x="1.5" y="6" width="17" height="8" rx="3" fill="var(--${c})"/>`, t)).join('') + `<p class="txt">Un projet, un chantier ou une mission montre l'état le plus actif de ses tâches : bleu dès que l'une travaille (travail mesuré), gris quand rien ne travaille. Toutes les barres ont la même épaisseur.</p></div>`;
 }
 const PRE = () => ST.tab === 'taches' ? 'c:' : 'g:';
 function anyOpen(){ return M.apps.some(a => isOpen(PRE() + a.ref, true)); }
@@ -4657,12 +4676,12 @@ function vGanttFull(){
   const actChips = n => n.leaf && n.acteurs && n.acteurs.length ? `<span class="acts" aria-label="Fait par ${esc(n.acteurs.map(a => actOf(a)[0]).join(', '))}">${n.acteurs.map(a => `<i style="--c:${actOf(a)[2]}" data-tip="${tipAttr(actTip(a))}">${esc(actOf(a)[1])}</i>`).join('')}</span>` : '';
   const lineOf = (l, n) => { const p = path(l), i = p.indexOf(n); const ch = (i >= 0 ? p.slice(i + 1) : p.slice(-2)).map(x => x.t); return (ch.length ? ch.join(' › ') + ' › ' : '') + l.t + (l.acteurs && l.acteurs.length ? ' (' + l.acteurs.map(a => actOf(a)[0]).join(', ') + ')' : ''); };
   // temps de travail réel : les plages de toutes les tâches données, fondues quand elles se touchent ; la longueur dit combien de temps, la hauteur combien de tâches en parallèle (aucun chiffre)
-  const chunkBars = (src, n) => {
+  const chunkBars = (src, n, prevuSeul) => {
     let bars = '';
       const GAP = Math.max(span / W * 28, 30 * 60e3), segs = [];
       src.forEach(l => (l.cls || []).forEach(c => {
         const a = Math.max(c.a, t0), b = Math.min(c.b, t1); if (b <= a) return;
-        if (a < now && b > now){ segs.push({a, b: now, l, pv: 0}); segs.push({a: now, b, l, pv: 1}); } else segs.push({a, b, l, pv: a >= now ? 1 : 0});
+        if (a < now && b > now){ if (!prevuSeul) segs.push({a, b: now, l, pv: 0}); segs.push({a: now, b, l, pv: 1}); } else if (!prevuSeul || a >= now) segs.push({a, b, l, pv: a >= now ? 1 : 0});
       }));
       segs.sort((x, y) => x.a - y.a);
       const chunks = [];
@@ -4671,7 +4690,7 @@ function vGanttFull(){
         const ev = []; z.g.forEach(g => { ev.push([g.a, 1], [g.b, -1]); }); ev.sort((p, q) => p[0] - q[0] || p[1] - q[1]);
         let cur = 0, conc = 1; ev.forEach(e => { cur += e[1]; conc = Math.max(conc, cur); });
         const ts = new Map(); z.g.forEach(g => ts.set(g.l.ref, lineOf(g.l, n))); const titres = [...ts.values()], ms2 = z.g.reduce((u, g) => u + g.b - g.a, 0);
-        const xa = X(CL(z.a)), xb = X(CL(z.b)), hh2 = 12 + 5 * (Math.min(conc, 5) - 1);
+        const xa = X(CL(z.a)), xb = X(CL(z.b)), hh2 = prevuSeul ? 12 : 12 + 5 * (Math.min(conc, 5) - 1);
         const tip = jour(z.a) + ' ' + hh(z.a) + ' – ' + (jour(z.b) === jour(z.a) ? '' : jour(z.b) + ' ') + hh(z.b) + ' · ' + dur(z.b - z.a) + (z.pv ? ' (prévu)' : '') + ' · ' + titres.length + ' tâche' + (titres.length > 1 ? 's' : '') + (conc > 1 ? ', jusqu\'à ' + conc + ' en même temps' : '') + '\n' + titres.slice(0, 8).join('\n') + (titres.length > 8 ? '\n… et ' + (titres.length - 8) + ' autres' : '');
         bars += `<span class="gbk${z.pv ? ' pv' : ''}${z.b > t1 || z.a < t0 ? ' cut' : ''}" style="left:${xa}%;width:max(${xb - xa}%,5px);height:${hh2}px" title="${esc(tip)}"></span>`;
       });
@@ -4682,20 +4701,24 @@ function vGanttFull(){
     const sc = (n.leaf ? 'e-' + n.e : 'st-' + n.st) + (n.oubli ? ' oubli' : '');
     // le trou : la tâche était prête et rien ne tournait pour elle (trait plein = mesuré, pointillé = prévu)
     if (n.hole) bars += seg(n.hole.a, n.hole.b, 'gh2' + (n.hole.reel ? ' reel' : ''), ` title="trou de ${esc(dur(n.hole.d))}"`);
-    if (n.lvl === 'app' || n.syn){
-      bars += chunkBars(n.syn ? n.kids : [...new Set(M.leaves.filter(l => l.rl === n.rl).concat(n.ls || []))], n);
+    if (n.syn){
+      bars += chunkBars(n.kids, n);
+    } else if (n.lvl === 'app'){
+      // le projet : l'état de toutes ses tâches (une seule épaisseur), puis ce qui est PRÉVU ; sans étapes dans le relevé, les blocs d'avant
+      const tout = [...new Set(M.leaves.filter(l => l.rl === n.rl).concat(n.ls || []))], hist = etatsOf(n, seg);
+      bars += hist ? hist + chunkBars(tout, n, true) : chunkBars(tout, n);
     } else if (n.start != null){
       const end = n.end || now;
-      if (!n.leaf && n.ls) bars += chunkBars(n.ls, n);
-      // vie réelle de l'élément (fine), puis les plages de travail mesurées (épaisses)
-      // l'état au fil du temps, jusqu'à la fin (Marc, 28/10) : une tâche acceptée ou abandonnée montre aussi son historique, une mission ou un chantier l'état de ses tâches
+      // l'état au fil du temps, jusqu'à la fin (Marc, 28/10) : une tâche acceptée ou abandonnée montre aussi son historique, une mission ou un chantier l'état de ses tâches ;
+      // une seule épaisseur : les blocs de travail (hauteur selon le parallèle) ne servent que sans historique d'états
       const hist = etatsOf(n, seg);
+      if (!hist && !n.leaf && n.ls) bars += chunkBars(n.ls, n);
       bars += hist || seg(n.start, end, `gl2 ${sc}`);
       // une tâche active (modifiée il y a moins de 30 min) : sa dernière plage de travail brille
       const lv = n.leaf && (n.e === 'cours' || n.e === 'rel') && actif(n) ? ' live' : '';
       // les plages de travail de la tâche : mêmes blocs que ceux de sa mission, pour retrouver d'où vient chaque bloc d'en haut
-      if (n.leaf) bars += chunkBars([n], n);
-      if (n.leaf && !n.work.length) bars += seg(n.start, end, `gw2 ${sc} nw${lv}`);
+      if (n.leaf && !hist) bars += chunkBars([n], n);
+      if (n.leaf && !hist && !n.work.length) bars += seg(n.start, end, `gw2 ${sc} nw${lv}`);
       if (!n.leaf && n.fini && n.end != null){
         if (!hist) bars += seg(n.start, n.end, `gb agg ${n.sp ? 'e-fus' : 'st-done'}`);
         if (n.end >= t0 && n.end <= t1) bars += `<span class="gfin${n.sp ? ' sp' : ''}" style="left:${X(n.end)}%" title="${esc(finiTxt(n) + ' ' + quand(n.end))}"></span>`;
