@@ -4417,6 +4417,25 @@ function faitsDe(n, H){
   }
   return f.join(' | ').replace(/\s+/g, ' ').slice(0, FAITS_MAX);
 }
+/* Les MESURES d'un graphique (Marc, 28/10 : « l'assistant voit toujours pas les graphes, il devrait »). Chaque barre, point ou part
+   porte déjà sa valeur dans son infobulle (`data-tip`) ; le texte visible n'a que le titre et les axes. On les donne à LIA, avec la
+   description du graphique (`aria-label`), pour qu'elle lise les chiffres au lieu de deviner. Pur : un bloc du DOM entre, un texte sort.
+   Une DONNÉE pour LIA, jamais une consigne. Rend '' quand le bloc n'a ni infobulle ni description : le texte entier prend alors le relais. */
+function mesuresDe(bloc, brut){
+  if (!bloc || !bloc.querySelectorAll) return '';
+  const propre = t => String(t || '').replace(/\s*\n\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  const descr = [], vu = new Set(), tips = [];
+  bloc.querySelectorAll('[role="img"][aria-label]').forEach(n => { const t = propre(n.getAttribute('aria-label')); if (t && !vu.has(t)){ vu.add(t); descr.push(t); } });
+  bloc.querySelectorAll('[data-tip]').forEach(n => { const t = propre(n.getAttribute('data-tip')); if (t && !vu.has(t)){ vu.add(t); tips.push(t); } });
+  if (!descr.length && !tips.length) return '';
+  const tete = [propre(brut).slice(0, 300)];
+  if (descr.length) tete.push('graphique : ' + descr.join(' ; ').slice(0, 300));
+  const debut = tete.filter(Boolean).join(' | ') + ' | mesures : ';
+  let place = FAITS_MAX - debut.length, i = 0, mes = '';
+  // chaque mesure entière ou aucune ; ce qui ne tient pas est compté, jamais coupé en deux
+  while (i < tips.length && mes.length + tips[i].length + 3 <= place - 40){ mes += (mes ? ' ; ' : '') + tips[i]; i++; }
+  return (debut + mes + (i < tips.length ? ' ; … et ' + (tips.length - i) + ' autres mesures' : '')).slice(0, FAITS_MAX);
+}
 function clicDroitDe(el){
   if (!el || !el.closest) return null;
   const g = GENRES.find(([sel]) => el.closest(sel));
@@ -4431,6 +4450,8 @@ function clicDroitDe(el){
   // les tâches et les missions sont dans M.N ; les apps (ref « app:… ») sont dans M.apps, pas dans M.N
   const n = ref && typeof M !== 'undefined' && M ? (M.N && M.N[ref]) || (M.apps || []).find(a => a.ref === ref) || null : null;
   if (n) donnees = faitsDe(n, {LV, STE, ORDRE, path, stLabel, quand, dur, retTxt, court, asof: M.asof});
+  // un graphique : ses mesures (infobulles) avant le simple texte du bloc
+  if (!donnees) donnees = mesuresDe(bloc, brut);
   if (!donnees && brut.length > 300) donnees = brut.slice(0, FAITS_MAX);
   return {genre: g[1], texte, donnees};
 }

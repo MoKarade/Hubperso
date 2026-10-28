@@ -2,6 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : LIA lit les graphiques de la page Chantier (Hubperso#681, mission MoKarade/.github#575)
+
+- **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Dans le cadre du Chantier (`chantier/cadre.html`), le texte d'un bloc ne portait que le titre et les axes : les chiffres sont dans les infobulles (`data-tip`) de chaque barre ou point.
+- **Ce qui change** : `mesuresDe(bloc, brut)` (pur) donne à LIA la description du graphique (`aria-label`) puis ses mesures, chacune entière ou aucune, doublons retirés, sous 1 200 caractères, avec « … et N autres mesures » pour ce qui ne tient pas. Une donnée, jamais une consigne. Un bloc sans infobulle ni description : le texte du bloc prend le relais comme avant. Les faits d'une barre du Gantt (`faitsDe`) gardent la priorité.
+- **Tests** : `tests/chantierCadreDom.test.ts` (graphique avec description et infobulles, mesure répétée dite une fois, graphique chargé borné avec le compte des omises).
+- **Preuve à lire** : le PC pose « Explique-moi ça » sur une barre d'un graphique du Chantier ; la réponse cite des valeurs lues dans les infobulles.
+
 ## 28/10/2026 : LIA lit les courbes du hub (Hubperso#675, mission MoKarade/.github#575)
 
 - **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Un clic droit sur une courbe envoyait « une courbe d'évolution » sans aucune valeur : le tracé n'est qu'un `<path>`.
