@@ -20,6 +20,7 @@ import { Sparkline } from "./Sparkline";
 import { Icone } from "./Icone";
 import { LogoApp } from "./LogoApp";
 import { aUnLogo } from "@/lib/logos";
+import { valeurDeMetrique } from "@/lib/resumeSerie";
 
 /**
  * Le bloc dominant de la carte : la métrique que l'app a choisi de publier en premier, sa
@@ -59,7 +60,7 @@ export function Heros({ heros }: { heros: NonNullable<ReturnType<typeof etatCart
       </p>
 
       <div className="heros__courbe">
-        <Sparkline points={serie} label={metrique.label} />
+        <Sparkline points={serie} label={metrique.label} val={valeurDeMetrique(metrique)} />
       </div>
     </div>
   );
