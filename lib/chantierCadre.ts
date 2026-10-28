@@ -69,6 +69,12 @@ export const MESSAGE_COUTS = "chantier-couts";
  * `{ type, id, ok: true }` une fois déposé ou `{ type, id, ok: false, erreur }`. Le cadre n'a pas de réseau : c'est le hub qui dépose.
  */
 export const MESSAGE_GESTE = "chantier-geste";
+/**
+ * Une version neuve du document du cadre est servie (le hub le voit à son ETag) : le hub le dit au cadre, qui se recharge de lui-même
+ * quand plus personne ne s'en sert, et dit `chantier-recharge` au hub juste avant, pour qu'il accepte le canal du document neuf.
+ */
+export const MESSAGE_VERSION_NEUVE = "chantier-version-neuve";
+export const MESSAGE_RECHARGE = "chantier-recharge";
 /** Le hub demande un onglet au cadre déjà ouvert (`/chantier?onglet=couts` sans le recharger) : `{ type, onglet }`. */
 export const MESSAGE_ONGLET = "chantier-onglet";
 /**

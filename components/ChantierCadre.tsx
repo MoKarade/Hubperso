@@ -29,7 +29,9 @@ import {
   MESSAGE_GESTE,
   MESSAGE_OK,
   MESSAGE_ONGLET,
+  MESSAGE_RECHARGE,
   MESSAGE_RELEVE,
+  MESSAGE_VERSION_NEUVE,
   SANDBOX_CADRE,
   URL_CADRE,
   URL_COUTS,
@@ -54,6 +56,9 @@ const INTERVALLE_MS = 60_000;
 /** Les coûts demandent un tour chez chaque app : toutes les 5 min, onglet visible seulement. */
 const INTERVALLE_COUTS_MS = 300_000;
 
+/** La version du document du cadre (son ETag, sans lire la base) : toutes les 5 min, onglet visible seulement. */
+const INTERVALLE_VERSION_MS = 300_000;
+
 type Onglet = (typeof ONGLETS)[number];
 
 export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet | null; actif?: boolean }) {
@@ -70,6 +75,8 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
     let enCours = false;
     let coutsEnCours = false;
     let coutsLusA = 0;
+    let versionLueA = 0;
+    let versionCadre: string | null = null;
 
     const dire = (message: string) => {
       canal?.postMessage({ type: MESSAGE_ETAT, message });
@@ -125,6 +132,25 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
     }
 
     /**
+     * Le cadre ne se recharge jamais seul : un déploiement qui change `chantier/cadre.html` ne l'atteindrait pas avant que la
+     * personne recharge la page. On relit donc l'ETag du document (HEAD : aucun corps, aucune lecture en base) ; s'il change,
+     * le cadre est prévenu et se recharge quand plus personne ne s'en sert (il garde son onglet dans son adresse).
+     */
+    async function verifierVersion() {
+      versionLueA = Date.now();
+      try {
+        const reponse = await fetch(URL_CADRE, { method: "HEAD", cache: "no-store", credentials: "same-origin" });
+        const version = reponse.status === 200 ? reponse.headers.get("etag") : null;
+        if (!version) return;
+        const changee = versionCadre !== null && version !== versionCadre;
+        versionCadre = version;
+        if (changee) canal?.postMessage({ type: MESSAGE_VERSION_NEUVE });
+      } catch {
+        // Un hub qui ne répond pas ne change rien : la prochaine vérification réessaie.
+      }
+    }
+
+    /**
      * Le cadre remet un geste (Fusionner, Fait, une réponse) : le hub le dépose avec la session du propriétaire, le
      * cadre n'ayant ni réseau ni Drive. Le serveur valide tout ; ici on ne relaie que ce qui a la forme d'un geste,
      * et la réponse repart dans le canal avec l'`id` du geste (jamais ailleurs).
@@ -175,6 +201,13 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
         const type = (m.data as { type?: unknown } | null)?.type;
         if (type === MESSAGE_GESTE) void deposerGeste(m.data);
         else if (type === MESSAGE_CLIC_DROIT) relayerClicDroit(m.data);
+        else if (type === MESSAGE_RECHARGE) {
+          // Le cadre se recharge : son document neuf se présentera avec un canal neuf, qu'il faut alors accepter.
+          canal?.close();
+          canal = null;
+          etag = null;
+          bandeau = false;
+        }
       };
       canal.postMessage({ type: MESSAGE_OK, gestes: true });
       void lire();
@@ -185,6 +218,7 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
       if (!actifRef.current || document.visibilityState !== "visible") return;
       void lire();
       if (Date.now() - coutsLusA >= INTERVALLE_COUTS_MS) void lireCouts();
+      if (Date.now() - versionLueA >= INTERVALLE_VERSION_MS) void verifierVersion();
     };
 
     actions.current = {

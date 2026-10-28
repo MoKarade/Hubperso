@@ -21,14 +21,23 @@ const fetchMoq = vi.fn();
 const coutsMoq = vi.fn();
 /** Les gestes de l'onglet « À toi » : une troisième route, écrite seulement sur demande du cadre. */
 const gestesMoq = vi.fn();
+/** Le document du cadre lui-même : le hub n'en lit que l'ETag (HEAD), pour savoir qu'un déploiement l'a changé. */
+const versionMoq = vi.fn();
 const COUTS = { suivies: 1, apps: 2, alertes: 0, totaux: [], note: null, detail: [] };
 
 beforeEach(() => {
   vi.useFakeTimers();
   coutsMoq.mockResolvedValue({ ok: true, status: 200, json: async () => COUTS });
   gestesMoq.mockResolvedValue({ ok: true, status: 201 });
+  versionMoq.mockResolvedValue({ status: 200, headers: { get: () => '"v1"' } });
   vi.stubGlobal("fetch", (url: string, init?: RequestInit) =>
-    url === "/api/chantier/couts" ? coutsMoq(url, init) : url === "/api/chantier/gestes" ? gestesMoq(url, init) : fetchMoq(url, init),
+    url === "/api/chantier/couts"
+      ? coutsMoq(url, init)
+      : url === "/api/chantier/gestes"
+        ? gestesMoq(url, init)
+        : url === "/api/chantier/cadre"
+          ? versionMoq(url, init)
+          : fetchMoq(url, init),
   );
   conteneur = document.createElement("div");
   document.body.appendChild(conteneur);
@@ -41,6 +50,7 @@ afterEach(() => {
   fetchMoq.mockReset();
   coutsMoq.mockReset();
   gestesMoq.mockReset();
+  versionMoq.mockReset();
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -79,7 +89,7 @@ async function presenter(source: Window | null, port: FaussePort | null, donnee:
 function donnees(port: FaussePort) {
   return port.postMessage.mock.calls
     .map((c) => c[0] as { type: string; message?: string; octets?: ArrayBuffer })
-    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste");
+    .filter((m) => m.type !== "chantier-ok" && m.type !== "chantier-couts" && m.type !== "chantier-geste" && m.type !== "chantier-version-neuve");
 }
 
 /** Les réponses aux gestes écrites dans le canal. */
@@ -364,6 +374,77 @@ describe("ChantierCadre", () => {
     act(() => racine.render(h(ChantierCadre, { actif: true, onglet: "couts" })));
     expect(cadre.getAttribute("src")).toBe("/api/chantier/cadre#gantt");
     expect(port.postMessage).toHaveBeenCalledWith({ type: "chantier-onglet", onglet: "couts" });
+  });
+});
+
+describe("ChantierCadre : le cadre se met à jour sans que l'on recharge la page", () => {
+  const versionsNeuves = (port: FaussePort) => port.postMessage.mock.calls.filter((c) => (c[0] as { type: string }).type === "chantier-version-neuve");
+
+  it("la version du document se lit par HEAD (aucun corps, aucune base), à la présentation puis toutes les 5 minutes", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    expect(versionMoq).toHaveBeenCalledTimes(1);
+    expect(versionMoq.mock.calls[0]![1]).toMatchObject({ method: "HEAD", cache: "no-store", credentials: "same-origin" });
+    await avancer(60_000 * 5);
+    expect(versionMoq).toHaveBeenCalledTimes(2);
+    expect(versionsNeuves(port)).toHaveLength(0);
+  });
+
+  it("un déploiement change l'ETag : le cadre est prévenu une fois, par son canal", async () => {
+    const { cadre, direct } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    versionMoq.mockResolvedValue({ status: 200, headers: { get: () => '"v2"' } });
+    await avancer(60_000 * 5);
+    expect(versionsNeuves(port)).toHaveLength(1);
+    await avancer(60_000 * 5);
+    expect(versionsNeuves(port)).toHaveLength(1);
+    expect(direct).not.toHaveBeenCalled();
+  });
+
+  it("une panne ou un refus de la route ne prévient personne et ne casse rien", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    versionMoq.mockRejectedValueOnce(new Error("réseau")).mockResolvedValue({ status: 401, headers: { get: () => null } });
+    await avancer(60_000 * 10);
+    expect(versionsNeuves(port)).toHaveLength(0);
+  });
+
+  it("caché (hors de /chantier) : la version n'est pas relue", async () => {
+    act(() => racine.render(h(ChantierCadre, { actif: true })));
+    const cadre = conteneur.querySelector("iframe")!;
+    fetchMoq.mockResolvedValue(reponse(304, '"1"'));
+    await presenter(cadre.contentWindow, faussePort());
+    versionMoq.mockClear();
+    act(() => racine.render(h(ChantierCadre, { actif: false })));
+    await avancer(60_000 * 10);
+    expect(versionMoq).not.toHaveBeenCalled();
+  });
+
+  it("le cadre dit qu'il se recharge : le canal est fermé et celui du document neuf est accepté", async () => {
+    const { cadre } = monter();
+    const ancien = faussePort();
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await presenter(cadre.contentWindow, ancien);
+    await act(async () => {
+      ancien.onmessage?.({ data: { type: "chantier-recharge" } });
+    });
+    expect(ancien.close).toHaveBeenCalled();
+    // le relevé n'est plus écrit dans l'ancien canal
+    ancien.postMessage.mockClear();
+    await avancer(60_000);
+    expect(ancien.postMessage).not.toHaveBeenCalled();
+
+    const neuf = faussePort();
+    await presenter(cadre.contentWindow, neuf);
+    expect(neuf.postMessage.mock.calls[0]![0]).toEqual({ type: "chantier-ok", gestes: true });
+    // l'ETag d'avant est oublié : le document neuf reçoit le relevé en entier, pas un 304
+    expect(fetchMoq.mock.calls.at(-1)![1].headers).toEqual({});
   });
 });
 

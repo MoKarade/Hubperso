@@ -17,11 +17,11 @@ vi.mock("node:fs/promises", () => ({ readFile: moq.readFile }));
 
 import { CSP_CADRE } from "@/lib/chantierCadre";
 
-async function appeler() {
+async function appeler(entetes?: Record<string, string>) {
   // Module neuf à chaque cas : le document y est gardé en mémoire.
   vi.resetModules();
   const { GET } = await import("../app/api/chantier/cadre/route");
-  return GET();
+  return GET(entetes ? new Request("https://hub.test/api/chantier/cadre", { headers: entetes }) : undefined);
 }
 
 beforeEach(() => {
@@ -64,6 +64,34 @@ describe("GET /api/chantier/cadre", () => {
     expect(r.headers.get("x-frame-options")).toBe("SAMEORIGIN");
     expect(r.headers.get("referrer-policy")).toBe("no-referrer");
     expect(String(moq.readFile.mock.calls[0]![0])).toMatch(/chantier[\\/]cadre\.html$/);
+  });
+
+  it("le document porte un ETag (son empreinte) : le même texte, le même ETag ; un autre texte, un autre", async () => {
+    moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
+    const a = (await appeler()).headers.get("etag");
+    expect(a).toMatch(/^"[0-9a-f]{16}"$/);
+    expect((await appeler()).headers.get("etag")).toBe(a);
+    moq.readFile.mockResolvedValue("<!doctype html><title>Chantier neuf</title>");
+    expect((await appeler()).headers.get("etag")).not.toBe(a);
+  });
+
+  it("If-None-Match sur la bonne version : 304 sans corps, avec les en-têtes de sécurité ; sur une autre : le document", async () => {
+    moq.auth.mockResolvedValue({ user: { email: PROPRIETAIRE } });
+    const etag = (await appeler()).headers.get("etag")!;
+    const connue = await appeler({ "if-none-match": etag });
+    expect(connue.status).toBe(304);
+    expect(await connue.text()).toBe("");
+    expect(connue.headers.get("etag")).toBe(etag);
+    expect(connue.headers.get("cache-control")).toContain("no-store");
+    expect(connue.headers.get("x-content-type-options")).toBe("nosniff");
+    const autre = await appeler({ "if-none-match": '"autre"' });
+    expect(autre.status).toBe(200);
+    expect(await autre.text()).toContain("<title>Chantier</title>");
+  });
+
+  it("sans session, If-None-Match ne contourne rien : 401, pas 304", async () => {
+    moq.auth.mockResolvedValue(null);
+    expect((await appeler({ "if-none-match": '"x"' })).status).toBe(401);
   });
 
   it("les refus portent aussi les en-têtes de sécurité (la CSP globale ne s'applique pas ici)", async () => {
