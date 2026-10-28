@@ -95,7 +95,15 @@ const moq = vi.hoisted(() => ({
   baseConfiguree: vi.fn(() => true),
   assurerMigrations: vi.fn(async () => {}),
   ranger: vi.fn(),
+  pousser: vi.fn(async () => "envoye"),
+  apres: [] as Array<() => Promise<void> | void>,
 }));
+// `after` n'existe que dans une requête Next : on garde son callback pour le lancer à la main, comme après la réponse.
+vi.mock("next/server", async (importOriginal) => {
+  const vrai = await importOriginal<typeof import("next/server")>();
+  return { ...vrai, after: (f: () => Promise<void> | void) => void moq.apres.push(f) };
+});
+vi.mock("@/lib/chantierSortiesEnvoi", () => ({ pousserSortieWebhook: moq.pousser }));
 vi.mock("@/lib/db", () => ({ baseConfiguree: moq.baseConfiguree }));
 vi.mock("@/lib/migrations", () => ({ assurerMigrations: moq.assurerMigrations }));
 vi.mock("@/lib/chantierEvenementsDb", () => ({ ranger: moq.ranger }));
@@ -114,6 +122,8 @@ beforeEach(() => {
   moq.baseConfiguree.mockReset().mockReturnValue(true);
   moq.assurerMigrations.mockReset().mockResolvedValue(undefined);
   moq.ranger.mockReset().mockResolvedValue({ nouveau: true });
+  moq.pousser.mockClear();
+  moq.apres.length = 0;
   vi.stubEnv("CHANTIER_WEBHOOK_SECRET", SECRET);
 });
 
@@ -138,6 +148,26 @@ describe("POST /api/chantier/evenement", () => {
     expect(moq.ranger).toHaveBeenCalledWith(expect.objectContaining({ id: ID, cle: "hub#7", etat: "ouverte" }));
     moq.ranger.mockResolvedValue({ nouveau: false });
     expect(await (await POST(requete(PR))).json()).toEqual({ ok: true, nouveau: false });
+  });
+
+  it("Hubperso#651 : une livraison NOUVELLE part à MemoryAI après la réponse, avec le jeton dédié ; un renvoi, un refus, une panne : rien ne part", async () => {
+    vi.stubEnv("MEMORYAI_SORTIES_TOKEN", "jeton-de-test-sorties-0123456789");
+    const r = await POST(requete(PR));
+    expect(r.status).toBe(200);
+    expect(moq.pousser).not.toHaveBeenCalled(); // pas avant la réponse
+    expect(moq.apres).toHaveLength(1);
+    await moq.apres[0]!();
+    expect(moq.pousser).toHaveBeenCalledWith({ evenement: expect.objectContaining({ id: ID, cle: "hub#7" }), jeton: "jeton-de-test-sorties-0123456789" });
+
+    moq.apres.length = 0;
+    moq.ranger.mockResolvedValue({ nouveau: false }); // GitHub rejoue la livraison : déjà rangée, déjà poussée
+    await POST(requete(PR));
+    await POST(requete(PR, {}, null)); // signature absente
+    await POST(requete("{}", { "x-github-event": "ping" }));
+    moq.ranger.mockRejectedValue(new Error("neon indisponible"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await POST(requete(PR));
+    expect(moq.apres).toHaveLength(0);
   });
 
   it("ping ou type non retenu : 200 ignore, rien n'est rangé ; retenu mais illisible : 422", async () => {

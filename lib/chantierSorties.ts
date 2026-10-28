@@ -16,9 +16,12 @@
 import { createHash } from "node:crypto";
 import { gunzipSync } from "node:zlib";
 import { octetsGzip } from "./chantierReleve";
+import type { EvenementChantier as WebhookChantier } from "./chantierEvenements";
 
 export const TYPE_APP = "chantier_app";
 export const TYPE_MISSION = "chantier_mission";
+/** Un webhook GitHub/Vercel reçu par `/api/chantier/evenement`, poussé tel quel à l'instant où il arrive. */
+export const TYPE_EVENEMENT = "chantier_evenement";
 /** Les bornes de la porte de MemoryAI (`lib/sorties/contrat.ts`) : plus long est REFUSÉ, jamais coupé là-bas. */
 export const TITRE_MAX = 120;
 export const RESUME_MAX = 600;
@@ -153,15 +156,36 @@ export function evenementsChantier(releve: unknown, maintenant: Date): Evenement
   return [...apps, ...missions.map((m) => m.e)].slice(0, EVENEMENTS_MAX);
 }
 
-/**
- * Le hub pousse une fois par heure au plus : le PC envoie toutes les 10 minutes, on ne pousse que pour l'envoi
- * des dix premières minutes de l'heure (heure UTC). Pas de minuteur de plus, pas de lecture en base. PURE.
- */
-export function doitPousser(maintenant: Date): boolean {
-  return maintenant.getUTCMinutes() < 10;
-}
-
 /** Le corps de `POST /api/sorties`. L'app ne s'y lit jamais : MemoryAI la déduit du jeton (ADR 0015). PURE. */
 export function corpsSorties(evenements: readonly EvenementChantier[]): { source: "sorties"; evenements: EvenementChantier[] } {
   return { source: "sorties", evenements: [...evenements] };
+}
+
+/**
+ * Un webhook déjà réduit par `lireEvenement`, mis en sortie pour MemoryAI. PURE.
+ * Titre, état, branche, environnement et sha court seulement : jamais le lien, jamais le corps d'un commentaire.
+ * La `ref` est l'identifiant de LIVRAISON de GitHub : un renvoi (rejeu, double envoi) a la même `ref`, donc MemoryAI
+ * ne le double pas (empreinte du type et de la `ref`).
+ */
+export function sortieDepuisWebhook(e: WebhookChantier): EvenementChantier {
+  const plus = e.plus ?? {};
+  const resume = [
+    plus.t ? `« ${ligne(plus.t, 100)} »` : "",
+    e.etat ? `état ${ligne(e.etat, 30)}` : "",
+    plus.lb ? `étiquette ${ligne(plus.lb, 60)}` : "",
+    plus.b ? `branche ${ligne(plus.b, 60)}` : "",
+    plus.env ? `environnement ${ligne(plus.env, 40)}` : "",
+    plus.sev ? `gravité ${ligne(plus.sev, 20)}` : "",
+    e.sha ? `commit ${ligne(e.sha, 40).slice(0, 7)}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    type: TYPE_EVENEMENT,
+    date: e.at,
+    titre: ligne(`${e.repo} · ${e.cle} : ${e.type} ${e.action}`, TITRE_MAX),
+    resume: ligne(resume || `${e.type} ${e.action}`, RESUME_MAX),
+    ref: `ev:${e.id}`.slice(0, 80),
+    niveau: NIVEAU,
+  };
 }
