@@ -87,6 +87,11 @@ const FIXES: readonly VariableAttendue[] = [
     siAbsente: "réception des événements GitHub désactivée : /api/chantier/evenement répond 503, la page Chantier ne lit que le relevé du PC",
   },
   {
+    nom: "CHANTIER_GITHUB_TOKEN",
+    exigence: "optionnelle",
+    siAbsente: "rattrapage GitHub non branché : /api/chantier/rattrapage répond 503, la page Chantier garde l'âge du relevé du PC entre le relevé et les premiers événements (jeton en lecture seule : Issues, Pull requests, Metadata, les dépôts du projet)",
+  },
+  {
     nom: "MEMORYAI_SORTIES_TOKEN",
     exigence: "optionnelle",
     siAbsente: "le hub ne pousse pas l'état du chantier à MemoryAI : LIA ne lit que les faits envoyés avec le clic droit (jeton d'écrivain de la porte POST /api/sorties, variable serveur, lue au build)",

@@ -44,6 +44,10 @@
       // Les événements GitHub reçus par le hub (webhooks signés) : l'état à l'instant, avant le relevé du PC.
       recu = true;
       if (typeof window.surEvenements === 'function') window.surEvenements(m); else (window.evEnAttente = window.evEnAttente || []).push(m);
+    } else if (m.type === 'chantier-rattrapage') {
+      // Ce que GitHub dit de l'état courant des issues et PR, lu une fois par le hub à l'ouverture (le trou entre le relevé du PC et les événements).
+      recu = true;
+      if (typeof window.surRattrapage === 'function') window.surRattrapage(m); else (window.ratEnAttente = window.ratEnAttente || []).push(m);
     } else if (m.type === 'chantier-couts') {
       // Les coûts et quotas des apps (la page Coûts du hub, reprise ici) : lus par le hub, jamais par ce document.
       recu = true;
@@ -1638,6 +1642,11 @@ const persist = () => store.set({tab: ST.tab, f: ST.f, z: ST.z, open: ST.open, v
 const H = 3600e3, MIN = 60e3;
 /* événements GitHub (webhooks signés → hub, Hubperso#684) : EV par identifiant de livraison ; EVS = la dernière lecture réussie, l'erreur, le dernier reçu */
 const EV = new Map(), EVS = {lu: NaN, err: '', der: NaN};
+/* rattrapage GitHub (Hubperso#699) : le hub lit lui-même l'état courant des issues et PR, une fois à l'ouverture. `complet` = tous les dépôts lus, rien tronqué : alors seulement
+   l'état des tâches est aussi frais que les événements en direct. Sans jeton (`nb`), en échec ou tronqué, la page garde l'âge du relevé du PC et le dit. */
+const RAT = {lu: NaN, err: '', nb: false, inc: [], errs: []};
+const ratComplet = () => isFinite(RAT.lu) && !RAT.err && !RAT.errs.length && !RAT.inc.length;
+const evVivantTop = () => isFinite(EVS.lu) && !EVS.err && Date.now() - EVS.lu < 90e3;
 const wallT = (t, z) => Date.parse(new Date(t).toLocaleString('en-US', {timeZone: z}));
 // places par dépôt : une seule jusqu'à la décision de Marc du 21/10 (13:21Z), deux ensuite, ou ce que dit la file du script
 const PLACES_DEPUIS = Date.parse('2026-10-21T13:21:03Z');
@@ -1825,6 +1834,17 @@ function avecEvenements(D, evs){
     const R = par[e.repo]; if (!R) return;
     const n = R.n.get(e.n), plus = e.plus || {}, iso = e.at;
     if (e.type === 'issues'){
+      if (e.action === 'snapshot'){
+        let lb = []; try { lb = JSON.parse(plus.labs || '[]').filter(x => typeof x === 'string'); } catch (x) {}
+        const niv = lb.map(x => NIVEAUX[x]).find(Boolean), ferme = e.etat === 'fermee';
+        let x = n;
+        if (!x){ if (ferme) return; x = {n: e.n, t: plus.t || '', l: null, lb: [], st: 'open', c: plus.cr || iso, x: null, s: null, k: [], d: []}; R.r.nodes.push(x); R.n.set(e.n, x); }
+        if (plus.t) x.t = plus.t;
+        x.lb = lb; if (niv) x.l = niv;
+        x.st = ferme ? 'closed' : 'open'; x.x = ferme ? (plus.fin || iso) : null;
+        if (plus.acc && !x.pv) { try { const a = JSON.parse(plus.acc); if (a && typeof a.c === 'string') x.pv = {u: typeof a.u === 'string' ? a.u : null, c: a.c}; } catch (z) {} }
+        return;
+      }
       if (e.action === 'opened' && !n){ const x = {n: e.n, t: plus.t || '', l: null, lb: [], st: 'open', c: iso, x: null, s: null, k: [], d: []}; R.r.nodes.push(x); R.n.set(e.n, x); return; }
       if (!n) return;
       if (e.action === 'edited' && plus.t) n.t = plus.t;
@@ -4208,7 +4228,8 @@ function sources(){
   const t = s => s ? Date.parse(s) : NaN, jauge = (k, f) => (G[k] ? G[k][f] : null);
   const jours = CLIGNES.map(l => l[0]).sort(), dernier = jours.length ? t(jours[jours.length - 1] + 'T12:00:00Z') : NaN;
   const S = [
-    {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, ret: 12 * MIN, per: 20 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
+    {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? (ratComplet() && evVivantTop() ? Math.max(M.asof, EVS.lu) : M.asof) : NaN, cad: 10 * MIN, ret: 12 * MIN, per: 20 * MIN,
+      src: 'GitHub (issues et PR des dépôts), ' + (ratComplet() && evVivantTop() ? 'rattrapé chez GitHub à l\'ouverture puis suivi par les événements en direct' : 'relevé du PC' + (RAT.nb ? ' : rattrapage GitHub non branché (jeton de lecture absent), le trou avant les événements reste inconnu' : RAT.err ? ' : ' + RAT.err : RAT.errs.length ? ' : rattrapage incomplet (' + RAT.errs.join(' ; ') + ')' : RAT.inc.length ? ' : rattrapage tronqué (' + RAT.inc.join(', ') + ')' : ''))},
     ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, ret: 12 * MIN, per: 20 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
     ...(isFinite(EVS.lu) || EVS.err ? [{id: 'evenements', nom: 'Événements GitHub en direct', nat: 'mes', at: EVS.lu, cad: 15e3, ret: 45e3, per: 90e3, src: EVS.err || (EV.size ? EV.size + ' événements reçus du webhook GitHub, le dernier ' + ago(EVS.der) + ' : ils passent avant le relevé du PC' : 'aucun événement reçu : le webhook GitHub n\'est pas encore branché, seul le relevé du PC alimente la page')}] : []),
     ...(CUR && CUR.etapes && typeof CUR.etapes === 'object' ? [{id: 'etapes', nom: 'Durées des étapes : sortie du brouillon et mise en ligne', nat: 'mes', at: t(CUR.etapes.releve), cad: 15 * MIN, src: 'GitHub (sortie du brouillon et déploiement Vercel de chaque PR fusionnée), relevé du PC'}] : []),
@@ -5547,18 +5568,30 @@ function vGanttFull(){
      publié n'a pas de jauge. */
   window.surCouts = () => { if (M && ST.tab === 'couts') render(); };
   // le hub relit les événements toutes les 10 s : on range par identifiant de livraison (un renvoi ne compte pas deux fois), on oublie ce qui a plus de 14 jours
+  const rangerEv = liste => {
+    (Array.isArray(liste) ? liste : []).forEach(e => { if (e && typeof e.id === 'string' && typeof e.cle === 'string' && typeof e.repo === 'string' && isFinite(Date.parse(e.at))) EV.set(e.id, e); });
+    EV.forEach((e, id) => { if (Date.now() - Date.parse(e.at) > 14 * DAY) EV.delete(id); });
+    EVS.der = [...EV.values()].reduce((a, e) => e.action === 'snapshot' ? a : Math.max(a, Date.parse(e.at)), NaN) || NaN;
+  };
+  // un événement utile change l'état des tâches : tout le modèle est recalculé sur le relevé + les événements, et la page se redessine, quel que soit l'onglet
+  const recalculer = () => { try { M = model(avecEvenements(BASE, [...EV.values()])); render(); } catch (e) { const el = $('#err'); el.hidden = false; el.textContent = 'Données illisibles : ' + (e && e.message || e); } };
   window.surEvenements = m => {
     const etait = isFinite(EVS.lu) + '|' + EVS.err;
     if (typeof m.erreur === 'string' && m.erreur) EVS.err = m.erreur; else { EVS.err = ''; EVS.lu = Date.now(); }
     const avant = EV.size;
-    (Array.isArray(m.evenements) ? m.evenements : []).forEach(e => { if (e && typeof e.id === 'string' && typeof e.cle === 'string' && typeof e.repo === 'string' && isFinite(Date.parse(e.at))) EV.set(e.id, e); });
-    EV.forEach((e, id) => { if (Date.now() - Date.parse(e.at) > 14 * DAY) EV.delete(id); });
-    EVS.der = [...EV.values()].reduce((a, e) => Math.max(a, Date.parse(e.at)), NaN) || NaN;
-    // un événement utile change l'état des tâches : tout le modèle est recalculé sur le relevé + les événements, et la page se redessine, quel que soit l'onglet
-    if (M && BASE && EV.size !== avant){ try { M = model(avecEvenements(BASE, [...EV.values()])); render(); } catch (e) { const el = $('#err'); el.hidden = false; el.textContent = 'Données illisibles : ' + (e && e.message || e); } }
+    rangerEv(m.evenements);
+    if (M && BASE && EV.size !== avant) recalculer();
     else if (M && ST.tab === 'cours' && etait !== isFinite(EVS.lu) + '|' + EVS.err) render();
   };
   (window.evEnAttente || []).splice(0).forEach(window.surEvenements);
+  // le rattrapage GitHub : les mêmes événements (action « snapshot »), rangés comme les autres ; son état dit si l'âge des tâches peut suivre les événements
+  window.surRattrapage = m => {
+    const avant = EV.size;
+    if (typeof m.erreur === 'string' && m.erreur) { RAT.err = m.erreur; RAT.nb = m.nonBranche === true; }
+    else { RAT.err = ''; RAT.nb = false; RAT.lu = Date.now(); RAT.inc = (Array.isArray(m.incomplets) ? m.incomplets : []).filter(x => typeof x === 'string'); RAT.errs = (Array.isArray(m.erreurs) ? m.erreurs : []).filter(x => typeof x === 'string'); rangerEv(m.evenements); }
+    if (M && BASE && EV.size !== avant) recalculer(); else if (M) render();
+  };
+  (window.ratEnAttente || []).splice(0).forEach(window.surRattrapage);
   const nbr = v => Number.isFinite(+v) ? +v : 0;
   function vAppsHub(){
     const D = window.hubCouts, titre = `<p class="ccap"><b>Coûts des apps</b>${fraisHTML(['couts-apps'])}</p>`;
