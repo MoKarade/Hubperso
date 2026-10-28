@@ -108,7 +108,7 @@ export function lireClicDroit(donnee: unknown): ClicDroitCadre | null {
  * Les onglets de la page, dans les mots du document (`?onglet=couts` ouvre le bon : `mur` est l'accueil de la page). Une valeur inconnue
  * donne `null` : la page s'ouvre sur son onglet habituel, jamais sur un fragment inventé par l'adresse.
  */
-export const ONGLETS = ["mur", "toi", "gantt", "parcours", "vitesse", "couts"] as const;
+export const ONGLETS = ["mur", "toi", "gantt", "vitesse", "couts"] as const;
 export function ongletDe(valeur: unknown): (typeof ONGLETS)[number] | null {
   return ONGLETS.find((o) => o === valeur) ?? null;
 }

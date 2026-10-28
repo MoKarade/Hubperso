@@ -349,7 +349,7 @@ describe("l'onglet Vitesse : la rapidité des PR et des tâches, par acteur (#61
     expect(DOCUMENT).toContain("['vitesse', 'Vitesse']");
     expect(DOCUMENT).toContain("tab === 'vitesse' ? vVitesseM()");
     expect(DOCUMENT).toMatch(/const ANCIEN = \{plan: 'taches', cartes: 'taches', quota: 'rythme'\};/);
-    expect(DOCUMENT).toContain("t === 'vitesse' || t === 'parcours' ? t : ANCIEN[t]");
+    expect(DOCUMENT).toContain("t === 'vitesse' ? t : ANCIEN[t]");
   });
 
   it("mêmes couleurs d'acteurs que « Qui fusionne » de l'Accueil (une seule table)", () => {
@@ -403,12 +403,12 @@ describe("la période choisie commande toute la page (#621)", () => {
   });
 });
 
-describe("l'onglet Parcours : de l'idée à l'affichage dans l'app (#625)", () => {
-  it("existe dans la barre et s'ouvre par ?onglet=parcours", () => {
-    expect(ongletDe("parcours")).toBe("parcours");
-    expect(DOCUMENT).toContain("['parcours', 'Parcours']");
-    expect(DOCUMENT).toContain("tab === 'parcours' ? vParcoursM()");
-    expect(DOCUMENT).toContain("t === 'vitesse' || t === 'parcours' ? t");
+describe("Vitesse et Parcours en un seul onglet : le trajet d'une tâche et la vitesse par acteur (#625)", () => {
+  it("il n'y a qu'un onglet : Vitesse porte aussi le parcours, pas d'onglet Parcours", () => {
+    expect(ongletDe("parcours")).toBeNull();
+    expect(DOCUMENT).not.toContain("['parcours', 'Parcours']");
+    expect(DOCUMENT).toContain("const P = parcoursParts()");
+    expect(DOCUMENT).toContain("P.hero + P.flow");
   });
 
   it("les phases viennent d'instants du relevé ; un instant absent saute la phase, jamais estimé", () => {
@@ -424,6 +424,19 @@ describe("l'onglet Parcours : de l'idée à l'affichage dans l'app (#625)", () =
   it("la période filtre le trajet et chaque ligne ouvre la fiche de la tâche", () => {
     expect(DOCUMENT).toContain("const L = M.leaves.filter(act)");
     expect(DOCUMENT).toContain('class="pcr" data-open="${esc(l.ref)}"');
+  });
+
+  it("les graphes ajoutés : où va le temps (acteur, app), bout en bout, tâches en vol, entrées et sorties", () => {
+    expect(DOCUMENT).toContain("function chPhases(W, title, groups)");
+    expect(DOCUMENT).toContain("chPhases(W2, 'Par acteur'");
+    expect(DOCUMENT).toContain("chPhases(W2, 'Par app'");
+    expect(DOCUMENT).toContain("function chBoutEnBout(W, done)");
+    expect(DOCUMENT).toContain("title: 'Tâches en vol'");
+    expect(DOCUMENT).toContain("title: 'Entrées et sorties'");
+  });
+
+  it("une tâche sans acteur connu reste « Non attribué » dans où va le temps", () => {
+    expect(DOCUMENT).toContain("phasesPar(P.done, l => quiTask(l), k => QUIT[k][0])");
   });
 });
 

@@ -1507,7 +1507,7 @@ const TABS = ['toi', 'taches', 'gantt', 'rythme'];
 // anciens onglets (avant le 19/10) : Plan et Cartes = Tâches, Vitesse et Quota = Rythme
 const ANCIEN = {plan: 'taches', cartes: 'taches', quota: 'rythme'};
 // « mur », « vitesse » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
-const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' || t === 'vitesse' || t === 'parcours' ? t : ANCIEN[t] || null;
+const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' || t === 'vitesse' ? t : ANCIEN[t] || null;
 // durées de l'onglet Rythme (Marc, 21/10) et découpage des fusions : type, app, ou qui (Jules, fil Claude, autre)
 const VPS = ['24h', '7j', '30j', '90j'], VSPL = ['type', 'app', 'qui'], QSS = ['claude', 'vercel', 'actions', 'jules', 'gemini', 'api'];
 const ST = {tab: tabDe(saved.tab) || 'toi', f: saved.f && saved.f !== 'toi' ? saved.f : 'tout', z: saved.z || 'fit', open: saved.open || {}, stack: [], pan: 0, vp: VPS.includes(saved.vp) ? saved.vp : '24h', vsplit: VSPL.includes(saved.vsplit) ? saved.vsplit : 'type', vsel: null, vselm: null, cap: saved.cap === 'file' ? 'file' : 'depot', qs: QSS.includes(saved.qs) ? saved.qs : 'claude'};
@@ -4382,11 +4382,10 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     mur: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="5" rx="1.2"/><rect x="12" y="4" width="9" height="5" rx="1.2"/><rect x="3" y="11" width="10" height="5" rx="1.2"/><rect x="15" y="11" width="6" height="5" rx="1.2"/><rect x="3" y="18" width="5" height="3" rx="1"/><rect x="10" y="18" width="11" height="3" rx="1"/></svg>',
     toi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.8"/><path d="M4.6 20.5c.8-4 3.6-6.2 7.4-6.2s6.6 2.2 7.4 6.2"/></svg>',
     gantt: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="10" height="3.6" rx="1.8"/><rect x="8" y="10.2" width="13" height="3.6" rx="1.8"/><rect x="5" y="15.9" width="9" height="3.6" rx="1.8"/></svg>',
-    parcours: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/></svg>',
     vitesse: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>',
     couts: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.8-1.3-2.4-2-4.4-2-2.5 0-4 1.2-4 3 0 4.2 8.6 2.2 8.6 6.6 0 1.8-1.7 3.1-4.5 3.1-2.2 0-3.9-.8-4.8-2.2"/></svg>'
   };
-  const TABS = [['mur', 'Accueil'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['parcours', 'Parcours'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
+  const TABS = [['mur', 'Accueil'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
   const arc = (p, col, sz = 76, sw = 8) => { const r = (sz - sw) / 2, c = 2 * Math.PI * r, v = Math.max(0.012, Math.min(1, p)); return `<svg viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="${sw}"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(v * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${sz / 2} ${sz / 2})"/></svg>`; };
   const mobile = () => innerWidth <= 700;
 
@@ -5104,13 +5103,67 @@ function vGanttFull(){
       s += `<text x="0" y="${y + 19}" style="fill:var(--ink)">#${x.p.n} · ${esc(String(nom).slice(0, mobile() ? 11 : 20))}</text><rect x="${lw}" y="${y + 4}" width="${w.toFixed(1)}" height="${RH - 10}" rx="6" fill="${QUI[x.q][1]}" data-tip="${tipAttr('#' + x.p.n + ' · ' + nom + ' · ' + QUI[x.q][0] + '\n' + mlab(x.d))}"/><text class="v" x="${(lw + w + 8).toFixed(1)}" y="${y + 19}">${esc(mlab(x.d))}</text>`; });
     return fig('Les plus lentes', `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Les ${L.length} PR les plus lentes de la période">${s}</svg>`);
   }
+  /* où va le temps : une barre par groupe (acteur, app), les médianes de chaque phase mises bout à bout */
+  function chPhases(W, title, groups){
+    const G = groups.filter(g => g.n).sort((a, b) => b.tot - a.tot);
+    if (!G.length) return '';
+    const RH = 34, T = 4, lw = mobile() ? 86 : 120, rw = 74, mx = Math.max(...G.map(g => g.tot), 1), H = T + G.length * RH + 6;
+    let s = '';
+    G.forEach((g, i) => { const y = T + i * RH; let x = lw;
+      s += `<text x="0" y="${y + 20}" style="fill:var(--ink)">${esc(g.nm)}</text>`;
+      Object.values(PCPH).forEach(([k, nm, col]) => { const v = g.v[k]; if (!v) return; const w = Math.max(3, v / mx * (W - lw - rw));
+        s += `<rect x="${x.toFixed(1)}" y="${y + 5}" width="${(w - 1.5).toFixed(1)}" height="${RH - 12}" rx="4" fill="${col}" data-tip="${tipAttr(g.nm + ' · ' + nm + ' : médiane ' + mlab(v) + ' · ' + nfmt(g.n) + ' tâche' + (g.n > 1 ? 's' : ''))}"/>`; x += w; });
+      s += `<text class="v" x="${(x + 6).toFixed(1)}" y="${y + 20}">${esc(mlab(g.tot))}</text>`; });
+    return fig(title, `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)} : ${G.map(g => g.nm + ' ' + mlab(g.tot)).join(', ')}">${s}</svg>`, chips(Object.values(PCPH).map(h => [h[2], h[1]])));
+  }
+  const phasesPar = (done, keyOf, nameOf, order) => { const m = {};
+    done.forEach(x => { const k = keyOf(x.l); (m[k] = m[k] || []).push(x); });
+    return Object.keys(m).map(k => { const v = {}; Object.values(PCPH).forEach(([ph]) => { const a = m[k].map(x => x.p.ph.filter(h => h.k === ph).reduce((t, h) => t + h.d, 0)).filter((d, i) => m[k][i].p.ph.some(h => h.k === ph)); const q = quant(a, .5); if (q != null) v[ph] = q; });
+      return {k, nm: nameOf(k), v, n: m[k].length, tot: Object.values(v).reduce((a, b) => a + b, 0)}; }); };
+  /* de l'idée à l'acceptation, de bout en bout */
+  function chBoutEnBout(W, done){
+    const d = done.map(x => x.p.total / 6e4).filter(v => v >= 0);
+    if (!d.length) return '';
+    const B_ = [['< 1 h', 60], ['1–6 h', 360], ['6–24 h', 1440], ['1–3 j', 4320], ['> 3 j', 1e9]], cnt = B_.map(() => 0);
+    d.forEach(v => { cnt[B_.findIndex(b => v < b[1])]++; });
+    const H = mobile() ? 200 : 230, T = 28, B = 34, ih = H - T - B, bw = W / B_.length, mx = Math.max(...cnt, 1);
+    let s = ''; cnt.forEach((c, i) => { const h = c / mx * ih, x = i * bw + bw * .16, w = bw * .68;
+      s += `<rect x="${x.toFixed(1)}" y="${(T + ih - h).toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(2, h).toFixed(1)}" rx="5" fill="var(--vio)" fill-opacity="${i === cnt.indexOf(mx) ? 1 : .6}" data-tip="${tipAttr(B_[i][0] + ' : ' + c + ' tâche' + (c > 1 ? 's' : '') + ' (' + Math.round(c / d.length * 100) + ' %)')}"/><text class="v" x="${(x + w / 2).toFixed(1)}" y="${(T + ih - h - 6).toFixed(1)}" text-anchor="middle">${c}</text><text x="${(x + w / 2).toFixed(1)}" y="${H - 10}" text-anchor="middle">${B_[i][0]}</text>`; });
+    return fig('De l\'idée à l\'acceptation', `<svg class="cch" viewBox="0 0 ${W} ${H}" role="img" aria-label="Durée de bout en bout de ${d.length} tâches, médiane ${esc(mlab(quant(d, .5)))}">${s}</svg>`, `<div class="kp2"><b>${esc(mlab(quant(d, .5)))}</b><span>médiane</span><b>${esc(mlab(quant(d, .9)))}</b><span>9 sur 10</span></div>`);
+  }
+  /* lignes sur les cases de la période (tâches en vol, entrées et sorties) */
+  function chLignes(W, o){
+    const bins = o.bins, N = bins.length, H2 = mobile() ? 190 : 220, L = 36, R = 12, T = 16, B = 28, iw = W - L - R, ih = H2 - T - B;
+    const top = nice(Math.max(...o.series.flatMap(x => x.v), 4)), Y = v => T + ih - v / top * ih, X = i => L + (N > 1 ? i / (N - 1) : .5) * iw;
+    let s = axisY(W, L, T, ih, [0, top / 2, top], Y);
+    o.series.forEach(x => { s += `<path d="M${x.v.map((v, i) => X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join('L')}" fill="none" stroke="${x.col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"${x.dash ? ' stroke-dasharray="2 6"' : ''}/><circle cx="${X(N - 1).toFixed(1)}" cy="${Y(x.v[N - 1]).toFixed(1)}" r="4.5" fill="${x.col}" stroke="var(--bg)" stroke-width="2"/>`; });
+    bins.forEach((b, i) => { s += hit(X(i) - iw / Math.max(1, N - 1) / 2, T, iw / Math.max(1, N - 1), ih, b.long + o.series.map(x => '\n' + x.name + ' : ' + nfmt(x.v[i]))); });
+    const st = Math.max(1, Math.ceil(N / (iw / 62)));
+    for (let i = N - 1; i >= 0; i -= st) s += `<text x="${X(i).toFixed(1)}" y="${H2 - 6}" text-anchor="middle">${esc(bins[i].lab)}</text>`;
+    return fig(o.title, `<svg class="cch" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${esc(o.title)} sur ${esc(PS().n)}">${s}</svg>`, chips(o.series.map(x => [x.col, x.name, nfmt(x.v[N - 1])])));
+  }
+  function chFlux(W, D){
+    const bins = binsOf(D.endT), idx = Object.fromEntries(bins.map((b, i) => [b.k, i])), lv = M.leaves.filter(l => l.c != null);
+    const ouv = t => lv.filter(l => l.c <= t && (l.end == null || l.end > t)), at = (arr, f) => arr.filter(f).length;
+    const entrees = bins.map(() => 0), sorties = bins.map(() => 0);
+    lv.forEach(l => { const i = idx[binKey(l.c)]; if (i != null) entrees[i]++; if (l.end != null){ const j = idx[binKey(l.end)]; if (j != null) sorties[j]++; } });
+    const vol = bins.map(b => { const o = ouv(Math.min(b.t, Date.now())); return {ouv: o.length, trav: at(o, l => l.start != null && l.start <= b.t && !(l.merged != null && l.merged <= b.t)), pre: at(o, l => l.merged != null && l.merged <= b.t)}; });
+    return grid(2, [
+      chLignes(W, {title: 'Tâches en vol', bins, series: [{name: 'Ouvertes', col: 'var(--todo)', v: vol.map(x => x.ouv)}, {name: 'Au travail', col: 'var(--doing)', v: vol.map(x => x.trav)}, {name: 'En preuve', col: 'var(--vio)', v: vol.map(x => x.pre)}]}),
+      chLignes(W, {title: 'Entrées et sorties', bins, series: [{name: 'Créées', col: 'var(--todo)', v: entrees}, {name: 'Acceptées', col: 'var(--done)', v: sorties}]})]);
+  }
+
   function vVitesseM(){
     const D = vitesseData(); D.repos = Object.fromEntries((CUR.repos || []).map(r => [r.k, r.name]));
+    const P = parcoursParts(), W2 = colW(2), clock = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>';
     const ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>';
-    return perBar('top')
+    return perBar('top') + P.hero + P.flow
+      + sf('Où va le temps', () => band(clock, 'Où va le temps', grid(2, [chPhases(W2, 'Par acteur', phasesPar(P.done, l => quiTask(l), k => QUIT[k][0])), chPhases(W2, 'Par app', phasesPar(P.done, l => l.k, k => D.repos[k] || k))].filter(Boolean))))
       + sf('Vitesse', () => band(ico, 'Qui va vite', vCartesQui(D)))
-      + sf('Délais', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg>', 'Délais', grid(1, [chDelais(colW(1), D), chLentes(colW(1), D)])))
-      + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(colW(2), D), chTachesQui(colW(2), D)])));
+      + sf('Délais', () => band(clock, 'Délais', grid(1, [chDelais(colW(1), D), chLentes(colW(1), D)])))
+      + sf('Cadence', () => band(BI.prog, 'Cadence et durée des tâches', grid(2, [chCadenceQui(W2, D), chTachesQui(W2, D)]) + grid(2, [chBoutEnBout(W2, P.done)])))
+      + sf('Flux', () => band(BI.prog, 'Flux', chFlux(W2, D)))
+      + P.rows;
   }
 
   /* ---------- Parcours : de l'idée à l'affichage dans l'app (Marc 28/10) ----------
@@ -5128,7 +5181,7 @@ function vGanttFull(){
     if (l.open && last && last[0] !== 'acc') ph.push({k: PCPH[last[0]] ? PCPH[last[0]][0] : 'mix', c: PCPH[last[0]] ? PCPH[last[0]][2] : 'var(--line2)', a: last[1], b: now, d: (now - last[1]) / 6e4, nm: PCPH[last[0]] ? PCPH[last[0]][1] : 'En cours', op: true});
     return {ph, B, total: B.length ? (l.open ? now : B[B.length - 1][1]) - B[0][1] : 0, at: last ? last[0] : null};
   }
-  function vParcoursM(){
+  function parcoursParts(){
     const ms = PS().ms, t0 = Date.now() - ms, inP = t => t != null && isFinite(t) && t >= t0, act = l => inP(l.u) || inP(l.x) || inP(l.c) || inP(l.start);
     const L = M.leaves.filter(act), ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/></svg>';
     const done = L.filter(l => l.e === 'acc' && inP(l.x)).map(l => ({l, p: parcoursOf(l)})).filter(x => x.p.ph.length);
@@ -5154,8 +5207,9 @@ function vGanttFull(){
       return `<button class="pcr" data-open="${esc(l.ref)}" aria-label="${esc(l.t)} : ${esc(mlab(p.total / 6e4))}"><span class="t" style="--c:${appCol(l.k)}"><i></i><span>${esc(l.t)}</span></span><span class="pcb" aria-hidden="true">${bar}</span><span class="v">${esc(mlab(p.total / 6e4))}</span></button>`;
     }).join('');
     const key = chips(Object.values(PCPH).map(h => [h[2], h[1]]));
-    return perBar('top') + hero + sf('Trajet', () => band(ico, 'Le trajet', `<div class="pcf" role="img" aria-label="Idée, prise, PR, fusion, acceptée, dans l'app">${flow}</div>`))
-      + sf('Tâches', () => band(BI.prog, 'Chaque tâche', rows ? `${key}<div class="pcrows">${rows}</div>` : '<p class="soon" role="status">Aucune tâche sur cette période.</p>'));
+    return {L, done, hero, ico,
+      flow: sf('Trajet', () => band(ico, 'Le trajet', `<div class="pcf" role="img" aria-label="Idée, prise, PR, fusion, acceptée, dans l'app">${flow}</div>`)),
+      rows: sf('Tâches', () => band(BI.prog, 'Chaque tâche', rows ? `${key}<div class="pcrows">${rows}</div>` : '<p class="soon" role="status">Aucune tâche sur cette période.</p>'))};
   }
 
   let MEXC = false, GINIT = false;
@@ -5182,7 +5236,7 @@ function vGanttFull(){
       post(false); return;
     }
     VIEW.hidden = true; VIEW.innerHTML = '';
-    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : tab === 'parcours' ? vParcoursM() : vToiM();
+    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : vToiM();
     countUp($('#mv'));
   }
   window.render = function(){
