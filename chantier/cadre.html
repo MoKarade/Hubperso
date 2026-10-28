@@ -2008,11 +2008,12 @@ function jaugeQ(o){
   let exp = null, proj = null, verdict, mot;
   if (o.start != null){
     const f = Math.min(1, Math.max(0.0001, (now - o.start) / (o.end - o.start)));
-    exp = o.limit * f; proj = o.used / f;
+    // sous 10 % de la période, une projection multiplie le moindre bruit (5 % utilisés en 2 h d'une semaine = « 366 % ») : aucune projection avant
+    exp = o.limit * f; proj = f >= .1 ? o.used / f : null;
     if (o.used > o.limit) { verdict = 'ko'; mot = 'dépassé'; }
-    else if (proj > o.limit) { verdict = 'vig'; mot = 'au rythme actuel, tu dépasses'; }
+    else if (proj != null && proj > o.limit) { verdict = 'vig'; mot = 'au rythme actuel, tu dépasses'; }
     else if (o.used > exp * 1.15 && f > .05) { verdict = 'vig'; mot = 'en avance sur le rythme'; }
-    else { verdict = 'ok'; mot = 'dans le rythme'; }
+    else { verdict = 'ok'; mot = proj == null ? 'début de période : trop tôt pour projeter' : 'dans le rythme'; }
   } else {
     if (o.used > o.limit) { verdict = 'ko'; mot = 'au-dessus du plafond'; }
     else if (pct >= .8) { verdict = 'vig'; mot = 'proche du plafond'; }
@@ -2548,8 +2549,8 @@ function quotaSheet(key){
   } else {
     const j = g.j, u = g.unite, now = g.now, rows = [['Limite', `${fr(g.limit)} ${u} · ${g.cadre}`]];
     if (j.exp != null){
-      rows.push(['Où tu devrais être maintenant', `${fr(j.exp)} ${u}`], ['Projection fin de période, au rythme actuel', `${fr(j.proj)} ${u}${j.proj > g.limit ? ' · trop' : ''}`]);
-      if (j.proj > g.limit && g.used < g.limit && g.hist && g.hist.length){
+      rows.push(['Où tu devrais être maintenant', `${fr(j.exp)} ${u}`], ['Projection fin de période, au rythme actuel', j.proj == null ? 'trop tôt : moins de 10 % de la période écoulée' : `${fr(j.proj)} ${u}${j.proj > g.limit ? ' · trop' : ''}`]);
+      if (j.proj != null && j.proj > g.limit && g.used < g.limit && g.hist && g.hist.length){
         const tl = g.hist[g.hist.length - 1][0], vl = g.hist[g.hist.length - 1][1], rate = vl / (tl - g.start);
         if (rate > 0) rows.push(['Plafond atteint vers', quand(tl + (g.limit - vl) / rate)]);
       }
@@ -4477,7 +4478,7 @@ setInterval(() => { if (!document.hidden){ tickGantt(); tickAgo(); } }, 20e3);
     if (g.start == null || g.api) return j.mot + frein;
     if (v === 'ko') return 'dépassé' + frein;
     const reset = 'remise à zéro ' + jour(g.end);
-    if (j.proj > g.limit) return 'à ce rythme : ' + nfmt(Math.round(j.proj / g.limit * 100)) + ' % avant la ' + reset + frein;
+    if (j.proj != null && j.proj > g.limit) return 'à ce rythme : ' + nfmt(Math.round(j.proj / g.limit * 100)) + ' % avant la ' + reset + frein;
     return j.mot + ' · ' + reset + frein;
   }
   function rings(){
