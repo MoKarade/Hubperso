@@ -84,7 +84,7 @@ const FIXES: readonly VariableAttendue[] = [
   {
     nom: "BILANS_DRIVE_FOLDER_ID",
     exigence: "optionnelle",
-    siAbsente: "onglet Bilans « non configuré » : /api/bilans répond 503 (identifiant du dossier Drive des bilans, variable serveur)",
+    siAbsente: "le dossier Drive « Bilans » par défaut (lib/bilansGarde.ts) ; la variable le remplace, par exemple pour un autre dossier",
   },
   {
     nom: "AUTH_COOKIE_DOMAIN",

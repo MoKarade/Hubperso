@@ -1,7 +1,8 @@
-// lib/bilansGarde.ts — la garde commune des routes `/api/bilans` : session, propriétaire seul, dossier configuré,
+// lib/bilansGarde.ts — la garde commune des routes `/api/bilans` : session, propriétaire seul, dossier,
 // jeton Drive. Rend soit la réponse d'échec, soit de quoi lire. Un invité du hub reçoit 404, pas 403.
 
 import { isAuthorizedEmail } from "@/lib/authorized";
+import { DOSSIER_BILANS } from "@/lib/bilans";
 import { jetonDrive } from "@/lib/jetonDrive";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
 
@@ -29,8 +30,7 @@ export async function garderBilans(
   if (!email) return erreurBilans(401, "unauthorized", "Session invalide.");
   if (!isAuthorizedEmail(email, process.env.AUTHORIZED_EMAIL)) return erreurBilans(404, "not_found", "Introuvable.");
 
-  const dossier = process.env.BILANS_DRIVE_FOLDER_ID?.trim();
-  if (!dossier) return erreurBilans(503, "dossier-non-configure", "Le dossier Drive des bilans n'est pas configuré.");
+  const dossier = process.env.BILANS_DRIVE_FOLDER_ID?.trim() || DOSSIER_BILANS;
 
   const jeton = await jetonDrive(request);
   if ("raison" in jeton) {

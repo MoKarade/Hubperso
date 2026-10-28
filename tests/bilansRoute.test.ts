@@ -11,7 +11,7 @@ vi.mock("@/lib/bilansDrive", () => ({ listerBilans: moq.listerBilans, lireBilan:
 
 import { GET as LISTE } from "@/app/api/bilans/route";
 import { GET as UN } from "@/app/api/bilans/[id]/route";
-import { CSP_BILAN } from "@/lib/bilans";
+import { CSP_BILAN, DOSSIER_BILANS } from "@/lib/bilans";
 
 const PROPRIETAIRE = "proprio@example.test";
 const ID = "fichierBilan1234567";
@@ -45,12 +45,11 @@ describe("garde commune", () => {
     expect(moq.jetonDrive).not.toHaveBeenCalled();
   });
 
-  it("dossier non configuré : 503 qui le dit", async () => {
+  it("variable absente : le dossier par défaut sert, jamais un dossier vide", async () => {
     vi.stubEnv("BILANS_DRIVE_FOLDER_ID", "");
-    const r = await LISTE(requete());
-    expect(r.status).toBe(503);
-    expect(await r.json()).toMatchObject({ error: "dossier-non-configure" });
-    expect(moq.jetonDrive).not.toHaveBeenCalled();
+    moq.listerBilans.mockResolvedValue({ ok: true, valeur: [] });
+    expect((await LISTE(requete())).status).toBe(200);
+    expect(moq.listerBilans).toHaveBeenCalledWith("jeton-de-test", DOSSIER_BILANS);
   });
 
   it("droit Drive absent : 409 qui dit de se reconnecter ; Google en panne : 502", async () => {
