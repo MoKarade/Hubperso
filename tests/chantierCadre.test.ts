@@ -455,6 +455,13 @@ describe("chaque bloc dit d'où vient sa donnée, son âge et sa nature (#640)",
     expect(DOCUMENT).not.toContain("!isFinite(age) ? 'ok'");
   });
 
+  it("chaque source est jugée sur sa vraie cadence : la Semaine Claude passe une fois par heure, une app au repos garde sa date", () => {
+    expect(DOCUMENT).toContain("cad: 60 * MIN, ret: 75 * MIN, per: 120 * MIN");
+    expect(DOCUMENT).toContain("cad: 2 * H, ret: 3 * H, per: 6 * H");
+    expect(DOCUMENT).toContain("const ret = s.ret || 1.5 * s.cad, per = s.per || 3 * s.cad;");
+    expect(DOCUMENT).toContain("s.age / s.per * 100");
+  });
+
   it("les reçus sont dits saisis à la main et le taux est dit estimé : rien ne se rafraîchit en douce", () => {
     expect(DOCUMENT).toContain("nat: 'sai'");
     expect(DOCUMENT).toContain("pas un cours du jour");

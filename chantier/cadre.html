@@ -4093,8 +4093,8 @@ function sources(){
     {id: 'vercel', nom: 'Déploiements Vercel', nat: 'mes', at: t(jauge('vercel', 'releve')), cad: 10 * MIN, src: 'statuts de commit GitHub'},
     {id: 'jules', nom: 'Tâches Jules', nat: 'mes', at: t(jauge('jules', 'releve')), cad: 10 * MIN, src: 'étiquettes posées dans GitHub'},
     {id: 'gemini', nom: 'Relectures Gemini', nat: 'mes', at: t(jauge('gemini', 'releve')), cad: 10 * MIN, src: 'script du PC'},
-    {id: 'claude', nom: 'Semaine Claude', nat: 'mes', at: t(jauge('claude', 'mesure_utc')), cad: 15 * MIN, src: 'claude /usage lu sur le PC'},
-    {id: 'api-mois', nom: 'API des apps, ce mois', nat: 'mes', at: t(jauge('api', 'data_as_of')), cad: 60 * MIN, src: 'hubperso.com/api/cout (les apps publient à leur rythme)'},
+    {id: 'claude', nom: 'Semaine Claude', nat: 'mes', at: t(jauge('claude', 'mesure_utc')), cad: 60 * MIN, ret: 75 * MIN, per: 120 * MIN, src: 'claude /usage lu sur le PC, une fois par heure (tâche Quota-Claude)'},
+    {id: 'api-mois', nom: 'API des apps, ce mois', nat: 'mes', at: t(jauge('api', 'data_as_of')), cad: 2 * H, ret: 3 * H, per: 6 * H, src: 'hubperso.com/api/cout : la date est celle de l’app la plus ancienne ; une app au repos garde sa date, ce n’est pas une panne'},
     {id: 'api-cumul', nom: 'API des apps, plus ancienne mesure', nat: 'mes', at: t(jauge('api', 'cumul_as_of')), cad: 24 * H, src: 'le cumul est daté de la mesure la plus ancienne parmi les apps : une app qui ne publie plus le fige (relevé du PC à ' + (isFinite(t(jauge('api', 'releve'))) ? hh(t(jauge('api', 'releve'))) : '—') + ')'},
     {id: 'couts-apps', nom: 'Coûts des apps', nat: 'mes', at: window.hubCoutsAt || NaN, cad: 5 * MIN, src: 'lu par le hub chez chaque app'},
     {id: 'recus', nom: 'Reçus de dépenses', nat: 'sai', at: dernier, cad: 31 * 24 * H, src: 'reçus relevés à la main dans les courriels : dernier reçu le ' + (jours.length ? cDate(jours[jours.length - 1]) : '—')},
@@ -4105,8 +4105,9 @@ function sources(){
   const now = Date.now();
   return S.map(s => {
     const age = isFinite(s.at) ? Math.max(0, now - s.at) : NaN;
-    const etat = !isFinite(age) ? 'fixe' : (isFinite(s.perime) && now > s.perime) || age > 3 * s.cad ? 'perime' : age > 1.5 * s.cad ? 'retard' : 'ok';
-    return {...s, age, etat};
+    const ret = s.ret || 1.5 * s.cad, per = s.per || 3 * s.cad;   // seuils propres à la vraie cadence de la source, sinon 1,5 et 3 cadences
+    const etat = !isFinite(age) ? 'fixe' : (isFinite(s.perime) && now > s.perime) || age > per ? 'perime' : age > ret ? 'retard' : 'ok';
+    return {...s, age, etat, per};
   });
 }
 const ETAT_RANG = {ok: 0, fixe: 1, retard: 2, perime: 3}, ETAT_LAB = {ok: 'à jour', fixe: 'fixe', retard: 'en retard', perime: 'périmé'};
@@ -4135,7 +4136,7 @@ function vDonnees(){
   const S = sources().sort((a, b) => ETAT_RANG[b.etat] - ETAT_RANG[a.etat] || (b.age || 0) - (a.age || 0));
   const n = k => S.filter(s => s.etat === k).length;
   const row = s => {
-    const w = !isFinite(s.age) ? 0 : Math.max(2, Math.min(100, s.age / (3 * s.cad) * 100));
+    const w = !isFinite(s.age) ? 0 : Math.max(2, Math.min(100, s.age / s.per * 100));
     return `<div class="dsr ${s.etat}" title="${esc(s.nom + ' : ' + s.src)}"><span class="dn">${esc(s.nom)}</span><span class="db" role="img" aria-label="${esc(s.nom + ' : ' + ETAT_LAB[s.etat])}"><i style="width:${w.toFixed(1)}%"></i></span>`
       + `<span class="dv">${isFinite(s.age) ? esc(dur(s.age)) : 'sans date'}</span><span class="dk ${s.nat}"><i></i>${esc(NATURE[s.nat])}</span></div>`;
   };
