@@ -153,14 +153,6 @@ export function evenementsChantier(releve: unknown, maintenant: Date): Evenement
   return [...apps, ...missions.map((m) => m.e)].slice(0, EVENEMENTS_MAX);
 }
 
-/**
- * Le hub pousse une fois par heure au plus : le PC envoie toutes les 10 minutes, on ne pousse que pour l'envoi
- * des dix premières minutes de l'heure (heure UTC). Pas de minuteur de plus, pas de lecture en base. PURE.
- */
-export function doitPousser(maintenant: Date): boolean {
-  return maintenant.getUTCMinutes() < 10;
-}
-
 /** Le corps de `POST /api/sorties`. L'app ne s'y lit jamais : MemoryAI la déduit du jeton (ADR 0015). PURE. */
 export function corpsSorties(evenements: readonly EvenementChantier[]): { source: "sorties"; evenements: EvenementChantier[] } {
   return { source: "sorties", evenements: [...evenements] };

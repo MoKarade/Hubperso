@@ -1,15 +1,15 @@
 // lib/chantierSortiesEnvoi.ts — l'envoi des sorties du chantier à MemoryAI (Hubperso#651). La seule I/O de la chaîne.
 //
 // Un échec ne remonte JAMAIS : il se dit au journal serveur (le code seulement, jamais le jeton ni le corps) et
-// l'envoi du PC, lui, a déjà réussi. Aucune nouvelle de MemoryAI n'est un état à garder : l'heure suivante renvoie.
+// l'envoi du PC, lui, a déjà réussi. Aucune nouvelle de MemoryAI n'est un état à garder : le relevé suivant renvoie. Chaque relevé pousse (toutes les 10 min) : MemoryAI écarte ce qu'elle a déjà par (app, empreinte), et la `ref` d'un événement porte l'empreinte de son état, donc un renvoi identique ne crée rien (ADR 0031).
 
 import { SOURCE_DEFS } from "./sources";
-import { corpsSorties, decoderReleve, doitPousser, evenementsChantier } from "./chantierSorties";
+import { corpsSorties, decoderReleve, evenementsChantier } from "./chantierSorties";
 
 /** Au-delà, on abandonne : l'envoi tourne après la réponse au PC et ne doit pas rester pendu. */
 export const DELAI_ENVOI_MS = 8_000;
 
-export type IssueEnvoi = "pas-l-heure" | "non-configure" | "releve-illisible" | "rien-a-envoyer" | "envoye" | "refuse" | "injoignable";
+export type IssueEnvoi = "non-configure" | "releve-illisible" | "rien-a-envoyer" | "envoye" | "refuse" | "injoignable";
 
 export interface EntreeEnvoi {
   donneesGzB64: string;
@@ -21,7 +21,6 @@ export interface EntreeEnvoi {
 
 /** Pousse l'état du chantier à `POST /api/sorties` de MemoryAI. Rend ce qui s'est passé, ne lève jamais. */
 export async function pousserSortiesChantier(e: EntreeEnvoi): Promise<IssueEnvoi> {
-  if (!doitPousser(e.maintenant)) return "pas-l-heure";
   const memoire = SOURCE_DEFS.find((d) => d.id === "memoryai");
   const jeton = e.jeton?.trim();
   if (!memoire || !jeton) return "non-configure";

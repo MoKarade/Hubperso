@@ -1,6 +1,6 @@
 // tests/chantierSorties.test.ts — l'état du chantier mis en sorties pour MemoryAI (Hubperso#651).
 // Ce qu'on éprouve : le décodage du relevé, les événements (bornes de la porte de MemoryAI, rien d'inventé, états lus dans les
-// étiquettes), l'identité par empreinte, la cadence d'une fois par heure, l'envoi (jeton en Bearer, jamais d'`app` dans le corps)
+// étiquettes), l'identité par empreinte, un renvoi identique (même empreinte), l'envoi (jeton en Bearer, jamais d'`app` dans le corps)
 // et ses échecs, qui ne lèvent jamais.
 
 import { gzipSync } from "node:zlib";
@@ -8,7 +8,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   corpsSorties,
   decoderReleve,
-  doitPousser,
   EVENEMENTS_MAX,
   evenementsChantier,
   NIVEAU,
@@ -108,15 +107,6 @@ describe("evenementsChantier", () => {
   });
 });
 
-describe("doitPousser", () => {
-  it("une fois par heure : l'envoi du PC des dix premières minutes (UTC) seulement", () => {
-    expect(doitPousser(new Date("2026-10-28T18:00:30Z"))).toBe(true);
-    expect(doitPousser(new Date("2026-10-28T18:09:59Z"))).toBe(true);
-    expect(doitPousser(new Date("2026-10-28T18:10:00Z"))).toBe(false);
-    expect(doitPousser(new Date("2026-10-28T18:55:00Z"))).toBe(false);
-  });
-});
-
 describe("pousserSortiesChantier", () => {
   const entree = (o: Partial<Parameters<typeof pousserSortiesChantier>[0]> = {}) => ({ donneesGzB64: gz(releve()), maintenant: MAINTENANT, jeton: "jeton-de-test-0123456789", ...o });
   const reponse = (status: number) => new Response("{}", { status });
@@ -134,10 +124,9 @@ describe("pousserSortiesChantier", () => {
     expect(DELAI_ENVOI_MS).toBeLessThanOrEqual(10_000);
   });
 
-  it("rien n'est envoyé hors de l'heure, sans jeton, ou si le relevé est illisible ou vide", async () => {
+  it("rien n'est envoyé sans jeton, ou si le relevé est illisible ou vide", async () => {
     const appeler = vi.fn(async () => reponse(200));
     const f = appeler as unknown as typeof fetch;
-    expect(await pousserSortiesChantier(entree({ appeler: f, maintenant: new Date("2026-10-28T18:30:00Z") }))).toBe("pas-l-heure");
     expect(await pousserSortiesChantier(entree({ appeler: f, jeton: undefined }))).toBe("non-configure");
     expect(await pousserSortiesChantier(entree({ appeler: f, jeton: "  " }))).toBe("non-configure");
     expect(await pousserSortiesChantier(entree({ appeler: f, donneesGzB64: "H4sIpasdugzip" }))).toBe("releve-illisible");
