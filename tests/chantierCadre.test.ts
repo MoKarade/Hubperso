@@ -649,7 +649,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     // PR prête et En ligne : clé optionnelle `etapes` (.github#689) ; une PR jamais en brouillon ou sans déploiement n'est jamais comptée comme 0
     expect(DOCUMENT).toContain("const xcEtapes = () =>");
     expect(DOCUMENT).toContain("E.prets[k]");
-    expect(DOCUMENT).toContain("E.en_ligne[k].pret_le");
+    expect(DOCUMENT).toContain("ed.termine !== false ? t(ed.pret_le)");
     expect(DOCUMENT).toContain("PR fusionnées sans déploiement, non comptées");
     expect(DOCUMENT).toContain("if (!E){ delete o.rel; delete o.dep; }");
     expect(DOCUMENT).toContain("id: 'etapes'");

@@ -5273,10 +5273,10 @@ function vGanttFull(){
       (CUR && Array.isArray(CUR.prlog) ? CUR.prlog : []).forEach(x => {
         if (x.k !== 'tache' || (XQ !== 'tous' && quiDe(x) !== XQ)) return;
         const k = x.r + '#' + x.n, c = t(x.c), m = t(x.m); if (c == null || m == null || m < t0) return;
-        const pret = E.prets[k] ? t(E.prets[k]) : null, el = E.en_ligne && E.en_ligne[k] ? t(E.en_ligne[k].pret_le) : null;
+        const pret = E.prets[k] ? t(E.prets[k]) : null, ed = E.en_ligne && E.en_ligne[k], el = ed && ed.termine !== false ? t(ed.pret_le) : null;
         if (pret != null){ add('draft', c, pret); add('rel', pret, m); }
         if (el != null) add('dep', m, el);
-        else if (E.en_ligne && now - m > 30 * 60e3 && cov[x.r] && m >= t(cov[x.r])) sans.n++;
+        else if (E.en_ligne && !ed && !(E.restant > 0) && now - m > 30 * 60e3 && cov[x.r] && m >= t(cov[x.r])) sans.n++;
       });
     }
     const o = {}; Object.keys(S).forEach(k => { const a = S[k]; o[k] = {n: a.length, mean: a.length ? a.reduce((u, v) => u + v, 0) / a.length : null, med: med(a)}; });
