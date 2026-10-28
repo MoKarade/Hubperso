@@ -14,6 +14,7 @@ import { ResumeHub } from "@/components/ResumeHub";
 import type { SummaryResult } from "@/lib/fetchSummary";
 import { formatEnteteAccueil } from "@/lib/format";
 import { resumeHub } from "@/lib/resume";
+import type { TauxChange } from "@/lib/tauxChange";
 import { aggregateUsage } from "@/lib/usage";
 import { hubSource, validSummary } from "./helpers";
 
@@ -92,8 +93,17 @@ describe("panneau « Coûts et quotas » (rendu)", () => {
 
   it("une seule période : la note de devise remplace l'explication", () => {
     const html = rendre([ok("a", { cost: { amount: 10, currency: "CAD", period: "total" } })]);
-    expect(texte(html)).toContain("taux fixe");
+    expect(texte(html)).toContain("taux de repli, pas un cours du jour");
     expect(texte(html)).not.toContain("Pas de total unique");
+  });
+
+  it("le taux du relevé du PC est écrit avec sa source et son jour, jamais présenté comme le repli (Hubperso#642)", () => {
+    const change: TauxChange = { taux: 1.4038, date: "2026-10-27", source: "Banque du Canada", repli: false, motif: null };
+    const html = renderToStaticMarkup(
+      h(CostsCard, { digest: aggregateUsage([ok("a", { cost: { amount: 10, currency: "USD", period: "total" } })], change), maintenant: NOW }),
+    );
+    expect(texte(html)).toContain("1 $ US = 1,4038 $ CA : Banque du Canada du 2026-10-27");
+    expect(texte(html)).not.toContain("repli");
   });
 
   it("aucun plafond de dépense inventé", () => {

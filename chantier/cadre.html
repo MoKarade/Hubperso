@@ -3403,11 +3403,11 @@ function toucheAction(k){
 
 // ---- Coûts (Marc, 26/10/2026 : « met tous les couts genre git et autre et électricité aussi, vas loin dans le détail ») ----
 // Un nouveau reçu s'ajoute à CLIGNES. L'électricité n'est jamais additionnée aux reçus : c'est une estimation, calculée plus bas.
-const FX = 1.4305;   // repli seulement (taux d'un reçu du 20/05) : le relevé porte désormais le taux de la Banque du Canada, daté
-const fxLive = () => { const x = CUR && CUR.quota && CUR.quota.taux_usd_cad; return x && typeof x === 'object' && +x.taux > .5 && +x.taux < 3 ? x : null; };
+const FX = 1.38;   // repli seulement, le même que celui du hub (lib/tauxChange.ts) : le relevé porte le taux de la Banque du Canada, daté
+const fxLive = () => { const x = CUR && CUR.quota && CUR.quota.taux_usd_cad; const r = x && typeof x === 'object' ? Date.parse(x.releve) : NaN; return x && typeof x === 'object' && +x.taux >= .5 && +x.taux <= 3 && Date.now() - r <= 72 * 36e5 ? x : null; };
 const fxTaux = () => fxLive() ? +fxLive().taux : FX;
 const fxTxt = () => fxTaux().toString().replace('.', ',');
-const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b> · ${fxLive() ? 'taux de la Banque du Canada du ' + esc(cDate(String(fxLive().date).slice(0, 10))) : 'taux fixe, estimé : le relevé ne donne pas encore le taux du jour'}</p>`;
+const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b> · ${fxLive() ? 'taux de la Banque du Canada du ' + esc(cDate(String(fxLive().date).slice(0, 10))) : 'taux de repli, pas un cours du jour : le relevé du PC ne donne pas de taux lisible (absent ou de plus de 72 h)'}</p>`;
 // [clé, nom, couleur, ce que contient le poste]
 const CPOSTES = [
   ['abo', 'Claude · abonnement', '#9b7be0', ''],
@@ -3555,7 +3555,7 @@ function vCouts(){
   const lim = `<details class="cxsub cxlim"><summary>Sources et limites</summary><p class="qnote">${cChip('Certain')} Chaque montant vient d'un reçu ou d'un courriel de paiement.</p>`
     + `<p class="qnote">${cChip('Probable')} La recherche de reçus peut en manquer : le total est un plancher.</p>`
     + `<p class="qnote">${cChip('À vérifier')} Neon, Infisical, Mergify, Sonar : aucun reçu trouvé, probablement gratuits. Minutes Actions : seuls les dépôts privés sont comptés.</p>`
-    + `<p class="qnote">${cChip('Supposition')} Les $ US sont convertis à ${esc(fxTxt())} (${fxLive() ? 'taux de la Banque du Canada du ' + esc(cDate(String(fxLive().date).slice(0, 10))) + ', le même pour tous les reçus' : 'taux fixe d’un reçu : le relevé ne donne pas le taux du jour'}) ; Vercel est lu comme facturé en $ US.</p></details>`;
+    + `<p class="qnote">${cChip('Supposition')} Les $ US sont convertis à ${esc(fxTxt())} (${fxLive() ? 'taux de la Banque du Canada du ' + esc(cDate(String(fxLive().date).slice(0, 10))) + ', le même pour tous les reçus' : 'taux de repli, pas un cours du jour : le relevé du PC ne donne pas de taux lisible'}) ; Vercel est lu comme facturé en $ US.</p></details>`;
   return `<div class="cx">${head}${mat}${fr}<div class="cxduo">${cDirect()}${cElec()}</div>${postes}${lim}</div>`;
 }
 // ---- Rythme en trois vues (Marc, 26/10/2026 : « regroupe / fusionne plus, c'est toujours un peu le bordel ») ----
@@ -4247,7 +4247,7 @@ function sources(){
     ...(RECUS_COURRIELS ? [{id: 'recus-courriels', nom: 'Reçus lus dans les courriels', nat: 'mes', at: t(RECUS_COURRIELS.lu_le), cad: 7 * 24 * H, ret: 7 * 24 * H + 6 * H, per: 8 * 24 * H, src: 'courriels de reçus lus en lecture seule par le PC, une fois par semaine (nouvel essai toutes les 6 h après un échec)'}] : []),
     {id: 'recus', nom: 'Reçus de dépenses', nat: 'sai', at: dernier, cad: 31 * 24 * H, src: 'reçus relevés à la main dans les courriels : dernier reçu le ' + (jours.length ? cDate(jours[jours.length - 1]) : '—')},
     fxLive() ? {id: 'taux', nom: 'Taux USD → CAD', nat: 'cal', at: t(fxLive().releve), cad: 6 * H, src: 'Banque du Canada (série FXUSDCAD du ' + String(fxLive().date).slice(0, 10) + '), appliqué à tous les reçus en $ US : une conversion, pas le taux de chaque jour'}
-      : {id: 'taux', nom: 'Taux USD → CAD', nat: 'est', at: NaN, cad: 0, src: 'taux fixe de ' + FX + ' (reçu du 20/05), pas un cours du jour : le relevé ne donne pas le taux de la Banque du Canada'},
+      : {id: 'taux', nom: 'Taux USD → CAD', nat: 'est', at: NaN, cad: 0, src: 'taux de repli de ' + FX + ', pas un cours du jour : le relevé du PC ne donne pas de taux lisible (absent ou de plus de 72 h)'},
     {id: 'elec', nom: 'Électricité du PC', nat: 'est', at: NaN, cad: 0, src: 'puissance et tarif réglés par curseurs, hors reçus'}
   ];
   const now = Date.now();

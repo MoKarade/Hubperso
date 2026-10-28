@@ -25,6 +25,7 @@ import { BandeauAttention } from "@/components/BandeauAttention";
 import { PagePublique } from "@/components/PagePublique";
 import { CostsCard } from "@/components/CostsCard";
 import type { Attention } from "@/lib/attention";
+import { TAUX_PAR_DEFAUT } from "@/lib/tauxChange";
 import type { UsageDigest } from "@/lib/usage";
 
 /** Le texte visible, sans balises ni séparateurs `<!-- -->` que React insère entre textes. */
@@ -267,7 +268,7 @@ describe("PagePublique", () => {
 });
 
 describe("CostsCard", () => {
-  const vide: UsageDigest = { apps: [], totalsByPeriod: [], trackedCount: 0, quotaWarnings: 0 };
+  const vide: UsageDigest = { apps: [], totalsByPeriod: [], trackedCount: 0, quotaWarnings: 0, change: TAUX_PAR_DEFAUT };
   const MAINTENANT = Date.parse("2026-10-22T20:00:00Z");
 
   it("aucune app ne publie ses coûts : le dit, sans montant inventé", () => {

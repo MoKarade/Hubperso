@@ -512,7 +512,7 @@ describe("plus de graphes, tirés du relevé seulement (#640)", () => {
     expect(DOCUMENT).toContain('<h3 class="qjh">Consommation, ${esc(PS().n)}');
     expect(DOCUMENT).toContain('const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b>');
     expect(DOCUMENT).toContain("Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p>${fxLigne()}");
-    expect(DOCUMENT).toContain("taux fixe, estimé : le relevé ne donne pas encore le taux du jour");
+    expect(DOCUMENT).toContain("taux de repli, pas un cours du jour : le relevé du PC ne donne pas de taux lisible (absent ou de plus de 72 h)");
   });
 
   it("les tâches ouvertes : leur âge et leur répartition par app, avec leur légende", () => {
@@ -533,10 +533,11 @@ describe("plus de graphes, tirés du relevé seulement (#640)", () => {
     expect(DOCUMENT).toContain("['actions', 'vercel', 'jules', 'gemini', 'claude', 'api'].filter(");
   });
 
-  it("le taux USD→CAD est celui du relevé (Banque du Canada) quand il existe, borné, sinon le repli est dit fixe", () => {
+  it("le taux USD→CAD est celui du relevé (Banque du Canada) quand il existe, borné, sinon, ou au-delà de 72 h, le repli 1,38 est dit", () => {
     expect(DOCUMENT).toContain("CUR.quota.taux_usd_cad");
-    expect(DOCUMENT).toContain("+x.taux > .5 && +x.taux < 3");
-    expect(DOCUMENT).toContain("taux fixe d’un reçu : le relevé ne donne pas le taux du jour");
+    expect(DOCUMENT).toContain("+x.taux >= .5 && +x.taux <= 3 && Date.now() - r <= 72 * 36e5");
+    expect(DOCUMENT).toContain("const FX = 1.38;");
+    expect(DOCUMENT).toContain("taux de repli, pas un cours du jour : le relevé du PC ne donne pas de taux lisible'");
     expect(DOCUMENT).toContain("const cc = (m, dev) => dev === 'USD' ? m * fxTaux() : m;");
     expect(DOCUMENT).not.toContain("m * FX");
   });

@@ -41,6 +41,12 @@ export async function lireGantt() {
   return lignes[0] ?? null;
 }
 
+/** Le champ `quota` du dernier relevé, SANS le reste (~400 Ko de données) : de quoi lire le taux USD→CAD. `null` si rien n'est arrivé. */
+export async function lireQuotaGantt(): Promise<unknown> {
+  const lignes = await db.select({ quota: ganttReleve.quota }).from(ganttReleve).where(eq(ganttReleve.id, 1)).limit(1);
+  return lignes[0]?.quota ?? null;
+}
+
 /**
  * Les deux heures du dernier relevé, SANS son contenu : de quoi juger « rien de nouveau » (ETag)
  * sans relire les ~400 Ko de `donnees_gz_b64`. `null` si le PC n'a encore rien envoyé.
