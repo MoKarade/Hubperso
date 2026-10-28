@@ -8,12 +8,14 @@
 //   signature absente ou fausse            → 401, et rien n'est lu ni écrit
 //   corps trop gros 413 · JSON illisible 400 · événement retenu mais illisible ou dépôt inconnu 422
 //   type ou action non retenus (ping compris) → 200 { ok:true, ignore:true, raison } : GitHub n'a pas à réessayer
-//   retenu → 200 { ok:true, nouveau } : `nouveau:false` = livraison déjà rangée (renvoi)
+//   retenu → 200 { ok:true, nouveau } : `nouveau:false` = livraison déjà rangée (renvoi) ; une livraison NOUVELLE part aussi
+//            à MemoryAI (sorties, Hubperso#651), après la réponse
 //   sans base 503 · base en panne 500 (jamais un 200 qui la cache : GitHub propose de rejouer la livraison)
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { formeSignature, lireEvenement, signer, TAILLE_MAX_EVENEMENT } from "@/lib/chantierEvenements";
 import { ranger } from "@/lib/chantierEvenementsDb";
+import { pousserSortieWebhook } from "@/lib/chantierSortiesEnvoi";
 import { baseConfiguree } from "@/lib/db";
 import { memeJeton } from "@/lib/jetonApp";
 import { cleClient, creerLimiteur, reponse429 } from "@/lib/limiteDebit";
@@ -59,7 +61,11 @@ export async function POST(request: Request): Promise<Response> {
   try {
     // Même leçon que `/api/gantt` : la route tourne sans personne devant, elle crée donc elle-même sa table.
     await assurerMigrations();
-    return rep({ ok: true, ...(await ranger(lecture.evenement)) });
+    const rangee = await ranger(lecture.evenement);
+    // Hubperso#651 : MemoryAI reçoit l'événement à l'instant où il arrive, sans attendre le relevé du PC (qui reste le filet).
+    // Après la réponse, jamais avant : un échec là-bas ne change rien au 200 que GitHub reçoit. Un renvoi (`nouveau:false`) ne repart pas.
+    if (rangee.nouveau) after(() => pousserSortieWebhook({ evenement: lecture.evenement, jeton: process.env.MEMORYAI_SORTIES_TOKEN }));
+    return rep({ ok: true, ...rangee });
   } catch (err) {
     console.error("[chantier] événement non rangé", err);
     return rep({ ok: false, raison: "l'écriture en base a échoué — voir les journaux Vercel." }, 500);

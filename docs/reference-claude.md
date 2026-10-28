@@ -66,6 +66,9 @@ widgets 100 % génériques.
     `lib/chantierSortiesEnvoi.ts`, l'envoi) : c'est ce qui permet à LIA de lire le chantier elle-même
     (Hubperso#651). Variable absente = rien n'est poussé ; un échec se dit au journal et ne touche
     ni la réponse au PC ni la ligne en base.
+    `POST /api/chantier/evenement` (webhook GitHub/Vercel) pousse aussi, après sa réponse, l'événement reçu
+    quand la livraison est nouvelle (`sortieDepuisWebhook`, type `chantier_evenement`, `ref` = `ev:<livraison>`) :
+    rien ne dépend du relevé du PC, qui reste le filet.
   - `POST /api/cron/releve` — l'**horloge** du hub, appelée par
     `.github/workflows/releve.yml` (ADR 0003). Authentifiée par un secret **DÉDIÉ**
     (`CRON_SECRET`), pas par un `HUB_TOKEN_*` : ce qu'elle déclenche est une ÉCRITURE dans
