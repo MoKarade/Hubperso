@@ -603,7 +603,7 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
   });
 
   it("montre le process en pastilles, sans phrases : une colonne par étape, une ligne par app, le pouls et les 48 prochaines heures", () => {
-    for (const t of ["'Idée'", "'En file'", "'Prise'", "'PR brouillon'", "'PR prête'", "'Contrôles'", "'Fusionnée'", "'En ligne'", "'Preuve'", "'Acceptée, 24 h'"]) expect(DOCUMENT).toContain(t);
+    for (const t of ["'Idée'", "'En file'", "'Attend'", "'Prise'", "'PR brouillon'", "'PR prête'", "'Contrôles'", "'File Mergify'", "'Fusionnée'", "'En ligne'", "'Preuve'", "'Acceptée'"]) expect(DOCUMENT).toContain(t);
     expect(DOCUMENT).toContain("function xcPouls(W)");
     expect(DOCUMENT).toContain("function xcSuite(W)");
     expect(DOCUMENT).toContain("const ecQui = l =>");
@@ -632,6 +632,18 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     expect(DOCUMENT).toContain("lecture des PR incomplète");
     // une PR que la fiche de sa tâche ne porte pas (2e PR d'une tâche, PR sans tâche) reste visible, au bon étage
     expect(DOCUMENT).toContain("D.P.prs.filter(r => r && !refs.has(");
+  });
+
+  it("donne la durée moyenne de chaque étape mesurée et dit où elle se passe, sans inventer celles que le relevé ne date pas", () => {
+    expect(DOCUMENT).toContain("const xcDurees = () =>");
+    expect(DOCUMENT).toContain("const XLIEU = {");
+    for (const l of ["'Mergify'", "'Vercel'", "'GitHub / PC'", "'agent'"]) expect(DOCUMENT).toContain(l);
+    // seules les étapes datées par le relevé ont une durée ; les autres montrent « ? »
+    expect(DOCUMENT).toContain("S = {file: [], prise: [], draft: [], ci: [], mg: [], prove: [], acc: []}");
+    expect(DOCUMENT).toContain("Le relevé ne date pas cette étape : la durée reste inconnue plutôt qu’inventée");
+    expect(DOCUMENT).toContain("moyenne ' + dur(d.mean) + ' · médiane ' + dur(d.med)");
+    // la file Mergify est son étape, séparée des contrôles
+    expect(DOCUMENT).toContain("(xcQueue(l, D) ? 'mg' : 'ci')");
     expect(DOCUMENT).toContain("case 'acc': return l.end ? 'acceptée ' + quand(l.end)");
     expect(DOCUMENT).toContain("id: 'prs'");
   });
