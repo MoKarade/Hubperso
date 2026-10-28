@@ -63,6 +63,12 @@ const TRACES: Record<IconeNav, ReactNode> = {
       <path d="M4 7h7M7 12h10M5 17h8" />
     </>
   ),
+  bilans: (
+    <>
+      <path d="M6 3h8l4 4v14H6z" />
+      <path d="M14 3v4h4M9 12h6M9 16h6" />
+    </>
+  ),
   admin: (
     <>
       <circle cx="12" cy="12" r="3" />

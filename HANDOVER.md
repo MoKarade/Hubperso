@@ -2,6 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 2 : la page « Bilans » et son entrée sous « Gérer » (Hubperso#543)**
+
+- **Entrée « Bilans »** sous « Gérer » (`lib/navigation.ts`, icône `bilans`), donc dans « Plus » au téléphone ; propriétaire seul (un invité ne la voit pas), la barre du bas la range sous « Plus ».
+- **`/bilans`** (`app/bilans/page.tsx`, `exigerProprietaire`) : `components/BilansVue.tsx` lit `/api/bilans` avec la session et montre le bilan du jour ou de la semaine (onglets), les précédents à relire, dans un cadre isolé (`SANDBOX_BILAN`, jamais inséré dans la page). Aucune relecture automatique : un bilan se dépose une fois par jour, « Actualiser » suffit.
+- **États honnêtes** (`lib/bilansVue.ts`) : « Aucun bilan du jour pour l'instant » si le dossier est vide ; une phrase par échec (droit Drive manquant : reconnecte-toi ; dossier non branché ; Google ne répond pas) ; une réponse hors contrat n'est jamais réparée.
+- **Reste** : la routine qui écrit les bilans dans Drive (`bilan-jour-AAAA-MM-JJ.html`, `bilan-semaine-AAAA-MM-JJ.html`) et ne notifie plus que l'urgent, `BILANS_DRIVE_FOLDER_ID` dans Vercel, la reconnexion de Marc, puis la preuve en production.
+
 ## 🟦 Session 2026-10-28 — **Onglet Bilans, étape 1 : le hub lit les bilans gardés dans Drive (Hubperso#578, pour #543)**
 
 Marc, 28/10/2026 : les bilans (Brief du jour, rapport hebdo) se gardent tous dans Drive ; le hub les lit en direct.

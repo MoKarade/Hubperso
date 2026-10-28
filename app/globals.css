@@ -3184,3 +3184,95 @@ a:focus-visible,
 .page__hero {
   padding-block: clamp(1.2rem, 1rem + 1.4vw, 2rem);
 }
+
+/* ── BILANS (28/10/2026) : le bilan du jour ou de la semaine, lu dans Drive (`components/BilansVue.tsx`).
+   Le bilan s'affiche dans un cadre isolé ; tout le reste est en variables du hub, clair et sombre. */
+.bilans {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.bilans__barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.bilans__onglets {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.bilans__onglet,
+.bilans__actualiser,
+.bilans__precedent {
+  min-height: var(--cible);
+  padding: 0 1rem;
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.bilans__onglet[aria-selected="true"],
+.bilans__precedent[aria-current="true"] {
+  background: var(--surface-2);
+  border-color: var(--border-fort);
+}
+.bilans__actualiser {
+  border-color: var(--border);
+}
+.bilans__actualiser:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.bilans__panneau {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.bilans__date {
+  margin: 0;
+  font-size: 1.15rem;
+  text-transform: capitalize;
+}
+.bilans__cadre {
+  display: block;
+  width: 100%;
+  height: calc(100dvh - 17rem);
+  min-height: 24rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+.bilans__etat {
+  margin: 0;
+  padding: 1rem;
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 1px dashed var(--border-fort);
+  border-radius: 0.75rem;
+}
+.bilans__etat--erreur {
+  color: var(--text);
+  border-style: solid;
+}
+.bilans__precedents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.bilans__precedent {
+  border-color: var(--border);
+}
+.bilans__onglet:focus-visible,
+.bilans__actualiser:focus-visible,
+.bilans__precedent:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
