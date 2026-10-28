@@ -248,7 +248,6 @@ button.pill{cursor:pointer}
 .qrow .p{grid-area:p;font-size:13px;color:var(--mute)}
 .qrow .qdp{color:var(--ink);font-weight:700}
 .qv-ok{--qc:var(--done)}.qv-vig{--qc:var(--marc)}.qv-ko{--qc:var(--now)}.qv-nd{--qc:var(--todo)}.qv-act{--qc:var(--a-mem)}
-.qmore{margin-top:14px}.qmore summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--mute);font-size:14px;font-weight:600}
 
 .gfin{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:4px;background:var(--done);box-shadow:0 0 0 2px var(--bg)}
 .gfin::after{content:"";position:absolute;left:4.5px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
@@ -788,6 +787,41 @@ body.anim .card .cs i{animation:grow .7s ease both}
 /* À toi */
 .tt-toi{display:flex;flex-direction:column;gap:16px}
 .tg{display:flex;flex-direction:column;gap:8px}
+.xc{display:flex;flex-direction:column;gap:26px}
+.xc-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.xc-live{display:inline-flex;align-items:center;gap:8px;font:700 13px var(--fm);color:var(--mute)}.xc-live i{width:9px;height:9px;border-radius:50%;background:var(--done);animation:xcp 1.6s ease-in-out infinite}
+@keyframes xcp{50%{opacity:.25}}@keyframes xcg{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--doing) 34%,transparent)}}
+.xc-sc{overflow-x:auto;padding-bottom:4px}
+.xc-board{display:grid;grid-template-columns:var(--cols);gap:6px;align-items:stretch;min-width:var(--mw,820px)}
+.xc-h{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 8px;font-size:12.5px;line-height:1.2;color:var(--mute);text-align:center;min-width:0}
+.xc-h svg{width:22px;height:22px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.xc-h b{font:800 24px/1 var(--fm);color:var(--ink)}.xc-h.late b{color:var(--blk-t)}
+.xc-h.gh{opacity:.55}.xc-h.gh b{font-size:20px;color:var(--mute)}.xc-h.gh svg{stroke-dasharray:3 2.4}
+.xc-h+.xc-h::before{content:"";position:absolute;left:-6px;top:11px;width:6px;height:6px;border-top:2px solid var(--mute);border-right:2px solid var(--mute);transform:rotate(45deg) translate(-3px,3px);opacity:.6}
+.xc-l{display:flex;align-items:center;gap:7px;min-width:0;font-size:13px;font-weight:600;white-space:nowrap}.xc-l i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--ac)}.xc-l span{overflow:hidden;text-overflow:ellipsis}
+.xc-c{display:flex;flex-wrap:wrap;gap:6px;align-content:center;min-width:0;min-height:46px;padding:8px 7px;border-radius:10px;background:color-mix(in srgb,var(--line) 26%,transparent)}
+.xc-c.gh{background:none;border:1.5px dashed var(--line)}
+#mx .xc-b{position:relative;flex:none;display:grid;place-items:center;width:28px;height:28px;border:0;padding:0;border-radius:8px;background:var(--todo);color:var(--bg);font:800 11px var(--fm);cursor:pointer;text-decoration:none;box-sizing:border-box}
+#mx .xc-b::before{content:"";position:absolute;inset:-8px}
+#mx .xc-b.big{width:40px;height:40px;border-radius:11px;font-size:13px}
+#mx .xc-b .p{position:absolute;left:4px;right:4px;bottom:3px;height:3px;border-radius:2px;background:color-mix(in srgb,var(--bg) 38%,transparent);overflow:hidden}#mx .xc-b .p::after{content:"";display:block;height:100%;width:var(--p,0%);background:var(--bg)}
+#mx .xc-b.s-idee{background:transparent;box-shadow:inset 0 0 0 2px var(--todo);color:var(--todo)}
+#mx .xc-b.s-file{background:var(--todo)}
+#mx .xc-b.s-prise,#mx .xc-b.s-rel{background:var(--doing)}
+#mx .xc-b.s-draft{background:transparent;box-shadow:inset 0 0 0 2.5px var(--doing);color:var(--doing)}
+#mx .xc-b.s-fus{background:var(--fus-t)}
+#mx .xc-b.s-prove{background:transparent;box-shadow:inset 0 0 0 2.5px var(--fus-t);color:var(--fus-t)}
+#mx .xc-b.s-acc{background:var(--done)}
+#mx .xc-b.s-ci{background:var(--doing)}#mx .xc-b.s-ci.ok{background:var(--done)}
+#mx .xc-b.s-dep{cursor:default;width:34px;background:var(--todo);color:var(--bg);font-size:12px}#mx .xc-b.s-dep::before{display:none}#mx .xc-b.s-dep.ok{background:var(--done)}#mx .xc-b.s-dep.r{background:var(--blk-t)}#mx .xc-b.s-dep.on{background:var(--doing)}#mx .xc-b.s-dep.rien{background:transparent;box-shadow:inset 0 0 0 2px var(--line);color:var(--mute)}
+#mx .xc-b.mw{background:var(--marc);box-shadow:none;color:var(--bg)}
+#mx .xc-b.r{background:var(--blk-t);box-shadow:none;color:var(--bg)}
+#mx .xc-b.h{background:transparent;box-shadow:inset 0 0 0 2px var(--doing);border:0;border-style:dashed}
+#mx .xc-b.h.r{box-shadow:inset 0 0 0 2px var(--blk-t);color:var(--blk-t)}#mx .xc-b.h.ok{box-shadow:inset 0 0 0 2px var(--done);color:var(--done)}
+#mx .xc-b.on{animation:xcg 1.8s ease-in-out infinite}
+#mx .xc-b:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:20px;height:20px;border-radius:6px;font-size:10px;cursor:default}#mx .xc-key .xc-b::before{display:none}
+@media (prefers-reduced-motion:reduce){#mx .xc-b.on,.xc-live i{animation:none}}
+@media (max-width:700px){.xc-board{--mw:700px}}
 .tgh{display:flex;align-items:center;gap:8px;margin:0;color:var(--mute)}
 .tgh .si{width:20px;height:20px}
 .tgh b{font:700 15px var(--fm);color:var(--ink)}
@@ -1541,8 +1575,8 @@ const saved = store.get();
 const TABS = ['toi', 'taches', 'gantt', 'rythme'];
 // anciens onglets (avant le 19/10) : Plan et Cartes = Tâches, Vitesse et Quota = Rythme
 const ANCIEN = {plan: 'taches', cartes: 'taches', quota: 'rythme'};
-// « mur », « vitesse » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
-const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'couts' || t === 'vitesse' ? t : ANCIEN[t] || null;
+// « mur », « cours », « vitesse » et « couts » sont les onglets de la page dans le hub (?onglet=… -> #…)
+const tabDe = t => TABS.includes(t) || t === 'mur' || t === 'cours' || t === 'couts' || t === 'vitesse' ? t : ANCIEN[t] || null;
 // durées de l'onglet Rythme (Marc, 21/10) et découpage des fusions : type, app, ou qui (Jules, fil Claude, autre)
 const VPS = ['24h', '7j', '30j', '90j'], VSPL = ['type', 'app', 'qui'], QSS = ['claude', 'vercel', 'actions', 'jules', 'gemini', 'api'];
 const ST = {tab: tabDe(saved.tab) || 'toi', f: saved.f && saved.f !== 'toi' ? saved.f : 'tout', z: saved.z || 'fit', open: saved.open || {}, stack: [], pan: 0, vp: VPS.includes(saved.vp) ? saved.vp : '24h', vsplit: VSPL.includes(saved.vsplit) ? saved.vsplit : 'type', vsel: null, vselm: null, cap: saved.cap === 'file' ? 'file' : 'depot', qs: QSS.includes(saved.qs) ? saved.qs : 'claude'};
@@ -4113,6 +4147,7 @@ function sources(){
   const jours = CLIGNES.map(l => l[0]).sort(), dernier = jours.length ? t(jours[jours.length - 1] + 'T12:00:00Z') : NaN;
   const S = [
     {id: 'taches', nom: 'Tâches et PR', nat: 'mes', at: M ? M.asof : NaN, cad: 10 * MIN, src: 'GitHub (issues et PR des dépôts), relevé du PC'},
+    ...(CUR && CUR.prs_ouvertes && typeof CUR.prs_ouvertes === 'object' ? [{id: 'prs', nom: 'PR ouvertes : contrôles, file, déploiements', nat: 'mes', at: t(CUR.prs_ouvertes.releve), cad: 10 * MIN, src: 'GitHub (contrôles et file Mergify de chaque PR ouverte, dernier déploiement de chaque dépôt), relevé du PC'}] : []),
     {id: 'sante', nom: 'Défauts et preuves', nat: 'cal', at: t(F.calcule_le), cad: 30 * MIN, src: 'calculé par le PC sur le relevé'},
     {id: 'prev', nom: 'Ce qui va se passer', nat: 'est', at: t(P.calcule_le), cad: 10 * MIN, src: 'file du script du PC : une prévision, pas un fait'},
     {id: 'actions', nom: 'Minutes Actions', nat: 'mes', at: t(jauge('actions', 'releve')), cad: 10 * MIN, perime: t(jauge('actions', 'perime')), src: 'GitHub Actions (dépôts privés)'},
@@ -4566,12 +4601,13 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
   const VIEW = document.getElementById('view'); mx.appendChild(VIEW); VIEW.hidden = true;
   const I = {
     mur: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="5" rx="1.2"/><rect x="12" y="4" width="9" height="5" rx="1.2"/><rect x="3" y="11" width="10" height="5" rx="1.2"/><rect x="15" y="11" width="6" height="5" rx="1.2"/><rect x="3" y="18" width="5" height="3" rx="1"/><rect x="10" y="18" width="11" height="3" rx="1"/></svg>',
+    cours: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>',
     toi: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.8"/><path d="M4.6 20.5c.8-4 3.6-6.2 7.4-6.2s6.6 2.2 7.4 6.2"/></svg>',
     gantt: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="10" height="3.6" rx="1.8"/><rect x="8" y="10.2" width="13" height="3.6" rx="1.8"/><rect x="5" y="15.9" width="9" height="3.6" rx="1.8"/></svg>',
     vitesse: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-4.5"/><circle cx="12" cy="14" r="1.3"/></svg>',
     couts: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.8-1.3-2.4-2-4.4-2-2.5 0-4 1.2-4 3 0 4.2 8.6 2.2 8.6 6.6 0 1.8-1.7 3.1-4.5 3.1-2.2 0-3.9-.8-4.8-2.2"/></svg>'
   };
-  const TABS = [['mur', 'Accueil'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
+  const TABS = [['mur', 'Accueil'], ['cours', 'En cours'], ['toi', 'À toi'], ['gantt', 'Gantt'], ['vitesse', 'Vitesse'], ['couts', 'Coûts']];
   const arc = (p, col, sz = 76, sw = 8) => { const r = (sz - sw) / 2, c = 2 * Math.PI * r, v = Math.max(0.012, Math.min(1, p)); return `<svg viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="${sw}"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(v * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${sz / 2} ${sz / 2})"/></svg>`; };
   const mobile = () => innerWidth <= 700;
 
@@ -4725,18 +4761,6 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     const html = rows.map(r => `<div class="orow"><span class="n">${esc(r.nom)}</span><span class="ob" role="img" aria-label="${esc(r.nom + ' : ' + r.n + ' ouvertes')}" style="--w:${(r.n / mx * 100).toFixed(1)}%">${OUV.filter(o => r.v[o[0]]).map(([k, name, col]) => `<i style="flex:${r.v[k]};--c:${col}" data-tip="${tipAttr(r.nom + ' · ' + name + ' : ' + r.v[k])}"></i>`).join('')}</span><span class="v">${nfmt(r.n)}</span></div>`).join('');
     return fig('Tâches ouvertes : où', html ? `<div class="olist">${html}</div>` : '<p class="soon" role="status">Aucune tâche ouverte.</p>', chips(OUV.map(([k, name, col]) => [col, name, nfmt(L.filter(l => ouvGroupe(l.e) === k).length)])));
   }
-  /* la consommation de chaque ressource, jour par jour : les 7 jours que donne le relevé (quota.jours), rien de plus ancien */
-  function chQuotaJours(W){
-    const Q = CUR && CUR.quota, J = Q && Array.isArray(Q.jours) ? Q.jours : [];
-    if (!J.length) return '';
-    const R = [['actions', 'Actions · minutes', 'min', 'var(--done)'], ['vercel', 'Vercel · déploiements', 'déploiements', 'var(--doing)'], ['jules', 'Jules · tâches', 'tâches', 'var(--marc)'], ['gemini', 'Gemini · relectures', 'relectures', 'var(--a-mem)']];
-    return R.map(([k, titre, unit, col]) => {
-      const g = Q.jauges && Q.jauges[k], pj = g && g.par_jour; if (!pj) return '';
-      const bins = J.map(d => ({k: d, lab: d.slice(8), long: dlab(Date.parse(d + 'T12:00:00Z')), v: {x: +pj[d] || 0}}));
-      const sum = bins.reduce((a, b) => a + b.v.x, 0);
-      return chStack(W, {title: titre + ' par jour', bins, keys: [{k: 'x', name: unit, col}], unit, per: '7 jours', foot: `<div class="kp2"><b>${nfmt(sum)}</b><span>${esc(unit)} en 7 j</span></div>`});
-    }).filter(Boolean);
-  }
   /* quand le robot travaille : heure x jour de semaine */
   function chChaleur(W, P, endT, titre){
     const L = 30, T = 4, iw = W - L - 4, cs = Math.min(26, iw / 24), R = PS().ms < 7 * DAY ? 1 : 7, H = T + R * cs + 24, DJ = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'], WD = {Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6};
@@ -4838,7 +4862,7 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     return band(BI.prog, 'Avancement', grid(1, [sf('Avancement', () => chProg(WCH()))]), ['taches'])
       + band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>', 'Cadence', grid(2, [sf('Fusions par jour', () => chJour(W2, P, endT)), sf('Quand ça fusionne', () => chChaleur(W2, P, endT))]) + grid(2, [sf('Durée', () => chDuree(W2)), sf('Qui fusionne', () => chQui(W2, P, endT))]), ['taches'])
       + band(BI.prog, 'Tâches ouvertes', grid(2, [sf('Âge des tâches', () => chAge(W2)), sf('Tâches par app', () => chOuvertesApp(W2))]) + '<p class="qnote">L’état du moment : toutes les tâches ouvertes, quelle que soit la période choisie ; l’âge compte depuis la création de la tâche.</p>', ['taches'])
-      + band(BI.res, 'Ressources', rings() + (() => { const c = chQuotaJours(W2); return c.length ? `<div class="qjours"><h3 class="qjh">Quotas par jour<small>les 7 derniers jours du relevé</small></h3>${grid(2, c)}</div>` : ''; })() + (qs.length ? `<details class="qmore"><summary>Courbes réel contre rythme</summary>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</details>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
+      + band(BI.res, 'Ressources', rings() + `<div class="qjours"><h3 class="qjh">Consommation, ${esc(PS().n)}<small>suit la période choisie ; le relevé dit depuis quand il a des mesures</small></h3>${grid(2, ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api'].filter(k => (((CUR && CUR.quota && CUR.quota.jauges) || {})[k])).map(k => sf(k, () => chRes(k, W2))))}</div>` + (qs.length ? `<div class="qjours"><h3 class="qjh">Réel contre rythme<small>la ligne pointillée est le rythme qui tient jusqu'à la remise à zéro</small></h3>${grid(2, qs.map(g => sf(g.court, () => chQuota(g, W2))))}</div>` : ''), ['actions', 'vercel', 'jules', 'gemini', 'claude', 'api-mois'])
       + band(BI.cash, 'Coûts', `<div class="mini"><button class="kpi" data-tab="couts" style="text-align:left" aria-label="Payé en ${esc(PS().n)} : ${nfmt(paidCur)} $. Ouvrir les coûts"><b>${nfmt(paidCur)}</b><small>$ en ${esc(PS().n)}</small></button><div><div class="mcols" role="img" aria-label="Coût par mois">${cols}</div><div class="mlab">${labs}</div></div><button class="go" data-tab="couts" aria-label="Voir tous les coûts">${'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'}</button></div>`, ['recus', 'couts-apps', 'taux'])
       + sf('Données', () => band('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>', 'Données : d’où vient chaque chiffre', vDonnees()));
   }
@@ -4896,30 +4920,63 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
     return `<div class="dh"><span class="r">${arc(p, col, 84, 9)}<b>${g.used == null ? '—' : g.api ? '' : nfmt(Math.round(p * 100)) + '<small>%</small>'}</b></span><div><b>${esc(big)}</b><small>${esc(g.court)}${g.j ? ' · ' + esc(g.j.mot) : ''}</small></div></div>`
       + (g.extra && g.extra.length ? `<ul class="dl">${g.extra.slice(0, 8).map(([a, b]) => `<li><span>${esc(a)}</span><em>${esc(b)}</em></li>`).join('')}</ul>` : '');
   }
+  /* la courbe principale de chaque ressource, sur la PÉRIODE choisie : toujours affichée dans Ressources, et en tête du détail au clic.
+     Vercel, Jules, Gemini et Actions viennent de leurs évènements datés ; Claude et l'API de leur historique. Le relevé n'a pas toujours
+     toute la période : la courbe montre ce qu'il y a et dit « relevé depuis le … » (jamais un zéro inventé avant). */
+  function chRes(key, W){
+    const g = ((CUR && CUR.quota && CUR.quota.jauges) || {})[key] || {}, now = Date.now(), K = extraKeys();
+    const tsOf = e => Date.parse(e[0]), valid = e => isFinite(tsOf(e));
+    if (key === 'vercel'){
+      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf));
+      return chStack(W, {title: 'Déploiements', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'déploiements', first});
+    }
+    if (key === 'jules'){
+      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf));
+      return chStack(W, {title: 'Tâches données à Jules', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'tâches', first});
+    }
+    if (key === 'gemini'){
+      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf));
+      return chStack(W, {title: 'Appels à Gemini', bins: evBins(now, ev, tsOf, e => e[2] === 'pr' ? 'pr' : 'dem'), keys: [{k: 'pr', name: 'Relectures de PR', col: 'var(--marc)'}, {k: 'dem', name: 'Demandes', col: 'var(--vio)'}], unit: 'appels', first});
+    }
+    if (key === 'actions'){
+      const rs = (g.runs || []).filter(valid), first = denseFirst(rs.map(tsOf)), mn = e => +e[3] || 0;
+      return chStack(W, {title: 'Minutes Actions', bins: evBins(now, rs.map(e => ({t: tsOf(e), k: repoKey(e[1]), w: mn(e)})), e => e.t, e => e.k), keys: K, unit: 'min', first});
+    }
+    if (key === 'claude'){
+      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), p: x.pct, s: x.session})).filter(x => isFinite(x.t)), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first);
+      return chLine(W, {title: 'Part utilisée', t0, t1: now, max: 100, breakDrop: 30, unit: '%', series: [{name: 'Semaine', col: 'var(--vio)', pts: h.filter(x => x.p != null).map(x => [x.t, x.p])}, {name: 'Session de 5 h', col: 'var(--doing)', pts: h.filter(x => x.s != null).map(x => [x.t, x.s])}], foot: `<div class="kp2"><span>coupure = remise à zéro</span>${clipNote(first, now) || '<span class="dash">une mesure par heure</span>'}</div>`});
+    }
+    if (key === 'api'){
+      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), c: x.cad})).filter(x => isFinite(x.t) && x.c != null), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first), rep = g.repere || 20;
+      const brk = h.find((x, i) => i && h[i - 1].c > x.c * 3);
+      return chLine(W, {title: 'Total du mois, en $ CA', t0, t1: now, dec: 2, unit: '$', ref: [{v: rep, label: 'repère ' + rep + ' $'}], vlines: brk ? [{t: brk.t, label: 'La mesure change ici : ' + nfmt(h[h.indexOf(brk) - 1].c, 2) + ' $ avant, ' + nfmt(brk.c, 2) + ' $ après [À vérifier]'}] : [], series: [{name: 'Mois en cours', col: 'var(--now)', pts: h.map(x => [x.t, x.c])}], foot: `<div class="kp2">${brk ? '<span>trait orangé : la mesure change, à vérifier</span>' : ''}${clipNote(first, now)}</div>`});
+    }
+    return '';
+  }
   function detBody(key, W){
     const Q = (CUR && CUR.quota && CUR.quota.jauges) || {}, g = Q[key] || {}, now = Date.now(), K = extraKeys();
     const tsOf = e => Date.parse(e[0]), valid = e => isFinite(tsOf(e)), P = PRL();
     if (key === 'vercel'){
       const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf)), win = ev.filter(e => inP(tsOf(e), now));
-      return sf('Déploiements', () => chStack(W, {title: 'Déploiements', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'déploiements', first}))
+      return sf('Déploiements', () => chRes('vercel', W))
         + sf('Construits ou sautés', () => chStack(W, {title: 'Construits ou sautés', bins: evBins(now, ev, tsOf, e => e[2] === 'construit' ? 'c' : 's'), keys: [{k: 'c', name: 'Construits', col: 'var(--doing)'}, {k: 's', name: 'Sautés (docs, tests)', col: 'var(--todo)'}], unit: 'déploiements', first}))
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, e => repoKey(e[1])), unit: 'déploiements'}));
     }
     if (key === 'jules'){
-      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf)), win = ev.filter(e => inP(tsOf(e), now));
-      return sf('Tâches données à Jules', () => chStack(W, {title: 'Tâches données à Jules', bins: evBins(now, ev, tsOf, e => repoKey(e[1])), keys: K, unit: 'tâches', first}))
+      const ev = (g.evts || []).filter(valid), win = ev.filter(e => inP(tsOf(e), now));
+      return sf('Tâches données à Jules', () => chRes('jules', W))
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, e => repoKey(e[1])), unit: 'tâches'}))
         + sf('Dernières', () => lastList('Dernières tâches', ev.slice(-6).reverse().map(e => [e[1], dlab(tsOf(e)) + ' ' + hh(tsOf(e)), e[1] + '\n' + jour(tsOf(e)) + ' ' + hh(tsOf(e))])));
     }
     if (key === 'gemini'){
-      const ev = (g.evts || []).filter(valid), first = denseFirst(ev.map(tsOf)), win = ev.filter(e => inP(tsOf(e), now));
-      return sf('Appels à Gemini', () => chStack(W, {title: 'Appels à Gemini', bins: evBins(now, ev, tsOf, e => e[2] === 'pr' ? 'pr' : 'dem'), keys: [{k: 'pr', name: 'Relectures de PR', col: 'var(--marc)'}, {k: 'dem', name: 'Demandes', col: 'var(--vio)'}], unit: 'appels', first}))
+      const ev = (g.evts || []).filter(valid), win = ev.filter(e => inP(tsOf(e), now));
+      return sf('Appels à Gemini', () => chRes('gemini', W))
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, e => repoKey(e[1])), unit: 'appels'}))
         + sf('Derniers', () => lastList('Derniers appels', ev.slice(-6).reverse().map(e => [e[1], (e[2] === 'pr' ? 'PR ' : 'demande ') + dlab(tsOf(e)) + ' ' + hh(tsOf(e)), e[1] + '\n' + jour(tsOf(e)) + ' ' + hh(tsOf(e))])));
     }
     if (key === 'actions'){
-      const rs = (g.runs || []).filter(valid), first = denseFirst(rs.map(tsOf)), win = rs.filter(e => inP(tsOf(e), now)), mn = e => +e[3] || 0;
-      return sf('Minutes', () => chStack(W, {title: 'Minutes Actions', bins: evBins(now, rs.map(e => ({t: tsOf(e), k: repoKey(e[1]), w: mn(e)})), e => e.t, e => e.k), keys: K, unit: 'min', first}))
+      const rs = (g.runs || []).filter(valid), win = rs.filter(e => inP(tsOf(e), now)), mn = e => +e[3] || 0;
+      return sf('Minutes', () => chRes('actions', W))
         + sf('Par dépôt', () => chRank(W, {title: 'Par dépôt, ' + PS().n, rows: rankOf(win, e => repoKey(e[1]), mn), unit: 'min'}))
         + sf('Fusions de PR', () => chJour(W, P, now));
     }
@@ -4930,15 +4987,8 @@ setInterval(() => { if (!document.hidden && innerWidth){ tickGantt(); tickAgo();
         + sf('Par app', () => chRank(W, {title: 'Par app, ' + PS().n, rows: rankOf(win, p => p.r), unit: 'PR'}))
         + sf('Dernières', () => lastList('Dernières PR', C.slice().sort((a, b) => b.t - a.t).slice(0, 6).map(p => [repoName(p.r) + ' #' + p.n, dlab(p.t) + ' ' + hh(p.t), (p.b || '') + '\n' + jour(p.t) + ' ' + hh(p.t)])));
     }
-    if (key === 'claude'){
-      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), p: x.pct, s: x.session})).filter(x => isFinite(x.t)), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first);
-      return sf('Claude', () => chLine(W, {title: 'Part utilisée', t0, t1: now, max: 100, breakDrop: 30, unit: '%', series: [{name: 'Semaine', col: 'var(--vio)', pts: h.filter(x => x.p != null).map(x => [x.t, x.p])}, {name: 'Session de 5 h', col: 'var(--doing)', pts: h.filter(x => x.s != null).map(x => [x.t, x.s])}], foot: `<div class="kp2"><span>coupure = remise à zéro</span>${clipNote(first, now) || '<span class="dash">une mesure par heure</span>'}</div>`}));
-    }
-    if (key === 'api'){
-      const h = (g.historique_long || []).map(x => ({t: Date.parse(x.t), c: x.cad})).filter(x => isFinite(x.t) && x.c != null), first = h.length ? h[0].t : now - PS().ms, t0 = Math.max(now - PS().ms, first), rep = g.repere || 20;
-      const brk = h.find((x, i) => i && h[i - 1].c > x.c * 3);
-      return sf('API', () => chLine(W, {title: 'Total du mois, en $ CA', t0, t1: now, dec: 2, unit: '$', ref: [{v: rep, label: 'repère ' + rep + ' $'}], vlines: brk ? [{t: brk.t, label: 'La mesure change ici : ' + nfmt(h[h.indexOf(brk) - 1].c, 2) + ' $ avant, ' + nfmt(brk.c, 2) + ' $ après [À vérifier]'}] : [], series: [{name: 'Mois en cours', col: 'var(--now)', pts: h.map(x => [x.t, x.c])}], foot: `<div class="kp2">${brk ? '<span>trait orangé : la mesure change, à vérifier</span>' : ''}${clipNote(first, now)}</div>`}));
-    }
+    if (key === 'claude') return sf('Claude', () => chRes('claude', W));
+    if (key === 'api') return sf('API', () => chRes('api', W));
     return '';
   }
   const panEl = document.createElement('div'); panEl.id = 'mpan'; panEl.hidden = true; panEl.setAttribute('role', 'dialog'); panEl.setAttribute('aria-modal', 'true'); document.body.appendChild(panEl);
@@ -5134,6 +5184,132 @@ function vGanttFull(){
     const its = aToiItems(), n = its.length;
     return `<section class="hero2" style="padding-bottom:18px"><div class="pct" role="img" aria-label="${n} à faire par toi"><b>${nfmt(n)}</b></div><div class="hside"><div class="leg"><div><i class="sh marc"></i>à toi</div></div></div></section>${vAToi()}`;
   }
+
+  /* ---------- En cours : le process vu d'un coup d'œil (Hubperso#640, demande de Marc, 28/10/2026 : « une page en cours avec littéralement tout ce qui est en train de se passer, et ce qui est prévu » puis « beaucoup moins de texte, full visuel, en live, voir le process ») ----------
+     Tout vient du modèle tiré du relevé (`M.leaves`, `M.PD`, `M.sante.hors`, `prlog`), avec son âge. Une pastille = une tâche, qui avance de gauche à droite ;
+     le détail est dans l'infobulle et dans la fiche (clic). La CI, la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé : la page ne les montre pas. */
+  const ECN = {Claude: 'un fil Claude', Jules: 'Jules', Copilot: 'Copilot', Marc: 'Marc'};
+  const ecQui = l => {
+    if (l.marc) return 'Marc';
+    if (l.j) return 'Jules';
+    if (l.pat) return l.qui;
+    const a = (l.acteurs || []).filter(x => x.fin).sort((x, y) => y.fin - x.fin)[0];
+    return a ? ECN[a.qui] || a.qui : l.qui === '—' ? 'personne encore' : l.qui;
+  };
+  const ecSuite = l => {
+    const pr = l.pr, w = (l.waits || []).filter(x => x.unknown || x.open).slice(0, 3);
+    switch (l.e){
+      case 'cours': return !pr || pr.state !== 'open' ? 'PR pas encore ouverte' : pr.draft ? 'PR en brouillon : elle ne fusionne qu’une fois sortie du brouillon' : 'PR ouverte';
+      case 'rel': return 'PR prête : elle fusionne quand les contrôles sont verts';
+      case 'acc': return l.end ? 'acceptée ' + quand(l.end) : 'acceptée';
+      case 'fus': return l.pa != null ? 'preuve due ' + quand(l.pa) : 'preuve à faire après la fusion';
+      case 'prog': return l.pa != null ? 'preuve prévue ' + quand(l.pa) : l.paT ? 'preuve : ' + String(l.paT).slice(0, 110) : 'preuve attendue après un événement';
+      case 'ret': return l.pa != null ? 'preuve due depuis ' + quand(l.pa) : l.pm ? 'preuve manquante' : 'preuve en retard';
+      case 'blk': return l.oub && l.oub.cause ? l.oub.cause : w.length ? 'attend ' + w.map(x => x.ref).join(', ') : 'étiquette « bloqué »';
+      case 'marc': return l.geste && l.geste.t ? 'geste : ' + l.geste.t : 'attend ton geste';
+      default: return l.fs != null ? 'prévue ' + quand(l.fs, true) : l.why || (l.q != null ? 'file : rang ' + l.q : 'pas dans la file du script');
+    }
+  };
+  // le process, de l'idée à la tâche acceptée ; 4e valeur = étape qui vient de `prs_ouvertes` (contrôles, déploiements) : grisée avec « ? » quand le relevé n'en a pas
+  const XCOL = [
+    ['idee', 'Idée', '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4"/><path d="M12 15.6v.1"/>'],
+    ['file', 'En file', '<path d="M5 7h14M5 12h14M5 17h9"/>'],
+    ['prise', 'Prise', '<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/>'],
+    ['draft', 'PR brouillon', SVGI.pr],
+    ['rel', 'PR prête', SVGI.pr],
+    ['ci', 'Contrôles', '<path d="M12 3l7 3v5.5c0 4.2-2.8 7.6-7 9.5-4.2-1.9-7-5.3-7-9.5V6z"/>', 'pr'],
+    ['fus', 'Fusionnée', SVGI.fusion],
+    ['dep', 'En ligne', '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>', 'dep'],
+    ['prove', 'Preuve', '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.4 2.4L15.8 9.6"/>'],
+    ['acc', 'Acceptée, 24 h', SVGI.fait]
+  ];
+  // `prs_ouvertes` (relevé du PC, .github#679) : contrôles, file Mergify et agent de chaque PR ouverte, dernier déploiement de chaque dépôt ; absente = étapes grisées
+  const xcData = () => { const P = CUR && CUR.prs_ouvertes; if (!P || typeof P !== 'object' || !Array.isArray(P.prs)) return null;
+    const par = {}; P.prs.forEach(r => { if (r && r.repo) par[String(r.repo).toLowerCase() + '#' + r.n] = r; return r; });
+    return {P, par, dep: P.deploiements && typeof P.deploiements === 'object' ? P.deploiements : {}}; };
+  const xcRec = (l, D) => D && l.pr ? D.par[String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n] || null : null;
+  const xcEtatCi = r => r && !r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null;
+  const xcEnCi = (l, D) => { const r = xcRec(l, D); return !!r && !r.brouillon && ((r.mergify && r.mergify.file === true) || ['en_cours', 'vert', 'rouge', 'annule'].includes(xcEtatCi(r))); };
+  const xcCol = (l, D) => (l.e === 'cours' || l.e === 'rel') && l.pr && l.pr.state === 'open' && !l.pr.draft && xcEnCi(l, D) ? 'ci' : l.e === 'cours' ? (l.pr && l.pr.state === 'open' ? (l.pr.draft ? 'draft' : 'rel') : 'prise') : l.e === 'rel' ? 'rel' : l.e === 'fus' ? 'fus' : l.e === 'prog' || l.e === 'ret' ? 'prove' : l.e === 'todo' && l.q == null ? 'idee' : 'file';   // bloquée et attend Marc : en file
+  const xcWho = l => { const q = ecQui(l); return q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'; };
+  const xcCiTip = r => { const c = r.ci || {}, m = r.mergify || {};
+    return (c.erreur ? '\ncontrôles : lecture en panne (' + c.erreur + ')' : c.etat ? '\ncontrôles : ' + ({vert: 'verts', rouge: 'en échec', en_cours: 'en cours', annule: 'annulés', aucun: 'aucun lancé', non_lu: 'pas lus'}[c.etat] || c.etat) + (c.ok != null ? ' · ' + c.ok + ' ok' + (c.ko ? ', ' + c.ko + ' en échec' : '') + (c.en_cours ? ', ' + c.en_cours + ' en cours' : '') + (c.en_file ? ', ' + c.en_file + ' en file' : '') : '') + (c.rouges && c.rouges.length ? '\nen échec : ' + c.rouges.slice(0, 4).join(', ') : '') : '')
+      + (m.file === true ? '\nfile Mergify' + (m.position != null ? ' : n° ' + m.position : '') + (m.message ? ' · ' + m.message : '') : ''); };
+  const xcBrick = (l, col, now, D) => {
+    const big = col === 'prise' || col === 'draft' || col === 'rel' || col === 'ci', rec = col === 'ci' ? xcRec(l, D) : null, ce = rec ? xcEtatCi(rec) : null, live = (l.last && now - l.last < 15 * 60e3) || ce === 'en_cours';
+    const late = l.e === 'ret' || l.e === 'blk' || !!l.oub || ce === 'rouge' || ce === 'annule', mw = l.e === 'marc';
+    const cls = ['xc-b', 's-' + col, ce === 'vert' ? 'ok' : '', big ? 'big' : '', live && big ? 'on' : '', late ? 'r' : '', mw ? 'mw' : ''].filter(Boolean).join(' ');
+    const p = big && l.start && l.est && l.est.d ? Math.min(100, Math.round((now - l.start) / l.est.d * 100)) : 0;
+    const lab = l.e === 'blk' ? '!' : col === 'idee' ? '' : col === 'file' && !mw ? (l.q != null ? l.q : '') : xcWho(l);
+    const tip = l.t + '\n' + l.repo + '#' + l.n + ' · ' + ecQui(l) + (l.pr ? ' · PR #' + l.pr.n + (l.pr.state === 'open' ? (l.pr.draft ? ' brouillon' : ' prête') : '') : '') + (l.start && col !== 'file' && col !== 'idee' ? '\ncommencée ' + ago(l.start) : '') + (l.last ? '\ndernière trace ' + ago(l.last) : '') + (rec ? xcCiTip(rec) : '') + '\n' + ecSuite(l);
+    return `<button class="${cls}" data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" aria-label="${esc(l.t)}">${esc(lab)}${big ? `<span class="p" style="--p:${p}%"></span>` : ''}</button>`;
+  };
+  function xcPouls(W){
+    const now = Date.now(), N = 24, t0 = Math.floor(now / H) * H - (N - 1) * H, L = 30, T = 14, B = 22, ih = 150 - T - B, iw = W - L - 4, bw = iw / N;
+    const S = [['démarrées', 'var(--doing)', M.leaves.map(l => l.start)], ['fusionnées', 'var(--fus-t)', PRL().map(x => x.t)], ['acceptées', 'var(--done)', M.leaves.filter(l => l.e === 'acc').map(l => l.end)]];
+    const bins = S.map(([, , ts]) => { const o = Array(N).fill(0); ts.forEach(t => { const i = t ? Math.floor((t - t0) / H) : -1; if (i >= 0 && i < N) o[i]++; }); return o; });
+    const mx = nice(Math.max(1, ...Array.from({length: N}, (_, i) => bins.reduce((a, b) => a + b[i], 0)))), Y = v => T + ih - v / mx * ih;
+    let g = axisY(W, L, T, ih, [0, mx / 2, mx], Y, v => nfmt(v));
+    for (let i = 0; i < N; i++){
+      let y = T + ih; const x = L + i * bw + bw * .16, w = bw * .68, tips = [];
+      bins.forEach((b, k) => { if (!b[i]) return; const h = b[i] / mx * ih; y -= h; g += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(2, h - 1.5).toFixed(1)}" rx="2.5" fill="${S[k][1]}"/>`; tips.push(b[i] + ' ' + S[k][0]); });
+      if (i % 6 === 5 || i === 0) g += `<text x="${(L + i * bw + bw / 2).toFixed(1)}" y="${150 - 6}" text-anchor="middle">${esc(hh(t0 + i * H))}</text>`;
+      g += hit(L + i * bw, T, bw, ih + 6, hh(t0 + i * H) + (tips.length ? '\n' + tips.join('\n') : '\naucune activité'));
+    }
+    const key = chips(S.map(([n, c], k) => [c, n, bins[k].reduce((a, b) => a + b, 0)]));
+    return fig('Le pouls, 24 h', `<svg class="cch" viewBox="0 0 ${W} 150" role="img" aria-label="Tâches démarrées, PR fusionnées et tâches acceptées par heure, sur 24 heures">${g}</svg>`, key);
+  }
+  function xcSuite(W){
+    const now = Date.now(), R = 48 * H, L = 34, T = 8, rh = 22, iw = W - L - 8;
+    const rows = M.apps.map(a => ({a, it: M.leaves.filter(l => l.open && l.k === a.k).flatMap(l => [l.fs != null && l.e === 'todo' && l.fs - now < R ? {l, t: l.fs, k: 'deb'} : null, l.pa != null && l.pa - now < R && (l.e === 'prog' || l.e === 'fus' || l.e === 'ret') ? {l, t: l.pa, k: 'preuve'} : null].filter(Boolean))})).filter(r => r.it.length);
+    if (!rows.length) return '';
+    const Hh = T + rows.length * rh + 22, X = t => L + Math.max(0, Math.min(1, (t - now) / R)) * iw;
+    let g = '';
+    for (let h = 0; h <= 48; h += 12) g += `<line class="g" x1="${X(now + h * H).toFixed(1)}" x2="${X(now + h * H).toFixed(1)}" y1="${T - 2}" y2="${Hh - 20}"/><text x="${Math.min(W - 14, X(now + h * H)).toFixed(1)}" y="${Hh - 5}" text-anchor="${h === 0 ? 'start' : h === 48 ? 'end' : 'middle'}">${h === 0 ? 'maintenant' : h % 24 ? esc(hh(now + h * H)) : esc(quand(now + h * H, true))}</text>`;
+    rows.forEach((r, i) => {
+      const y = T + i * rh + rh / 2;
+      g += `<circle cx="10" cy="${y}" r="5" fill="var(--a-${esc(r.a.k)})"/>`;
+      r.it.forEach(({l, t, k}) => { const x = X(t), late = t < now, c = `var(--a-${esc(l.k)})`, tip = l.t + '\n' + (k === 'deb' ? 'début prévu ' : 'preuve due ') + quand(t, true);
+        g += k === 'deb' ? `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="var(--doing)" style="cursor:pointer"/>`
+          : `<circle data-open="${esc(l.ref)}" data-tip="${tipAttr(tip)}" cx="${x.toFixed(1)}" cy="${y}" r="6" fill="none" stroke="${late ? 'var(--blk-t)' : 'var(--fus-t)'}" stroke-width="2.6" style="cursor:pointer"/>`; });
+    });
+    const key = `<div class="chips"><span><i style="background:var(--mute)"></i>début prévu</span><span><i style="background:none;border:2.5px solid var(--mute);box-sizing:border-box"></i>preuve due</span></div>`;
+    return fig('Les 48 prochaines heures', `<svg class="cch" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Débuts prévus et preuves dues dans les 48 prochaines heures, une ligne par app">${g}</svg>`, key);
+  }
+  const xcAg = a => a === 'Jules' ? 'J' : a === 'Copilot' ? 'Cp' : a === 'Marc' ? 'M' : a === 'Claude' ? 'C' : a === 'Dependabot' ? 'D' : '';
+  const xcDepEtat = d => !d ? ['—', 'rien', 'aucun déploiement'] : d.erreur ? ['!', 'r', 'lecture en panne'] : d.etat === 'success' ? ['', 'ok', 'en ligne'] : ['failure', 'error'].includes(d.etat) ? ['!', 'r', 'en échec'] : ['pending', 'in_progress', 'queued', 'waiting'].includes(d.etat) ? ['', 'on', 'en cours'] : ['', 'rien', String(d.etat || '—')];
+  function vEnCours(){
+    const now = Date.now(), D = xcData(), ouv = M.leaves.filter(l => l.open && l.e !== 'aband'), recents = M.leaves.filter(l => l.e === 'acc' && l.end && now - l.end < DAY).sort((a, b) => b.end - a.end);
+    const appOf = repo => { const a = M.apps.find(x => x.rl === String(repo).toLowerCase()); return a ? a.k : 'x'; };
+    // PR sans tâche : celles de `prs_ouvertes` quand le relevé les donne, sinon les PR hors tâche du relevé des défauts
+    const refs = new Set(M.leaves.filter(l => l.pr).map(l => String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n));
+    const hors = D ? D.P.prs.filter(r => r && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r, tache: r.tache}))
+      : ((M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : []).map(h => ({repo: h.repo, n: h.n, t: h.t, url: h.url, draft: !!h.draft, ag: h.bot ? '' : '', bot: h.bot}));
+    const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'ci' : 'rel';
+    const cell = (a, c, g) => {
+      if (g === 'dep'){
+        const d = D && Object.keys(D.dep).find(k => k.toLowerCase() === a.rl), x = d ? xcDepEtat(D.dep[d]) : xcDepEtat(null), v = d ? D.dep[d] : null;
+        return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, En ligne"><span class="xc-b s-dep ${x[1]}" data-tip="${tipAttr(a.app + '\n' + x[2] + (v && v.environnement ? ' · ' + v.environnement : '') + (v && v.maj_le ? '\nmis à jour ' + ago(Date.parse(v.maj_le)) : '') + (v ? '\ndernier déploiement du dépôt, pas celui d’une PR' : ''))}">${esc(x[0])}</span></div>`;
+      }
+      if (g && !D) return `<div class="xc-c gh" data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"></div>`;
+      const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
+      const hh2 = c === 'draft' || c === 'rel' || c === 'ci' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b s-${c}${h.rec && !h.rec.tache ? ' h' : ''}${h.rec && xcEtatCi(h.rec) === 'vert' ? ' ok' : ''}${h.rec && ['rouge', 'annule'].includes(xcEtatCi(h.rec)) ? ' r' : ''}" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · ' + (h.tache ? 'tâche ' + h.tache : 'PR sans tâche') + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
+      return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now, D)).join('')}${hh2}</div>`;
+    };
+    const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => appOf(h.repo) === a.k)).map(a =>
+      `<div class="xc-l" style="--ac:var(--a-${esc(a.k)})" title="${esc(a.app)}"><i></i><span>${esc(a.app)}</span></div>` + XCOL.map(([c, , , g]) => cell(a, c, g)).join('')).join('');
+    const nCol = c => c === 'acc' ? recents.length : c === 'dep' ? (D ? Object.values(D.dep).filter(v => v && v.etat === 'success').length : 0) : ouv.filter(l => xcCol(l, D) === c).length + hors.filter(h => horsCol(h) === c).length, nLate = ouv.filter(l => l.e === 'ret').length;
+    const head = `<div></div>` + XCOL.map(([c, n, ic, g]) => `<div class="xc-h${g && !D ? ' gh' : ''}${c === 'prove' && nLate ? ' late' : ''}" role="columnheader"${g && !D ? ` data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"` : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><b>${g && !D ? '?' : nfmt(nCol(c))}</b><span>${esc(n)}</span></div>`).join('');
+    const cols = '110px ' + XCOL.map(x => x[3] === 'dep' ? '64px' : x[3] && !D ? '58px' : 'minmax(0,1fr)').join(' ');
+    const W2 = colW(2), pe = D && (D.P.incomplet || (Array.isArray(D.P.erreurs) && D.P.erreurs.length)) ? `<span class="cf" style="color:var(--blk-t)" title="${esc((D.P.erreurs || []).join('\n'))}">lecture des PR incomplète</span>` : '';
+    const top = `<div class="xc-top"><span class="xc-live"><i></i>en direct</span>${fraisHTML(D ? ['taches', 'prs'] : ['taches'])}${pe}</div>`;
+    const k = (cls, t, lab) => `<span><i class="xc-b ${cls}">${lab || ''}</i>${t}</span>`;
+    const key = `<div class="xc-key">${k('s-prise', 'fil Claude', 'C')}${k('s-prise', 'Jules', 'J')}${k('s-prise', 'Copilot', 'Cp')}${k('mw', 'toi', 'M')}${k('r', 'en retard, bloquée ou en échec', '!')}${k('s-file', 'rang dans la file', '1')}${k('h', 'PR sans tâche')}</div>`;
+    if (!rows) return `<div class="xc">${top}<p class="empty" role="status">Aucune tâche ouverte dans le relevé.</p></div>`;
+    return `<div class="xc">${top}<div class="xc-sc"><div class="xc-board" style="--cols:${cols}" role="table" aria-label="Le process, de l’idée à la tâche acceptée">${head}${rows}</div></div>${key}${grid(2, [sf('Pouls', () => xcPouls(W2)), sf('Suite', () => xcSuite(W2))])}</div>`;
+  }
+  // l'onglet En cours se redessine tout seul : les âges, les pastilles et les barres avancent sans toucher la page
+  setInterval(() => { if (M && ST.tab === 'cours' && !document.hidden) render(); }, 30e3);
 
   /* ---------- Coûts ---------- */
   const fd = d => +d.slice(8) + ' ' + cMoisCourt(d.slice(0, 7)).slice(0, 4).replace(/\.$/, '');
@@ -5459,7 +5635,7 @@ function vGanttFull(){
       post(false); return;
     }
     VIEW.hidden = true; VIEW.innerHTML = '';
-    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : vToiM();
+    $('#mv').innerHTML = tab === 'mur' ? vMur() : tab === 'cours' ? vEnCours() : tab === 'couts' ? vCoutsM() : tab === 'vitesse' ? vVitesseM() : vToiM();
     countUp($('#mv'));
   }
   window.render = function(){
