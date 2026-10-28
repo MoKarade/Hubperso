@@ -45,10 +45,10 @@ séparées (une par app). **Rien n'est encore branché** : générer la clé ne 
 comportement de production.
 
 ### Où va chaque clé
-| Clé | Où | Variable (nom proposé, à confirmer par la PR de signature) | Type Vercel |
+| Clé | Où | Variable (noms lus par les apps : `HUB_SESSION_PUBLIC_KEYS` ; la privée reste un nom proposé, à confirmer par la PR de signature) | Type Vercel |
 |---|---|---|---|
 | PRIVÉE (JWK, champ `d`) | projet `hubperso` UNIQUEMENT | `HUB_SESSION_PRIVATE_JWK` | Sensible, Production seulement |
-| PUBLIQUE (JWKS d'une ou deux clés) | hub ET les 4 satellites | `HUB_SESSION_JWKS` | Normale, Production seulement |
+| PUBLIQUE (JWKS d'une ou deux clés) | hub ET les satellites | `HUB_SESSION_PUBLIC_KEYS` | Normale, Production seulement |
 
 Jamais dans le dépôt, jamais dans Preview/Development (comme `AUTH_COOKIE_DOMAIN`), jamais dans
 un message, un journal ou une capture. Le `kid` (empreinte RFC 7638 de la clé publique)
@@ -63,7 +63,7 @@ pendant une rotation.
 3. Vercel, projet `hubperso` : créer `HUB_SESSION_PRIVATE_JWK` (Sensible) avec le CONTENU du
    fichier. Puis **supprimer le fichier** aussitôt (sous Windows le mode 0600 ne protège pas :
    le fichier hérite des droits du dossier).
-4. Créer `HUB_SESSION_JWKS` avec la ligne affichée, dans le hub et dans les 4 satellites.
+4. Créer `HUB_SESSION_PUBLIC_KEYS` avec la ligne affichée (forme `{"keys":[{"kty":"EC","crv":"P-256","x":"…","y":"…","kid":"…"}]}`), dans le hub et dans chaque app qui vérifie le cookie signé `__Secure-hub.session`.
 5. Redéployer. ⚠️ Un changement de variable sans commit ne déclenche PAS de build
    (`build-necessaire.sh`, BACKLOG H-18) : forcer un déploiement.
 Le script n'affiche jamais la clé privée ; s'il l'affichait un jour, c'est un bug à signaler
