@@ -15,6 +15,7 @@
 - **Pourquoi** : LIA peut laisser une note au coordinateur (MemoryAI, ADR 0022, choix « A » de Marc du 28/10), mais rien ne le réveillait. Le PC n'a aucun jeton MemoryAI ; son seul secret est `GANTT_SECRET`.
 - **Quoi** : `GET /api/chantier/notes-lia` (`Authorization: Bearer <GANTT_SECRET>`) rend `{ ok: true, notesLia: <entier ≥ 0 | null> }`. Le hub lit en direct le résumé de MemoryAI (`fetchSummaryLive`, `HUB_TOKEN` déjà détenu), métrique « Notes de LIA non lues » (MemoryAI#399, `lib/notesLia.ts`). `null` = inconnu (injoignable, invalide, métrique absente), jamais 0. 503 si `GANTT_SECRET` absent, 401 si faux (MemoryAI n'est alors pas interrogée), 429 au-delà de 30 appels par minute.
 - **Aucun secret neuf, aucun coût** ; le contenu des notes ne passe jamais par le hub. Cinquième route de serveur à serveur : égalité STRICTE dans `isPublicPath`, `ROUTES_A_JETON` à jour.
+- **Preuve en production** : `curl -s -H "Authorization: Bearer $GANTT_SECRET" https://hubperso.com/api/chantier/notes-lia` doit rendre `{"ok":true,"notesLia":<nombre>}` ; sans l'en-tête, 401.
 - **Suite** : le tour du PC (MoKarade/.github#681) lit cette route et lance `boite-reacteur.yml` quand le nombre dépasse celui déjà signalé.
 
 ## 28/10/2026 : LIA reçoit les faits d'une barre du Gantt et les analyse elle-même (Hubperso#644, mission MoKarade/.github#575)
