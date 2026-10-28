@@ -253,8 +253,9 @@ describe("les quotas se lisent d'un coup d'oeil, une ligne par ressource", () =>
     expect(DOCUMENT).toContain("data-det=\"copilot\"");
   });
 
-  it("les courbes sont repliées sous les lignes et les cibles font au moins 44 px", () => {
-    expect(DOCUMENT).toContain("<details class=\"qmore\"><summary>Courbes réel contre rythme</summary>");
+  it("les courbes réel contre rythme sont toujours affichées, sans tiroir, et les cibles font au moins 44 px", () => {
+    expect(DOCUMENT).toContain('<h3 class="qjh">Réel contre rythme');
+    expect(DOCUMENT).not.toContain("qmore");
     expect(DOCUMENT).toMatch(/\.qrow\{[^}]*min-height:44px/);
   });
 });
@@ -503,7 +504,7 @@ describe("le cadre se tient à jour sans que l'on recharge la page (#640)", () =
 describe("plus de graphes, tirés du relevé seulement (#640)", () => {
   it("le chiffre du haut porte sa pastille de fraîcheur, les quotas par jour leur titre, le taux sa valeur visible", () => {
     expect(DOCUMENT).toContain("${fraisHTML(['taches'])}</div></div></section>`");
-    expect(DOCUMENT).toContain('<h3 class="qjh">Quotas par jour');
+    expect(DOCUMENT).toContain('<h3 class="qjh">Consommation, ${esc(PS().n)}');
     expect(DOCUMENT).toContain('const fxLigne = () => `<p class="qnote cxfx">1 $ US = <b>${esc(fxTxt())} $ CA</b>');
     expect(DOCUMENT).toContain("Payé, d’après les reçus</b>${fraisHTML(['recus', 'taux'])}</p>${fxLigne()}");
     expect(DOCUMENT).toContain("taux fixe, estimé : le relevé ne donne pas encore le taux du jour");
@@ -516,11 +517,15 @@ describe("plus de graphes, tirés du relevé seulement (#640)", () => {
     expect(DOCUMENT).toContain("toutes les tâches ouvertes, quelle que soit la période choisie");
   });
 
-  it("la consommation par jour de chaque ressource vient de quota.jours et de par_jour, jamais d'une série inventée", () => {
-    expect(DOCUMENT).toContain("function chQuotaJours(W)");
-    expect(DOCUMENT).toContain("Array.isArray(Q.jours) ? Q.jours : []");
-    expect(DOCUMENT).toContain("g.par_jour");
-    expect(DOCUMENT).toContain("per: '7 jours'");
+  it("la consommation de chaque ressource suit la période choisie (7 jours, 1 mois, 3 mois), jamais une série inventée", () => {
+    expect(DOCUMENT).toContain("function chRes(key, W)");
+    expect(DOCUMENT).not.toContain("chQuotaJours");
+    for (const k of ["vercel", "jules", "gemini", "actions", "claude", "api"]) {
+      expect(DOCUMENT).toContain(`chRes('${k}', W`);
+    }
+    expect(DOCUMENT).toContain("evBins(");
+    expect(DOCUMENT).toContain("Math.max(now - PS().ms, first)");
+    expect(DOCUMENT).toContain("['actions', 'vercel', 'jules', 'gemini', 'claude', 'api'].filter(");
   });
 
   it("le taux USD→CAD est celui du relevé (Banque du Canada) quand il existe, borné, sinon le repli est dit fixe", () => {
@@ -586,5 +591,48 @@ describe("lireClicDroit : ce que le hub retient du clic droit du cadre", () => {
     ]) {
       expect(lireClicDroit(mauvais), JSON.stringify(mauvais)).toBeNull();
     }
+  });
+});
+
+describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du relevé seulement (#640)", () => {
+  it("existe dans la barre et s'ouvre par ?onglet=cours", () => {
+    expect(ongletDe("cours")).toBe("cours");
+    expect(DOCUMENT).toContain("['cours', 'En cours']");
+    expect(DOCUMENT).toContain("tab === 'cours' ? vEnCours()");
+    expect(DOCUMENT).toContain("t === 'cours' || t === 'couts'");
+  });
+
+  it("montre le process en pastilles, sans phrases : une colonne par étape, une ligne par app, le pouls et les 48 prochaines heures", () => {
+    for (const t of ["'Idée'", "'En file'", "'Prise'", "'PR brouillon'", "'PR prête'", "'Contrôles'", "'Fusionnée'", "'En ligne'", "'Preuve'", "'Acceptée, 24 h'"]) expect(DOCUMENT).toContain(t);
+    expect(DOCUMENT).toContain("function xcPouls(W)");
+    expect(DOCUMENT).toContain("function xcSuite(W)");
+    expect(DOCUMENT).toContain("const ecQui = l =>");
+    expect(DOCUMENT).toContain("M.sante.hors");
+    expect(DOCUMENT).not.toContain("la file Mergify et le déploiement de chaque PR ne sont pas dans le relevé : la page ne les montre pas plutôt");
+  });
+
+  it("reste en direct : la pastille d'âge du relevé, un redessin toutes les 30 s, la forme dit qui travaille", () => {
+    expect(DOCUMENT).toContain("fraisHTML(D ? ['taches', 'prs'] : ['taches'])");
+    expect(DOCUMENT).toContain("ST.tab === 'cours' && !document.hidden) render(); }, 30e3)");
+    expect(DOCUMENT).toContain("q === 'Jules' ? 'J' : q === 'Copilot' ? 'Cp' : q === 'Marc' ? 'M' : 'C'");
+    expect(DOCUMENT).toContain("prefers-reduced-motion:reduce){#mx .xc-b.on");
+  });
+
+  it("branche Contrôles et En ligne sur prs_ouvertes, grisées avec « ? » quand la clé manque, jamais vertes sans preuve", () => {
+    expect(DOCUMENT).toContain("CUR.prs_ouvertes");
+    expect(DOCUMENT).toContain("const xcData = () =>");
+    expect(DOCUMENT).toContain("Pas dans le relevé pour l’instant");
+    // une PR brouillon ou sans contrôle lu ne passe jamais en Contrôles ; « aucun » et « non_lu » ne sont pas du vert
+    expect(DOCUMENT).toContain("!r.brouillon && r.ci && !r.ci.erreur ? r.ci.etat : null");
+    expect(DOCUMENT).toContain("['en_cours', 'vert', 'rouge', 'annule'].includes(xcEtatCi(r))");
+    expect(DOCUMENT).toContain("ce === 'vert' ? 'ok' : ''");
+    expect(DOCUMENT).toContain("ce === 'rouge' || ce === 'annule'");
+    // le déploiement est celui du dépôt, pas celui d'une PR, et le dit
+    expect(DOCUMENT).toContain("dernier déploiement du dépôt, pas celui d’une PR");
+    expect(DOCUMENT).toContain("lecture des PR incomplète");
+    // une PR que la fiche de sa tâche ne porte pas (2e PR d'une tâche, PR sans tâche) reste visible, au bon étage
+    expect(DOCUMENT).toContain("D.P.prs.filter(r => r && !refs.has(");
+    expect(DOCUMENT).toContain("case 'acc': return l.end ? 'acceptée ' + quand(l.end)");
+    expect(DOCUMENT).toContain("id: 'prs'");
   });
 });
