@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   CSP_CADRE,
+  MESSAGE_CLIC_DROIT,
   MESSAGE_COUTS,
   MESSAGE_GESTE,
   MESSAGE_ONGLET,
@@ -313,5 +314,30 @@ describe("le cadre ne se recharge pas quand on change de page du hub (#596)", ()
     expect(DOCUMENT).toContain(`m.type === '${MESSAGE_ONGLET}'`);
     expect(DOCUMENT).toContain("window.surOnglet = o =>");
     expect(DOCUMENT).toContain("if (!document.hidden && innerWidth){ tickGantt(); tickAgo(); }");
+  });
+});
+
+describe("le clic droit du cadre est dit au hub (#610)", () => {
+  it("écoute contextmenu en capture, laisse Maj et les champs de saisie au navigateur", () => {
+    expect(DOCUMENT).toContain("document.addEventListener('contextmenu'");
+    expect(DOCUMENT).toContain("if (e.shiftKey || e.target.closest('input,textarea,select,[contenteditable]')) return;");
+    expect(DOCUMENT).toMatch(/\}, true\);\nlet LONG = null;/);
+  });
+
+  it("poste { type, x, y, genre, texte } dans le canal, texte coupé à 300 caractères", () => {
+    expect(DOCUMENT).toContain(`type: '${MESSAGE_CLIC_DROIT}'`);
+    expect(DOCUMENT).toContain("portHub.postMessage(msg)");
+    expect(DOCUMENT).toContain(".slice(0, 300)");
+    expect(DOCUMENT).toContain("genre: g[1], texte");
+  });
+
+  it("sans hub qui écoute, le menu du navigateur reste en place (preventDefault seulement si le message est parti)", () => {
+    expect(DOCUMENT).toContain("if (direAuHub(e.clientX, e.clientY, e.target)) e.preventDefault();");
+    expect(DOCUMENT).toContain("if (!portHub) return false;");
+  });
+
+  it("appui long tactile de 650 ms, annulé par un mouvement de plus de 8 px", () => {
+    expect(DOCUMENT).toContain("}, 650)");
+    expect(DOCUMENT).toContain("> 8) finLong()");
   });
 });

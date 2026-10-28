@@ -9,7 +9,7 @@
    remet l'un de ses bouts au hub — en nommant son origine, celle de l'adresse de CE document —, et le hub
    n'écrit plus que dans ce canal, qui n'a qu'un destinataire. */
 (function () {
-  var octets = null, attente = [], recu = false, canalHub = null, gestes = {};
+  var octets = null, attente = [], recu = false, canalHub = null, portHub = null, gestes = {};
   function etat(texte) {
     var e = document.getElementById('err');
     if (e) { e.hidden = !texte; e.textContent = texte || ''; }
@@ -20,6 +20,7 @@
     if (!m || typeof m !== 'object') return;
     if (m.type === 'chantier-ok') {
       recu = true;
+      portHub = ev.target;
       // Le hub sait déposer les gestes de l'onglet « À toi » (à la place du dossier Drive, que ce cadre n'a pas).
       if (m.gestes === true) {
         canalHub = ev.target;
@@ -65,6 +66,13 @@
       gestes[corps.id] = { ok: ok, ko: ko, t: t };
       canalHub.postMessage({ type: 'chantier-geste', geste: corps });
     });
+  };
+  // Clic droit (ou appui long) : le hub ne voit pas ce qui se passe dans ce cadre, il reçoit donc `{type, x, y, genre, texte}`
+  // par le canal. Faux tant qu'aucun hub n'écoute : le menu du navigateur reste alors en place.
+  window.hubClicDroit = function (msg) {
+    if (!portHub) return false;
+    portHub.postMessage(msg);
+    return true;
   };
   window.claude = {
     use: function (nom) {
@@ -4155,6 +4163,39 @@ document.addEventListener('click', ev => {
   if (t.dataset.tog){ const k = t.dataset.tog; ST.open[k] = t.getAttribute('aria-expanded') !== 'true'; persist(); return render(); }
   if (t.dataset.open){ if ($('#sheet').hidden) ST.stack = []; return openSheet(t.dataset.open); }
 });
+/* clic droit et appui long : dits au hub (LIA), qui seul peut y répondre ; Maj garde le menu du navigateur, les champs de saisie aussi */
+// [ce qui est visé, ce que c'est, le bloc dont on lit le texte]
+const GENRES = [['.gbx,.gtx', 'une barre du Gantt', '.grow'], ['.grow', 'une ligne du Gantt', '.grow'], ['.card', 'une carte de tâche', '.card'], ['.qc,.qk,.qlist', 'une jauge de quota', '.qc,.qk,.qlist'],
+  ['.vc,.vrow,.vseg', 'une mesure du rythme', '.vc,.vrow'], ['.ev', 'un événement', '.ev'], ['.row,.li', 'une ligne de la liste', '.row,.li'], ['.app', 'une application', '.app'], ['button,a', 'un bouton', 'button,a'], ['#view', 'la page', '#view']];
+function clicDroitDe(el){
+  if (!el || !el.closest) return null;
+  const g = GENRES.find(([sel]) => el.closest(sel));
+  if (!g) return null;
+  const bloc = el.closest(g[2]);
+  const texte = ((bloc && bloc.innerText) || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  return {genre: g[1], texte};
+}
+function direAuHub(x, y, el){
+  if (typeof window.hubClicDroit !== 'function') return false;
+  const c = clicDroitDe(el); if (!c) return false;
+  return window.hubClicDroit({type: 'chantier-clic-droit', x: Math.round(x), y: Math.round(y), genre: c.genre, texte: c.texte});
+}
+document.addEventListener('contextmenu', e => {
+  if (e.shiftKey || e.target.closest('input,textarea,select,[contenteditable]')) return;
+  // au toucher le menu vient de l'appui long, déjà traité plus bas : ici on garde seulement le menu du navigateur à l'écart
+  if (e.pointerType === 'touch'){ if (typeof window.hubClicDroit === 'function') e.preventDefault(); return; }
+  if (direAuHub(e.clientX, e.clientY, e.target)) e.preventDefault();
+}, true);
+let LONG = null;
+const finLong = () => { if (LONG){ clearTimeout(LONG.t); LONG = null; } };
+document.addEventListener('pointerdown', e => {
+  finLong();
+  if (e.pointerType !== 'touch' || e.target.closest('input,textarea,select,[contenteditable]')) return;
+  const x = e.clientX, y = e.clientY, el = e.target;
+  LONG = {x, y, t: setTimeout(() => { LONG = null; direAuHub(x, y, el); }, 650)};
+}, true);
+document.addEventListener('pointermove', e => { if (LONG && Math.hypot(e.clientX - LONG.x, e.clientY - LONG.y) > 8) finLong(); }, true);
+['pointerup', 'pointercancel', 'scroll'].forEach(t => document.addEventListener(t, finLong, true));
 /* Gantt : glisser à gauche ou à droite pour remonter le temps ou voir plus loin */
 let DR = null, SKIP = false;
 const trackW = () => { const g = document.querySelector('.gw .grow .gt'); return g ? g.clientWidth : 0; };
