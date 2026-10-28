@@ -97,6 +97,11 @@ const FIXES: readonly VariableAttendue[] = [
     siAbsente: "le hub n'émet pas le cookie de session signé (__Secure-hub.session) ; la connexion actuelle n'est pas touchée",
   },
   {
+    nom: "HUB_SESSION_PUBLIC_KEYS",
+    exigence: "optionnelle",
+    siAbsente: "la route de contrôle /api/session/signee répond « non-configure » (clés publiques de la session signée, JWKS)",
+  },
+  {
     nom: "SENTRY_DSN",
     exigence: "optionnelle",
     siAbsente: "suivi des erreurs éteint : aucune erreur n'est envoyée à Sentry (variable serveur, lue à l'exécution)",
