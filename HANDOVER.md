@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : lia-ui v0.47.0, LIA lit les graphiques et ne scanne que sur demande (Hubperso#679, mission MoKarade/.github#575)
+
+Épingle `@mokarade/lia-ui` v0.47.0 (sha pelé `7f1d7bb`), seul changement (`package.json`, lock). Marc, 28/10/2026 : « l'assistant voit toujours pas les graphes » et « l'animation de scan uniquement sur ce que je lui ai demandé ». v0.47.0 : LIA lit un graphique SVG (titre, axes, légende, valeurs écrites) sans code chez l'hôte ; les courbes du hub gardent leur résumé en mots (`data-lia-donnees`, Hubperso#675), qui prime. Les graphiques `<canvas>` restent illisibles (limite connue). v0.46.0 : le scan des nanobots ne joue que sur ce que Marc a demandé d'analyser. v0.45.1 (menu sur sa propre couche) arrive avec. Rien à brancher. Preuve : déploiement `READY` sur le commit fusionné, puis relevé du PC (question sur un graphique SVG du hub ; aucune visite spontanée ne lance l'essaim).
+
+Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant de tâche (il attend un ID du backlog comme `C28-49:` ou l'exception `HORS-BACKLOG:`) : un re-pin sans ID de backlog porte `HORS-BACKLOG:` en tête de sujet.
+
 ## 28/10/2026 : LIA lit les courbes du hub (Hubperso#675, mission MoKarade/.github#575)
 
 - **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Un clic droit sur une courbe envoyait « une courbe d'évolution » sans aucune valeur : le tracé n'est qu'un `<path>`.
