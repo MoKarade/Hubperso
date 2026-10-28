@@ -2,6 +2,14 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 28/10/2026 : LIA lit les courbes du hub (Hubperso#675, mission MoKarade/.github#575)
+
+- **Demande de Marc** (28/10, 19:40Z) : « l'assistant voit toujours pas les graphes, il devrait ». Un clic droit sur une courbe envoyait « une courbe d'évolution » sans aucune valeur : le tracé n'est qu'un `<path>`.
+- **Ce qui change** : `lib/resumeSerie.ts` (pur) écrit la série en mots (nombre de relevés, période, départ, arrivée, sens, plus bas et plus haut avec leur date, valeurs au format de la carte via `valeurDeMetrique`, dates au fuseau de Marc) ; `Sparkline` le pose dans `data-lia-donnees` quand l'appelant lui donne `val` (carte, mesure, détail d'une app, coût). `decrireElementHub` (`lib/liaElement.ts`) le relit (sur l'élément, un ancêtre, ou un descendant sauf dans un grand conteneur : une carte entière n'est pas « sa première courbe ») et l'envoie dans `donnees`, nettoyé (`<`, `>`, contrôles) et borné à 1 200 caractères.
+- **Pas de jugement** : le résumé dit « en hausse » ou « en baisse », jamais « mauvais » ; le hub ne sait pas ce que la métrique mesure. Moins de deux relevés : pas de résumé, comme pas de tracé.
+- **Hors de cette tâche** : les graphiques de la page Chantier (`chantier/cadre.html`, même fichier que Hubperso#640) et les graphes des autres apps, chacune sa tâche.
+- **Preuve à lire** : en production, le HTML de `/` porte `data-lia-donnees="Courbe « … »"` sur une carte qui a une courbe ; puis une question à LIA sur cette courbe cite des valeurs de la série.
+
 ## 28/10/2026 : le hub pousse l'état du chantier à MemoryAI pour que LIA le lise elle-même (Hubperso#651, mission MoKarade/.github#575)
 
 - **Décision de Marc** (carte du 28/10, 18:11Z) : « le hub pousse le chantier à MemoryAI » (le hub POUSSE, MemoryAI ne détient aucun jeton vers une app, ADR 0015).

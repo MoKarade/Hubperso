@@ -14,6 +14,7 @@ import {
 import { serieMetrique, variation, type Releve } from "@/lib/historique";
 import { severityTone } from "@/lib/status";
 import { formatDuree, formatMetricValue, formatTrend } from "@/lib/format";
+import { valeurDeMetrique } from "@/lib/resumeSerie";
 import { Sparkline } from "./Sparkline";
 
 function MetriqueDetaillee({
@@ -48,7 +49,7 @@ function MetriqueDetaillee({
         )}
       </div>
       <div className="detail__metrique-courbe">
-        <Sparkline points={serie} label={metrique.label} />
+        <Sparkline points={serie} label={metrique.label} val={valeurDeMetrique(metrique)} />
       </div>
       <p className="detail__metrique-note">
         {note ? (

@@ -17,11 +17,18 @@ import type { DescriptionElement } from "@mokarade/lia-ui";
 /** Longueur maximale du texte lu (lia-ui coupe aussi à 300 : on borne avant, pour ne rien dépendre de lui). */
 export const TEXTE_ELEMENT_MAX = 300;
 
+/** Longueur maximale des faits (`data-lia-donnees`, ce que dit une courbe) : la limite de lia-ui v0.45.0. */
+const DONNEES_ELEMENT_MAX = 1200;
+
+const ATTR_DONNEES = "data-lia-donnees";
+
 /** Ce que le module lit d'un élément. Un `Element` du navigateur convient ; un faux objet aussi, dans les tests. */
 export interface LecteurElement {
   matches(selecteur: string): boolean;
   closest(selecteur: string): LecteurElement | null;
-  querySelector(selecteur: string): { textContent: string | null } | null;
+  querySelector(selecteur: string): { textContent: string | null; getAttribute?(nom: string): string | null } | null;
+  /** Les faits posés par le composant (`data-lia-donnees`) : un `Element` du navigateur sait les lire. */
+  getAttribute?(nom: string): string | null;
   /** Le texte VISIBLE quand le navigateur le sait (`innerText` ignore ce qui est caché) ; sinon `textContent`. */
   readonly innerText?: string;
   readonly textContent: string | null;
@@ -53,13 +60,13 @@ export const GENRES_HUB: ReadonlyArray<{ selecteur: string; genre: string }> = [
 const TOUS = GENRES_HUB.map((g) => g.selecteur).join(", ");
 
 /** Le texte à joindre à la question : une ligne, sans `<` ni `>`, sans caractère de contrôle, borné. */
-export function nettoyerTexte(brut: string | null | undefined): string {
+export function nettoyerTexte(brut: string | null | undefined, max = TEXTE_ELEMENT_MAX): string {
   const net = (brut ?? "")
     .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
     .replace(/[<>]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  return net.length > TEXTE_ELEMENT_MAX ? `${net.slice(0, TEXTE_ELEMENT_MAX - 1).trimEnd()}…` : net;
+  return net.length > max ? `${net.slice(0, max - 1).trimEnd()}…` : net;
 }
 
 /** Le nom affiché de l'app à laquelle appartient l'élément (le titre de sa carte), ou `undefined`. */
@@ -76,6 +83,20 @@ function nomDeLApp(el: LecteurElement): string | undefined {
  */
 function pointe(el: LecteurElement): LecteurElement {
   return el.matches(".widget__detail") ? (el.closest(".widget") ?? el) : el;
+}
+
+/**
+ * Les faits que le composant a écrits pour LIA (`data-lia-donnees`, ex. le résumé d'une courbe) : sur l'élément, sur un
+ * ancêtre, ou dans un descendant (le chiffre principal contient sa courbe). Jamais dans un grand conteneur : une carte
+ * entière n'est pas « sa première courbe ». Nettoyés comme le texte, bornés à 1 200 caractères.
+ */
+function donneesDe(proche: LecteurElement): string | undefined {
+  const brut =
+    proche.getAttribute?.(ATTR_DONNEES) ??
+    proche.closest(`[${ATTR_DONNEES}]`)?.getAttribute?.(ATTR_DONNEES) ??
+    (proche.matches(CONTENEURS) ? null : proche.querySelector(`[${ATTR_DONNEES}]`)?.getAttribute?.(ATTR_DONNEES));
+  const net = nettoyerTexte(brut, DONNEES_ELEMENT_MAX);
+  return net === "" ? undefined : net;
 }
 
 /** Les grands conteneurs : y viser un détail qu'on ne sait pas nommer, c'est viser CE détail, pas tout le conteneur. */
@@ -103,10 +124,17 @@ export function decrireElementHub<E extends LecteurElement>(
     const nomPropre = nettoyerTexte(precis.nom);
     const nom = nomDeLApp(proche) ?? (nomPropre !== "" ? nomPropre : undefined);
     const texte = nettoyerTexte(precis.texte);
-    return { genre: nettoyerTexte(precis.genre), ...(nom !== undefined && { nom }), ...(texte !== "" && { texte }) };
+    const donnees = nettoyerTexte(precis.donnees, DONNEES_ELEMENT_MAX);
+    return {
+      genre: nettoyerTexte(precis.genre),
+      ...(nom !== undefined && { nom }),
+      ...(texte !== "" && { texte }),
+      ...(donnees !== "" && { donnees }),
+    };
   }
 
   const texte = nettoyerTexte(proche.innerText ?? proche.textContent);
   const nom = nomDeLApp(proche);
-  return { genre, ...(nom !== undefined && { nom }), ...(texte !== "" && { texte }) };
+  const donnees = donneesDe(proche);
+  return { genre, ...(nom !== undefined && { nom }), ...(texte !== "" && { texte }), ...(donnees !== undefined && { donnees }) };
 }

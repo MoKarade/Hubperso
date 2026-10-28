@@ -3,6 +3,7 @@ import { formatMetricValue, formatTrend } from "@/lib/format";
 import { severityTone } from "@/lib/status";
 import { Icone } from "./Icone";
 import { iconeTendance } from "@/lib/icones";
+import { valeurDeMetrique } from "@/lib/resumeSerie";
 import { Sparkline } from "./Sparkline";
 
 // Les métriques SECONDAIRES seulement. La première publiée est traitée à part, en héros
@@ -35,7 +36,7 @@ function Metric({ secondaire }: { secondaire: SecondaireCarte }) {
           plutôt qu'un trait plat, qui affirmerait une stabilité jamais observée. */}
       {serie.length > 0 && (
         <span className="metric__courbe">
-          <Sparkline points={serie} label={metrique.label} />
+          <Sparkline points={serie} label={metrique.label} val={valeurDeMetrique(metrique)} />
         </span>
       )}
     </div>

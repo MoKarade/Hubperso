@@ -58,7 +58,11 @@ function CourbeCout({
   return (
     <div className="detail__metrique">
       <div className="detail__metrique-courbe">
-        <Sparkline points={points} label={`coût (${cost.period}, ${cost.currency})`} />
+        <Sparkline
+          points={points}
+          label={`coût (${cost.period}, ${cost.currency})`}
+          val={(v) => `${v.toFixed(2)} ${cost.currency}`}
+        />
       </div>
       <p className="detail__metrique-note">
         Évolution du coût ({cost.period}, {cost.currency}) : {points.length} relevés
