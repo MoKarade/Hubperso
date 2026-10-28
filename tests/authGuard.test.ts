@@ -55,6 +55,13 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api/lia/autre")).toBe(false);
   });
 
+  it("laisse passer /api/lia/etat — et exactement ce chemin", () => {
+    expect(isPublicPath("/api/lia/etat")).toBe(true);
+    expect(isPublicPath("/api/lia/etat/")).toBe(false);
+    expect(isPublicPath("/api/lia/etat-tout")).toBe(false);
+    expect(isPublicPath("/api/lia/etat/autre")).toBe(false);
+  });
+
   it("laisse passer /api/cron/releve — et exactement ce chemin", () => {
     expect(isPublicPath("/api/cron/releve")).toBe(true);
     expect(isPublicPath("/api/cron/releve/")).toBe(false);

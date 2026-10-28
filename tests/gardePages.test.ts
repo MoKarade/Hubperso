@@ -152,6 +152,8 @@ describe("tout route handler est gardé, ou authentifié autrement et le prouve"
       "serveur à serveur : une app demande si une adresse a accès chez elle, identifiée par son HUB_TOKEN",
     "api/lia/ask/route.ts":
       "la question de LIA : une app (x-hub-token) ou l'accueil (session lue dans la route), relayée à MemoryAI",
+    "api/lia/etat/route.ts":
+      "l'état partagé de LIA : une app (x-hub-token + x-lia-proprietaire) ou l'accueil (session propriétaire lue dans la route), relayé à MemoryAI",
     "api/cron/releve/route.ts":
       "l'horloge du hub, appelée par un workflow GitHub Actions et authentifiée par CRON_SECRET",
     "api/gantt/route.ts":
