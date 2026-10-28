@@ -11,8 +11,10 @@
 
 import { traceSparkline } from "@/lib/carte";
 import type { Point } from "@/lib/historique";
+import { resumerSerie } from "@/lib/resumeSerie";
 
-export function Sparkline({ points, label }: { points: Point[]; label: string }) {
+/** `val` écrit une valeur de la série (unité comprise) pour le résumé lu par LIA ; sans lui, pas de résumé. */
+export function Sparkline({ points, label, val }: { points: Point[]; label: string; val?: (v: number) => string }) {
   const d = traceSparkline(points);
   // Moins de deux points : rien à tracer. Un trait plat affirmerait une stabilité qu'on n'a
   // pas observée — la carte écrit « pas encore d'historique » à la place.
@@ -25,6 +27,8 @@ export function Sparkline({ points, label }: { points: Point[]; label: string })
       preserveAspectRatio="none"
       role="img"
       aria-label={`Évolution de ${label} sur les relevés conservés`}
+      // Ce que le tracé montre, écrit : c'est ce que LIA lit (clic droit), elle ne voit pas un dessin.
+      data-lia-donnees={(val && resumerSerie(points, label, val)) || undefined}
     >
       {/* L'aire sous la courbe (maquette du 22/10) : la même série, fermée vers le bas. Elle ne
           dit rien de plus que le trait — elle le rend lisible d'un coup d'œil. */}
