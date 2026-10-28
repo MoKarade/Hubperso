@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { aUnLogo } from "@/lib/logos";
 import {
   estActive,
@@ -27,6 +27,7 @@ import {
   type IconeNav,
   type ModeleNav,
 } from "@/lib/navigation";
+import { ChantierPersistant } from "./ChantierPersistant";
 import { LogoApp } from "./LogoApp";
 
 /** Tracés sur une grille de 24, en `currentColor` : l'icône suit le texte, aucune couleur écrite. */
@@ -245,6 +246,12 @@ export function Cadre({ modele, children }: { modele: ModeleNav; children: React
       <Navigation modele={modele} chemin={chemin} />
       <div className="cadre__contenu" id="contenu" tabIndex={-1}>
         {children}
+        {/* Le cadre du Chantier reste monté d'une page à l'autre (caché hors de /chantier) : le Gantt ne se recharge pas. */}
+        {modele.vue.some((e) => e.id === "chantier") && (
+          <Suspense fallback={null}>
+            <ChantierPersistant />
+          </Suspense>
+        )}
       </div>
     </div>
   );
