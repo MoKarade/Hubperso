@@ -1799,6 +1799,43 @@ function plan(N, leaves, ASOF, mode, PRO){
 }
 
 /* ---------- modèle : tout est recalculé depuis les données GitHub ---------- */
+/* ---------- événements GitHub appliqués au relevé ----------
+   Le relevé du PC est la base ; ce que GitHub a dit APRÈS son heure (`asof`) est appliqué à une COPIE des tâches avant le calcul du modèle :
+   étiquette posée ou retirée, issue fermée, rouverte, titre modifié, issue neuve, « Acceptée », PR ouverte, brouillon, fusionnée ou fermée.
+   Un événement plus ancien que le relevé n'y change rien (le relevé le sait déjà). Sans événement utile, `D` est rendue telle quelle. */
+const NIVEAUX = {'niveau:tâche': 'tâche', 'niveau:mission': 'mission', 'niveau:chantier': 'chantier'};
+function avecEvenements(D, evs){
+  if (!D || !Array.isArray(D.repos) || !evs || !evs.length) return D;
+  const asof = Date.parse(D.asof), t = e => Date.parse(e.at);
+  const utiles = evs.filter(e => e && (e.type === 'issues' || e.type === 'pull_request' || e.type === 'issue_comment') && e.n && isFinite(t(e)) && (!isFinite(asof) || t(e) > asof))
+    .sort((a, b) => t(a) - t(b) || (a.id < b.id ? -1 : 1));
+  if (!utiles.length) return D;
+  const repos = D.repos.map(r => ({...r, nodes: (r.nodes || []).map(n => ({...n}))})), par = {};
+  repos.forEach(r => { par[r.k] = {r, n: new Map(r.nodes.map(n => [n.n, n]))}; });
+  utiles.forEach(e => {
+    const R = par[e.repo]; if (!R) return;
+    const n = R.n.get(e.n), plus = e.plus || {}, iso = e.at;
+    if (e.type === 'issues'){
+      if (e.action === 'opened' && !n){ const x = {n: e.n, t: plus.t || '', l: null, lb: [], st: 'open', c: iso, x: null, s: null, k: [], d: []}; R.r.nodes.push(x); R.n.set(e.n, x); return; }
+      if (!n) return;
+      if (e.action === 'edited' && plus.t) n.t = plus.t;
+      else if (e.action === 'labeled' && plus.lb){ n.lb = [...new Set([...(n.lb || []), plus.lb])]; if (NIVEAUX[plus.lb]) n.l = NIVEAUX[plus.lb]; if ((plus.lb === 'en-cours' || plus.lb === 'jules') && !n.s) n.s = iso; }
+      else if (e.action === 'unlabeled' && plus.lb){ n.lb = (n.lb || []).filter(x => x !== plus.lb); if (NIVEAUX[plus.lb] && n.l === NIVEAUX[plus.lb]) n.l = null; }
+      else if (e.action === 'closed'){ n.st = 'closed'; n.x = iso; }
+      else if (e.action === 'reopened'){ n.st = 'open'; n.x = null; }
+    } else if (e.type === 'issue_comment'){
+      if (n && e.etat === 'acceptee' && !n.pv) n.pv = {u: plus.u || null, c: iso};
+    } else {
+      const m = R.r.nodes.find(x => x.pr && x.pr.n === e.n); if (!m) return;
+      const pr = {...m.pr}; pr.upd = iso;
+      if (e.etat === 'fusionnee'){ pr.state = 'closed'; pr.merged = iso; pr.closed = iso; }
+      else if (e.etat === 'fermee'){ pr.state = 'closed'; pr.merged = null; pr.closed = iso; }
+      else if (e.etat === 'ouverte' || e.etat === 'brouillon'){ pr.state = 'open'; pr.merged = null; pr.closed = null; pr.draft = e.etat === 'brouillon'; }
+      m.pr = pr;
+    }
+  });
+  return {...D, repos};
+}
 function model(D){
   const N = {}, ms = x => x ? Date.parse(x) : null, ASOF = Date.parse(D.asof);
   // la file « tâche suivante » est celle du script de MoKarade/.github (prochaine-tache.mjs), calculée par build.py : la page ne la recalcule PAS.
@@ -4525,7 +4562,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if
 if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(() => { if (M && (ST.tab === 'taches' || ST.tab === 'gantt')) drawLinks(); })).observe($('#view'));
 
 /* ---------- données : copie publiée, puis relecture du dossier du projet toutes les 5 min ---------- */
-let CUR = EMBED, SRC = 'copie publiée';
+let CUR = EMBED, SRC = 'copie publiée', BASE = null;   // BASE : le relevé tel que reçu ; M est calculé sur BASE + les événements arrivés après
 function prive(c){
   if (!c || typeof c !== 'object') return;
   if (Array.isArray(c.vercel_recus)) VERCEL_RECUS = c.vercel_recus;
@@ -4537,7 +4574,7 @@ function prive(c){
   const kR = Object.keys(c).find(k => k.indexOf('recus_') === 0 && c[k] && typeof c[k] === 'object' && Array.isArray(c[k].recus)); if (kR) RECUS_COURRIELS = c[kR];
 }
 function load(d, anim){
-  try { prive(d && d.couts_manuels); M = model(d); CUR = d; if (anim) ANIM = true; render(); }
+  try { prive(d && d.couts_manuels); BASE = d; M = model(avecEvenements(d, [...EV.values()])); CUR = d; if (anim) ANIM = true; render(); }
   catch(e){ const el = $('#err'); el.hidden = false; el.textContent = 'Données illisibles : ' + (e && e.message || e); }
 }
 // première peinture : on attend au plus 0,9 s la copie du dossier du projet (une seule animation, avec les bons chiffres) ; sinon la copie publiée
@@ -5465,7 +5502,9 @@ function vGanttFull(){
     (Array.isArray(m.evenements) ? m.evenements : []).forEach(e => { if (e && typeof e.id === 'string' && typeof e.cle === 'string' && typeof e.repo === 'string' && isFinite(Date.parse(e.at))) EV.set(e.id, e); });
     EV.forEach((e, id) => { if (Date.now() - Date.parse(e.at) > 14 * DAY) EV.delete(id); });
     EVS.der = [...EV.values()].reduce((a, e) => Math.max(a, Date.parse(e.at)), NaN) || NaN;
-    if (M && ST.tab === 'cours' && (EV.size !== avant || etait !== isFinite(EVS.lu) + '|' + EVS.err)) render();
+    // un événement utile change l'état des tâches : tout le modèle est recalculé sur le relevé + les événements, et la page se redessine, quel que soit l'onglet
+    if (M && BASE && EV.size !== avant){ try { M = model(avecEvenements(BASE, [...EV.values()])); render(); } catch (e) { const el = $('#err'); el.hidden = false; el.textContent = 'Données illisibles : ' + (e && e.message || e); } }
+    else if (M && ST.tab === 'cours' && etait !== isFinite(EVS.lu) + '|' + EVS.err) render();
   };
   (window.evEnAttente || []).splice(0).forEach(window.surEvenements);
   const nbr = v => Number.isFinite(+v) ? +v : 0;

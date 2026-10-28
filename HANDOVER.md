@@ -15,6 +15,14 @@
 
 Leçon : « La doc suit le code » ne reconnaît pas `[#679]` comme identifiant de tâche (il attend un ID du backlog comme `C28-49:` ou l'exception `HORS-BACKLOG:`) : un re-pin sans ID de backlog porte `HORS-BACKLOG:` en tête de sujet.
 
+## 28/10/2026 : l'état des tâches suit les événements GitHub sur toute la page (Hubperso#697, mission #538)
+
+- **Demande de Marc** (28/10) : « page chantier en cours, full live pas de périmé » ; coordinateur : « fais aussi vivre l'état des tâches par ces événements, la lecture GitHub ne servira qu'à rattraper le trou ».
+- **Quoi** : `avecEvenements(D, evs)` (`chantier/cadre.html`) applique à une COPIE du relevé les événements `issues` (ouverte, titre modifié, étiquette posée ou retirée, fermée, rouverte), `issue_comment` (« Acceptée » devient la preuve de la tâche) et `pull_request` (ouverte, brouillon, prête, fusionnée, fermée) dont l'heure est APRÈS `asof`. Le modèle (`model`) est recalculé sur ce résultat : En cours, Gantt, Accueil et Tâches changent à l'arrivée de l'événement, sans recharger, quel que soit l'onglet. `BASE` garde le relevé tel que reçu ; chaque nouveau relevé reprend la main et les événements d'avant son heure n'y changent rien.
+- **Ce que les événements ne disent pas** (dit, jamais inventé) : le niveau et le parent d'une issue neuve (elle apparaît sans parent, tâche dès que `niveau:tâche` est posé), la PR d'une tâche sans PR au relevé (le lien « Tâche : #n » n'est pas dans l'événement), la file `prochaines` et les attentes (calculées par le PC). Une issue fermée sans « Acceptée » reste « en retard », comme pour le relevé.
+- **Trou avant les webhooks** : les événements n'existent que depuis leur pose (28/10 vers 21 h 14 Z). Entre le dernier relevé du PC et cette heure, l'état reste celui du relevé et garde son âge affiché ; la lecture GitHub de rattrapage (jeton `Issues` et `Pull requests` en lecture, au chargement de la page) est une tâche à part.
+- **Preuve à lire** : après le déploiement, poser une étiquette sur une tâche ouverte : sa brique change de colonne sur `/chantier` en moins de 15 s, sans recharger.
+
 ## 28/10/2026 : En cours lit les événements GitHub en direct (Hubperso#694, mission #538)
 
 - **Demande de Marc** (28/10, 20:57Z) : « page chantier en cours, full live pas de périmé ».
