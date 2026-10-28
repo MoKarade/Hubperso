@@ -816,6 +816,7 @@ body.anim .card .cs i{animation:grow .7s ease both}
 #mx .xc-b.mw{background:var(--marc);box-shadow:none;color:var(--bg)}
 #mx .xc-b.r{background:var(--blk-t);box-shadow:none;color:var(--bg)}
 #mx .xc-b.h{background:transparent;box-shadow:inset 0 0 0 2px var(--doing);border:0;border-style:dashed}
+#mx .xc-b.h.r{box-shadow:inset 0 0 0 2px var(--blk-t);color:var(--blk-t)}#mx .xc-b.h.ok{box-shadow:inset 0 0 0 2px var(--done);color:var(--done)}
 #mx .xc-b.on{animation:xcg 1.8s ease-in-out infinite}
 #mx .xc-b:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .xc-key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mute)}.xc-key span{display:inline-flex;align-items:center;gap:7px}#mx .xc-key .xc-b{width:20px;height:20px;border-radius:6px;font-size:10px;cursor:default}#mx .xc-key .xc-b::before{display:none}
@@ -5281,7 +5282,7 @@ function vGanttFull(){
     const appOf = repo => { const a = M.apps.find(x => x.rl === String(repo).toLowerCase()); return a ? a.k : 'x'; };
     // PR sans tâche : celles de `prs_ouvertes` quand le relevé les donne, sinon les PR hors tâche du relevé des défauts
     const refs = new Set(M.leaves.filter(l => l.pr).map(l => String(l.pr.repo || l.repo).toLowerCase() + '#' + l.pr.n));
-    const hors = D ? D.P.prs.filter(r => r && (!r.tache || !M.N[r.tache]) && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r}))
+    const hors = D ? D.P.prs.filter(r => r && !refs.has(String(r.repo).toLowerCase() + '#' + r.n)).map(r => ({repo: r.repo, n: r.n, t: r.titre, url: r.url, draft: !!r.brouillon, ag: r.agent, rec: r, tache: r.tache}))
       : ((M.sante && Array.isArray(M.sante.hors)) ? M.sante.hors : []).map(h => ({repo: h.repo, n: h.n, t: h.t, url: h.url, draft: !!h.draft, ag: h.bot ? '' : '', bot: h.bot}));
     const horsCol = h => h.draft ? 'draft' : h.rec && xcEnCi({pr: {repo: h.repo, n: h.n}, repo: h.repo}, D) ? 'ci' : 'rel';
     const cell = (a, c, g) => {
@@ -5291,7 +5292,7 @@ function vGanttFull(){
       }
       if (g && !D) return `<div class="xc-c gh" data-tip="${tipAttr('Pas dans le relevé pour l’instant')}"></div>`;
       const ls = c === 'acc' ? recents.filter(l => l.k === a.k) : ouv.filter(l => l.k === a.k && xcCol(l, D) === c).sort((x, y) => c === 'file' ? (x.q == null) - (y.q == null) || (x.q || 0) - (y.q || 0) : (y.last || y.start || 0) - (x.last || x.start || 0));
-      const hh2 = c === 'draft' || c === 'rel' || c === 'ci' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b h" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · PR sans tâche' + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
+      const hh2 = c === 'draft' || c === 'rel' || c === 'ci' ? hors.filter(h => appOf(h.repo) === a.k && horsCol(h) === c).map(h => `<a class="xc-b s-${c}${h.rec && !h.rec.tache ? ' h' : ''}${h.rec && xcEtatCi(h.rec) === 'vert' ? ' ok' : ''}${h.rec && ['rouge', 'annule'].includes(xcEtatCi(h.rec)) ? ' r' : ''}" href="${esc(/^https:\/\/github\.com\//.test(h.url || '') ? h.url : '#')}" target="_blank" rel="noopener" data-tip="${tipAttr((h.t || '') + '\n' + h.repo + '#' + h.n + ' · ' + (h.ag || (h.bot ? 'un robot' : 'une personne')) + ' · ' + (h.tache ? 'tâche ' + h.tache : 'PR sans tâche') + (h.rec ? xcCiTip(h.rec) : ''))}" aria-label="${esc(h.t || '')}">${esc(xcAg(h.ag))}</a>`).join('') : '';
       return `<div class="xc-c" role="group" aria-label="${esc(a.app)}, ${esc(XCOL.find(x => x[0] === c)[1])}">${ls.map(l => xcBrick(l, c === 'acc' ? 'acc' : c, now, D)).join('')}${hh2}</div>`;
     };
     const rows = M.apps.filter(a => ouv.some(l => l.k === a.k) || recents.some(l => l.k === a.k) || hors.some(h => appOf(h.repo) === a.k)).map(a =>

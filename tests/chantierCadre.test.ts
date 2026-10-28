@@ -630,6 +630,8 @@ describe("l'onglet En cours : tout ce qui se passe et la suite prévue, tiré du
     // le déploiement est celui du dépôt, pas celui d'une PR, et le dit
     expect(DOCUMENT).toContain("dernier déploiement du dépôt, pas celui d’une PR");
     expect(DOCUMENT).toContain("lecture des PR incomplète");
+    // une PR que la fiche de sa tâche ne porte pas (2e PR d'une tâche, PR sans tâche) reste visible, au bon étage
+    expect(DOCUMENT).toContain("D.P.prs.filter(r => r && !refs.has(");
     expect(DOCUMENT).toContain("id: 'prs'");
   });
 });
