@@ -5,6 +5,8 @@
 // répondre à personne d'autre que son cadre — et ne JAMAIS écrire par `postMessage(…, "*")`.
 // Même montage que tests/composantsDom.test.ts.
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, createElement as h } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -411,5 +413,56 @@ describe("ChantierCadre : le clic droit du cadre est relayé à LIA", () => {
     await geste(port, clic);
     arreter();
     expect(recus).toEqual([]);
+  });
+});
+
+// Le cadre décide, à chaque clic droit, ce qui a été visé (`GENRES`, `clicDroitDe` dans chantier/cadre.html) : un
+// élément qu'aucun genre ne couvre ne donne AUCUN menu (relevé réel du 28/10 : une carte de la vue Vitesse).
+// On exécute ces deux définitions telles qu'elles sont publiées, sur le balisage que le cadre produit.
+describe("chantier/cadre.html : tout ce que l'on voit ouvre le menu de LIA", () => {
+  const SOURCE = readFileSync(resolve(process.cwd(), "chantier", "cadre.html"), "utf8");
+  const debut = SOURCE.indexOf("const GENRES = [");
+  const fin = SOURCE.indexOf("function direAuHub(");
+  const clicDroitDe = new Function(`${SOURCE.slice(debut, fin)}; return clicDroitDe;`)() as (
+    el: Element | null,
+  ) => { genre: string; texte: string } | null;
+
+  // jsdom n'a pas `innerText` : le navigateur du cadre, si ; on le remplace par `textContent`.
+  const viser = (html: string, selecteur: string) => {
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    document.body.innerHTML = html;
+    return clicDroitDe(document.querySelector(selecteur));
+  };
+
+  const carte =
+    '<article class="qa"><h3>Claude</h3><div class="qm"><b>12</b></div><svg class="qsp" viewBox="0 0 10 10"><rect width="3" height="3"/></svg><div class="qbar"><span></span></div></article>';
+
+  it("le programme a bien été extrait", () => {
+    expect(debut).toBeGreaterThan(0);
+    expect(fin).toBeGreaterThan(debut);
+  });
+
+  it("vue Vitesse (bureau et téléphone) : la carte d'un acteur et chacune de ses parties", () => {
+    for (const cadre of [`<main id="view">${carte}</main>`, `<main id="mv">${carte}</main>`]) {
+      for (const cible of [".qa", ".qm b", ".qsp rect", ".qbar span", "h3"]) {
+        const r = viser(cadre, cible);
+        expect(r?.genre, cible).toBe("une carte de vitesse par acteur");
+        expect(r?.texte, cible).toContain("Claude");
+      }
+    }
+  });
+
+  it("un graphique, une section, la page : chacun répond, aussi sur le téléphone", () => {
+    const graphique = '<section class="band"><h2><span>Délais</span></h2><figure class="fg"><figcaption>Délai</figcaption><svg><rect/></svg></figure></section>';
+    expect(viser(`<main id="mv">${graphique}</main>`, "svg rect")?.genre).toBe("un graphique");
+    expect(viser(`<main id="mv">${graphique}</main>`, "h2 span")?.genre).toBe("une section de la page");
+    expect(viser('<main id="mv"><p>Rien</p></main>', "p")?.genre).toBe("la page");
+    expect(viser('<main id="view"><p>Rien</p></main>', "p")?.genre).toBe("la page");
+    expect(viser('<header class="mh"><h1>Chantier</h1></header><main id="mv"></main>', "h1")?.genre).toBe("la page");
+  });
+
+  it("le plus précis gagne : une barre du Gantt ou un bouton restent ce qu'ils sont", () => {
+    expect(viser('<main id="view"><div class="grow"><div class="gbx">x</div></div></main>', ".gbx")?.genre).toBe("une barre du Gantt");
+    expect(viser('<main id="mv"><button>Voir</button></main>', "button")?.genre).toBe("un bouton");
   });
 });
