@@ -28,13 +28,14 @@ describe("registre des façons de travailler", () => {
     expect(new Set(XFACONS.map((f) => f.ref).filter(Boolean)).size).toBe(XFACONS.filter((f) => f.ref).length);
   });
 
-  it("les durées attendues données par le fil workflow sont là ; aucune durée mesurée n'est inventée tant que rien n'est mesuré", () => {
+  it("les durées attendues données par le fil workflow sont là ; une durée mesurée n'existe que là où le fil workflow en a donné une", () => {
     const par = (ref: string) => XFACONS.find((f) => f.ref === ref)!;
     expect(par(".github#750").att).toContain("moins de 1 min");
     expect(par(".github#748").att).toContain("quelques secondes");
     expect(par(".github#713").att).toContain("2 min");
     expect(XFACONS.find((f) => f.regle && f.t.includes("coordinateur"))!.att).toContain("10 min");
-    for (const f of XFACONS) expect(f.mes).toBeNull();
+    expect(par(".github#750").mes).toContain("10 s");
+    for (const f of XFACONS) if (f.ref !== ".github#750") expect(f.mes).toBeNull();
   });
 
   it("le bloc est branché dans En cours : état et âge lus dans le relevé, durée absente dite, issue absente dite", () => {

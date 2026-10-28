@@ -5351,7 +5351,7 @@ function vGanttFull(){
   // Registre des façons de travailler : `ref` = l'issue qui la porte (état et âge lus dans le relevé), `att` = durée attendue, `mes` = durée mesurée (null tant que rien n'est mesuré), `regle` = date d'une règle sans issue.
   // Le fil workflow donne chaque changement avec ses durées ; un changement s'ajoute ici dans la même PR que la tâche qui le livre.
   const XFACONS = [
-    {ref: '.github#750', t: 'Une boîte à événements par dépôt : le fil de l’app se réveille seul', att: 'moins de 1 min entre « tâche prête » et le réveil du fil', mes: null},
+    {ref: '.github#750', t: 'Une boîte à événements par dépôt : le fil de l’app se réveille seul', att: 'moins de 1 min entre « tâche prête » et le réveil du fil', mes: 'environ 10 s le 28/10 (workflow 22:01:43Z, fil réveillé 22:01:53Z), sans relais ni PC ; avant : minutes par le coordinateur, jusqu’à 3 h 30 par le PC'},
     {ref: '.github#748', t: 'Le Réacteur dans les 9 autres dépôts, sans minuteur', att: 'quelques secondes pour une tâche prête, au lieu de la passe du PC (jusqu’à 3 h 30 mesuré)', mes: null},
     {ref: '.github#713', t: 'Une preuve « Acceptée » mal écrite reçoit une réponse avant la fermeture', att: 'réponse sous 2 min, au lieu de découvrir l’erreur à la réouverture', mes: null},
     {ref: '.github#712', t: 'Le Réacteur de .github écoute les événements et n’a plus aucun minuteur', att: null, mes: null},
