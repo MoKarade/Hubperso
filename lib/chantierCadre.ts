@@ -72,17 +72,20 @@ export const MESSAGE_GESTE = "chantier-geste";
 /** Le hub demande un onglet au cadre déjà ouvert (`/chantier?onglet=couts` sans le recharger) : `{ type, onglet }`. */
 export const MESSAGE_ONGLET = "chantier-onglet";
 /**
- * Un clic droit (ou un appui long de 650 ms sans mouvement) dans le cadre : `{ type, x, y, genre, texte }`. `x`, `y` sont les coordonnées
- * DANS le cadre ; `genre` dit ce que c'est (« une barre du Gantt »), `texte` le texte visible, coupé à 300 caractères. Le hub ne voit
+ * Un clic droit (ou un appui long de 650 ms sans mouvement) dans le cadre : `{ type, x, y, genre, texte, donnees }`. `x`, `y` sont les coordonnées
+ * DANS le cadre ; `genre` dit ce que c'est (« une barre du Gantt »), `texte` le texte visible, coupé à 300 caractères, `donnees` les faits
+ * du relevé que LIA analyse elle-même (chemin, état, dates, tâches, acteurs), coupés à 1 200. Le hub ne voit
  * pas ce qui se passe dans le cadre : c'est lui qui répond (LIA). Sans hub qui écoute, le menu du navigateur reste en place.
  */
 export const MESSAGE_CLIC_DROIT = "chantier-clic-droit";
 
 /** Ce que le hub retient d'un clic droit du cadre : la place dans le cadre et de quoi le décrire à LIA. */
-export type ClicDroitCadre = { x: number; y: number; description: { genre: string; texte?: string } };
+export type ClicDroitCadre = { x: number; y: number; description: { genre: string; texte?: string; donnees?: string } };
 
 const GENRE_MAX = 80;
 const TEXTE_MAX = 300;
+/** Les faits que le cadre lit dans son relevé pour LIA (lia-ui ≥ v0.45.0 : `DescriptionElement.donnees`, même borne). */
+const DONNEES_MAX = 1200;
 const COORDONNEE_MAX = 100_000;
 
 // Le cadre est un document venu d'ailleurs, et ce qu'il dit est une DONNÉE : on garde des nombres finis et deux textes
@@ -92,7 +95,7 @@ const sansControle = (v: string) => v.replace(/[\u0000-\u001f\u007f]+/g, " ").re
 /** `{ type, x, y, genre, texte }` du cadre → ce que LIA peut recevoir, ou `null` quand le message n'a pas cette forme. */
 export function lireClicDroit(donnee: unknown): ClicDroitCadre | null {
   if (typeof donnee !== "object" || donnee === null) return null;
-  const m = donnee as { type?: unknown; x?: unknown; y?: unknown; genre?: unknown; texte?: unknown };
+  const m = donnee as { type?: unknown; x?: unknown; y?: unknown; genre?: unknown; texte?: unknown; donnees?: unknown };
   if (m.type !== MESSAGE_CLIC_DROIT) return null;
   const { x, y } = m;
   if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) return null;
@@ -101,7 +104,8 @@ export function lireClicDroit(donnee: unknown): ClicDroitCadre | null {
   const genre = sansControle(m.genre).slice(0, GENRE_MAX);
   if (!genre) return null;
   const texte = typeof m.texte === "string" ? sansControle(m.texte).slice(0, TEXTE_MAX) : "";
-  return { x, y, description: texte ? { genre, texte } : { genre } };
+  const donnees = typeof m.donnees === "string" ? sansControle(m.donnees).slice(0, DONNEES_MAX) : "";
+  return { x, y, description: { genre, ...(texte ? { texte } : {}), ...(donnees ? { donnees } : {}) } };
 }
 
 /**

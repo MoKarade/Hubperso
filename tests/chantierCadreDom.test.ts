@@ -466,3 +466,141 @@ describe("chantier/cadre.html : tout ce que l'on voit ouvre le menu de LIA", () 
     expect(viser('<main id="mv"><button>Voir</button></main>', "button")?.genre).toBe("un bouton");
   });
 });
+
+// Ce que LIA reçoit d'une barre : les FAITS du relevé (Marc, 28/10 : « je veux qu'il puisse voir et analyser lui-même »), pas seulement 300
+// caractères de texte. `faitsDe` est pur (tout ce qu'il lit lui est donné) : on l'exécute tel que publié sur un petit relevé.
+describe("chantier/cadre.html : une barre du Gantt donne ses faits à LIA", () => {
+  const SOURCE = readFileSync(resolve(process.cwd(), "chantier", "cadre.html"), "utf8");
+  const debut = SOURCE.indexOf("const GENRES = [");
+  const fin = SOURCE.indexOf("function direAuHub(");
+  const { faitsDe, clicDroitDe } = new Function(`${SOURCE.slice(debut, fin)}; return { faitsDe, clicDroitDe };`)() as {
+    faitsDe: (n: unknown, h: unknown) => string;
+    clicDroitDe: (el: Element | null) => { genre: string; texte: string; donnees: string } | null;
+  };
+
+  const H = {
+    LV: { app: "App", mission: "Mission", "tâche": "Tâche" },
+    STE: { acc: "acceptée", cours: "en cours", todo: "à faire", marc: "attend Marc", aband: "abandonnée" } as Record<string, string>,
+    ORDRE: ["acc", "cours", "marc", "todo"],
+    path: (n: { parent?: unknown }) => {
+      const p: unknown[] = [];
+      for (let c = n.parent as { parent?: unknown } | undefined; c; c = c.parent as { parent?: unknown } | undefined) p.unshift(c);
+      return p as Array<{ t: string }>;
+    },
+    stLabel: (n: { e: string }) => H.STE[n.e],
+    quand: (t: number) => `t${t}`,
+    dur: (ms: number) => `${Math.round(ms / 3600000)} h`,
+    retTxt: () => "attend ton geste",
+    court: (t: string) => t,
+    asof: 5_000_000_000,
+  };
+  const app = { ref: "a", lvl: "app", t: "Hubperso", app: "Hubperso", parent: undefined };
+  const mission = { ref: "m", lvl: "mission", t: "Gantt source de vérité", parent: app };
+  const t1 = { ref: "t1", lvl: "tâche", leaf: true, t: "Barres par état", e: "acc", start: 1000, end: 4_000_000, open: false, parent: mission, pr: { repo: "Hubperso", n: 573 }, acteurs: [{ qui: "Claude", commits: 3 }] };
+  const t2 = { ref: "t2", lvl: "tâche", leaf: true, t: "Page chantier", e: "cours", start: 2000, open: true, parent: mission, acteurs: [{ qui: "Claude" }, { qui: "Marc" }] };
+  const t3 = { ref: "t3", lvl: "tâche", leaf: true, t: "Relais mobile", e: "marc", open: true, parent: mission, geste: { t: "choisir" }, oub: {} };
+  Object.assign(mission, { ls: [t1, t2, t3], ce: { acc: 1, cours: 1, marc: 1 }, start: 1000, fe: 9000 });
+
+  it("une mission : le chemin, le compte par état, les dates, les acteurs et ce qui reste à suivre", () => {
+    const f = faitsDe(mission, H);
+    expect(f).toContain("Mission « Gantt source de vérité » (dans Hubperso)");
+    expect(f).toContain("3 tâches : 1 acceptée, 1 en cours, 1 attend Marc");
+    expect(f).toContain("début : t1000");
+    expect(f).toContain("fin prévue : t9000");
+    expect(f).toContain("acteurs : Claude (2 tâches), Marc (1 tâche)");
+    expect(f).toContain("« Page chantier » en cours");
+    expect(f).not.toContain("« Barres par état » acceptée"); // une tâche acceptée n'est plus « à suivre »
+  });
+
+  it("une tâche : son état, sa durée, sa PR, ses acteurs, un geste attendu et un retard", () => {
+    const f = faitsDe(t1, H);
+    expect(f).toContain("Tâche « Barres par état » (dans Hubperso › Gantt source de vérité)");
+    expect(f).toContain("état : acceptée");
+    expect(f).toContain("(durée 1 h)");
+    expect(f).toContain("PR : Hubperso#573");
+    expect(f).toContain("travaillé par : Claude (3 commits)");
+    const g = faitsDe(t3, H);
+    expect(g).toContain("début : pas commencée");
+    expect(g).toContain("geste attendu de Marc : choisir");
+    expect(g).toContain("retard : attend ton geste");
+  });
+
+  it("les faits restent sous 1 200 caractères et ne portent rien d'inventé : sans relevé, rien", () => {
+    const grosse = { ...mission, ls: Array.from({ length: 80 }, (_, i) => ({ ...t2, ref: `x${i}`, t: `Tâche numéro ${i} ${"mot ".repeat(10)}` })), ce: { cours: 80 } };
+    expect(faitsDe(grosse, H).length).toBeLessThanOrEqual(1200);
+    expect(faitsDe(null, H)).toBe("");
+    expect(faitsDe({ t: "sans ref" }, H)).toBe("");
+  });
+
+  it("le clic droit sur un élément qui n'est pas dans le relevé donne le texte du bloc en entier, au-delà du repère de 300 caractères", () => {
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    document.body.innerHTML = `<main id="view"><article class="qa"><h3>Claude</h3><p>${"chiffre ".repeat(100)}</p></article></main>`;
+    const r = clicDroitDe(document.querySelector(".qa h3"))!;
+    expect(r.texte.length).toBe(300);
+    expect(r.donnees.length).toBeGreaterThan(600);
+    expect(r.donnees.length).toBeLessThanOrEqual(1200);
+    document.body.innerHTML = '<main id="view"><button>OK</button></main>';
+    expect(clicDroitDe(document.querySelector("button"))!.donnees).toBe("");
+  });
+});
+
+// L'appui long du cadre (650 ms, sans bouger de plus de 8 px) : le PC ne sait pas le faire dans un cadre isolé, la CI le fait (Hubperso#616).
+// On exécute les écouteurs tels que publiés sur un faux `document` qui les enregistre, puis on rejoue les gestes.
+describe("chantier/cadre.html : l'appui long ouvre le menu de LIA sur une barre du Gantt", () => {
+  const SOURCE = readFileSync(resolve(process.cwd(), "chantier", "cadre.html"), "utf8");
+  const debut = SOURCE.indexOf("const GENRES = [");
+  const marqueFin = "['pointerup', 'pointercancel', 'scroll'].forEach(t => document.addEventListener(t, finLong, true));";
+  const fin = SOURCE.indexOf(marqueFin) + marqueFin.length;
+  type Gestionnaire = (e: Record<string, unknown>) => void;
+  let ecouteurs: Record<string, Gestionnaire[]>;
+  let dit: ReturnType<typeof vi.fn>;
+  let barre: Element;
+
+  const lancer = (type: string, e: Record<string, unknown>) => (ecouteurs[type] ?? []).forEach((g) => g(e));
+  const doigt = (type: string, x: number, y: number, cible: Element = barre, pointerType = "touch") =>
+    lancer(type, { type, pointerType, clientX: x, clientY: y, target: cible, shiftKey: false });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    if (!("innerText" in HTMLElement.prototype)) Object.defineProperty(HTMLElement.prototype, "innerText", { get() { return this.textContent; } });
+    document.body.innerHTML = '<main id="view"><div class="grow"><button class="gbx" data-open="t1">Barre</button><input id="champ"></div></main>';
+    barre = document.querySelector(".gbx")!;
+    ecouteurs = {};
+    dit = vi.fn(() => true);
+    const faussDocument = { addEventListener: (t: string, g: Gestionnaire) => (ecouteurs[t] = [...(ecouteurs[t] ?? []), g]) };
+    new Function("document", "window", `${SOURCE.slice(debut, fin)}`)(faussDocument, { hubClicDroit: dit });
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("un doigt tenu 700 ms sur la barre : le menu s'ouvre au point d'appui, avec le bon genre", () => {
+    doigt("pointerdown", 120.4, 48.6);
+    vi.advanceTimersByTime(649);
+    expect(dit).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(51);
+    expect(dit).toHaveBeenCalledTimes(1);
+    expect(dit.mock.calls[0]![0]).toMatchObject({ type: "chantier-clic-droit", x: 120, y: 49, genre: "une barre du Gantt" });
+  });
+
+  it("levé trop tôt, déplacé de plus de 8 px, à la souris ou dans un champ : rien", () => {
+    doigt("pointerdown", 10, 10);
+    vi.advanceTimersByTime(300);
+    doigt("pointerup", 10, 10);
+    vi.advanceTimersByTime(1000);
+    doigt("pointerdown", 10, 10);
+    doigt("pointermove", 30, 10);
+    vi.advanceTimersByTime(1000);
+    doigt("pointerdown", 10, 10, barre, "mouse");
+    vi.advanceTimersByTime(1000);
+    doigt("pointerdown", 10, 10, document.querySelector("#champ")!);
+    vi.advanceTimersByTime(1000);
+    expect(dit).not.toHaveBeenCalled();
+  });
+
+  it("un petit tremblement (moins de 8 px) ne coupe pas l'appui long", () => {
+    doigt("pointerdown", 10, 10);
+    doigt("pointermove", 14, 13);
+    vi.advanceTimersByTime(700);
+    expect(dit).toHaveBeenCalledTimes(1);
+  });
+});
+
