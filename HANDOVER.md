@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 29/10/2026 : la façon « graphify imposé par un hook » dans En cours (Hubperso#752, mission #538)
+
+- **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur : graphify est imposé par un hook (refus d'un Read entier de plus de 400 lignes et d'un Glob sur tout le dépôt) dès qu'un dépôt a la nouvelle copie de `graphe.sh` et des réglages ; actif sur .github (#840, PR #843), les 9 autres dépôts suivent. Durée donnée par le fil workflow : environ 15 min par tâche (code, test, PR, checks verts, fusion).
+- **Test** : `tests/chantierFacons.test.ts` lit l'entrée ; une durée mesurée n'existe que pour #750, #807, #840 et le compte « full autonome ».
+- **Preuve à lire** : `/chantier`, onglet En cours, bloc « Façons de travailler » : la façon avec « mesuré ».
+
 ## 29/10/2026 : deux façons de travailler de plus dans En cours (Hubperso#740, mission #538)
 
 - **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur (règle de Marc du 28/10 21:51Z) : la boîte « preuve PC » (.github#807, #808, app-template#211 : « Relevé PC demandé » dans l'issue, le Réacteur publie dans la boîte du PC, le PC répond « Relevé PC », le fil propriétaire pose « Acceptée » ; mesuré : environ 17 s entre la demande et le commentaire dans la boîte, l'écoute du PC toutes les 30 s attend le oui de Marc) et le compte « full autonome » (objectif de Marc : 10 tâches prises sans message du coordinateur, fusionnées, prouvées sans relais ni geste de Marc ; 0 sur 10 au 29/10 à 01:53Z, registre `tâches-full-autonomes.md`, chiffre daté, à remettre à jour avec le registre).
