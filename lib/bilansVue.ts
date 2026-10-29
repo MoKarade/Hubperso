@@ -44,6 +44,6 @@ export function libelleDateBilan(date: string): string {
 
 export const LIBELLE_GENRE: Record<GenreBilan, string> = { jour: "Du jour", semaine: "De la semaine" };
 export const VIDE_GENRE: Record<GenreBilan, string> = {
-  jour: "Aucun bilan du jour pour l'instant.",
-  semaine: "Aucun bilan de la semaine pour l'instant.",
+  jour: "Aucun bilan du jour pour l'instant : le dossier Drive n'en contient aucun, la routine du Brief n'en a pas encore déposé.",
+  semaine: "Aucun bilan de la semaine pour l'instant : le dossier Drive n'en contient aucun, la routine du Brief n'en a pas encore déposé.",
 };

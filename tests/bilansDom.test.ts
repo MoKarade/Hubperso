@@ -62,7 +62,7 @@ describe("BilansVue", () => {
 
   it("aucun bilan : le dit, sans cadre ni bilan inventé", async () => {
     await monter(Response.json({ bilans: [] }));
-    expect(conteneur.textContent).toContain("Aucun bilan du jour pour l'instant.");
+    expect(conteneur.textContent).toContain("Aucun bilan du jour pour l'instant : le dossier Drive n'en contient aucun");
     expect(cadre()).toBeNull();
   });
 

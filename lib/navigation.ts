@@ -1,7 +1,7 @@
 // lib/navigation.ts — ce que la navigation du hub propose, et où on est.
 //
 // Marc, 22/10/2026 (maquette validée) : une barre latérale à l'ordinateur, une barre du bas au
-// téléphone, les mêmes entrées dans les deux : Vue (accueil, attention, et le chantier pour le propriétaire), Apps, Gérer (bilans, graphes, administration).
+// téléphone, les mêmes entrées dans les deux : Vue (accueil, attention, et le chantier et les bilans pour le propriétaire), Apps, Gérer (graphes, administration).
 // (La page Coûts a disparu le 26/10/2026 : ses infos vivent dans l'onglet Coûts du chantier.)
 // Ce fichier est PUR : il décide QUOI afficher et QUELLE entrée est active, il ne rend rien. Le
 // composant (`components/Navigation.tsx`) ne fait que peindre ce que lui rend `modeleNavigation`.
@@ -41,7 +41,7 @@ export interface AppNav {
 }
 
 /** Où se tient la barre du bas : ses trois entrées de page, ou la quatrième, « Plus » (la feuille). */
-export type RangBarre = "accueil" | "attention" | "chantier" | "plus";
+export type RangBarre = "accueil" | "attention" | "chantier" | "bilans" | "plus";
 
 export function modeleNavigation(apps: readonly AppNav[], proprietaire: boolean): ModeleNav {
   return {
@@ -50,6 +50,8 @@ export function modeleNavigation(apps: readonly AppNav[], proprietaire: boolean)
       { id: "attention", libelle: "Attention", href: "/attention", icone: "attention" },
       // Le Chantier (suivi, Gantt, coûts) prend la place que tenait « Coûts » : propriétaire seul.
       ...(proprietaire ? [{ id: "chantier", libelle: "Chantier", href: "/chantier", icone: "chantier" as const }] : []),
+      // Les bilans (Hubperso#750) : consultés chaque jour, donc dans la barre principale et non sous « Plus » ; propriétaire seul.
+      ...(proprietaire ? [{ id: "bilans", libelle: "Bilans", href: "/bilans", icone: "bilans" as const }] : []),
     ],
     apps: apps.map((app) => ({
       id: app.id,
@@ -60,7 +62,6 @@ export function modeleNavigation(apps: readonly AppNav[], proprietaire: boolean)
     })),
     gerer: proprietaire
       ? [
-          { id: "bilans", libelle: "Bilans", href: "/bilans", icone: "bilans" },
           { id: "graphes", libelle: "Graphes de code", href: "/graphes", icone: "graphes" },
           { id: "administration", libelle: "Administration", href: "/administration", icone: "admin" },
         ]
@@ -81,7 +82,8 @@ export function estActive(chemin: string, href: string): boolean {
 export function rangBarre(chemin: string): RangBarre {
   if (estActive(chemin, "/attention")) return "attention";
   if (estActive(chemin, "/chantier")) return "chantier";
-  if (estActive(chemin, "/bilans") || estActive(chemin, "/graphes") || estActive(chemin, "/administration")) {
+  if (estActive(chemin, "/bilans")) return "bilans";
+  if (estActive(chemin, "/graphes") || estActive(chemin, "/administration")) {
     return "plus";
   }
   return "accueil";
