@@ -2,6 +2,12 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 29/10/2026 : deux façons de travailler de plus dans En cours (Hubperso#740, mission #538)
+
+- **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur (règle de Marc du 28/10 21:51Z) : la boîte « preuve PC » (.github#807, #808, app-template#211 : « Relevé PC demandé » dans l'issue, le Réacteur publie dans la boîte du PC, le PC répond « Relevé PC », le fil propriétaire pose « Acceptée » ; mesuré : environ 17 s entre la demande et le commentaire dans la boîte, l'écoute du PC toutes les 30 s attend le oui de Marc) et le compte « full autonome » (objectif de Marc : 10 tâches prises sans message du coordinateur, fusionnées, prouvées sans relais ni geste de Marc ; 0 sur 10 au 29/10 à 01:53Z, registre `tâches-full-autonomes.md`, chiffre daté, à remettre à jour avec le registre).
+- **Test** : `tests/chantierFacons.test.ts` lit les deux entrées et leurs durées ; une durée mesurée n'existe que pour #750, #807 et le compte.
+- **Preuve à lire** : `/chantier`, onglet En cours, bloc « Façons de travailler » : les deux façons avec « mesuré ».
+
 ## 28/10/2026 : un seul taux USD→CAD, celui du relevé du PC (Hubperso#642, mission #538)
 
 - **Constat** : trois taux sans date pour le même coût (1,38 dans le hub, 1,4305 dans la page, 1,38 recopié dans le relevé). Le relevé du PC porte maintenant le taux de la Banque du Canada (`quota.taux_usd_cad` : `taux`, `date`, `source`, `releve`).
