@@ -2,6 +2,15 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 29/10/2026 : « Bilans » dans la barre principale, et une page vide qui dit pourquoi (Hubperso#750, mission #285)
+
+- **Constat** (Marc, 29/10 : « je vois pas la page bilan dans le hub ») : l'entrée « Bilans » était sous « Gérer », donc dans « Plus » au téléphone ; et le dossier Drive des bilans ne contenait que `sonde-format.html` (lu dans Drive le 29/10) : la routine du Brief n'a déposé aucun bilan, la page ne pouvait dire que « Aucun bilan du jour ».
+- **Changé** : `lib/navigation.ts` met « Bilans » dans le groupe Vue du propriétaire (barre du bas : Accueil, Attention, Chantier, Bilans, Plus ; barre latérale : groupe Vue), `rangBarre('/bilans')` rend `bilans`, « Gérer » ne garde que graphes et administration ; `lib/bilansVue.ts` : la page vide dit que le dossier Drive n'en contient aucun et que la routine du Brief n'en a pas encore déposé.
+- **Reste hors dépôt** : écrire `bilan-jour-AAAA-MM-JJ.html` et `bilan-semaine-AAAA-MM-JJ.html` dans le dossier Drive (routine du Brief) ; sans cela la page reste vide.
+- **Décision de Marc** (29/10, 12:58Z, « Ok pour recommandation ») : « Bilans » dans la barre principale, 5e entrée.
+- **Tests** : `tests/navigation.test.ts` (Vue = accueil, attention, chantier, bilans pour le propriétaire ; Gérer sans bilans ; rang de barre), `tests/bilansDom.test.ts` (texte de la page vide).
+- **Preuve à lire** : avec la session de Marc, au téléphone, « Bilans » dans la barre du bas sans ouvrir « Plus » ; sans bilan, la phrase d'explication.
+
 ## 29/10/2026 : la façon « session lancée par le Réacteur » et le compte full autonome à 1/10 (Hubperso#758, mission #538)
 
 - **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur : quand Jules ne prend pas la tâche suivante d'app-template ou de hub-contract, le Réacteur lance une routine (déclencheur d'API) qui ouvre une session neuve pour la livrer (.github#860, code dans .github#861, en brouillon). Aucune durée mesurée : rien ne s'active avant 3 gestes de Marc (créer la routine, poser 2 secrets, fusionner la PR).
