@@ -2,6 +2,15 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 29/10/2026 : « Bilans » dans la barre principale, et une page vide qui dit pourquoi (Hubperso#750, mission #285)
+
+- **Constat** (Marc, 29/10 : « je vois pas la page bilan dans le hub ») : l'entrée « Bilans » était sous « Gérer », donc dans « Plus » au téléphone ; et le dossier Drive des bilans ne contenait que `sonde-format.html` (lu dans Drive le 29/10) : la routine du Brief n'a déposé aucun bilan, la page ne pouvait dire que « Aucun bilan du jour ».
+- **Changé** : `lib/navigation.ts` met « Bilans » dans le groupe Vue du propriétaire (barre du bas : Accueil, Attention, Chantier, Bilans, Plus ; barre latérale : groupe Vue), `rangBarre('/bilans')` rend `bilans`, « Gérer » ne garde que graphes et administration ; `lib/bilansVue.ts` : la page vide dit que le dossier Drive n'en contient aucun et que la routine du Brief n'en a pas encore déposé.
+- **Reste hors dépôt** : écrire `bilan-jour-AAAA-MM-JJ.html` et `bilan-semaine-AAAA-MM-JJ.html` dans le dossier Drive (routine du Brief) ; sans cela la page reste vide.
+- **Brouillon** tant que Marc n'a pas choisi l'emplacement de l'entrée (barre principale, lien sur l'Accueil, ou sous « Plus »).
+- **Tests** : `tests/navigation.test.ts` (Vue = accueil, attention, chantier, bilans pour le propriétaire ; Gérer sans bilans ; rang de barre), `tests/bilansDom.test.ts` (texte de la page vide).
+- **Preuve à lire** : avec la session de Marc, au téléphone, « Bilans » dans la barre du bas sans ouvrir « Plus » ; sans bilan, la phrase d'explication.
+
 ## 29/10/2026 : deux façons de travailler de plus dans En cours (Hubperso#740, mission #538)
 
 - **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur (règle de Marc du 28/10 21:51Z) : la boîte « preuve PC » (.github#807, #808, app-template#211 : « Relevé PC demandé » dans l'issue, le Réacteur publie dans la boîte du PC, le PC répond « Relevé PC », le fil propriétaire pose « Acceptée » ; mesuré : environ 17 s entre la demande et le commentaire dans la boîte, l'écoute du PC toutes les 30 s attend le oui de Marc) et le compte « full autonome » (objectif de Marc : 10 tâches prises sans message du coordinateur, fusionnées, prouvées sans relais ni geste de Marc ; 0 sur 10 au 29/10 à 01:53Z, registre `tâches-full-autonomes.md`, chiffre daté, à remettre à jour avec le registre).
