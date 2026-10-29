@@ -2,6 +2,13 @@
 
 > État courant synthétique : voir `docs/ETAT.md`.
 
+## 29/10/2026 : la façon « session lancée par le Réacteur » et le compte full autonome à 1/10 (Hubperso#758, mission #538)
+
+- **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur : quand Jules ne prend pas la tâche suivante d'app-template ou de hub-contract, le Réacteur lance une routine (déclencheur d'API) qui ouvre une session neuve pour la livrer (.github#860, code dans .github#861, en brouillon). Aucune durée mesurée : rien ne s'active avant 3 gestes de Marc (créer la routine, poser 2 secrets, fusionner la PR).
+- **Corrigé** : le compte « full autonome » disait « 0 sur 10 le 29/10 à 01:53Z » ; le registre `tâches-full-autonomes.md` dit 1 / 10 depuis le 29/10 à 02:50Z (CarAI#245).
+- **Test** : `tests/chantierFacons.test.ts` lit l'entrée de #860 (sans « mesuré ») et « 1 sur 10 ».
+- **Preuve à lire** : `/chantier`, onglet En cours, bloc « Façons de travailler » : la façon de #860 et « 1 sur 10 ».
+
 ## 29/10/2026 : la façon « graphify imposé par un hook » dans En cours (Hubperso#752, mission #538)
 
 - **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur : graphify est imposé par un hook (refus d'un Read entier de plus de 400 lignes et d'un Glob sur tout le dépôt) dès qu'un dépôt a la nouvelle copie de `graphe.sh` et des réglages ; actif sur .github (#840, PR #843), les 9 autres dépôts suivent. Durée donnée par le fil workflow : environ 15 min par tâche (code, test, PR, checks verts, fusion).
