@@ -28,16 +28,31 @@ export function formatCad(amount: number): string {
 const ONE_DECIMAL = new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 1 });
 
 /**
+ * Le contrat borne `label` à 40 caractères mais PAS `value` quand c'est une chaîne : une app peut
+ * publier un texte de 500 caractères, qui ferait déborder la tuile du héros et les listes. Le hub
+ * coupe donc ce qu'il écrit, à la même échelle que `label`. Les nombres ne sont jamais coupés.
+ */
+export const VALEUR_MAX = 40;
+
+/** Coupe à `VALEUR_MAX` caractères (points de code : jamais au milieu d'un emoji) et finit par « … ». */
+function coupee(texte: string): string {
+  const caracteres = Array.from(texte);
+  if (caracteres.length <= VALEUR_MAX) return texte;
+  return `${caracteres.slice(0, VALEUR_MAX - 1).join("")}…`;
+}
+
+/**
  * Rend une métrique en texte. `percent` et `trend` sont exprimés en points de %
  * dans le contrat (ex. 2.3 = « 2,3 % »), pas en fraction — on les suffixe sans
- * conversion. Une valeur `string` pour un format numérique est affichée telle quelle.
+ * conversion. Une valeur `string` pour un format numérique est affichée telle quelle, coupée à
+ * `VALEUR_MAX` caractères.
  */
 export function formatMetricValue(metric: HubMetric): string {
   const { value, format } = metric;
-  if (format === "text") return String(value);
+  if (format === "text") return coupee(String(value));
 
   const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return String(value);
+  if (!Number.isFinite(n)) return coupee(String(value));
 
   switch (format) {
     case "currency":
