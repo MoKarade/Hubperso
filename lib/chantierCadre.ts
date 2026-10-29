@@ -89,6 +89,11 @@ export const MESSAGE_GESTE = "chantier-geste";
  */
 export const MESSAGE_VERSION_NEUVE = "chantier-version-neuve";
 export const MESSAGE_RECHARGE = "chantier-recharge";
+/**
+ * Le cadre a son canal mais pas de relevé : il le redemande (`{ type }`, toutes les 10 s tant qu'il n'en a pas). Le hub oublie l'ETag et
+ * relit : la page ne reste plus sur « En attente du relevé… » après une lecture ratée ou lente (Hubperso#719).
+ */
+export const MESSAGE_DEMANDE_RELEVE = "chantier-demande-releve";
 /** Le hub demande un onglet au cadre déjà ouvert (`/chantier?onglet=couts` sans le recharger) : `{ type, onglet }`. */
 export const MESSAGE_ONGLET = "chantier-onglet";
 /**

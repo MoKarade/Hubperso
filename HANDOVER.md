@@ -21,6 +21,13 @@
 - **Test** : `tests/chantierFacons.test.ts` lit les deux entrées et leurs durées ; une durée mesurée n'existe que pour #750, #807 et le compte.
 - **Preuve à lire** : `/chantier`, onglet En cours, bloc « Façons de travailler » : les deux façons avec « mesuré ».
 
+## 29/10/2026 : le cadre de /chantier redemande le relevé tant qu'il n'en a pas (Hubperso#719, mission #538)
+
+- **Constat** : relevé PC de 10:10 (Québec), après le déploiement de #759 : le cadre se recharge seul sans « unauthenticated » (gagné) mais reste sur « En attente du relevé… » plus de 30 s ; un rechargement dur à la main ramène les données. Preuve de #719 non acquise.
+- **Banc Chromium** (vrai `ChantierCadre`, vrai `cadre.html`, rechargement piloté par `hubRecharger`) : la poignée de main après rechargement marche, onglet visible ou caché ; avec des données minimales, aucun blocage. **Reproduit** : si la première lecture du relevé après la présentation échoue (500), l'ancien code reste sur « En attente du relevé… » jusqu'au tour suivant du hub (60 s, onglet visible seulement), sans rien redemander. Cause réelle en production NON prouvée [Supposition : lecture lente ou ratée à froid juste après un déploiement].
+- **Fait** : le cadre qui a son canal mais pas de relevé le redemande toutes les 10 s, six fois au plus (`chantier-demande-releve`) ; le hub oublie l'ETag et relit (`MESSAGE_DEMANDE_RELEVE`). Banc : même scénario, données vues après 20 s au lieu de « jamais » dans les 40 s.
+- **Preuve à lire** : après le prochain déploiement qui change `chantier/cadre.html`, le PC garde `/chantier` ouvert sans y toucher (boîte « preuve PC ») : le cadre se recharge et affiche les données seul.
+
 ## 28/10/2026 : un seul taux USD→CAD, celui du relevé du PC (Hubperso#642, mission #538)
 
 - **Constat** : trois taux sans date pour le même coût (1,38 dans le hub, 1,4305 dans la page, 1,38 recopié dans le relevé). Le relevé du PC porte maintenant le taux de la Banque du Canada (`quota.taux_usd_cad` : `taux`, `date`, `source`, `releve`).
