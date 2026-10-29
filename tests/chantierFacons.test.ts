@@ -35,7 +35,12 @@ describe("registre des façons de travailler", () => {
     expect(par(".github#713").att).toContain("2 min");
     expect(XFACONS.find((f) => f.regle && f.t.includes("coordinateur"))!.att).toContain("10 min");
     expect(par(".github#750").mes).toContain("10 s");
-    for (const f of XFACONS) if (f.ref !== ".github#750") expect(f.mes).toBeNull();
+    expect(par(".github#807").mes).toContain("17 s");
+    const plein = XFACONS.find((f) => f.regle === "29/10")!;
+    expect(plein.t).toContain("full autonome");
+    expect(plein.att).toContain("10 tâches");
+    expect(plein.mes).toContain("0 sur 10");
+    for (const f of XFACONS) if (![".github#750", ".github#807"].includes(f.ref ?? "") && f !== plein) expect(f.mes).toBeNull();
   });
 
   it("le bloc est branché dans En cours : état et âge lus dans le relevé, durée absente dite, issue absente dite", () => {
