@@ -557,6 +557,66 @@ describe("ChantierCadre : le hub recharge le cadre sur l'onglet que le cadre don
   });
 });
 
+describe("ChantierCadre : le cadre sans relevé le redemande (Hubperso#719)", () => {
+  it("il relit sans If-None-Match, même si le dernier tour a échoué ou répondu 304", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    // la présentation tombe sur une panne : le cadre n'a rien reçu
+    fetchMoq.mockResolvedValue(reponse(500));
+    await presenter(cadre.contentWindow, port);
+    expect(donnees(port).filter((m) => m.octets)).toHaveLength(0);
+    const avant = fetchMoq.mock.calls.length;
+
+    fetchMoq.mockResolvedValue(reponse(200, '"2"'));
+    await act(async () => {
+      port.onmessage?.({ data: { type: "chantier-demande-releve" } });
+    });
+    expect(fetchMoq.mock.calls.length).toBe(avant + 1);
+    expect(fetchMoq.mock.calls.at(-1)![1].headers).toEqual({});
+    expect(donnees(port).filter((m) => m.octets)).toHaveLength(1);
+
+    // le relevé est connu (ETag posé) ; si le cadre le redemande quand même (il l'a perdu), c'est encore sans If-None-Match
+    await act(async () => {
+      port.onmessage?.({ data: { type: "chantier-demande-releve" } });
+    });
+    expect(fetchMoq.mock.calls.at(-1)![1].headers).toEqual({});
+    expect(donnees(port).filter((m) => m.octets)).toHaveLength(2);
+  });
+
+  it("un message d'un autre type ne relit rien", async () => {
+    const { cadre } = monter();
+    const port = faussePort();
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await presenter(cadre.contentWindow, port);
+    const avant = fetchMoq.mock.calls.length;
+    await act(async () => {
+      port.onmessage?.({ data: { type: "chantier-demande" } });
+      port.onmessage?.({ data: null });
+    });
+    expect(fetchMoq.mock.calls.length).toBe(avant);
+  });
+
+  it("après un rechargement piloté, le document neuf qui redemande reçoit le relevé en entier", async () => {
+    const { cadre } = monter();
+    const ancien = faussePort();
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await presenter(cadre.contentWindow, ancien);
+    await act(async () => {
+      ancien.onmessage?.({ data: { type: "chantier-recharge" } });
+    });
+    // le document neuf se présente pendant que le hub est sur une panne passagère, puis redemande
+    fetchMoq.mockResolvedValue(reponse(503));
+    const neuf = faussePort();
+    await presenter(cadre.contentWindow, neuf);
+    expect(donnees(neuf).filter((m) => m.octets)).toHaveLength(0);
+    fetchMoq.mockResolvedValue(reponse(200, '"1"'));
+    await act(async () => {
+      neuf.onmessage?.({ data: { type: "chantier-demande-releve" } });
+    });
+    expect(donnees(neuf).filter((m) => m.octets)).toHaveLength(1);
+  });
+});
+
 describe("ChantierCadre : le clic droit du cadre est relayé à LIA", () => {
   const clic = { type: "chantier-clic-droit", x: 120, y: 48, genre: "une barre du Gantt", texte: "Hubperso#604" };
 

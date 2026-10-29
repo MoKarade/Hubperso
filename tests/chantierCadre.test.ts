@@ -500,6 +500,11 @@ describe("le cadre se tient à jour sans que l'on recharge la page (#640)", () =
     expect(DOCUMENT).toContain("portHub.postMessage({ type: 'chantier-recharge', onglet: location.hash.replace('#', '') });");
   });
 
+  it("un cadre qui a son canal mais pas de relevé le redemande toutes les 10 s, six fois au plus (Hubperso#719)", () => {
+    expect(DOCUMENT).toContain("setInterval(function () { if (!octets && portHub && redemandes < 6) { redemandes++; portHub.postMessage({ type: 'chantier-demande-releve' }); } }, 10000);");
+    expect(DOCUMENT).toContain("var redemandes = 0;");
+  });
+
   it("le cadre ne se recharge jamais lui-même : son rechargement part sans cookie de session (401 « unauthenticated », Hubperso#719)", () => {
     expect(DOCUMENT).not.toContain("location.reload");
     expect(DOCUMENT).not.toMatch(/location\.(href|assign|replace)\s*[=(]/);
