@@ -7,9 +7,22 @@
 - **Constat** (Marc, 29/10 : « je vois pas la page bilan dans le hub ») : l'entrée « Bilans » était sous « Gérer », donc dans « Plus » au téléphone ; et le dossier Drive des bilans ne contenait que `sonde-format.html` (lu dans Drive le 29/10) : la routine du Brief n'a déposé aucun bilan, la page ne pouvait dire que « Aucun bilan du jour ».
 - **Changé** : `lib/navigation.ts` met « Bilans » dans le groupe Vue du propriétaire (barre du bas : Accueil, Attention, Chantier, Bilans, Plus ; barre latérale : groupe Vue), `rangBarre('/bilans')` rend `bilans`, « Gérer » ne garde que graphes et administration ; `lib/bilansVue.ts` : la page vide dit que le dossier Drive n'en contient aucun et que la routine du Brief n'en a pas encore déposé.
 - **Reste hors dépôt** : écrire `bilan-jour-AAAA-MM-JJ.html` et `bilan-semaine-AAAA-MM-JJ.html` dans le dossier Drive (routine du Brief) ; sans cela la page reste vide.
-- **Brouillon** tant que Marc n'a pas choisi l'emplacement de l'entrée (barre principale, lien sur l'Accueil, ou sous « Plus »).
+- **Décision de Marc** (29/10, 12:58Z, « Ok pour recommandation ») : « Bilans » dans la barre principale, 5e entrée.
 - **Tests** : `tests/navigation.test.ts` (Vue = accueil, attention, chantier, bilans pour le propriétaire ; Gérer sans bilans ; rang de barre), `tests/bilansDom.test.ts` (texte de la page vide).
 - **Preuve à lire** : avec la session de Marc, au téléphone, « Bilans » dans la barre du bas sans ouvrir « Plus » ; sans bilan, la phrase d'explication.
+
+## 29/10/2026 : la façon « session lancée par le Réacteur » et le compte full autonome à 1/10 (Hubperso#758, mission #538)
+
+- **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur : quand Jules ne prend pas la tâche suivante d'app-template ou de hub-contract, le Réacteur lance une routine (déclencheur d'API) qui ouvre une session neuve pour la livrer (.github#860, code dans .github#861, en brouillon). Aucune durée mesurée : rien ne s'active avant 3 gestes de Marc (créer la routine, poser 2 secrets, fusionner la PR).
+- **Corrigé** : le compte « full autonome » disait « 0 sur 10 le 29/10 à 01:53Z » ; le registre `tâches-full-autonomes.md` dit 1 / 10 depuis le 29/10 à 02:50Z (CarAI#245).
+- **Test** : `tests/chantierFacons.test.ts` lit l'entrée de #860 (sans « mesuré ») et « 1 sur 10 ».
+- **Preuve à lire** : `/chantier`, onglet En cours, bloc « Façons de travailler » : la façon de #860 et « 1 sur 10 ».
+
+## 29/10/2026 : la façon « graphify imposé par un hook » dans En cours (Hubperso#752, mission #538)
+
+- **Ajouté** au registre `XFACONS` (`chantier/cadre.html`), demande du fil workflow relayée par le coordinateur : graphify est imposé par un hook (refus d'un Read entier de plus de 400 lignes et d'un Glob sur tout le dépôt) dès qu'un dépôt a la nouvelle copie de `graphe.sh` et des réglages ; actif sur .github (#840, PR #843), les 9 autres dépôts suivent. Durée donnée par le fil workflow : environ 15 min par tâche (code, test, PR, checks verts, fusion).
+- **Test** : `tests/chantierFacons.test.ts` lit l'entrée ; une durée mesurée n'existe que pour #750, #807, #840 et le compte « full autonome ».
+- **Preuve à lire** : `/chantier`, onglet En cours, bloc « Façons de travailler » : la façon avec « mesuré ».
 
 ## 29/10/2026 : deux façons de travailler de plus dans En cours (Hubperso#740, mission #538)
 
