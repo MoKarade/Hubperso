@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { HubMetric } from "@mokarade/hub-contract";
-import { formatMetricValue, formatTrend, formatDateTime, ilYa } from "../lib/format";
+import { VALEUR_MAX, formatMetricValue, formatTrend, formatDateTime, ilYa } from "../lib/format";
 
 function metric(over: Partial<HubMetric>): HubMetric {
   return { label: "x", value: 0, format: "number", ...over };
@@ -33,6 +33,36 @@ describe("formatMetricValue", () => {
 
   it("valeur string non numérique en format numérique : rendue brute plutôt que NaN", () => {
     expect(formatMetricValue(metric({ value: "n/d", format: "currency" }))).toBe("n/d");
+  });
+
+  describe("longueur maximale d'une valeur texte (Hubperso#747)", () => {
+    it("40 caractères ou moins : rendue telle quelle", () => {
+      const quarante = "a".repeat(VALEUR_MAX);
+      expect(formatMetricValue(metric({ value: quarante, format: "text" }))).toBe(quarante);
+      expect(formatMetricValue(metric({ value: "n/d", format: "text" }))).toBe("n/d");
+    });
+
+    it.each([VALEUR_MAX + 1, 500])("%i caractères : coupée à 40 et finie par « … »", (n) => {
+      const out = formatMetricValue(metric({ value: "b".repeat(n), format: "text" }));
+      expect(Array.from(out)).toHaveLength(VALEUR_MAX);
+      expect(out).toBe(`${"b".repeat(VALEUR_MAX - 1)}…`);
+    });
+
+    it("jamais au milieu d'un caractère à deux unités UTF-16", () => {
+      const out = formatMetricValue(metric({ value: "😀".repeat(60), format: "text" }));
+      expect(out).toBe(`${"😀".repeat(VALEUR_MAX - 1)}…`);
+      expect(out).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
+    });
+
+    it("une chaîne non numérique en format numérique est coupée aussi", () => {
+      const out = formatMetricValue(metric({ value: "x".repeat(200), format: "number" }));
+      expect(Array.from(out)).toHaveLength(VALEUR_MAX);
+    });
+
+    it("un nombre n'est jamais coupé", () => {
+      const out = formatMetricValue(metric({ value: 123456789012345, format: "number" }));
+      expect(out).not.toContain("…");
+    });
   });
 });
 

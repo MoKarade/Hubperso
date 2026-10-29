@@ -25,6 +25,12 @@
 - **Tests** : `tests/chantierCadre.test.ts` (le cadre ne contient plus de rechargement ni de navigation de lui-même), `tests/chantierCadreDom.test.ts` (adresse neuve, onglet repris, onglet inventé ignoré, adresse d'ouverture conservée).
 - **Preuve à lire** : `/chantier` ouvert, un déploiement passe, le cadre se recharge seul (page cachée ou inutilisée depuis 45 s) et reste vivant, sans « unauthenticated ».
 
+## 29/10/2026 : une valeur texte du contrat est coupée à l'affichage (Hubperso#747, mission #134)
+
+- **Constat** (fil DriveAI, DriveAI#782) : dans `@mokarade/hub-contract` v1.5.0, `value` d'une métrique ou d'une ligne de détail peut être une chaîne sans longueur maximale (`label` est borné à 40). Ajouter un `max` au contrat serait un changement cassant : le hub se protège à l'affichage.
+- **Fait** : `formatMetricValue` (`lib/format.ts`), le seul endroit où le hub écrit une valeur (`lib/carte.ts`, héros, listes, détail), coupe une chaîne à `VALEUR_MAX` = 40 caractères et finit par « … » (points de code, jamais au milieu d'un emoji). Les nombres ne sont pas touchés. Choix du lieu : `formatMetricValue` et non `lib/carte.ts` (recommandation du fil DriveAI), parce que la page de détail et les listes n'en passent pas par `lib/carte.ts` [Probable]. 40 = l'échelle de `label` [Supposition : à ajuster si une vraie valeur texte légitime est plus longue].
+- **Test** : `tests/format.test.ts` (40 inchangé, 41 et 500 coupés, emoji, chaîne non numérique en format numérique, nombre jamais coupé).
+
 ## 29/10/2026 : `/api/sante` dit le commit servi (Hubperso#743, mission #744)
 
 La réponse porte aussi `"commit"` : les 7 premiers caractères de `VERCEL_GIT_COMMIT_SHA` (public, aucun secret), dans les cas `ok` et dans les deux 503 (`base`, `configuration`) ; champ absent si la variable manque ou n'est pas un SHA hexadécimal ; le 429 ne le porte pas (il vient du limiteur, avant tout). Pourquoi : après un retour en arrière, un alias Vercel peut rester figé sur un ancien déploiement sans que rien le montre (.github#822). Le verrou « corps muet » de `tests/sante.test.ts` reste entier : seul `commit` est autorisé en plus, aucun nom de variable, aucune donnée, aucun message d'erreur ne sort. Preuve en production : `curl -sL https://hubperso.com/api/sante` rend `commit` = 7 premiers caractères du commit fusionné.
