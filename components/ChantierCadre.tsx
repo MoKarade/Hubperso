@@ -27,6 +27,7 @@ import { EVENEMENT_LIA_CLIC_CADRE } from "@/lib/lia";
 import {
   MESSAGE_CLIC_DROIT,
   MESSAGE_COUTS,
+  MESSAGE_DEMANDE_RELEVE,
   MESSAGE_ETAT,
   MESSAGE_EVENEMENTS,
   MESSAGE_GESTE,
@@ -278,6 +279,11 @@ export function ChantierCadre({ onglet = null, actif = true }: { onglet?: Onglet
         const type = (m.data as { type?: unknown } | null)?.type;
         if (type === MESSAGE_GESTE) void deposerGeste(m.data);
         else if (type === MESSAGE_CLIC_DROIT) relayerClicDroit(m.data);
+        else if (type === MESSAGE_DEMANDE_RELEVE) {
+          // Le cadre n'a pas de relevé : on oublie l'ETag (pas de 304 possible) et on relit, comme à la présentation.
+          etag = null;
+          void lire();
+        }
         else if (type === MESSAGE_RECHARGE) {
           // Le cadre veut se recharger : c'est ICI qu'on le fait (navigation lancée par le hub, avec le cookie de session). Son
           // document neuf se présentera avec un canal neuf, qu'il faut alors accepter. L'onglet donné par le cadre est validé.

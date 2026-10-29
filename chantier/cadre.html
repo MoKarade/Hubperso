@@ -109,6 +109,12 @@
   };
   bonjour();
   var minuteur = setInterval(function () { if (recu) clearInterval(minuteur); else bonjour(); }, 1000);
+  // Le canal est établi mais le relevé n'est pas venu (Hubperso#719 : après un rechargement piloté par le hub, une lecture ratée ou lente à
+  // froid laissait « En attente du relevé… » jusqu'au prochain tour du hub, caché ou non) : on le redemande toutes les 10 s, par le canal,
+  // tant qu'on n'en a pas reçu un, six fois au plus (un hub sans relevé, `aucun`, n'est pas martelé : le tour de la minute prend le relais).
+  // Le hub relit alors sans `If-None-Match` ; dès que `octets` existe, plus rien ne part.
+  var redemandes = 0;
+  setInterval(function () { if (!octets && portHub && redemandes < 6) { redemandes++; portHub.postMessage({ type: 'chantier-demande-releve' }); } }, 10000);
 })();
 </script>
 <meta charset="utf-8">
