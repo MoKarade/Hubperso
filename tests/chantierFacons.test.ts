@@ -39,7 +39,10 @@ describe("registre des façons de travailler", () => {
     const plein = XFACONS.find((f) => f.regle === "29/10")!;
     expect(plein.t).toContain("full autonome");
     expect(plein.att).toContain("10 tâches");
-    expect(plein.mes).toContain("0 sur 10");
+    expect(plein.mes).toContain("1 sur 10");
+    expect(plein.mes).toContain("CarAI#245");
+    expect(par(".github#860").t).toContain("Réacteur");
+    expect(par(".github#860").mes).toBeNull();
     expect(par(".github#840").mes).toContain("15 min");
     for (const f of XFACONS) if (![".github#750", ".github#807", ".github#840"].includes(f.ref ?? "") && f !== plein) expect(f.mes).toBeNull();
   });
