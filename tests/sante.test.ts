@@ -8,6 +8,7 @@
 //     les NOMS manquants seulement au journal serveur, jamais dans la réponse (F7).
 //
 // Dans aucun cas le corps ne porte un nom de variable, une valeur ou un message brut.
+// Seule exception voulue : `commit`, les 7 premiers caractères du SHA servi (Hubperso#743).
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { VARIABLES_ATTENDUES } from "../lib/variablesAttendues";
@@ -31,6 +32,7 @@ function requete(client = `10.0.0.${++ip}`): Request {
 
 /** Pose toutes les variables REQUISES avec la valeur témoin. */
 function poserRequises(sauf: string[] = []) {
+  vi.stubEnv("VERCEL_GIT_COMMIT_SHA", ""); // chaque test pose le commit lui-même
   for (const v of VARIABLES_ATTENDUES) {
     if (v.exigence === "requise" && !sauf.includes(v.nom)) vi.stubEnv(v.nom, TEMOIN);
   }
@@ -145,5 +147,63 @@ describe("GET /api/sante — base réelle en mémoire (PGlite)", () => {
     const res = await GET(requete());
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
+  });
+});
+
+describe("GET /api/sante — commit servi (Hubperso#743)", () => {
+  const SHA = "95a6a563fbf1591d8a944f7a97595e9a8c17e041";
+
+  it("variable posée : { ok: true, commit } avec les 7 premiers caractères hexadécimaux", async () => {
+    poserRequises();
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", SHA);
+    baseEnMemoire();
+    const { GET } = await import("@/app/api/sante/route");
+    const res = await GET(requete());
+    expect(res.status).toBe(200);
+    const corps = await res.text();
+    expect(JSON.parse(corps)).toEqual({ ok: true, commit: "95a6a56" });
+    verifierCorpsMuet(corps);
+  });
+
+  it("le commit sort aussi quand la sonde est rouge (base), le reste du corps reste muet", async () => {
+    poserRequises();
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", SHA);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    baseEnMemoire(async () => {
+      throw new Error(`connexion refusée postgres://${TEMOIN}@neon`);
+    });
+    const { GET } = await import("@/app/api/sante/route");
+    const res = await GET(requete());
+    expect(res.status).toBe(503);
+    const corps = await res.text();
+    expect(JSON.parse(corps)).toEqual({ ok: false, cause: "base", commit: "95a6a56" });
+    verifierCorpsMuet(corps);
+  });
+
+  it("le commit sort aussi quand une variable requise manque", async () => {
+    poserRequises(["GOOGLE_CLIENT_SECRET"]);
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", SHA);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    baseEnMemoire();
+    const { GET } = await import("@/app/api/sante/route");
+    const res = await GET(requete());
+    expect(await res.json()).toEqual({ ok: false, cause: "configuration", commit: "95a6a56" });
+  });
+
+  it.each([
+    ["variable absente", ""],
+    ["valeur non hexadécimale", "pas-un-sha-" + TEMOIN],
+    ["trop courte", "abc12"],
+    ["lettres hors a-f", "zzzzzzzzzz"],
+  ])("%s : le champ commit est absent, le corps reste { ok: true }", async (_nom, valeur) => {
+    poserRequises();
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", valeur);
+    baseEnMemoire();
+    const { GET } = await import("@/app/api/sante/route");
+    const res = await GET(requete());
+    const corps = await res.text();
+    expect(JSON.parse(corps)).toEqual({ ok: true });
+    expect(corps).not.toContain("commit");
+    verifierCorpsMuet(corps);
   });
 });
