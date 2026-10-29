@@ -2,7 +2,7 @@
 
 ## Ce que couvre la v1
 Un test de fumée HTTP + JSON : `npm run fumee` sonde 5 URL publiques de `https://hubperso.com`
-(liste dans `scripts/fumee.json`) : 200 attendu ; `/api/sante` doit rendre `{ok:true}` (un 200 avec
+(liste dans `scripts/fumee.json`) : 200 attendu ; `/api/sante` doit rendre `{ok:true}` (plus `commit`, les 7 premiers caractères du SHA servi) (un 200 avec
 `ok:false` est une PANNE). Délai 10 s, 2 essais espacés de 10 s. Le parcours navigateur (Playwright)
 arrive avec P4. Pour viser une préversion : `npm run fumee -- --url-base https://<déploiement>`.
 

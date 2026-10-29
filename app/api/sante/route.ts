@@ -5,9 +5,14 @@
 //
 // ⚠️ Route SANS authentification — délibérément. Elle traverse le garde par `isPublicPath`
 // (lib/authGuard.ts), JAMAIS par une exclusion du matcher de `middleware.ts`. Elle ne rend
-// que `{ ok: true }` ou `{ ok: false, cause }` : aucune donnée, aucun message d'erreur brut,
-// aucun NOM de variable. `tests/gardePages.test.ts` vérifie qu'elle n'importe aucun module
-// de données ; `tests/sante.test.ts` que son corps reste muet dans tous les cas.
+// que `{ ok: true }` ou `{ ok: false, cause }`, plus le commit servi (7 caractères, public) :
+// aucune donnée, aucun message d'erreur brut, aucun NOM de variable. `tests/gardePages.test.ts`
+// vérifie qu'elle n'importe aucun module de données ; `tests/sante.test.ts` que son corps
+// reste muet dans tous les cas, `commit` mis à part.
+//
+// `commit` dit QUEL déploiement le domaine sert : après un retour en arrière, un alias Vercel
+// peut rester figé sur un ancien déploiement sans que rien le montre (Hubperso#743,
+// MoKarade/.github#822). Absent si la variable manque ou n'est pas un SHA hexadécimal.
 //
 // ── POURQUOI CETTE ROUTE EXISTE ──────────────────────────────────────────────────────
 // La page d'accueil répond même quand la base est en panne (redirection vers /login) :
@@ -47,8 +52,14 @@ const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 const limiteur = creerLimiteur({ max: 10, fenetreMs: 60_000 });
 
+/** Les 7 premiers caractères du commit servi ; rien si la variable manque ou n'est pas un SHA. */
+function commitServi(brut: string | undefined = process.env.VERCEL_GIT_COMMIT_SHA): { commit?: string } {
+  const sha = (brut ?? "").trim();
+  return /^[0-9a-f]{7,40}$/i.test(sha) ? { commit: sha.slice(0, 7).toLowerCase() } : {};
+}
+
 function echec(cause: "base" | "configuration"): Response {
-  return Response.json({ ok: false, cause }, { status: 503, headers: NO_STORE });
+  return Response.json({ ok: false, cause, ...commitServi() }, { status: 503, headers: NO_STORE });
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -75,5 +86,5 @@ export async function GET(request: Request): Promise<Response> {
     return echec("configuration");
   }
 
-  return Response.json({ ok: true }, { headers: NO_STORE });
+  return Response.json({ ok: true, ...commitServi() }, { headers: NO_STORE });
 }

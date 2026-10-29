@@ -126,6 +126,11 @@ const FIXES: readonly VariableAttendue[] = [
     exigence: "optionnelle",
     siAbsente: "page /graphes « non branchée » : aucun graphe de code lu (jeton GitHub en lecture seule, variable serveur)",
   },
+  {
+    nom: "VERCEL_GIT_COMMIT_SHA",
+    exigence: "optionnelle",
+    siAbsente: "/api/sante ne dit plus le commit servi (posée par Vercel à chaque déploiement, jamais à la main ; hors Vercel elle est absente)",
+  },
 ];
 
 const PAR_APP: readonly VariableAttendue[] = SOURCE_DEFS.flatMap((def) => [
