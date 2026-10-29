@@ -27,6 +27,10 @@
 - **Tests** : `tests/liaGraphes.test.ts` (chaque état, borne de 1 200 caractères, pas de compte inventé), `tests/liaElement.test.ts` (carte, vignette, titre et verrou sur la source de la page ; rouge avant la correction).
 - **Preuve à lire** : sur `hubperso.com/graphes`, « Explique-moi ça » sur une vignette répond avec le dépôt, l'état, le commit court et l'âge du graphe, et dit que le dessin 3D n'est pas lisible depuis la page.
 
+## 29/10/2026 : lia-ui v0.48.1, la discussion de LIA survit à 2 minutes d'inactivité (Hubperso#734, mission MoKarade/.github#719)
+
+Épingle `@mokarade/lia-ui` v0.48.1 (sha pelé `2e4c9e3`), seul changement (`package.json`, lock). Avant : après 2 minutes sans geste, la discussion se fermait et s'effaçait partout (état partagé compris), elle ne survivait ni à un rechargement ni au passage d'une app à l'autre. Après (lia-ui#166) : la fermeture pour inactivité cache le chat sans effacer la discussion, reprise 30 minutes. Preuve en production : le PC pose une question à LIA, attend plus de 3 minutes sans toucher, recharge la page ; la discussion est là.
+
 ## 28/10/2026 : lia-ui v0.48.0, LIA lit les barres HTML et relit l'état moins souvent (Hubperso#717, mission MoKarade/.github#719)
 
 Épingle `@mokarade/lia-ui` v0.48.0 (sha pelé `b0c8524`), seul changement (`package.json`, lock). v0.47.1 (lia-ui#162, fil Vercel : `/api/lia/etat` = 2,3 k appels/24 h, 28 % des invocations du hub) : l'état partagé n'est relu que toutes les 2 minutes et seulement quand la page est à l'écran, une page qui revient au premier plan relit tout de suite. v0.48.0 (lia-ui#164) : un clic droit sur une barre de graphique dessinée en HTML vise sa ligne et LIA lit le texte de chaque ligne et la largeur dessinée de sa barre. Preuve : déploiement `READY` sur le commit fusionné ; le fil Vercel relève `/api/lia/etat` sur 24 h après le déploiement (cible : au moins moitié moins d'appels).
