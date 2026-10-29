@@ -27,6 +27,10 @@
 - **Tests** : `tests/liaGraphes.test.ts` (chaque état, borne de 1 200 caractères, pas de compte inventé), `tests/liaElement.test.ts` (carte, vignette, titre et verrou sur la source de la page ; rouge avant la correction).
 - **Preuve à lire** : sur `hubperso.com/graphes`, « Explique-moi ça » sur une vignette répond avec le dépôt, l'état, le commit court et l'âge du graphe, et dit que le dessin 3D n'est pas lisible depuis la page.
 
+## 29/10/2026 : lia-ui v0.48.2, toucher le corps de LIA cache le chat sans effacer la discussion (Hubperso#737, mission MoKarade/.github#719)
+
+Épingle `@mokarade/lia-ui` v0.48.2 (sha pelé `524f7b1`), seul changement (`package.json`, lock). Avant : sur un chat ouvert, un toucher du corps de LIA effaçait la discussion partout (le relevé KO du PC sur #734 venait de là). Après (lia-ui#168) : le toucher cache le chat et garde la discussion 30 minutes ; seuls ✕ et Échap l'effacent. Preuve en production : le PC pose une question, touche le corps de LIA (le chat se cache), le touche de nouveau : les 2 messages sont là ; puis ✕ : le fil est vide après un rechargement.
+
 ## 29/10/2026 : lia-ui v0.48.1, la discussion de LIA survit à 2 minutes d'inactivité (Hubperso#734, mission MoKarade/.github#719)
 
 Épingle `@mokarade/lia-ui` v0.48.1 (sha pelé `2e4c9e3`), seul changement (`package.json`, lock). Avant : après 2 minutes sans geste, la discussion se fermait et s'effaçait partout (état partagé compris), elle ne survivait ni à un rechargement ni au passage d'une app à l'autre. Après (lia-ui#166) : la fermeture pour inactivité cache le chat sans effacer la discussion, reprise 30 minutes. Preuve en production : le PC pose une question à LIA, attend plus de 3 minutes sans toucher, recharge la page ; la discussion est là.
